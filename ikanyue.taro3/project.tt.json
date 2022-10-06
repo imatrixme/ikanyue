@@ -1,0 +1,13 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "sing.taro3",
+  "description": "绍夷歌唱",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}
