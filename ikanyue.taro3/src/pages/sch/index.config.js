@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '课程安排',
+  navigationBarTitleText: '学唱歌',
 });

@@ -1,38 +1,50 @@
 [
   {
-    "title": "测试名称",
+    "title": "赏析",
     "date": "2022-10-06",
     "start": 1000,
-    "end": 1200
+    "end": 1200,
+    "max": 5,
+    "current": 3
   },
   {
     "title": "测试名称",
     "date": "2022-10-06",
     "start": 1400,
-    "end": 1500
+    "end": 1500,
+    "max": 5,
+    "current": 3
   },
   {
     "title": "测试名称",
     "date": "2022-10-06",
     "start": 1700,
-    "end": 1850
+    "end": 1850,
+    "max": 5,
+    "current": 3
   },
   {
     "title": "测试名称",
     "date": "2022-10-07",
     "start": 900,
-    "end": 1050
+    "end": 1050,
+    "max": 5,
+    "current": 3
   },
   {
     "title": "测试名称",
     "date": "2022-10-08",
     "start": 1400,
-    "end": 1500
+    "end": 1500,
+    "max": 5,
+    "current": 3
   },
   {
     "title": "测试名称",
     "date": "2022-10-09",
     "start": 1700,
-    "end": 1850
+    "end": 1850,
+    "max": 5,
+    "current": 3
   }
 ]
