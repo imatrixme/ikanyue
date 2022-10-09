@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="title-zone">
-      <!-- <text class="page-title">课程安排</text> -->
+      <text class="page-title">课程安排</text>
     </view>
     <view class="table">
       <view class="table-left">
@@ -110,10 +110,10 @@ export default {
      */
     getDaysOfThisWeek: () => {
       let monday = dayjs().startOf('day');
-      let days = [0, 1, 2, 3, 4, 5, 6].map((delta) => {
+      let days = [0, 1, 2, 3, 4, 5, 6].map((delta, idx) => {
         let day_ = monday.add(delta, 'day');
         return {
-          name: day_.format('dddd'),
+          name: day_.format('dddd') + (idx === 0 ? '(今天)' : ''),
           date: day_.format('YYYY-MM-DD'),
         };
       });
@@ -165,6 +165,7 @@ export default {
         return {
           name: name_,
           height: ht_,
+          span: span_,
         };
       });
       return amps;
@@ -209,6 +210,9 @@ $borderWidth: 1px;
 $borderColor: #2782d730;
 $deepBackground: #dfdfdf;
 $scheduleColor: #1aad19;
+$scheduleImage: linear-gradient(to bottom, #1bba1b 10%, #1aad19 99%);
+$scheduleShadow: 0 4px 10px 0 rgb($scheduleColor, 0.5);
+$scheduleTextShadow: 0 -1px 0 rgb(black, 0.2);
 
 .title-zone {
   display: flex;
@@ -291,6 +295,8 @@ $scheduleColor: #1aad19;
     .oneday-schedule {
       position: absolute;
       background-color: $scheduleColor;
+      background-image: $scheduleImage;
+      box-shadow: $scheduleShadow;
       border-radius: 6px;
       display: flex;
       flex-direction: column;
@@ -301,9 +307,11 @@ $scheduleColor: #1aad19;
       .schedule-cell-title {
         font-size: 13px;
         font-weight: bold;
+        text-shadow: $scheduleTextShadow;
       }
       .schedule-cell-people {
         font-size: 11px;
+        text-shadow: $scheduleTextShadow;
       }
     }
   }
@@ -312,9 +320,9 @@ $scheduleColor: #1aad19;
 .table-left {
   display: flex;
   flex-direction: column;
-  width: 90px;
-  border-bottom: $borderWidth solid $borderColor;
-  border-right: $borderWidth solid $borderColor;
+  width: 93px;
+  // border-bottom: $borderWidth solid $borderColor;
+  // border-right: $borderWidth solid $borderColor;
 
   .table-shiduan {
     font-weight: bold;
@@ -322,7 +330,9 @@ $scheduleColor: #1aad19;
     justify-content: center;
     align-items: center;
     height: 42px;
-    width: 100%;
+    width: 92px;
+    border-right: $borderWidth solid $borderColor;
+    border-bottom: $borderWidth solid $borderColor;
   }
 
   .table-daytime {
@@ -332,12 +342,13 @@ $scheduleColor: #1aad19;
 
     .cell-hour {
       border-right: none;
-      border-top: $borderWidth solid $borderColor;
+      border-right: $borderWidth solid $borderColor;
+      border-bottom: $borderWidth solid $borderColor;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 42px;
-      width: 66px;
+      width: 67.5px;
     }
 
     .daytime-apm,
@@ -348,14 +359,15 @@ $scheduleColor: #1aad19;
       font-weight: bold;
     }
     .daytime-apm {
-      width: 24px;
+      width: 25px;
     }
     .daytime-everyhour {
       flex-grow: 1;
     }
     .apme {
       background-color: $deepBackground;
-      border-top: $borderWidth solid $borderColor;
+      border-right: $borderWidth solid $borderColor;
+      border-bottom: $borderWidth solid $borderColor;
       display: flex;
       justify-content: center;
       align-items: center;

@@ -1,4 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: '',
+  navigationBarTitleText: '学唱歌',
   enablePullDownRefresh: true,
 });
