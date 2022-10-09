@@ -321,8 +321,6 @@ $scheduleTextShadow: 0 -1px 0 rgb(black, 0.2);
   display: flex;
   flex-direction: column;
   width: 93px;
-  // border-bottom: $borderWidth solid $borderColor;
-  // border-right: $borderWidth solid $borderColor;
 
   .table-shiduan {
     font-weight: bold;

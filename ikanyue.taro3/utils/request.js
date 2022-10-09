@@ -1,5 +1,3 @@
-const { WITH_CTX } = require('_@vue_compiler-core@3.2.40@@vue/compiler-core');
-
 const STAGE = process.env.NODE_ENV !== 'production' ? 'TEST' : 'RELEASE';
 const HOST = 'https://sing.ommapp.com';
 
