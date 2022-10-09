@@ -1,15 +1,24 @@
 <template>
   <view class="container">
     <view class="title-zone">
-      <text class="page-title">课程安排</text>
+      <!-- <text class="page-title">课程安排</text> -->
     </view>
     <view class="table">
       <view class="table-left">
-        <text class="table-shiduan">时段</text>
+        <text class="table-shiduan">
+          时段
+        </text>
         <view class="table-daytime">
           <view class="daytime-apm">
-            <text v-for="(item, index) in apms" :key="index" :class="styleOfApm(item)">
-              {{ item }}
+            <text
+              v-for="(apm, index) in adaptedApms(apms)"
+              :key="index"
+              class="apme"
+              :style="{
+                height: apm.height + 'px',
+              }"
+            >
+              {{ apm.name }}
             </text>
           </view>
           <view class="daytime-everyhour">
@@ -31,7 +40,7 @@
               class="table-right-row big-cell"
               v-for="(hour, hi) in hours"
               :key="hi"
-              :class="styleOfHour(hour, index)"
+              :class="styleOfBigHour(hour, index)"
             >
             </text>
             <div class="table-oneday-overlay">
@@ -42,7 +51,7 @@
                 :style="{
                   top: sch.style.top + 'px',
                   height: sch.style.height + 'px',
-                  width: sch.style.width + 'px',
+                  width: '100%',
                 }"
               >
                 <text class="schedule-cell-title">{{ sch.title }}</text>
@@ -57,39 +66,71 @@
 </template>
 
 <script>
+import { iNet } from '../../../utils/request';
+import * as dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+dayjs.locale('zh-cn');
+
 const daytimes = require('../../data/daytime.json');
-const weekdays = require('../../data/weekday.json');
-const classes = require('../../data/schedule.json');
 
 var that;
 export default {
   data() {
     return {
-      count: 0,
+      sysinfo: wx.getSystemInfoSync(),
       hours: [],
       days: [],
       schedules: [],
-      apms: ['上午', '', '下午', '晚上'],
+      apms: ['am', 'null', 'pm', 'even'],
+      ratio: 1,
     };
   },
-
   created() {
     that = this;
   },
   mounted() {
-    this.hours = daytimes;
-    this.days = weekdays;
-    this.schedules = classes;
-  },
-
-  computed: {
-    // x() {
-    //   console.log('day');
-    // },
+    this.refreshDataset();
   },
 
   methods: {
-    styleOfHour: (hour, index) => {
+    /**
+     * 刷新数据
+     */
+    refreshDataset: () => {
+      that.ratio = that.sysinfo.screenWidth / 375.0;
+      that.hours = daytimes;
+      that.days = that.getDaysOfThisWeek();
+      return iNet.get('/v1/schedules').then((res) => {
+        that.schedules = res;
+      });
+    },
+
+    /**
+     * 获取从现在开始之后的一周时间
+     */
+    getDaysOfThisWeek: () => {
+      let monday = dayjs().startOf('day');
+      let days = [0, 1, 2, 3, 4, 5, 6].map((delta) => {
+        let day_ = monday.add(delta, 'day');
+        return {
+          name: day_.format('dddd'),
+          date: day_.format('YYYY-MM-DD'),
+        };
+      });
+      return days;
+    },
+    /**
+     * 获取每小时单元格的动态样式
+     * @param {Hour} hour
+     */
+    styleOfHour: (hour) => {
+      var style = ['cell-hour'];
+      if (hour.disable) {
+        style.push('disable-cell');
+      }
+      return style;
+    },
+    styleOfBigHour: (hour, index) => {
       var style = ['cell'];
       if (hour.disable) {
         style.push('disable-cell');
@@ -98,32 +139,67 @@ export default {
       }
       return style;
     },
+    /**
+     * 获取时段单元格的动态样式
+     * @param {String} apm 时段文字描述
+     */
 
-    styleOfApm: (apm) => {
-      let map = {
-        上午: 'apme-am',
-        下午: 'apme-pm',
-        晚上: 'apme-even',
-      };
-      return ['apme', map[apm]];
+    adaptedApms: () => {
+      let amps = that.apms.map((apm, idx) => {
+        var unit_ht_ = 43;
+        var span_ = 1;
+        var name_ = '';
+        if (apm === 'am') {
+          span_ = 4;
+          name_ = '上午';
+        }
+        if (apm === 'pm') {
+          span_ = 4;
+          name_ = '下午';
+        }
+        if (apm === 'even') {
+          span_ = 3;
+          name_ = '晚上';
+        }
+        let ht_ = Math.floor(unit_ht_ * that.ratio) * span_ - 1;
+        return {
+          name: name_,
+          height: ht_,
+        };
+      });
+      return amps;
     },
 
+    /**
+     * 预处理单日内的日程单元格样式
+     * @param {Day} day 单日对象
+     */
     adaptedHours: (day) => {
       let matched = that.schedules.filter((sch, idx) => {
         return sch.date === day.date;
       });
       let styled = matched.map((sch, idx) => {
         var sch_ = sch;
-        let hourspan = (sch_.end - sch_.start) / 100.0;
+        let schSpan = (sch_.end - sch_.start) * 0.01;
+        let topSpan = (sch_.start - 900) * 0.01;
+
         sch_.style = {
-          top: (sch_.start - 900) * 0.01 * (42 + 1),
-          height: (sch_.end - sch_.start) * 0.01 * 42 + (hourspan - 1),
-          width: 66 + 32 * 2,
+          top: Math.floor(43 * that.ratio) * topSpan,
+          height: Math.floor(43 * that.ratio) * schSpan,
         };
         return sch_;
       });
       return styled;
     },
+  },
+
+  /**
+   * 当下拉刷新时触发动作
+   */
+  onPullDownRefresh: () => {
+    that.refreshDataset().then(() => {
+      return wx.stopPullDownRefresh();
+    });
   },
 };
 </script>
@@ -150,39 +226,20 @@ $scheduleColor: #1aad19;
   display: flex;
   flex-direction: row;
   border-top: $borderWidth solid $borderColor;
-  border-left: $borderWidth solid $borderColor;
-}
-
-.table-left {
-  display: flex;
-  flex-direction: column;
-
-  .table-daytime {
-    display: flex;
-    flex-direction: row;
-
-    .daytime-apm,
-    .daytime-everyhour {
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-      font-weight: bold;
-    }
-  }
 }
 
 .cell {
   border-bottom: $borderWidth solid $borderColor;
   border-right: $borderWidth solid $borderColor;
-  min-height: 42px;
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 42px;
   width: 66px;
 }
 
 .big-cell {
-  padding: 0 32px;
+  width: 130px;
 }
 
 .disable-cell {
@@ -230,7 +287,6 @@ $scheduleColor: #1aad19;
     left: 0;
     width: 100%;
     height: 100%;
-    // background-color: gray;
 
     .oneday-schedule {
       position: absolute;
@@ -253,34 +309,59 @@ $scheduleColor: #1aad19;
   }
 }
 
-.table-shiduan {
+.table-left {
+  display: flex;
+  flex-direction: column;
+  width: 90px;
   border-bottom: $borderWidth solid $borderColor;
   border-right: $borderWidth solid $borderColor;
-  min-height: 42px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 91px;
-  font-weight: bold;
-}
-.apme {
-  width: 24px;
-  background-color: $deepBackground;
-  border-bottom: $borderWidth solid $borderColor;
-  border-right: $borderWidth solid $borderColor;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  min-height: 42px;
-}
-.apme-am {
-  min-height: 171px;
-}
-.apme-pm {
-  min-height: 171px;
-}
-.apme-even {
-  min-height: 128px;
+
+  .table-shiduan {
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 42px;
+    width: 100%;
+  }
+
+  .table-daytime {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+    .cell-hour {
+      border-right: none;
+      border-top: $borderWidth solid $borderColor;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 42px;
+      width: 66px;
+    }
+
+    .daytime-apm,
+    .daytime-everyhour {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .daytime-apm {
+      width: 24px;
+    }
+    .daytime-everyhour {
+      flex-grow: 1;
+    }
+    .apme {
+      background-color: $deepBackground;
+      border-top: $borderWidth solid $borderColor;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      width: 24px;
+    }
+  }
 }
 </style>
