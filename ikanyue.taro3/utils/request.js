@@ -1,5 +1,6 @@
 const STAGE = process.env.NODE_ENV !== 'production' ? 'TEST' : 'RELEASE';
 const HOST = 'https://sing.ommapp.com';
+// const HOST = 'http://127.0.0.1:1337';
 
 const Request = (method = 'GET', url, data = {}, header = {}) => {
   var url_ = url.indexOf('http') === -1 ? HOST + url : url;
@@ -13,7 +14,7 @@ const Request = (method = 'GET', url, data = {}, header = {}) => {
       header: headers_,
       method: method,
       success: (res) => {
-        if (res.data.code !== undefined && res.data.msg !== undefined) {
+        if (res.data.code !== undefined && res.data.message !== undefined) {
           if (parseInt(res.data.code) === 10000) {
             resolve(res.data.data);
             return;

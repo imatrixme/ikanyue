@@ -1,5 +1,5 @@
 export default defineAppConfig({
-  pages: ['pages/sch/index'],
+  pages: ['pages/sch/index', 'pages/schdetail/index'],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',

@@ -53,9 +53,10 @@
                   height: sch.style.height + 'px',
                   width: '100%',
                 }"
+                @click="jump2ScheduleDetail(sch)"
               >
                 <text class="schedule-cell-title">{{ sch.title }}</text>
-                <text class="schedule-cell-people">余 {{ sch.max - sch.current }} 人</text>
+                <text class="schedule-cell-people">余 {{ sch.capacity - sch.current }} 人</text>
               </view>
             </div>
           </div>
@@ -66,6 +67,7 @@
 </template>
 
 <script>
+import Taro from '@tarojs/taro';
 import { iNet } from '../../../utils/request';
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
@@ -100,9 +102,15 @@ export default {
       that.ratio = that.sysinfo.screenWidth / 375.0;
       that.hours = daytimes;
       that.days = that.getDaysOfThisWeek();
-      return iNet.get('/v1/schedules').then((res) => {
-        that.schedules = res;
-      });
+      Taro.showLoading({ title: '课表刷新中...' });
+      return iNet
+        .get('/v1/schedule/list')
+        .then((res) => {
+          that.schedules = res;
+        })
+        .finally(() => {
+          Taro.hideLoading();
+        });
     },
 
     /**
@@ -191,6 +199,13 @@ export default {
         return sch_;
       });
       return styled;
+    },
+    /**
+     * 跳转到课程活动详情页面
+     * @param {Schedule} schedule 课程对象
+     */
+    jump2ScheduleDetail: (schedule) => {
+      Taro.navigateTo({ url: '/pages/schdetail/index?sn=' + schedule.sn });
     },
   },
 
