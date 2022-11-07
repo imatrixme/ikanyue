@@ -46,6 +46,7 @@
             <div class="table-oneday-overlay">
               <view
                 class="oneday-schedule"
+                :class="sch.current >= sch.capacity ? 'danger' : 'safe'"
                 v-for="(sch, schIdx) in adaptedHours(day)"
                 :key="schIdx"
                 :style="{
@@ -227,6 +228,11 @@ $deepBackground: #dfdfdf;
 $scheduleColor: #1aad19;
 $scheduleImage: linear-gradient(to bottom, #1bba1b 10%, #1aad19 99%);
 $scheduleShadow: 0 4px 10px 0 rgb($scheduleColor, 0.5);
+
+$scheduleColor_danger: #de3636;
+$scheduleImage_danger: linear-gradient(to bottom, #ed3737 10%, #de3636 99%);
+$scheduleShadow_danger: 0 4px 10px 0 rgb($scheduleColor_danger, 0.5);
+
 $scheduleTextShadow: 0 -1px 0 rgb(black, 0.2);
 
 .title-zone {
@@ -309,9 +315,6 @@ $scheduleTextShadow: 0 -1px 0 rgb(black, 0.2);
 
     .oneday-schedule {
       position: absolute;
-      background-color: $scheduleColor;
-      background-image: $scheduleImage;
-      box-shadow: $scheduleShadow;
       border-radius: 6px;
       display: flex;
       flex-direction: column;
@@ -330,6 +333,17 @@ $scheduleTextShadow: 0 -1px 0 rgb(black, 0.2);
       }
     }
   }
+}
+
+.safe {
+  background-color: $scheduleColor;
+  background-image: $scheduleImage;
+  box-shadow: $scheduleShadow;
+}
+.danger {
+  background-color: $scheduleColor_danger;
+  background-image: $scheduleImage_danger;
+  box-shadow: $scheduleShadow_danger;
 }
 
 .table-left {

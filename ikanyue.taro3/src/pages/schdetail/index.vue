@@ -21,7 +21,7 @@
     </view>
 
     <view class="operation">
-      <button type="primary">去报名</button>
+      <button type="primary" @click="jumpUrl" :disabled="schedule.current >= schedule.capacity">去报名</button>
     </view>
 
     <view class="summary">
@@ -39,8 +39,6 @@ import { iNet } from '../../../utils/request';
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn');
-
-const schedules = require('../../data/schedule.json');
 
 var that;
 export default {
@@ -66,7 +64,6 @@ export default {
       iNet
         .get(url, paras)
         .then((data) => {
-          console.log(data);
           that.schedule = data;
           that.updateDataset();
         })
@@ -84,6 +81,13 @@ export default {
         dayjs(that.schedule.ostart, 'yyyy-MM-DD HH:mm:ss').format('HH:mm') +
         ' - ' +
         dayjs(that.schedule.oend, 'yyyy-MM-DD HH:mm:ss').format('HH:mm');
+    },
+
+    jumpUrl: () => {
+      // Taro.openCustomerServiceChat({
+      //   extInfo: { url: '' },
+      //   success: function(res) {},
+      // });
     },
   },
 };
