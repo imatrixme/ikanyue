@@ -1,4 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '学唱歌',
-  enablePullDownRefresh: true,
+    navigationBarTitleText: "课程安排",
+    enablePullDownRefresh: true,
+    backgroundTextStyle: "dark"
 });

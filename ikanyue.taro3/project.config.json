@@ -1,15 +1,15 @@
 {
-  "miniprogramRoot": "./dist",
-  "projectname": "sing.taro3",
-  "description": "绍夷歌唱",
-  "appid": "touristappid",
-  "setting": {
-    "urlCheck": true,
-    "es6": false,
-    "enhance": false,
-    "compileHotReLoad": false,
-    "postcss": false,
-    "minified": false
-  },
-  "compileType": "miniprogram"
+    "miniprogramRoot": "./dist",
+    "projectname": "ikanyue",
+    "description": "看乐艺术",
+    "appid": "wx9cd85dbfdf22c771",
+    "setting": {
+        "urlCheck": false,
+        "es6": false,
+        "enhance": false,
+        "compileHotReLoad": false,
+        "postcss": false,
+        "minified": false
+    },
+    "compileType": "miniprogram"
 }
