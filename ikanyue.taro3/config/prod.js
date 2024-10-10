@@ -3,7 +3,7 @@ module.exports = {
         NODE_ENV: '"production"'
     },
     defineConstants: {
-        SERVICE_URL: JSON.stringify("https://sing.ommapp.com"),
+        SERVICE_URL: JSON.stringify("https://mapi.ikanyue.com"),
         STAGE: JSON.stringify("RELEASE")
     },
     mini: {},
