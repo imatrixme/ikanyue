@@ -1,3 +1,4 @@
 export default definePageConfig({
-    navigationBarTitleText: '价目',
+    navigationBarTitleText: '价目表',
+    navigationStyle: 'custom',
 });
