@@ -1,12 +1,12 @@
 import { iNet } from './request';
+import Taro from '@tarojs/taro';
 
 const kUserInfo = 'com.ikanyue.cache.userinfo';
 
 // 获取用户信息
 const getUserInfo = () => {
-    const data = wx.getStorageSync(kUserInfo);
+    const data = Taro.getStorageSync(kUserInfo);
     const result = typeof data === 'string' && data.length > 0 ? JSON.parse(data) : {};
-    // console.log("获取缓存用户信息", result);
     return result;
 };
 
@@ -14,14 +14,12 @@ const getUserInfo = () => {
 const getToken = () => {
     const info = getUserInfo();
     const result = info.token || '';
-    // console.log("获取缓存用户Token", result);
     return result;
 };
 
 // 是否已登录
 const isLogin = () => {
     const result = getToken().length > 0;
-    // console.log("判断用户是否已登录", result);
     return result;
 };
 
@@ -30,7 +28,7 @@ const refresh_login = () => {
         iNet.post('/v1/user/refresh', {}, false)
             .then((res) => {
                 // console.log("用户使用Code登录/注册成功");
-                wx.setStorageSync(kUserInfo, JSON.stringify(res));
+                Taro.setStorageSync(kUserInfo, JSON.stringify(res));
                 resolve(true);
             })
             .catch((err) => {
@@ -40,73 +38,35 @@ const refresh_login = () => {
     });
 };
 
-const signup_login = () => {
+// 密码登录
+const loginWithPassword = (cellphone, password) => {
     return new Promise((resolve, reject) => {
-        // console.log("getUserInfo");
-        wx.getUserInfo({
-            withCredentials: true,
-            success: (userInfo) => {
-                // console.log(userInfo);
-                wx.login({
-                    success: (res) => {
-                        // 得到微信 Code
-                        // console.log(res);
-                        userInfo.code = res.code;
-                        iNet.post('/v1/user/wechat/signuplogin', userInfo, false)
-                            .then((res) => {
-                                // console.log("用户使用Code登录/注册成功");
-                                wx.setStorageSync(kUserInfo, JSON.stringify(res));
-                                resolve(true);
-                            })
-                            .catch((err) => {
-                                // console.log("用户使用Code登录/注册失败", err);
-                                reject(false);
-                            });
-                    },
-                    failure: (err) => {
-                        // console.log("用户登录Code获取失败", err);
-                        reject(false);
-                    },
-                });
+        iNet.post(
+            '/v1/auth/login',
+            {
+                cellphone,
+                password,
             },
-            failure: (err) => {
-                // console.log("用户登录态信息获取失败", err);
-                reject(false);
-            },
-        });
-    });
-};
-
-// 刷新 Token
-const login = () => {
-    return new Promise((resolve, reject) => {
-        wx.checkSession({
-            success: () => {
-                if (!isLogin()) {
-                    signup_login()
-                        .then((res) => resolve(res))
-                        .catch((err) => reject(false));
-                    return;
-                }
-                refresh_login()
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(false));
-            },
-            failure: () => {
-                signup_login()
-                    .then((res) => resolve(res))
-                    .catch((err) => reject(false));
-            },
-        });
+            false
+        )
+            .then((res) => {
+                // 登录成功，缓存用户信息
+                // console.log('密码登录成功', res);
+                Taro.setStorageSync(kUserInfo, JSON.stringify(res));
+                resolve(res);
+            })
+            .catch((err) => {
+                // console.log('密码登录失败', err);
+                reject(err);
+            });
     });
 };
 
 const UserManager = {
     getUserInfo,
-    login,
     isLogin,
     getToken,
-    refreshLogin: refresh_login,
+    loginWithPassword,
 };
 
 export { UserManager };

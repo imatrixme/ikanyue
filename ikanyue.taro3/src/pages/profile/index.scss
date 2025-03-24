@@ -1,0 +1,80 @@
+.container {
+    padding: 16px;
+}
+
+.unloginview {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    height: 88vh;
+
+    .logo {
+        width: 100px;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+
+        .incname {
+            font-size: 20px;
+            font-weight: bolder;
+            color: #202020;
+        }
+        .slogan {
+            font-size: 14px;
+            color: #888888;
+        }
+    }
+
+    .loginbtn {
+        margin-top: 16px;
+        padding: 0 32px;
+    }
+}
+
+.loginview {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    height: 88vh;
+
+    .avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 1px solid #ccc;
+        background-color: #f0f0f0;
+        overflow: hidden;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+
+        .nickName {
+            font-size: 20px;
+            font-weight: bolder;
+            color: #202020;
+        }
+        .province {
+            font-size: 13px;
+            color: #888888;
+        }
+    }
+
+    .modifybtn {
+        margin-top: 16px;
+        padding: 0 32px;
+    }
+}

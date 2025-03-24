@@ -1,15 +1,15 @@
 <template>
     <view class="container">
-        <view class="unloginview" v-if="userInfo === undefined">
+        <view class="unloginview" v-if="!isLogin()">
             <image class="logo" :src="images.logo" mode="widthFix" />
             <view class="content">
                 <text class="incname">看乐艺术</text>
                 <text class="slogan">提高歌唱水平，提升音乐认知</text>
             </view>
-            <nut-button type="primary" class="loginbtn" @click="registerLogin">登录·注册</nut-button>
+            <nut-button type="primary" class="loginbtn" @click="showLoginPopup">登录·注册</nut-button>
         </view>
 
-        <view class="loginview" v-if="userInfo !== undefined">
+        <view class="loginview" v-if="isLogin()">
             <image class="avatar" :src="userInfo.avatar" mode="widthFix" />
             <view class="content">
                 <text class="nickname">{{ userInfo.nickName }}</text>
@@ -17,136 +17,186 @@
             </view>
             <nut-button type="default" class="modifybtn" @click="modifyInfo">修改信息</nut-button>
         </view>
+
+        <!-- 登录弹窗 -->
+        <nut-popup
+            position="bottom"
+            :visible="showLogin"
+            @close="showLogin = false"
+            :close-on-click-overlay="true"
+            closeable
+            :style="{ height: '55%', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }"
+            @click-overlay="showLogin = false"
+            @click-close-icon="showLogin = false"
+        >
+            <view class="login-popup">
+                <view class="login-header">
+                    <view class="login-title">账号登录</view>
+                </view>
+                <view class="login-form">
+                    <nut-input
+                        v-model="loginForm.phone"
+                        placeholder="请输入手机号"
+                        type="digit"
+                        class="login-input"
+                        clearable
+                    />
+                    <nut-input
+                        v-model="loginForm.password"
+                        placeholder="请输入密码"
+                        type="password"
+                        class="login-input"
+                        clearable
+                    />
+                    <nut-button
+                        type="primary"
+                        block
+                        class="login-submit-btn"
+                        @click="handlePasswordLogin"
+                        :loading="loading"
+                    >
+                        登录
+                    </nut-button>
+                </view>
+            </view>
+        </nut-popup>
     </view>
 </template>
 
 <script>
-import Taro, { getCurrentInstance } from "@tarojs/taro";
-import { iNet } from "../../../utils/request";
-import { UserManager } from "../../../utils/usermanager";
+import Taro, { getCurrentInstance } from '@tarojs/taro';
+import { UserManager } from '../../../utils/usermanager';
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+dayjs.locale('zh-cn');
 
-import dayjs from "dayjs";
-import "dayjs/locale/zh-cn";
-dayjs.locale("zh-cn");
-
-var that;
 export default {
     data() {
         return {
             dayjs: dayjs,
             images: {
-                logo: require("../../imgs/kanyuelogo.png")
+                logo: require('../../imgs/kanyuelogo.png'),
             },
-            userInfo: undefined
+            userInfo: undefined,
+            showLogin: false,
+            loading: false,
+            loginForm: {
+                phone: '',
+                password: '',
+            },
         };
     },
-    created() {
-        that = this;
-    },
     mounted() {
-        that.userInfo = UserManager.getUserInfo();
-        that.refreshUserInfo();
+        this.refreshUserInfo();
     },
     methods: {
-        refreshUserInfo: () => {
-            if (!UserManager.isLogin()) {
+        isLogin() {
+            return this.userInfo !== undefined && this.userInfo.token !== undefined;
+        },
+        refreshUserInfo() {
+            this.userInfo = UserManager.getUserInfo();
+        },
+        modifyInfo() {
+            if (!this.isLogin()) {
                 return;
             }
-            UserManager.refreshLogin().finally(() => {
-                that.userInfo = UserManager.getUserInfo();
-            });
+            Taro.navigateTo({ url: '/pages/userinfo/index' });
         },
-        registerLogin: () => {
-            if (UserManager.isLogin()) {
+        // 显示登录弹窗
+        showLoginPopup() {
+            this.showLogin = true;
+            console.log('显示登录弹窗', this.showLogin);
+        },
+        // 处理密码登录
+        handlePasswordLogin() {
+            // 表单验证
+            if (!this.loginForm.phone || !this.loginForm.password) {
+                Taro.showToast({
+                    title: '请输入手机号和密码',
+                    icon: 'none',
+                });
                 return;
             }
-            UserManager.login()
-                .then(res => that.refreshUserInfo())
-                .catch(err => console.log(err));
+
+            // 手机号格式验证
+            if (!/^1\d{10}$/.test(this.loginForm.phone)) {
+                Taro.showToast({
+                    title: '请输入正确的手机号',
+                    icon: 'none',
+                });
+                return;
+            }
+
+            this.loading = true;
+
+            UserManager.loginWithPassword(this.loginForm.phone, this.loginForm.password)
+                .then((res) => {
+                    this.showLogin = false;
+                    this.refreshUserInfo();
+                    Taro.showToast({
+                        title: '登录成功',
+                        icon: 'success',
+                    });
+                })
+                .catch((err) => {
+                    Taro.showToast({
+                        title: err.message || '登录失败，请重试',
+                        icon: 'none',
+                    });
+                })
+                .finally(() => {
+                    this.loading = false;
+                });
         },
-        modifyInfo: () => {
-            Taro.navigateTo({ url: "/pages/userinfo/index" });
-        }
-    }
+    },
 };
 </script>
 
 <style lang="scss">
-.container {
-    padding: 16px;
-}
+@import './index.scss';
 
-.unloginview {
+.login-popup {
+    padding: 20px;
+    padding-bottom: 50px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    justify-content: center;
-    align-items: center;
-    height: 88vh;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 
-    .logo {
-        width: 100px;
-    }
-
-    .content {
+    .login-header {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
         justify-content: center;
         align-items: center;
+        position: relative;
+        margin-bottom: 30px;
+        margin-top: 10px;
 
-        .incname {
+        .login-title {
             font-size: 20px;
-            font-weight: bolder;
-            color: #202020;
-        }
-        .slogan {
-            font-size: 14px;
-            color: #888888;
+            font-weight: bold;
+            text-align: center;
         }
     }
 
-    .loginbtn {
-        margin-top: 16px;
-        padding: 0 32px;
-    }
-}
-
-.loginview {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    justify-content: center;
-    align-items: center;
-    height: 88vh;
-
-    .avatar {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-    }
-
-    .content {
+    .login-form {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
 
-        .nickName {
-            font-size: 20px;
-            font-weight: bolder;
-            color: #202020;
+        .login-input {
+            margin-top: 20px;
         }
-        .province {
-            font-size: 13px;
-            color: #888888;
-        }
-    }
 
-    .modifybtn {
-        margin-top: 16px;
-        padding: 0 32px;
+        .login-submit-btn {
+            margin-top: 30px;
+            height: 45px;
+            border-radius: 22px;
+            font-size: 16px;
+            background: linear-gradient(to right, #ff4949, #ff7f50);
+            border: none;
+            box-shadow: 0 3px 10px rgba(255, 73, 73, 0.3);
+        }
     }
 }
 </style>
