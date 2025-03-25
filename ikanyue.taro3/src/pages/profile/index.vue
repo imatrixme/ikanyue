@@ -12,7 +12,7 @@
         <view class="loginview" v-if="isLogin()">
             <image class="avatar" :src="userInfo.avatar" mode="widthFix" />
             <view class="content">
-                <text class="nickname">{{ userInfo.nickName }}</text>
+                <text class="nickname">{{ userInfo.nickname }}</text>
                 <text class="province" v-if="userInfo.province !== undefined">{{ userInfo.province }}</text>
             </view>
             <nut-button type="default" class="modifybtn" @click="modifyInfo">修改信息</nut-button>
@@ -66,6 +66,7 @@
 <script>
 import Taro, { getCurrentInstance } from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
+import { Api } from '../../../utils/apis';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 dayjs.locale('zh-cn');
@@ -89,12 +90,27 @@ export default {
     mounted() {
         this.refreshUserInfo();
     },
+    onShow() {
+        // 在页面显示时重新获取用户信息，确保从userinfo页面返回时数据是最新的
+        this.refreshUserInfo();
+    },
     methods: {
         isLogin() {
             return this.userInfo !== undefined && this.userInfo.token !== undefined;
         },
         refreshUserInfo() {
+            // 先从本地获取缓存的用户信息
             this.userInfo = UserManager.getUserInfo();
+
+            // 如果已登录，尝试刷新用户信息
+            if (this.isLogin()) {
+                Api.refreshLogin()
+                    .then(() => {
+                        // 刷新成功后再次从缓存获取更新后的用户信息
+                        this.userInfo = UserManager.getUserInfo();
+                    })
+                    .catch((err) => console.log('刷新用户信息失败', err));
+            }
         },
         modifyInfo() {
             if (!this.isLogin()) {
@@ -129,7 +145,7 @@ export default {
 
             this.loading = true;
 
-            UserManager.loginWithPassword(this.loginForm.phone, this.loginForm.password)
+            Api.loginWithPassword(this.loginForm.phone, this.loginForm.password)
                 .then((res) => {
                     this.showLogin = false;
                     this.refreshUserInfo();

@@ -10,6 +10,14 @@ const getUserInfo = () => {
     return result;
 };
 
+// 更新本地用户信息缓存
+const updateUserInfoCache = (userInfo) => {
+    const currentUserInfo = getUserInfo();
+    const updatedUserInfo = { ...currentUserInfo, ...userInfo };
+    Taro.setStorageSync(kUserInfo, JSON.stringify(updatedUserInfo));
+    return updatedUserInfo;
+};
+
 // 获取 Token
 const getToken = () => {
     const info = getUserInfo();
@@ -23,50 +31,17 @@ const isLogin = () => {
     return result;
 };
 
-const refresh_login = () => {
-    return new Promise((resolve, reject) => {
-        iNet.post('/v1/user/refresh', {}, false)
-            .then((res) => {
-                // console.log("用户使用Code登录/注册成功");
-                Taro.setStorageSync(kUserInfo, JSON.stringify(res));
-                resolve(true);
-            })
-            .catch((err) => {
-                // console.log("用户使用Code登录/注册失败", err);
-                reject(false);
-            });
-    });
-};
-
-// 密码登录
-const loginWithPassword = (cellphone, password) => {
-    return new Promise((resolve, reject) => {
-        iNet.post(
-            '/v1/auth/login',
-            {
-                cellphone,
-                password,
-            },
-            false
-        )
-            .then((res) => {
-                // 登录成功，缓存用户信息
-                // console.log('密码登录成功', res);
-                Taro.setStorageSync(kUserInfo, JSON.stringify(res));
-                resolve(res);
-            })
-            .catch((err) => {
-                // console.log('密码登录失败', err);
-                reject(err);
-            });
-    });
+// 清空用户信息（登出）
+const logout = () => {
+    Taro.removeStorageSync(kUserInfo);
 };
 
 const UserManager = {
     getUserInfo,
-    isLogin,
+    updateUserInfoCache,
     getToken,
-    loginWithPassword,
+    isLogin,
+    logout,
 };
 
 export { UserManager };

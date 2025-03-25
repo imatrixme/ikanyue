@@ -1,4 +1,5 @@
 import { UserManager } from './usermanager';
+import Taro from '@tarojs/taro';
 
 const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) => {
     var url_ = url.indexOf('http') === -1 ? SERVICE_URL + url : url;
@@ -8,13 +9,11 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
     headers_['X-Ca-Source'] = 'wechat_mp';
     return new Promise((resolve, reject) => {
         if (authcheck && !UserManager.isLogin()) {
-            UserManager.login()
-                .then((res) => resolve(undefined))
-                .catch((err) => reject(new Error('Login...')));
+            reject(new Error('Login required'));
             return;
         }
         headers_.token = UserManager.getToken();
-        wx.request({
+        Taro.request({
             url: url_,
             data: data,
             header: headers_,
