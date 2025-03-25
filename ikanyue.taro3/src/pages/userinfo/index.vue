@@ -69,11 +69,11 @@
             :modelValue="currentGender"
             :visible="showGenderPicker"
             @update:visible="(val) => (showGenderPicker = val)"
-            :columns="genders"
+            :columns="[genders]"
             title="性别选择"
             @confirm="
-                ({ selectedValue, _ }) => {
-                    saveGenderObj(selectedValue);
+                (val) => {
+                    saveGenderObj(val.selectedValue);
                 }
             "
         >
@@ -162,40 +162,54 @@ export default {
             that.currentProvince = pvalue;
         },
         saveGenderObj: (gvalue) => {
-            const name = gvalue['0'];
+            // 确保从picker中获取的值转为数字
+            const name = Number(gvalue['0']);
+
+            // 查找对应的性别对象
             const target = that.genders.filter((kv) => kv.value === name);
             const gender = target && target.length > 0 ? target[0] : undefined;
+
+            // 设置性别文本和值
             that.currentGenderText = gender ? gender.text : '未知';
-            that.currentGenderValue = gender ? gender.value : 0;
+            that.currentGenderValue = gender ? Number(gender.value) : 0;
             that.currentGender = gvalue;
         },
         refreshUserInfo: () => {
             // 从本地获取用户信息
             const userInfo = UserManager.getUserInfo();
+
             that.userInfo = userInfo;
             that.currentCellphone = userInfo.cellphone;
             that.currentRealname = userInfo.realname;
             that.currentNickname = userInfo.nickname;
-            that.currentAge = userInfo.age;
+            that.currentAge = userInfo.age || 18;
             that.currentProvinceText = userInfo.province;
 
-            // 设置性别
-            const genderValue = userInfo.gender !== undefined ? userInfo.gender : 0;
+            // 设置性别 - 修复性别显示问题
+            // 确保将gender转换为数字类型
+            const genderValue = userInfo.gender !== undefined ? Number(userInfo.gender) : 0;
+
+            // 找到对应的性别对象
             const genderObj = that.genders.find((g) => g.value === genderValue);
+
             that.currentGenderValue = genderValue;
             that.currentGenderText = genderObj ? genderObj.text : '未知';
-            that.currentGender = genderObj ? [genderObj.value] : [0];
+            that.currentGender = [genderValue]; // 直接使用数值
         },
 
         saveInfo: () => {
+            // 确保性别是数字类型
+            const genderValue = Number(that.currentGenderValue);
+
             const params = {
                 realname: that.currentRealname,
                 nickname: that.currentNickname,
-                age: that.currentAge,
+                age: Number(that.currentAge), // 确保年龄是数字
                 cellphone: that.currentCellphone,
                 province: that.currentProvinceText,
-                gender: that.currentGenderValue,
+                gender: genderValue,
             };
+
             Taro.showLoading({ title: '保存中...' });
             Api.updateUserInfo(params)
                 .then((res) => {
@@ -205,10 +219,14 @@ export default {
                     });
                 })
                 .then(() => {
-                    Api.refreshLogin();
+                    // 主动获取最新用户信息
+                    return Api.refreshLogin();
+                })
+                .then(() => {
+                    // 获取最新缓存的用户信息并更新界面
+                    that.refreshUserInfo();
                 })
                 .catch((err) => {
-                    console.log(err);
                     Taro.showToast({
                         title: err.message || '更新失败',
                         icon: 'none',
@@ -216,7 +234,6 @@ export default {
                 })
                 .finally(() => {
                     Taro.hideLoading();
-                    that.refreshUserInfo();
                 });
         },
     },
