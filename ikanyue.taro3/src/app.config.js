@@ -1,5 +1,13 @@
 export default defineAppConfig({
-    pages: ['pages/profile/index', 'pages/pricing/index', 'pages/slogan/index', 'pages/userinfo/index'],
+    pages: [
+        'pages/profile/index',
+        'pages/pricing/index',
+        'pages/slogan/index',
+        'pages/userinfo/index',
+        'pages/activity/index',
+        'pages/activityDetail/index',
+        'pages/webview/index',
+    ],
     window: {
         backgroundTextStyle: 'light',
         navigationBarBackgroundColor: '#fff',
@@ -7,20 +15,28 @@ export default defineAppConfig({
         navigationBarTextStyle: 'black',
     },
     tabBar: {
-        color: '#BFBFBF',
-        selectedColor: '#F7931E',
+        color: '#666',
+        selectedColor: '#FF4949',
+        backgroundColor: '#fafafa',
+        borderStyle: 'black',
         list: [
-            // {
-            //     pagePath: 'pages/slogan/index',
-            //     iconPath: 'imgs/shouye.png',
-            //     selectedIconPath: 'imgs/shouye-sel.png',
-            //     text: '信息',
-            // },
+            {
+                pagePath: 'pages/slogan/index',
+                iconPath: 'imgs/shouye.png',
+                selectedIconPath: 'imgs/shouye-sel.png',
+                text: '首页',
+            },
+            {
+                pagePath: 'pages/activity/index',
+                iconPath: 'imgs/profile.png',
+                selectedIconPath: 'imgs/profile-sel.png',
+                text: '活动',
+            },
             {
                 pagePath: 'pages/pricing/index',
                 iconPath: 'imgs/pricing.png',
                 selectedIconPath: 'imgs/pricing-sel.png',
-                text: '价目',
+                text: '价格',
             },
             {
                 pagePath: 'pages/profile/index',

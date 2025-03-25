@@ -48,6 +48,29 @@ const updateUserInfo = (userInfo) => {
 };
 
 /**
+ * 查询活动列表或活动详情
+ * @param {Object} params - 查询参数
+ * @param {string} [params.id] - 活动ID，如果提供则返回单个活动详情
+ * @param {number} [params.page=1] - 页码
+ * @param {number} [params.perPage=20] - 每页数量
+ * @param {string} [params.status='active'] - 活动状态过滤
+ * @param {string} [params.sort='-sequence'] - 排序字段
+ * @param {string} [params.tags] - 标签过滤，多个标签用逗号分隔
+ * @returns {Promise} - 查询结果Promise
+ */
+const findActivities = (params = {}) => {
+    return new Promise((resolve, reject) => {
+        iNet.get('/v1/activity/find', params)
+            .then((res) => {
+                resolve(res);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+};
+
+/**
  * 刷新登录状态
  * @returns {Promise} - 刷新结果Promise
  */
@@ -69,6 +92,7 @@ const Api = {
     loginWithPassword,
     updateUserInfo,
     refreshLogin: refresh_login,
+    findActivities,
 };
 
 export { Api };
