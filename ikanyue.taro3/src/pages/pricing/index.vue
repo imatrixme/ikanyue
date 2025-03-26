@@ -1,81 +1,80 @@
 <template>
-    <view class="pricing-container">
-        <view class="pricing-content">
-            <!-- 分类选择器 - 左侧 -->
-            <view class="category-column">
-                <scroll-view scroll-y class="category-scroll" :style="{ height: scrollHeight + 'px' }">
-                    <view
-                        v-for="(category, index) in categories"
-                        :key="index"
-                        class="category-item"
-                        :class="{ active: selectedCategoryIndex === index }"
-                        @tap="selectCategory(index, category)"
-                    >
-                        <nut-icon :name="category.icon" size="20" class="category-icon"></nut-icon>
-                        <text class="category-name">{{ category.name }}</text>
-                    </view>
-                </scroll-view>
-            </view>
-
-            <!-- 价格列表 - 右侧 -->
-            <view class="content-column">
-                <scroll-view
-                    scroll-y
-                    class="pricing-scroll"
-                    @scrolltolower="onScrollToLower"
-                    :style="{ height: scrollHeight + 'px' }"
+    <view class="page-wrapper">
+        <!-- 分类选择器 - 左侧 -->
+        <view class="category-column">
+            <scroll-view scroll-y="true" :style="{ height: scrollHeight + 'px' }" show-scrollbar="false" enhanced>
+                <view
+                    v-for="(category, index) in categories"
+                    :key="index"
+                    class="category-item"
+                    :class="{ active: selectedCategoryIndex === index }"
+                    @tap="selectCategory(index, category)"
                 >
-                    <view v-if="loading" class="loading-container">
-                        <nut-icon name="loading" size="20"></nut-icon>
-                        <text class="loading-text">加载中...</text>
-                    </view>
+                    <nut-icon :name="category.icon" size="20" class="category-icon"></nut-icon>
+                    <text class="category-name">{{ category.name }}</text>
+                </view>
+            </scroll-view>
+        </view>
 
-                    <view v-else-if="networkError" class="empty-container">
-                        <nut-empty description="网络错误，点击重试"></nut-empty>
-                        <nut-button type="primary" size="small" @click="loadPricingData" style="margin-top: 10px"
-                            >重新加载</nut-button
-                        >
-                    </view>
+        <!-- 价格列表 - 右侧 -->
+        <view class="content-column">
+            <scroll-view
+                scroll-y="true"
+                :style="{ height: scrollHeight + 'px' }"
+                show-scrollbar="false"
+                enhanced
+                @scrolltolower="onScrollToLower"
+            >
+                <view v-if="loading" class="status-box">
+                    <nut-icon name="loading" size="20"></nut-icon>
+                    <text class="loading-text">加载中...</text>
+                </view>
 
-                    <view v-else-if="!currentPricing.length" class="empty-container">
-                        <nut-empty description="暂无价格方案"></nut-empty>
-                    </view>
+                <view v-else-if="networkError" class="status-box">
+                    <nut-empty description="网络错误，点击重试"></nut-empty>
+                    <nut-button type="primary" size="small" @click="loadPricingData" style="margin-top: 10px">
+                        重新加载
+                    </nut-button>
+                </view>
 
-                    <view v-else class="pricing-cards">
-                        <view
-                            v-for="(item, index) in currentPricing"
-                            :key="index"
-                            class="pricing-card"
-                            :class="{ popular: item.isPopular }"
-                            @tap="showPricingDetail(item)"
-                        >
-                            <view class="card-header">
-                                <view class="price-tier">{{ item.tier }}</view>
-                                <view class="price-container">
-                                    <text class="price-symbol">¥</text>
-                                    <text class="price-amount">{{ item.price }}</text>
-                                    <text class="price-unit">{{ item.unit }}</text>
-                                </view>
-                                <view class="price-desc">{{ item.description }}</view>
+                <view v-else-if="!currentPricing.length" class="status-box">
+                    <nut-empty description="暂无价格方案"></nut-empty>
+                </view>
+
+                <view v-else class="pricing-cards">
+                    <view
+                        v-for="(item, index) in currentPricing"
+                        :key="index"
+                        class="pricing-card"
+                        :class="{ popular: item.isPopular }"
+                        @tap="showPricingDetail(item)"
+                    >
+                        <view class="card-header">
+                            <view class="price-tier">{{ item.tier }}</view>
+                            <view class="price-container">
+                                <text class="price-symbol">¥</text>
+                                <text class="price-amount">{{ item.price }}</text>
+                                <text class="price-unit">{{ item.unit }}</text>
                             </view>
+                            <view class="price-desc">{{ item.description }}</view>
+                        </view>
 
-                            <view class="card-body">
-                                <view class="features-list">
-                                    <view v-for="(feature, fIdx) in item.features" :key="fIdx" class="feature-item">
-                                        <nut-icon name="checked" size="16"></nut-icon>
-                                        <text>{{ feature }}</text>
-                                    </view>
+                        <view class="card-body">
+                            <view class="features-list">
+                                <view v-for="(feature, fIdx) in item.features" :key="fIdx" class="feature-item">
+                                    <nut-icon name="checked" size="16"></nut-icon>
+                                    <text>{{ feature }}</text>
                                 </view>
-                            </view>
-
-                            <view class="card-footer">
-                                <text class="discount-tag" v-if="item.discount">{{ item.discount }}% 优惠</text>
-                                <text class="original-price" v-if="item.originalPrice">¥{{ item.originalPrice }}</text>
                             </view>
                         </view>
+
+                        <view class="card-footer">
+                            <text class="discount-tag" v-if="item.discount">{{ item.discount }}% 优惠</text>
+                            <text class="original-price" v-if="item.originalPrice">¥{{ item.originalPrice }}</text>
+                        </view>
                     </view>
-                </scroll-view>
-            </view>
+                </view>
+            </scroll-view>
         </view>
     </view>
 </template>
@@ -108,7 +107,7 @@ export default {
             // 网络错误状态
             networkError: false,
             // 滚动区域高度
-            scrollHeight: 500,
+            scrollHeight: 600,
             // 模拟数据（实际开发中应该通过 API 获取）
             mockData: {
                 'one-on-one': [
@@ -355,9 +354,9 @@ export default {
             },
         };
     },
-    mounted() {
-        // 计算滚动区域高度
-        this.calculateScrollHeight();
+    onLoad() {
+        // 计算页面高度并设置滚动区域高度
+        this.setScrollHeight();
 
         // 初始化第一个分类
         this.currentCategory = this.categories[0];
@@ -365,19 +364,31 @@ export default {
         // 加载价格数据
         this.loadPricingData();
     },
+    onShow() {
+        // 每次显示页面时重新计算高度
+        this.setScrollHeight();
+    },
+    onReady() {
+        // 页面渲染完成后再次确认高度
+        this.setScrollHeight();
+    },
     methods: {
-        // 计算滚动区域高度
-        calculateScrollHeight() {
-            // 获取系统信息以确定屏幕高度
-            const systemInfo = Taro.getSystemInfoSync();
-            this.scrollHeight = systemInfo.windowHeight;
-            console.log('设置滚动高度:', this.scrollHeight);
+        // 设置滚动高度
+        setScrollHeight() {
+            try {
+                const res = Taro.getSystemInfoSync();
+                // 设置滚动区域高度为窗口高度
+                this.scrollHeight = res.windowHeight;
+                console.log('设置滚动高度:', this.scrollHeight);
+            } catch (e) {
+                console.error('获取系统信息失败:', e);
+            }
         },
 
         // 滚动到底部
         onScrollToLower() {
             console.log('滚动到底部');
-            // 这里可以添加加载更多的逻辑
+            // 加载更多的逻辑
         },
 
         // 加载价格数据
@@ -439,65 +450,4 @@ export default {
 
 <style lang="scss">
 @import './index.scss';
-
-// 分类选择器列样式
-.category-column {
-    width: 110px;
-    height: 100%;
-    background-color: #fff;
-    border-right: 1px solid #eee;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.03);
-}
-
-// 分类滚动区域
-.category-scroll {
-    width: 100%;
-    background-color: #fff;
-}
-
-// 分类项
-.category-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 90px;
-    width: 100%;
-    border-bottom: 1px solid #f5f5f5;
-    transition: all 0.3s;
-    padding: 5px 0;
-
-    &.active {
-        background-color: #ff4949;
-        position: relative;
-
-        &:after {
-            content: '';
-            position: absolute;
-            left: 0;
-            height: 70%;
-            width: 4px;
-            background-color: #ff4949;
-            border-radius: 0 3px 3px 0;
-        }
-
-        .category-icon,
-        .category-name {
-            color: #fff;
-        }
-    }
-
-    .category-icon {
-        font-size: 24px;
-        color: #666;
-        margin-bottom: 8px;
-    }
-
-    .category-name {
-        font-size: 14px;
-        font-weight: bold;
-        color: #333;
-        text-align: center;
-    }
-}
 </style>

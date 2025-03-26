@@ -1,72 +1,58 @@
 <template>
-    <view class="container">
+    <view class="userinfo-page">
         <nut-form>
             <nut-form-item label="昵称">
-                <input class="nut-input-text" type="text" placeholder="请输入昵称" v-model="currentNickname" />
+                <view class="input-field">
+                    <input v-model="currentNickname" placeholder="请输入昵称" type="text" class="native-input" />
+                </view>
             </nut-form-item>
-        </nut-form>
-        <nut-form>
+
             <nut-form-item label="姓名">
-                <input class="nut-input-text" placeholder="请输入姓名" type="text" v-model="currentRealname" />
+                <view class="input-field">
+                    <input v-model="currentRealname" placeholder="请输入姓名" type="text" class="native-input" />
+                </view>
             </nut-form-item>
+
             <nut-form-item label="性别">
-                <input
-                    class="nut-input-text"
-                    placeholder="请选择性别"
-                    type="text"
-                    v-model="currentGenderText"
-                    readonly
-                    @click="showGenderPicker = true"
-                />
+                <view class="picker-field" @click="showGenderPicker = true">
+                    <view class="picker-value">{{ currentGenderText || '请选择性别' }}</view>
+                    <nut-icon name="right" size="14px" color="#999"></nut-icon>
+                </view>
             </nut-form-item>
+
             <nut-form-item label="年龄">
-                <input class="nut-input-text" placeholder="请输入年龄" type="number" v-model="currentAge" />
+                <view class="input-field">
+                    <input v-model="currentAge" placeholder="请输入年龄" type="number" class="native-input" />
+                </view>
             </nut-form-item>
+
             <nut-form-item label="联系电话">
-                <input
-                    class="nut-input-text"
-                    placeholder="请输入联系电话"
-                    type="number"
-                    v-model="currentCellphone"
-                    readonly
-                    disabled
-                />
+                <view class="disabled-field">
+                    <view class="disabled-value">{{ currentCellphone }}</view>
+                </view>
             </nut-form-item>
+
             <nut-form-item label="省份">
-                <input
-                    class="nut-input-text"
-                    placeholder="请选择省份"
-                    type="text"
-                    v-model="currentProvinceText"
-                    readonly
-                    @click="showProvincePicker = true"
-                />
+                <view class="picker-field" @click="showProvincePicker = true">
+                    <view class="picker-value">{{ currentProvinceText || '请选择省份' }}</view>
+                    <nut-icon name="right" size="14px" color="#999"></nut-icon>
+                </view>
             </nut-form-item>
         </nut-form>
+
         <view class="info-tips">
             <text>
                 *
                 以上信息不会泄露给任何第三方，仅用于评估交流计划。由于声乐学习与年龄、地域语言习惯密切相关，如实填写以上信息，将有助于我们制定更具针对性的学习计划。姓名、电话号码将用于日常教学联系，包括但不限于预约、问题与反馈等。
             </text>
         </view>
+
         <view class="info-action">
             <nut-button type="primary" size="large" class="savebtn" @click="saveInfo">保存</nut-button>
         </view>
+
+        <!-- 性别选择器 -->
         <nut-picker
-            :modelValue="currentProvince"
-            :visible="showProvincePicker"
-            @update:visible="(val) => (showProvincePicker = val)"
-            :columns="provinces"
-            title="城市选择"
-            @confirm="
-                ({ selectedValue, _ }) => {
-                    saveProvinceObj(selectedValue);
-                }
-            "
-        >
-        </nut-picker>
-        <nut-picker
-            :modelValue="currentGender"
             :visible="showGenderPicker"
             @update:visible="(val) => (showGenderPicker = val)"
             :columns="[genders]"
@@ -76,15 +62,28 @@
                     saveGenderObj(val.selectedValue);
                 }
             "
-        >
-        </nut-picker>
+        />
+
+        <!-- 省份选择器 -->
+        <nut-picker
+            :visible="showProvincePicker"
+            @update:visible="(val) => (showProvincePicker = val)"
+            :columns="provinces"
+            title="城市选择"
+            @confirm="
+                ({ selectedValue, _ }) => {
+                    saveProvinceObj(selectedValue);
+                }
+            "
+        />
     </view>
 </template>
 
 <script>
-import Taro, { getCurrentInstance } from '@tarojs/taro';
+import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
+import './index.scss';
 
 var that;
 export default {
@@ -239,25 +238,3 @@ export default {
     },
 };
 </script>
-
-<style lang="scss">
-page {
-    background-color: #f8f8f8;
-}
-.container {
-}
-
-.info-tips {
-    font-size: 10px;
-    color: #888888;
-    padding: 4px 16px;
-}
-
-.info-action {
-    padding: 8px 32px;
-}
-
-.nut-input-text {
-    border: none;
-}
-</style>

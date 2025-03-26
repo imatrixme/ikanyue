@@ -1,91 +1,90 @@
 <template>
-    <view class="activity-list">
-        <view class="activity-container">
-            <!-- 日期选择器 - 左侧 -->
-            <view class="date-column">
-                <scroll-view scroll-y class="date-scroll" :style="{ height: scrollHeight + 'px' }">
-                    <view
-                        v-for="(group, index) in dateGroups"
-                        :key="index"
-                        class="date-item"
-                        :class="{ active: selectedGroupIndex === index }"
-                        @tap="selectDateGroup(index)"
-                    >
-                        <text class="day">{{ group.dateText }}</text>
-                        <text class="date">{{ group.title }}</text>
-                    </view>
-                </scroll-view>
-            </view>
-
-            <!-- 活动列表 - 右侧 -->
-            <view class="content-column">
-                <scroll-view
-                    scroll-y
-                    class="activity-scroll"
-                    @scrolltolower="onScrollToLower"
-                    :style="{ height: scrollHeight + 'px' }"
+    <view class="page-wrapper">
+        <!-- 左侧日期列表 -->
+        <view class="date-column">
+            <scroll-view scroll-y="true" :style="{ height: scrollHeight + 'px' }" show-scrollbar="false" enhanced>
+                <view
+                    v-for="(group, index) in dateGroups"
+                    :key="index"
+                    class="date-item"
+                    :class="{ active: selectedGroupIndex === index }"
+                    @tap="selectDateGroup(index)"
                 >
-                    <view v-if="loading" class="loading-container">
-                        <nut-icon name="loading" size="20"></nut-icon>
-                        <text class="loading-text">加载中...</text>
-                    </view>
+                    <text class="day">{{ group.dateText }}</text>
+                    <text class="date">{{ group.title }}</text>
+                </view>
+            </scroll-view>
+        </view>
 
-                    <view v-else-if="networkError" class="empty-container">
-                        <nut-empty description="网络错误，点击重试"></nut-empty>
-                        <nut-button type="primary" size="small" @click="loadAllActivities" style="margin-top: 10px"
-                            >重新加载</nut-button
-                        >
-                    </view>
+        <!-- 右侧活动列表 -->
+        <view class="activity-column">
+            <scroll-view
+                scroll-y="true"
+                :style="{ height: scrollHeight + 'px' }"
+                show-scrollbar="false"
+                enhanced
+                @scrolltolower="onScrollToLower"
+            >
+                <view v-if="loading" class="status-box">
+                    <nut-icon name="loading" size="20"></nut-icon>
+                    <text class="loading-text">加载中...</text>
+                </view>
 
-                    <view v-else-if="!activities.length" class="empty-container">
-                        <nut-empty description="暂无活动"></nut-empty>
-                    </view>
+                <view v-else-if="networkError" class="status-box">
+                    <nut-empty description="网络错误，点击重试"></nut-empty>
+                    <nut-button type="primary" size="small" @click="loadAllActivities" style="margin-top: 10px">
+                        重新加载
+                    </nut-button>
+                </view>
 
-                    <view v-else class="activity-cards">
-                        <view
-                            v-for="activity in activities"
-                            :key="activity.id"
-                            class="activity-card"
-                            @tap="goToDetail(activity.id)"
-                        >
-                            <image
-                                :src="activity.cover_image || defaultCoverImage"
-                                class="activity-image"
-                                mode="aspectFill"
-                            />
-                            <view class="activity-info">
-                                <text class="activity-title">{{ activity.title }}</text>
-                                <view class="activity-meta">
-                                    <view class="meta-item">
-                                        <nut-icon name="clock" size="14"></nut-icon>
-                                        <text>{{ formatDateOnly(activity.startTime) }}</text>
-                                        <text style="margin-left: 8px">{{ formatTimeOnly(activity.startTime) }}</text>
-                                        <text v-if="activity.endTime" style="margin-left: 4px"
-                                            >- {{ formatTimeOnly(activity.endTime) }}</text
-                                        >
-                                    </view>
-                                    <view class="meta-item">
-                                        <nut-icon name="location" size="14"></nut-icon>
-                                        <text>{{ activity.location }}</text>
-                                    </view>
+                <view v-else-if="!activities.length" class="status-box">
+                    <nut-empty description="暂无活动"></nut-empty>
+                </view>
+
+                <view v-else class="activity-list">
+                    <view
+                        v-for="activity in activities"
+                        :key="activity.id"
+                        class="activity-card"
+                        @tap="goToDetail(activity.id)"
+                    >
+                        <image
+                            :src="activity.cover_image || defaultCoverImage"
+                            class="activity-image"
+                            mode="aspectFill"
+                        />
+                        <view class="activity-info">
+                            <text class="activity-title">{{ activity.title }}</text>
+                            <view class="activity-meta">
+                                <view class="meta-item">
+                                    <nut-icon name="clock" size="14"></nut-icon>
+                                    <text>{{ formatDateOnly(activity.startTime) }}</text>
+                                    <text style="margin-left: 8px">{{ formatTimeOnly(activity.startTime) }}</text>
+                                    <text v-if="activity.endTime" style="margin-left: 4px">
+                                        - {{ formatTimeOnly(activity.endTime) }}
+                                    </text>
                                 </view>
-                                <view class="activity-bottom">
-                                    <view class="tag-list">
-                                        <text v-for="(tag, idx) in activity.tags" :key="idx" class="tag">{{
-                                            tag
-                                        }}</text>
-                                    </view>
-                                    <view class="price-container" v-if="activity.price > 0">
-                                        <text class="price-symbol">¥</text>
-                                        <text class="price-amount">{{ activity.price }}</text>
-                                    </view>
-                                    <view class="price-free" v-else>免费</view>
+                                <view class="meta-item">
+                                    <nut-icon name="location" size="14"></nut-icon>
+                                    <text>{{ activity.location }}</text>
                                 </view>
+                            </view>
+                            <view class="activity-bottom">
+                                <view class="tag-list">
+                                    <text v-for="(tag, idx) in activity.tags" :key="idx" class="tag">
+                                        {{ tag }}
+                                    </text>
+                                </view>
+                                <view class="price-container" v-if="activity.price > 0">
+                                    <text class="price-symbol">¥</text>
+                                    <text class="price-amount">{{ activity.price }}</text>
+                                </view>
+                                <view class="price-free" v-else>免费</view>
                             </view>
                         </view>
                     </view>
-                </scroll-view>
-            </view>
+                </view>
+            </scroll-view>
         </view>
     </view>
 </template>
@@ -110,32 +109,44 @@ export default {
             // 网络错误状态
             networkError: false,
             // 默认封面图
-            defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg', // 替换为实际的占位图URL
+            defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg',
             // 滚动区域高度
-            scrollHeight: 500,
+            scrollHeight: 600,
         };
     },
-    mounted() {
-        // 先生成日期分组选择器（不依赖网络）
+    onLoad() {
+        // 计算页面高度并设置滚动区域高度
+        this.setScrollHeight();
+
+        // 加载数据
         this.generateDateGroups();
-        // 再加载活动数据
         this.loadAllActivities();
-        // 计算滚动区域高度
-        this.calculateScrollHeight();
+    },
+    onShow() {
+        // 每次显示页面时重新计算高度
+        this.setScrollHeight();
+    },
+    onReady() {
+        // 页面渲染完成后再次确认高度
+        this.setScrollHeight();
     },
     methods: {
-        // 计算滚动区域高度
-        calculateScrollHeight() {
-            // 获取系统信息以确定屏幕高度
-            const systemInfo = Taro.getSystemInfoSync();
-            this.scrollHeight = systemInfo.windowHeight;
-            console.log('设置滚动高度:', this.scrollHeight);
+        // 设置滚动高度
+        setScrollHeight() {
+            try {
+                const res = Taro.getSystemInfoSync();
+                // 设置滚动区域高度为窗口高度
+                this.scrollHeight = res.windowHeight;
+                console.log('设置滚动高度:', this.scrollHeight);
+            } catch (e) {
+                console.error('获取系统信息失败:', e);
+            }
         },
 
         // 滚动到底部
         onScrollToLower() {
             console.log('滚动到底部');
-            // 这里可以添加加载更多的逻辑
+            // 加载更多的逻辑
         },
 
         // 一次性加载所有活动数据
@@ -146,19 +157,17 @@ export default {
             try {
                 // 计算时间范围
                 const now = new Date();
-
                 // 上个月的第一天
                 const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
                 // 三个月后的最后一天
                 const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 4, 0);
 
                 const params = {
                     start_time_gte: lastMonth.toISOString(),
                     start_time_lte: threeMonthsLater.toISOString(),
-                    status: 'all', // 获取所有状态的活动
+                    status: 'all',
                     sort: 'startTime',
-                    perPage: 1000, // 设置较大的数量，以一次获取所有数据
+                    perPage: 1000,
                 };
 
                 const res = await Api.findActivities(params);
@@ -166,7 +175,6 @@ export default {
 
                 // 保存所有活动数据
                 this.allActivities = res.items || [];
-
                 // 筛选当前选择的日期的活动
                 this.filterActivitiesByDate();
             } catch (error) {
@@ -181,7 +189,7 @@ export default {
             }
         },
 
-        // 生成日期分组 - 固定生成，不依赖网络数据
+        // 生成日期分组
         generateDateGroups() {
             const groups = [];
             const now = new Date();
@@ -248,7 +256,6 @@ export default {
             // 一周后的所有活动
             const oneWeekLater = new Date(now);
             oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-
             const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 4, 0);
 
             groups.push({
@@ -279,49 +286,21 @@ export default {
         // 只格式化日期部分 (月日)
         formatDateOnly(timestamp) {
             if (!timestamp) return '';
-
             const date = new Date(timestamp);
-
-            // 检查日期是否有效
             if (isNaN(date.getTime())) return '';
-
             const month = (date.getMonth() + 1).toString();
             const day = date.getDate().toString();
-
             return `${month}月${day}日`;
         },
 
         // 只格式化时间部分 (时分)
         formatTimeOnly(timestamp) {
             if (!timestamp) return '';
-
             const date = new Date(timestamp);
-
-            // 检查日期是否有效
             if (isNaN(date.getTime())) return '';
-
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
-
             return `${hours}:${minutes}`;
-        },
-
-        // 格式化完整日期时间
-        formatDateTime(timestamp) {
-            if (!timestamp) return '';
-
-            // 处理ISO格式的日期字符串
-            const date = new Date(timestamp);
-
-            // 检查日期是否有效
-            if (isNaN(date.getTime())) return '';
-
-            const month = (date.getMonth() + 1).toString();
-            const day = date.getDate().toString();
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            return `${month}月${day}日 ${hours}:${minutes}`;
         },
 
         // 选择日期组
@@ -364,8 +343,6 @@ export default {
 
                 // 解析活动开始时间
                 const activityDate = new Date(activity.startTime);
-
-                // 检查日期是否有效
                 if (isNaN(activityDate.getTime())) {
                     return false;
                 }
@@ -381,8 +358,7 @@ export default {
                 );
 
                 // 判断活动时间是否在范围内
-                const inRange = activityUtc >= groupStartUtc && activityUtc <= groupEndUtc;
-                return inRange;
+                return activityUtc >= groupStartUtc && activityUtc <= groupEndUtc;
             });
         },
 
