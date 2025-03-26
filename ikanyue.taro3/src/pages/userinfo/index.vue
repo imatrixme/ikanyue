@@ -57,6 +57,7 @@
             @update:visible="(val) => (showGenderPicker = val)"
             :columns="[genders]"
             title="性别选择"
+            :value="[currentGenderValue]"
             @confirm="
                 (val) => {
                     saveGenderObj(val.selectedValue);
@@ -68,11 +69,12 @@
         <nut-picker
             :visible="showProvincePicker"
             @update:visible="(val) => (showProvincePicker = val)"
-            :columns="provinces"
-            title="城市选择"
+            :columns="[provinces]"
+            title="省份选择"
+            :value="[currentProvinceValue]"
             @confirm="
-                ({ selectedValue, _ }) => {
-                    saveProvinceObj(selectedValue);
+                (val) => {
+                    saveProvinceObj(val.selectedValue);
                 }
             "
         />
@@ -182,7 +184,18 @@ export default {
             that.currentRealname = userInfo.realname;
             that.currentNickname = userInfo.nickname;
             that.currentAge = userInfo.age || 18;
-            that.currentProvinceText = userInfo.province;
+
+            // 设置省份
+            if (userInfo.province) {
+                // 查找对应的省份对象
+                const provinceObj = that.provinces.find((p) => p.text === userInfo.province);
+                if (provinceObj) {
+                    that.currentProvinceText = provinceObj.text;
+                    that.currentProvinceValue = provinceObj.value;
+                } else {
+                    that.currentProvinceText = userInfo.province;
+                }
+            }
 
             // 设置性别 - 修复性别显示问题
             // 确保将gender转换为数字类型

@@ -125,10 +125,20 @@ export default {
     onShow() {
         // 每次显示页面时重新计算高度
         this.setScrollHeight();
+
+        // 每次显示页面时自动刷新数据，但保持当前筛选条件
+        if (this.allActivities.length > 0) {
+            this.refreshActivities();
+        }
     },
     onReady() {
         // 页面渲染完成后再次确认高度
         this.setScrollHeight();
+    },
+    // 添加下拉刷新的生命周期方法
+    onPullDownRefresh() {
+        // 重新加载数据，保持当前的筛选条件，并显示提示
+        this.refreshActivitiesWithToast();
     },
     methods: {
         // 设置滚动高度
@@ -149,9 +159,63 @@ export default {
             // 加载更多的逻辑
         },
 
+        // 手动下拉刷新时使用，带提示
+        async refreshActivitiesWithToast() {
+            // 记住当前的筛选索引
+            const currentIndex = this.selectedGroupIndex;
+
+            try {
+                // 重新加载全部数据，不显示加载动画
+                await this.loadAllActivities(false);
+
+                // 恢复之前的筛选条件
+                this.selectedGroupIndex = currentIndex;
+                this.filterActivitiesByDate();
+
+                // 显示成功提示
+                Taro.showToast({
+                    title: '刷新成功',
+                    icon: 'success',
+                    duration: 1500,
+                });
+            } catch (error) {
+                console.error('刷新活动失败:', error);
+                Taro.showToast({
+                    title: '刷新失败',
+                    icon: 'none',
+                    duration: 1500,
+                });
+            } finally {
+                // 停止下拉刷新动画
+                Taro.stopPullDownRefresh();
+            }
+        },
+
+        // 自动刷新使用，无提示
+        async refreshActivities() {
+            // 记住当前的筛选索引
+            const currentIndex = this.selectedGroupIndex;
+
+            try {
+                // 重新加载全部数据
+                await this.loadAllActivities(false); // 不显示加载提示
+
+                // 恢复之前的筛选条件
+                this.selectedGroupIndex = currentIndex;
+                this.filterActivitiesByDate();
+            } catch (error) {
+                console.error('自动刷新活动失败:', error);
+            } finally {
+                // 确保停止可能的下拉刷新动画
+                Taro.stopPullDownRefresh();
+            }
+        },
+
         // 一次性加载所有活动数据
-        async loadAllActivities() {
-            this.loading = true;
+        async loadAllActivities(showLoading = true) {
+            if (showLoading) {
+                this.loading = true;
+            }
             this.networkError = false;
 
             try {
@@ -180,10 +244,12 @@ export default {
             } catch (error) {
                 console.error('加载活动列表失败:', error);
                 this.networkError = true;
-                Taro.showToast({
-                    title: '加载失败，请点击重试',
-                    icon: 'none',
-                });
+                if (showLoading) {
+                    Taro.showToast({
+                        title: '加载失败，请点击重试',
+                        icon: 'none',
+                    });
+                }
             } finally {
                 this.loading = false;
             }

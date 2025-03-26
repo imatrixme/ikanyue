@@ -367,10 +367,20 @@ export default {
     onShow() {
         // 每次显示页面时重新计算高度
         this.setScrollHeight();
+
+        // 每次显示页面时自动刷新数据，但保持当前筛选条件
+        if (this.allPricing && Object.keys(this.allPricing).length > 0) {
+            this.refreshPricingData();
+        }
     },
     onReady() {
         // 页面渲染完成后再次确认高度
         this.setScrollHeight();
+    },
+    // 添加下拉刷新的生命周期方法
+    onPullDownRefresh() {
+        // 重新加载数据，保持当前的筛选条件，并显示提示
+        this.refreshPricingData(true); // 传入true表示需要显示提示
     },
     methods: {
         // 设置滚动高度
@@ -391,9 +401,48 @@ export default {
             // 加载更多的逻辑
         },
 
+        // 刷新价格数据但保持当前筛选条件
+        async refreshPricingData(showToast = false) {
+            // 记住当前的筛选索引
+            const currentIndex = this.selectedCategoryIndex;
+
+            try {
+                // 重新加载全部数据
+                await this.loadPricingData(false); // 传入false参数表示静默加载
+
+                // 恢复之前的筛选条件
+                this.selectedCategoryIndex = currentIndex;
+                this.currentCategory = this.categories[currentIndex];
+                this.filterPricingByCategory();
+
+                // 只在需要显示提示时才显示（如手动下拉刷新）
+                if (showToast) {
+                    Taro.showToast({
+                        title: '刷新成功',
+                        icon: 'success',
+                        duration: 1500,
+                    });
+                }
+            } catch (error) {
+                console.error('刷新价格数据失败:', error);
+                if (showToast) {
+                    Taro.showToast({
+                        title: '刷新失败',
+                        icon: 'none',
+                        duration: 1500,
+                    });
+                }
+            } finally {
+                // 停止下拉刷新动画（如果存在）
+                Taro.stopPullDownRefresh();
+            }
+        },
+
         // 加载价格数据
-        async loadPricingData() {
-            this.loading = true;
+        async loadPricingData(showLoading = true) {
+            if (showLoading) {
+                this.loading = true;
+            }
             this.networkError = false;
 
             try {
@@ -410,10 +459,12 @@ export default {
             } catch (error) {
                 console.error('加载价格数据失败:', error);
                 this.networkError = true;
-                Taro.showToast({
-                    title: '加载失败，请点击重试',
-                    icon: 'none',
-                });
+                if (showLoading) {
+                    Taro.showToast({
+                        title: '加载失败，请点击重试',
+                        icon: 'none',
+                    });
+                }
                 this.loading = false;
             }
         },
