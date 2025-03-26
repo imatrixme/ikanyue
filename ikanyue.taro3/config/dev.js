@@ -1,11 +1,11 @@
 module.exports = {
     env: {
-        NODE_ENV: '"development"'
+        NODE_ENV: '"development"',
     },
     defineConstants: {
-        SERVICE_URL: JSON.stringify("http://127.0.0.1:1337"),
-        STAGE: JSON.stringify("TEST")
+        SERVICE_URL: JSON.stringify('http://172.19.54.73:1337'),
+        STAGE: JSON.stringify('TEST'),
     },
     mini: {},
-    h5: {}
+    h5: {},
 };

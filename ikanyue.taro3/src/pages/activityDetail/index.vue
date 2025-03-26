@@ -1,40 +1,54 @@
 <template>
     <view class="activity-detail">
         <!-- 封面图 -->
-        <image class="cover-image" :src="activity.cover_image" mode="aspectFill" />
+        <image :src="activity.cover_image || defaultCoverImage" class="cover-image" mode="aspectFill" />
 
-        <!-- 基本信息 -->
+        <!-- 活动信息 -->
         <view class="info-section">
             <view class="title">{{ activity.title }}</view>
+
+            <!-- 价格信息 -->
+            <view class="price-section">
+                <view v-if="activity.price > 0" class="price-container">
+                    <text class="price-symbol">¥</text>
+                    <text class="price-amount">{{ activity.price }}</text>
+                </view>
+                <view v-else class="price-free">免费活动</view>
+            </view>
+
             <view class="meta-list">
                 <view class="meta-item">
                     <nut-icon name="clock" size="18"></nut-icon>
-                    <text>{{ formatDateTime(activity.start_time) }}</text>
+                    <view class="meta-content">
+                        <text class="meta-label">活动时间</text>
+                        <view>
+                            <text>{{ formatDateOnly(activity.startTime) }} </text>
+                            <text>{{ formatTimeOnly(activity.startTime) }}</text>
+                            <text v-if="activity.endTime"> - {{ formatTimeOnly(activity.endTime) }}</text>
+                        </view>
+                    </view>
                 </view>
                 <view class="meta-item">
                     <nut-icon name="location" size="18"></nut-icon>
-                    <text>{{ activity.location }}</text>
-                </view>
-                <view class="meta-item">
-                    <nut-icon name="price" size="18"></nut-icon>
-                    <text v-if="activity.price > 0">¥{{ activity.price }}</text>
-                    <text v-else class="free">免费</text>
+                    <view class="meta-content">
+                        <text class="meta-label">活动地点</text>
+                        <text>{{ activity.location }}</text>
+                    </view>
                 </view>
             </view>
 
-            <!-- 标签 -->
             <view class="tag-list" v-if="activity.tags && activity.tags.length">
                 <text v-for="(tag, index) in activity.tags" :key="index" class="tag">{{ tag }}</text>
             </view>
         </view>
 
-        <!-- 描述信息 -->
+        <!-- 活动描述 -->
         <view class="desc-section">
             <view class="section-title">活动详情</view>
             <view class="description">{{ activity.description }}</view>
         </view>
 
-        <!-- 图片 -->
+        <!-- 活动图片 -->
         <view class="image-section" v-if="activity.images && activity.images.length">
             <view class="section-title">活动图集</view>
             <scroll-view class="image-scroll" scroll-x>
@@ -69,14 +83,15 @@ export default {
                 description: '',
                 cover_image: '',
                 images: [],
-                start_time: 0,
-                end_time: 0,
+                startTime: 0,
+                endTime: 0,
                 location: '',
                 price: 0,
                 register_url: '',
                 tags: [],
             },
             loading: true,
+            defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg', // 替换为实际的占位图URL
         };
     },
     onLoad(options) {
@@ -120,14 +135,48 @@ export default {
             }
         },
 
+        // 只格式化日期部分 (月日)
+        formatDateOnly(timestamp) {
+            if (!timestamp) return '';
+
+            const date = new Date(timestamp);
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) return '';
+
+            const month = (date.getMonth() + 1).toString();
+            const day = date.getDate().toString();
+
+            return `${month}月${day}日`;
+        },
+
+        // 只格式化时间部分 (时分)
+        formatTimeOnly(timestamp) {
+            if (!timestamp) return '';
+
+            const date = new Date(timestamp);
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) return '';
+
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            return `${hours}:${minutes}`;
+        },
+
         // 格式化日期时间
         formatDateTime(timestamp) {
             if (!timestamp) return '';
 
             const date = new Date(timestamp);
+
+            // 检查日期是否有效
+            if (isNaN(date.getTime())) return '';
+
             const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString();
+            const day = date.getDate().toString();
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
 
