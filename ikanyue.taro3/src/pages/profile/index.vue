@@ -99,17 +99,32 @@ export default {
             return this.userInfo !== undefined && this.userInfo.token !== undefined;
         },
         refreshUserInfo() {
+            console.log('开始刷新用户信息');
             // 先从本地获取缓存的用户信息
             this.userInfo = UserManager.getUserInfo();
+            console.log('从缓存获取的用户信息:', this.userInfo);
 
             // 如果已登录，尝试刷新用户信息
-            if (this.isLogin()) {
+            if (UserManager.isLogin()) {
+                console.log('检测到已登录状态，开始刷新登录信息');
                 Api.refreshLogin()
-                    .then(() => {
+                    .then((res) => {
+                        console.log('刷新登录成功:', res);
                         // 刷新成功后再次从缓存获取更新后的用户信息
                         this.userInfo = UserManager.getUserInfo();
+                        console.log('更新后的用户信息:', this.userInfo);
                     })
-                    .catch((err) => console.log('刷新用户信息失败', err));
+                    .catch((err) => {
+                        console.error('刷新用户信息失败', err);
+                        // 如果刷新失败，可能是token过期，尝试清除本地缓存
+                        if (this.userInfo && this.userInfo.token) {
+                            console.log('清除过期的登录状态');
+                            UserManager.logout();
+                            this.userInfo = undefined;
+                        }
+                    });
+            } else {
+                console.log('用户未登录状态');
             }
         },
         modifyInfo() {
@@ -144,17 +159,28 @@ export default {
             }
 
             this.loading = true;
+            console.log('开始登录请求');
 
             Api.loginWithPassword(this.loginForm.phone, this.loginForm.password)
                 .then((res) => {
+                    console.log('登录成功响应:', res);
                     this.showLogin = false;
-                    this.refreshUserInfo();
+
+                    // 确保立即从缓存获取最新用户信息
+                    setTimeout(() => {
+                        this.refreshUserInfo();
+                        // 强制视图更新
+                        this.$forceUpdate();
+                        console.log('登录后用户信息:', this.userInfo);
+                    }, 100);
+
                     Taro.showToast({
                         title: '登录成功',
                         icon: 'success',
                     });
                 })
                 .catch((err) => {
+                    console.error('登录失败:', err);
                     Taro.showToast({
                         title: err.message || '登录失败，请重试',
                         icon: 'none',

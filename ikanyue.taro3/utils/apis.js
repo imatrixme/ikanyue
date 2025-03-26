@@ -10,7 +10,7 @@ import { UserManager } from './usermanager';
 const loginWithPassword = (cellphone, password) => {
     return new Promise((resolve, reject) => {
         iNet.post(
-            '/v1/auth/login',
+            '/v1/user/login',
             {
                 cellphone,
                 password,
@@ -18,11 +18,13 @@ const loginWithPassword = (cellphone, password) => {
             false
         )
             .then((res) => {
+                console.log('登录API返回结果:', res);
                 // 登录成功，更新用户信息缓存
                 UserManager.updateUserInfoCache(res);
                 resolve(res);
             })
             .catch((err) => {
+                console.error('登录API错误:', err);
                 reject(err);
             });
     });
@@ -37,11 +39,13 @@ const updateUserInfo = (userInfo) => {
     return new Promise((resolve, reject) => {
         iNet.post('/v1/user/update', userInfo)
             .then((res) => {
+                console.log('更新用户信息API返回:', res);
                 // 更新成功后，更新本地缓存
                 UserManager.updateUserInfoCache(userInfo);
                 resolve(res);
             })
             .catch((err) => {
+                console.error('更新用户信息API错误:', err);
                 reject(err);
             });
     });
@@ -74,16 +78,30 @@ const findActivities = (params = {}) => {
  * 刷新登录状态
  * @returns {Promise} - 刷新结果Promise
  */
-const refresh_login = () => {
+const refreshLogin = () => {
     return new Promise((resolve, reject) => {
-        iNet.post('/v1/user/refresh', {}, false)
+        if (!UserManager.isLogin()) {
+            console.log('未登录状态，无法刷新登录');
+            reject(new Error('未登录状态'));
+            return;
+        }
+
+        console.log('开始刷新登录状态');
+        iNet.post('/v1/user/refresh')
             .then((res) => {
+                console.log('刷新登录API返回:', res);
                 // 登录成功，缓存用户信息
                 UserManager.updateUserInfoCache(res);
-                resolve(true);
+                resolve(res);
             })
             .catch((err) => {
-                reject(false);
+                console.error('刷新登录API错误:', err);
+                // 如果刷新失败，清除登录状态
+                if (err.code === 10401 || err.code === 10403) {
+                    console.log('Token无效，清除登录状态');
+                    UserManager.logout();
+                }
+                reject(err);
             });
     });
 };
@@ -91,7 +109,7 @@ const refresh_login = () => {
 const Api = {
     loginWithPassword,
     updateUserInfo,
-    refreshLogin: refresh_login,
+    refreshLogin,
     findActivities,
 };
 
