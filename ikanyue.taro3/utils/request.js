@@ -8,11 +8,9 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
     headers_['X-Ca-Nonce'] = Math.floor(Date.now());
     headers_['X-Ca-Source'] = 'wechat_mp';
     return new Promise((resolve, reject) => {
-        if (authcheck && !UserManager.isLogin()) {
-            reject(new Error('Login required'));
-            return;
+        if (authcheck) {
+            headers_.token = UserManager.getToken();
         }
-        headers_.token = UserManager.getToken();
         Taro.request({
             url: url_,
             data: data,

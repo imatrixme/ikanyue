@@ -1,0 +1,157 @@
+.pricing-container {
+    width: 100%;
+    height: 100vh;
+    background-color: #f8f8f8;
+    overflow: hidden;
+}
+
+.pricing-content {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+// 内容列
+.content-column {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+
+// 价格卡片滚动区域
+.pricing-scroll {
+    width: 100%;
+}
+
+// 价格卡片容器
+.pricing-cards {
+    padding: 15px;
+
+    // 价格卡片样式
+    .pricing-card {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        background-color: #fff;
+        overflow: hidden;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+        position: relative;
+
+        &.popular::before {
+            content: '热门';
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background-color: #ff4949;
+            color: #fff;
+            padding: 2px 30px;
+            font-size: 12px;
+            transform: rotate(45deg);
+            z-index: 1;
+        }
+
+        .card-header {
+            padding: 16px;
+            background: linear-gradient(to right, #ff6b6b, #ff4949);
+            color: #fff;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .price-tier {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .price-container {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 4px;
+
+            .price-symbol {
+                font-size: 16px;
+                margin-right: 4px;
+            }
+
+            .price-amount {
+                font-size: 28px;
+                font-weight: bold;
+            }
+
+            .price-unit {
+                font-size: 14px;
+                margin-left: 4px;
+                opacity: 0.9;
+            }
+        }
+
+        .price-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card-body {
+            padding: 16px;
+
+            .features-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+
+                .feature-item {
+                    display: flex;
+                    align-items: center;
+                    font-size: 14px;
+                    color: #666;
+
+                    .nut-icon {
+                        margin-right: 8px;
+                        color: #ff4949;
+                        flex-shrink: 0;
+                    }
+                }
+            }
+        }
+
+        .card-footer {
+            padding: 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .discount-tag {
+                display: inline-block;
+                padding: 4px 8px;
+                background-color: #fff0f0;
+                color: #ff4949;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .original-price {
+                font-size: 13px;
+                color: #999;
+                text-decoration: line-through;
+            }
+        }
+    }
+}
+
+// 加载和空状态容器
+.loading-container,
+.empty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+
+    .loading-text {
+        margin-top: 10px;
+        color: #999;
+        font-size: 14px;
+    }
+}
