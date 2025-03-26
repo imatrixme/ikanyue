@@ -14,7 +14,7 @@
             </nut-form-item>
 
             <nut-form-item label="性别">
-                <view class="picker-field" @click="showGenderPicker = true">
+                <view class="picker-field" @click="openGenderPicker">
                     <view class="picker-value">{{ currentGenderText || '请选择性别' }}</view>
                     <nut-icon name="right" size="14px" color="#999"></nut-icon>
                 </view>
@@ -33,7 +33,7 @@
             </nut-form-item>
 
             <nut-form-item label="省份">
-                <view class="picker-field" @click="showProvincePicker = true">
+                <view class="picker-field" @click="openProvincePicker">
                     <view class="picker-value">{{ currentProvinceText || '请选择省份' }}</view>
                     <nut-icon name="right" size="14px" color="#999"></nut-icon>
                 </view>
@@ -55,28 +55,20 @@
         <nut-picker
             :visible="showGenderPicker"
             @update:visible="(val) => (showGenderPicker = val)"
-            :columns="[genders]"
+            :columns="gendersForPicker"
             title="性别选择"
-            :value="[currentGenderValue]"
-            @confirm="
-                (val) => {
-                    saveGenderObj(val.selectedValue);
-                }
-            "
+            :modelValue="[selectedGenderValue]"
+            @confirm="onGenderConfirm"
         />
 
         <!-- 省份选择器 -->
         <nut-picker
             :visible="showProvincePicker"
             @update:visible="(val) => (showProvincePicker = val)"
-            :columns="[provinces]"
+            :columns="provincesForPicker"
             title="省份选择"
-            :value="[currentProvinceValue]"
-            @confirm="
-                (val) => {
-                    saveProvinceObj(val.selectedValue);
-                }
-            "
+            :modelValue="[selectedProvinceValue]"
+            @confirm="onProvinceConfirm"
         />
     </view>
 </template>
@@ -145,35 +137,46 @@ export default {
                 { text: '云南省', value: 'YunNan' },
                 { text: '浙江省', value: 'ZheJiang' },
             ],
+            provincesForPicker: [],
+            gendersForPicker: [],
+            selectedGenderValue: '',
+            selectedProvinceValue: '',
         };
     },
     created() {
         that = this;
+        this.provincesForPicker = [this.provinces];
+        this.gendersForPicker = [this.genders];
     },
     mounted() {
         that.refreshUserInfo();
     },
     methods: {
-        saveProvinceObj: (pvalue) => {
-            const name = pvalue['0'];
-            const target = that.provinces.filter((kv) => kv.value === name);
-            const province = target && target.length > 0 ? target[0] : undefined;
-            that.currentProvinceText = province ? province.text : undefined;
-            that.currentProvinceValue = province ? province.value : undefined;
-            that.currentProvince = pvalue;
+        onProvinceConfirm({ selectedValue, selectedOptions }) {
+            if (selectedOptions && selectedOptions.length > 0) {
+                const province = selectedOptions[0];
+                that.currentProvinceText = province.text;
+                that.currentProvinceValue = province.value;
+                that.selectedProvinceValue = province.value;
+            }
         },
-        saveGenderObj: (gvalue) => {
-            // 确保从picker中获取的值转为数字
-            const name = Number(gvalue['0']);
-
-            // 查找对应的性别对象
-            const target = that.genders.filter((kv) => kv.value === name);
-            const gender = target && target.length > 0 ? target[0] : undefined;
-
-            // 设置性别文本和值
-            that.currentGenderText = gender ? gender.text : '未知';
-            that.currentGenderValue = gender ? Number(gender.value) : 0;
-            that.currentGender = gvalue;
+        onGenderConfirm({ selectedValue, selectedOptions }) {
+            if (selectedOptions && selectedOptions.length > 0) {
+                const gender = selectedOptions[0];
+                that.currentGenderText = gender.text;
+                that.currentGenderValue = Number(gender.value);
+                that.selectedGenderValue = gender.value.toString();
+            }
+        },
+        openGenderPicker() {
+            // 确保选择器打开时已经有正确的初始值
+            that.selectedGenderValue = that.currentGenderValue !== undefined ? that.currentGenderValue.toString() : '0';
+            that.showGenderPicker = true;
+        },
+        openProvincePicker() {
+            // 确保选择器打开时已经有正确的初始值
+            that.selectedProvinceValue = that.currentProvinceValue || '';
+            that.showProvincePicker = true;
         },
         refreshUserInfo: () => {
             // 从本地获取用户信息
@@ -192,6 +195,7 @@ export default {
                 if (provinceObj) {
                     that.currentProvinceText = provinceObj.text;
                     that.currentProvinceValue = provinceObj.value;
+                    that.selectedProvinceValue = provinceObj.value;
                 } else {
                     that.currentProvinceText = userInfo.province;
                 }
@@ -206,7 +210,7 @@ export default {
 
             that.currentGenderValue = genderValue;
             that.currentGenderText = genderObj ? genderObj.text : '未知';
-            that.currentGender = [genderValue]; // 直接使用数值
+            that.selectedGenderValue = genderValue.toString();
         },
 
         saveInfo: () => {
@@ -228,6 +232,7 @@ export default {
                     Taro.showToast({
                         title: '更新成功',
                         icon: 'success',
+                        duration: 1500,
                     });
                 })
                 .then(() => {
@@ -242,6 +247,7 @@ export default {
                     Taro.showToast({
                         title: err.message || '更新失败',
                         icon: 'none',
+                        duration: 1500,
                     });
                 })
                 .finally(() => {
