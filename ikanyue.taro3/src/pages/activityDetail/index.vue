@@ -57,13 +57,12 @@
 </template>
 
 <script>
-import { reactive, toRefs, onMounted } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 
 export default {
-    setup() {
-        const state = reactive({
+    data() {
+        return {
             activity: {
                 id: 0,
                 title: '',
@@ -78,15 +77,29 @@ export default {
                 tags: [],
             },
             loading: true,
-        });
-
+        };
+    },
+    onLoad(options) {
+        if (options && options.id) {
+            this.fetchActivityDetail(options.id);
+        } else {
+            Taro.showToast({
+                title: '参数错误',
+                icon: 'none',
+            });
+            setTimeout(() => {
+                Taro.navigateBack();
+            }, 1500);
+        }
+    },
+    methods: {
         // 获取活动详情
-        const fetchActivityDetail = async (id) => {
-            state.loading = true;
+        async fetchActivityDetail(id) {
+            this.loading = true;
             try {
                 const res = await Api.findActivities({ id });
                 if (res && res.data && res.data.length > 0) {
-                    state.activity = res.data[0];
+                    this.activity = res.data[0];
                 } else {
                     Taro.showToast({
                         title: '未找到活动',
@@ -103,12 +116,12 @@ export default {
                     icon: 'none',
                 });
             } finally {
-                state.loading = false;
+                this.loading = false;
             }
-        };
+        },
 
         // 格式化日期时间
-        const formatDateTime = (timestamp) => {
+        formatDateTime(timestamp) {
             if (!timestamp) return '';
 
             const date = new Date(timestamp);
@@ -119,19 +132,19 @@ export default {
             const minutes = date.getMinutes().toString().padStart(2, '0');
 
             return `${year}年${month}月${day}日 ${hours}:${minutes}`;
-        };
+        },
 
         // 预览图片
-        const previewImage = (current, urls) => {
+        previewImage(current, urls) {
             Taro.previewImage({
                 current,
                 urls,
             });
-        };
+        },
 
         // 报名活动
-        const register = () => {
-            if (!state.activity.register_url) {
+        register() {
+            if (!this.activity.register_url) {
                 Taro.showToast({
                     title: '暂未开放报名',
                     icon: 'none',
@@ -140,34 +153,12 @@ export default {
             }
 
             // 使用webview页面打开外部链接
-            const url = encodeURIComponent(state.activity.register_url);
-            const title = encodeURIComponent(state.activity.title);
+            const url = encodeURIComponent(this.activity.register_url);
+            const title = encodeURIComponent(this.activity.title);
             Taro.navigateTo({
                 url: `/pages/webview/index?url=${url}&title=${title}`,
             });
-        };
-
-        onMounted(() => {
-            const router = Taro.getCurrentInstance().router;
-            if (router && router.params && router.params.id) {
-                fetchActivityDetail(router.params.id);
-            } else {
-                Taro.showToast({
-                    title: '参数错误',
-                    icon: 'none',
-                });
-                setTimeout(() => {
-                    Taro.navigateBack();
-                }, 1500);
-            }
-        });
-
-        return {
-            ...toRefs(state),
-            formatDateTime,
-            previewImage,
-            register,
-        };
+        },
     },
 };
 </script>
