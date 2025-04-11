@@ -1,7 +1,7 @@
 <template>
     <view class="activity-detail">
         <!-- 封面图 -->
-        <image :src="activity.cover_image || defaultCoverImage" class="cover-image" mode="aspectFill" />
+        <image :src="activity.coverImage || defaultCoverImage" class="cover-image" mode="aspectFill" />
 
         <!-- 活动信息 -->
         <view class="info-section">
@@ -35,6 +35,19 @@
                         <text>{{ activity.location }}</text>
                     </view>
                 </view>
+                <view class="meta-item" v-if="activity.maxParticipants">
+                    <nut-icon name="people" size="18"></nut-icon>
+                    <view class="meta-content">
+                        <text class="meta-label">参与名额</text>
+                        <view>
+                            <text>{{ activity.maxParticipants }}人</text>
+                            <text v-if="activity.currentParticipants">
+                                (已报名: {{ activity.currentParticipants }}人)</text
+                            >
+                            <text v-if="hasLimitedSeats" class="remaining-few">仅剩{{ remainingSeats }}个名额</text>
+                        </view>
+                    </view>
+                </view>
             </view>
 
             <view class="tag-list" v-if="activity.tags && activity.tags.length">
@@ -45,7 +58,7 @@
         <!-- 活动描述 -->
         <view class="desc-section">
             <view class="section-title">活动详情</view>
-            <view class="description">{{ activity.description }}</view>
+            <rich-text class="description" :nodes="safeHtmlContent" user-select></rich-text>
         </view>
 
         <!-- 活动图片 -->
@@ -63,6 +76,13 @@
             </scroll-view>
         </view>
 
+        <!-- 退款政策说明 -->
+        <view class="disclaimer-section">
+            <text class="disclaimer-text">
+                活动开始前24小时可申请全额退款；活动开始前12小时可申请50%退款；活动开始前12小时内不予退款。活动最终解释权归主办方所有。
+            </text>
+        </view>
+
         <!-- 底部操作栏 -->
         <view class="bottom-bar">
             <nut-button block type="primary" class="register-btn" @tap="register">立即报名</nut-button>
@@ -73,6 +93,7 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+import { getSafeHtml, htmlToText } from './htmlUtils';
 
 export default {
     data() {
@@ -81,18 +102,39 @@ export default {
                 id: 0,
                 title: '',
                 description: '',
-                cover_image: '',
+                coverImage: '',
                 images: [],
                 startTime: 0,
                 endTime: 0,
                 location: '',
                 price: 0,
-                register_url: '',
+                externalLink: '',
                 tags: [],
+                maxParticipants: 0, // 最大参与人数
+                currentParticipants: 0, // 当前已报名人数
             },
             loading: true,
             defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg', // 替换为实际的占位图URL
+            safeHtmlContent: '', // 用于存储处理后的HTML内容
         };
+    },
+    computed: {
+        // 是否显示"仅剩X个名额"的提示
+        hasLimitedSeats() {
+            return (
+                this.activity.maxParticipants &&
+                this.activity.currentParticipants &&
+                this.activity.maxParticipants - this.activity.currentParticipants <= 10
+            );
+        },
+
+        // 剩余名额数量
+        remainingSeats() {
+            if (!this.activity.maxParticipants || !this.activity.currentParticipants) {
+                return 0;
+            }
+            return this.activity.maxParticipants - this.activity.currentParticipants;
+        },
     },
     onLoad(options) {
         if (options && options.id) {
@@ -114,7 +156,30 @@ export default {
             try {
                 const res = await Api.findActivities({ id });
                 if (res) {
-                    this.activity = res;
+                    // 将API返回的字段适配到本地的驼峰命名
+                    this.activity = {
+                        ...this.activity,
+                        id: res.id,
+                        title: res.title,
+                        description: res.description || '',
+                        coverImage: res.cover_image || res.coverImage,
+                        images: res.images || [],
+                        startTime: res.startTime,
+                        endTime: res.endTime,
+                        location: res.location,
+                        price: res.price,
+                        externalLink: res.external_link || res.externalLink,
+                        tags: res.tags || [],
+                        maxParticipants: res.max_participants || res.maxParticipants || 0,
+                        currentParticipants: res.current_participants || res.currentParticipants || 0,
+                    };
+
+                    // 处理HTML内容
+                    if (this.activity.description) {
+                        this.safeHtmlContent = getSafeHtml(this.activity.description);
+                    } else {
+                        this.safeHtmlContent = '';
+                    }
                 } else {
                     Taro.showToast({
                         title: '未找到活动',
@@ -193,7 +258,7 @@ export default {
 
         // 报名活动
         register() {
-            if (!this.activity.register_url) {
+            if (!this.activity.externalLink) {
                 Taro.showToast({
                     title: '暂未开放报名',
                     icon: 'none',
@@ -202,7 +267,7 @@ export default {
             }
 
             // 使用webview页面打开外部链接
-            const url = encodeURIComponent(this.activity.register_url);
+            const url = encodeURIComponent(this.activity.externalLink);
             const title = encodeURIComponent(this.activity.title);
             Taro.navigateTo({
                 url: `/pages/webview/index?url=${url}&title=${title}`,

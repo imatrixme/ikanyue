@@ -85,6 +85,17 @@
                     color: #999;
                     margin-bottom: 4px;
                 }
+
+                .remaining-few {
+                    margin-left: 5px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    color: #ff4949;
+                    background-color: #ffeeee;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    display: inline-block;
+                }
             }
         }
     }
@@ -105,7 +116,8 @@
 }
 
 .desc-section,
-.image-section {
+.image-section,
+.disclaimer-section {
     padding: 20px;
     background-color: #fff;
     margin-bottom: 12px;
@@ -135,9 +147,68 @@
     }
 
     .description {
+        display: block;
         font-size: 15px;
         color: #333;
         line-height: 1.7;
+        word-break: break-word;
+        text-align: justify;
+        padding: 5px 0;
+
+        /* 富文本内部样式 - 通过内联方式应用 */
+        /* 小程序rich-text无法继承外部样式，所以这些样式仅作参考 */
+        p {
+            margin-bottom: 12px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        a {
+            color: #ff4949;
+            text-decoration: underline;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: bold;
+            margin: 16px 0 8px 0;
+            color: #222;
+            line-height: 1.4;
+        }
+
+        h1 {
+            font-size: 20px;
+        }
+
+        h2 {
+            font-size: 18px;
+        }
+
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-size: 16px;
+        }
+
+        ul,
+        ol {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
     }
 }
 
@@ -155,12 +226,28 @@
     }
 }
 
+// 添加退款政策区域特定样式
+.disclaimer-section {
+    padding: 15px;
+    margin-bottom: 32px; // 为底部操作栏留出空间
+    box-shadow: none;
+
+    .disclaimer-text {
+        font-size: 11px;
+        color: #bbb;
+        line-height: 1.5;
+        text-align: center;
+        display: block;
+    }
+}
+
+// 底部操作栏
 .bottom-bar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 12px 16px;
+    padding: 12px 16px 32px 16px;
     background-color: #fff;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     z-index: 100;
