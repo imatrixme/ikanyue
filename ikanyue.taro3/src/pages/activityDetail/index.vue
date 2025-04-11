@@ -113,8 +113,8 @@ export default {
             this.loading = true;
             try {
                 const res = await Api.findActivities({ id });
-                if (res && res.data && res.data.length > 0) {
-                    this.activity = res.data[0];
+                if (res) {
+                    this.activity = res;
                 } else {
                     Taro.showToast({
                         title: '未找到活动',
