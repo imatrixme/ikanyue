@@ -28,15 +28,9 @@ export default defineAppConfig({
             },
             {
                 pagePath: 'pages/activity/index',
-                iconPath: 'imgs/profile.png',
-                selectedIconPath: 'imgs/profile-sel.png',
+                iconPath: 'imgs/record.png',
+                selectedIconPath: 'imgs/record-sel.png',
                 text: '活动',
-            },
-            {
-                pagePath: 'pages/pricing/index',
-                iconPath: 'imgs/pricing.png',
-                selectedIconPath: 'imgs/pricing-sel.png',
-                text: '价格',
             },
             {
                 pagePath: 'pages/profile/index',
