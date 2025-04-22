@@ -7,10 +7,6 @@ export default defineAppConfig({
         'pages/userinfo/index',
         'pages/activityDetail/index',
         'pages/webview/index',
-        'pages/audioMaterial/index',
-        'pages/audioMaterial/detail/index',
-        'pages/videoMaterial/index',
-        'pages/videoMaterial/detail/index',
     ],
     window: {
         backgroundTextStyle: 'light',
@@ -35,18 +31,6 @@ export default defineAppConfig({
                 iconPath: 'imgs/record.png',
                 selectedIconPath: 'imgs/record-sel.png',
                 text: '活动',
-            },
-            {
-                pagePath: 'pages/audioMaterial/index',
-                iconPath: 'imgs/record.png',
-                selectedIconPath: 'imgs/record-sel.png',
-                text: '音频',
-            },
-            {
-                pagePath: 'pages/videoMaterial/index',
-                iconPath: 'imgs/record.png',
-                selectedIconPath: 'imgs/record-sel.png',
-                text: '视频',
             },
             {
                 pagePath: 'pages/profile/index',

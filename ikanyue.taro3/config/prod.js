@@ -1,10 +1,10 @@
 module.exports = {
     env: {
-        NODE_ENV: '"production"'
+        NODE_ENV: '"production"',
     },
     defineConstants: {
-        SERVICE_URL: JSON.stringify("https://mapi.ikanyue.com"),
-        STAGE: JSON.stringify("RELEASE")
+        SERVICE_URL: JSON.stringify('https://mapi.ikanyue.com'),
+        STAGE: JSON.stringify('RELEASE'),
     },
     mini: {},
     h5: {
@@ -34,5 +34,5 @@ module.exports = {
         //       postProcess: (context) => ({ ...context, outputPath: path.join(staticDir, 'index.html') })
         //     }))
         // }
-    }
+    },
 };
