@@ -1,0 +1,157 @@
+.audio-detail-page {
+    background-color: #f8f8f8;
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+.audio-header {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+}
+
+.audio-cover {
+    width: 100%;
+    height: 100%;
+    filter: blur(10px);
+    transform: scale(1.1);
+}
+
+.header-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    padding: 0 20px;
+    text-align: center;
+}
+
+.header-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.header-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.audio-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.audio-tag {
+    font-size: 12px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+
+.audio-player {
+    margin: -30px 16px 0;
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.player-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 16px 0;
+}
+
+.player-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f2f2f2;
+}
+
+.player-progress {
+    margin: 10px 0 20px;
+}
+
+.player-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #999;
+}
+
+.audio-content {
+    margin: 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.content-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    position: relative;
+    padding-left: 12px;
+}
+
+.content-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    height: 16px;
+    width: 4px;
+    background-color: #3370ff;
+    border-radius: 2px;
+}
+
+.content-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    white-space: pre-wrap;
+}
+
+.description-section {
+    margin: 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 0 30px;
+}

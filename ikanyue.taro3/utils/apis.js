@@ -106,11 +106,99 @@ const refreshLogin = () => {
     });
 };
 
+/**
+ * 查询音频材料列表
+ * @param {Object} params - 查询参数
+ * @param {number} [params.page=1] - 页码
+ * @param {number} [params.perPage=20] - 每页数量
+ * @param {string} [params.status='published'] - 状态筛选
+ * @param {string} [params.sort='-sequence'] - 排序字段
+ * @param {string} [params.type] - 类型筛选
+ * @param {string} [params.language] - 语言筛选
+ * @param {number} [params.difficulty] - 难度等级筛选
+ * @returns {Promise} - 查询结果Promise
+ */
+const findAudioMaterials = (params = {}) => {
+    return new Promise((resolve, reject) => {
+        iNet.get('/v1/audio-material/list', params)
+            .then((res) => {
+                resolve(res);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+};
+
+/**
+ * 查询单个音频材料详情
+ * @param {Object} params - 查询参数
+ * @param {string} params.id - 音频材料ID
+ * @returns {Promise} - 查询结果Promise
+ */
+const findAudioMaterialDetail = (params = {}) => {
+    return new Promise((resolve, reject) => {
+        iNet.get('/v1/audio-material/find', params)
+            .then((res) => {
+                resolve(res);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+};
+
+/**
+ * 查询视频材料列表
+ * @param {Object} params - 查询参数
+ * @param {number} [params.page=1] - 页码
+ * @param {number} [params.perPage=20] - 每页数量
+ * @param {string} [params.status='published'] - 状态筛选
+ * @param {string} [params.sort='-sequence'] - 排序字段
+ * @param {string} [params.type] - 类型筛选
+ * @param {string} [params.language] - 语言筛选
+ * @param {number} [params.difficulty] - 难度等级筛选
+ * @returns {Promise} - 查询结果Promise
+ */
+const findVideoMaterials = (params = {}) => {
+    return new Promise((resolve, reject) => {
+        iNet.get('/v1/video-material/list', params)
+            .then((res) => {
+                resolve(res);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+};
+
+/**
+ * 查询单个视频材料详情
+ * @param {Object} params - 查询参数
+ * @param {string} params.id - 视频材料ID
+ * @returns {Promise} - 查询结果Promise
+ */
+const findVideoMaterialDetail = (params = {}) => {
+    return new Promise((resolve, reject) => {
+        iNet.get('/v1/video-material/find', params)
+            .then((res) => {
+                resolve(res);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+};
+
 const Api = {
     loginWithPassword,
     updateUserInfo,
     refreshLogin,
     findActivities,
+    findAudioMaterials,
+    findAudioMaterialDetail,
+    findVideoMaterials,
+    findVideoMaterialDetail,
 };
 
 export { Api };
