@@ -7,7 +7,8 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
     headers_['X-Ca-Stage'] = STAGE;
     headers_['X-Ca-Nonce'] = Math.floor(Date.now());
     headers_['X-Ca-Source'] = 'wechat_mp';
-    headers_.contentType = 'application/json';
+    headers_['Content-Type'] = method === 'GET' ? 'application/json' : 'application/x-www-form-urlencoded';
+
     return new Promise((resolve, reject) => {
         if (authcheck) {
             headers_.token = UserManager.getToken();
@@ -24,7 +25,8 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
                         resolve(res.data.data);
                         return;
                     } else {
-                        const err = new Error(res.data.code, res.data.message);
+                        const err = new Error(res.data.message);
+                        err.code = res.data.code;
                         reject(err);
                         return;
                     }
@@ -32,6 +34,7 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
                 resolve(res.data);
             },
             fail: (err) => {
+                // console.log('请求失败:', err);
                 reject(err);
                 return;
             },
