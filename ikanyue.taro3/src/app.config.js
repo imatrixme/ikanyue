@@ -1,9 +1,9 @@
 export default defineAppConfig({
     pages: [
+        'pages/slogan/index',
         'pages/activity/index',
         'pages/profile/index',
         'pages/pricing/index',
-        'pages/slogan/index',
         'pages/userinfo/index',
         'pages/activityDetail/index',
         'pages/webview/index',

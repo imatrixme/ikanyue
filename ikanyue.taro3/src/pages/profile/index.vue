@@ -3,14 +3,14 @@
         <view class="unloginview" v-if="!isLogin()">
             <image class="logo" :src="images.logo" mode="widthFix" />
             <view class="content">
-                <text class="incname">看乐艺术</text>
+                <!-- <text class="incname">看乐艺术</text> -->
                 <text class="slogan">提高歌唱水平，提升音乐认知</text>
             </view>
             <nut-button type="primary" class="loginbtn" @click="showLoginPopup">登录·注册</nut-button>
         </view>
 
         <view class="loginview" v-if="isLogin()">
-            <image class="avatar" :src="userInfo.avatar" mode="widthFix" />
+            <image class="avatar" :src="images.avatar" mode="widthFix" />
             <view class="content">
                 <text class="nickname">{{ userInfo.nickname }}</text>
                 <text class="province" v-if="userInfo.province !== undefined">{{ userInfo.province }}</text>
@@ -76,7 +76,8 @@ export default {
         return {
             dayjs: dayjs,
             images: {
-                logo: require('../../imgs/kanyuelogo.png'),
+                logo: require('../../imgs/kanyue_logo_1.png'),
+                avatar: require('../../imgs/kanyue_logo_avatar_1.png'),
             },
             userInfo: undefined,
             showLogin: false,
