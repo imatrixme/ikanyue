@@ -1,7 +1,7 @@
 <template>
     <view class="activity-detail">
         <!-- 封面图 -->
-        <image :src="activity.coverImage || defaultCoverImage" class="cover-image" mode="aspectFill" />
+        <image :src="activity.coverImage" class="cover-image" mode="aspectFill" />
 
         <!-- 活动信息 -->
         <view class="info-section">
@@ -11,7 +11,7 @@
             <view class="price-section">
                 <view v-if="activity.price > 0" class="price-container">
                     <text class="price-symbol">¥</text>
-                    <text class="price-amount">{{ activity.price }}</text>
+                    <text class="price-amount">{{ (activity.price / 100.0).toFixed(2) }}</text>
                 </view>
                 <view v-else class="price-free">免费活动</view>
             </view>
@@ -51,7 +51,7 @@
             </view>
 
             <view class="tag-list" v-if="activity.tags && activity.tags.length">
-                <text v-for="(tag, index) in activity.tags" :key="index" class="tag">{{ tag }}</text>
+                <text v-for="(tag, index) in activity.tags.split(',')" :key="index" class="tag">{{ tag.trim() }}</text>
             </view>
         </view>
 
@@ -85,7 +85,16 @@
 
         <!-- 底部操作栏 -->
         <view class="bottom-bar">
-            <nut-button block type="primary" class="register-btn" @tap="register">立即报名</nut-button>
+            <nut-button
+                block
+                type="primary"
+                class="register-btn"
+                @tap="register"
+                v-if="!activity.externalLink || activity.externalLink === ''"
+            >
+                立即报名
+            </nut-button>
+            <nut-button block type="primary" class="register-btn" disabled v-else> 暂不可报名 </nut-button>
         </view>
     </view>
 </template>
@@ -114,7 +123,6 @@ export default {
                 currentParticipants: 0, // 当前已报名人数
             },
             loading: true,
-            defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg', // 替换为实际的占位图URL
             safeHtmlContent: '', // 用于存储处理后的HTML内容
         };
     },
@@ -162,7 +170,7 @@ export default {
                         id: res.id,
                         title: res.title,
                         description: res.description || '',
-                        coverImage: res.cover_image || res.coverImage,
+                        coverImage: res.coverImageUrl,
                         images: res.images || [],
                         startTime: res.startTime,
                         endTime: res.endTime,

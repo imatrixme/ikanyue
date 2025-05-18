@@ -1,6 +1,6 @@
 export default defineAppConfig({
     pages: [
-        'pages/slogan/index',
+        // 'pages/slogan/index',
         'pages/activity/index',
         'pages/profile/index',
         'pages/pricing/index',
@@ -20,12 +20,12 @@ export default defineAppConfig({
         backgroundColor: '#fafafa',
         borderStyle: 'black',
         list: [
-            {
-                pagePath: 'pages/slogan/index',
-                iconPath: 'imgs/shouye.png',
-                selectedIconPath: 'imgs/shouye-sel.png',
-                text: '首页',
-            },
+            // {
+            //     pagePath: 'pages/slogan/index',
+            //     iconPath: 'imgs/shouye.png',
+            //     selectedIconPath: 'imgs/shouye-sel.png',
+            //     text: '首页',
+            // },
             {
                 pagePath: 'pages/activity/index',
                 iconPath: 'imgs/record.png',

@@ -48,11 +48,7 @@
                         class="activity-card"
                         @tap="goToDetail(activity.id)"
                     >
-                        <image
-                            :src="activity.cover_image || defaultCoverImage"
-                            class="activity-image"
-                            mode="aspectFill"
-                        />
+                        <image :src="activity.coverImageUrl" class="activity-image" mode="aspectFill" />
                         <view class="activity-info">
                             <text class="activity-title">{{ activity.title }}</text>
                             <view class="activity-meta">
@@ -71,13 +67,13 @@
                             </view>
                             <view class="activity-bottom">
                                 <view class="tag-list">
-                                    <text v-for="(tag, idx) in activity.tags" :key="idx" class="tag">
-                                        {{ tag }}
+                                    <text v-for="(tag, idx) in activity.tags.split(',')" :key="idx" class="tag">
+                                        {{ tag.trim() }}
                                     </text>
                                 </view>
                                 <view class="price-container" v-if="activity.price > 0">
                                     <text class="price-symbol">¥</text>
-                                    <text class="price-amount">{{ activity.price }}</text>
+                                    <text class="price-amount">{{ (activity.price / 100.0).toFixed(2) }}</text>
                                 </view>
                                 <view class="price-free" v-else>免费</view>
                             </view>
@@ -108,8 +104,6 @@ export default {
             loading: true,
             // 网络错误状态
             networkError: false,
-            // 默认封面图
-            defaultCoverImage: 'https://img.yzcdn.cn/vant/apple-1.jpg',
             // 滚动区域高度
             scrollHeight: 600,
         };
