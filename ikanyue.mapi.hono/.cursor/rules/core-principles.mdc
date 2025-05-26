@@ -1,0 +1,71 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 核心开发原则
+
+## 强制性要求
+
+### 1. 文档驱动开发
+- **每个 JS 文件必须有对应的 MD 文档**
+- **所有文档必须包含 mermaid 流程图**
+- **先读文档，再修改代码，最后更新文档**
+
+### 2. 流程图可视化
+- **接口文档**: 包含完整的请求处理流程图
+- **中间件文档**: 展示数据在上下文中的流转
+- **工具类文档**: 主要方法的处理流程
+
+### 3. 工作流程
+1. 📖 **阅读文档** - 理解现有实现和流程图
+2. 🔍 **分析依赖** - 检查相关中间件和工具类
+3. 💻 **修改代码** - 实现功能变更
+4. 🔄 **更新流程图** - 修正 mermaid 图表
+5. 📝 **更新文档** - 同步文档内容
+6. ✅ **测试验证** - 确保功能正常
+
+## 文档标准
+
+### 必需元素
+- **功能描述** - 清晰说明
+- **mermaid 流程图** - 可视化流程
+- **依赖关系** - 使用 `[file](mdc:path)` 引用
+- **更新历史** - 记录变更
+
+### 流程图类型
+- `flowchart TD` - 接口处理流程
+- `sequenceDiagram` - 中间件交互
+- `graph LR` - 数据流转图
+
+## 兼容性原则
+
+### 与原项目保持一致
+- 接口路径和参数格式
+- 响应结构: `{code, message, data}`
+- 数据库操作逻辑
+- 认证机制
+
+## 质量保证
+
+### 检查命令
+```bash
+npm run check-docs
+```
+
+### 检查内容
+- 文档文件完整性
+- mermaid 流程图存在性
+- 文档更新时效性
+
+## 参考文档
+
+- [详细开发规范](mdc:.cursor/rules/main-development-rules.mdc)
+- [API开发规范](mdc:.cursor/rules/api-development.mdc)
+- [中间件权限规范](mdc:.cursor/rules/middleware-permissions.mdc)
+- [文档标准规范](mdc:.cursor/rules/documentation-standards.mdc)
+
+## 示例参考
+
+- [响应中间件文档](mdc:src/middleware/response.js.md)
+- [登录接口文档](mdc:src/routes/user/login.js.md)
