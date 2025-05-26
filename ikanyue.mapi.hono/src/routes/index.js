@@ -4,11 +4,16 @@
  */
 
 const { authMiddleware } = require('../middleware/auth');
+const { isTeacherMiddleware } = require('../middleware/isTeacher');
+const { isAdminMiddleware } = require('../middleware/isAdmin');
 
 // 导入路由处理器
 const userRoutes = require('./user');
 const studentRoutes = require('./student');
 const teacherRoutes = require('./teacher');
+const activityRoutes = require('./activity');
+const videoMaterialRoutes = require('./videoMaterial');
+const audioMaterialRoutes = require('./audioMaterial');
 
 /**
  * 注册所有路由
@@ -32,6 +37,15 @@ function registerRoutes(app) {
 
     // 教师相关路由
     teacherRoutes(app, authMiddleware);
+
+    // 活动相关路由
+    activityRoutes(app, authMiddleware, isAdminMiddleware);
+
+    // 视频材料相关路由
+    videoMaterialRoutes(app, authMiddleware, isTeacherMiddleware);
+
+    // 音频材料相关路由
+    audioMaterialRoutes(app, authMiddleware, isTeacherMiddleware);
 
     // 404 处理
     app.notFound((c) => {

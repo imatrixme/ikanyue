@@ -6,10 +6,12 @@
   "keywords": [],
   "main": "src/index.js",
   "scripts": {
-    "start": "NODE_ENV=production bun run src/index.js",
-    "dev": "bun run --watch src/index.js",
+    "start": "NODE_ENV=production node src/index.js",
+    "dev": "node --watch src/index.js",
+    "dev:bun": "bun run --watch src/index.js",
+    "start:bun": "NODE_ENV=production bun run src/index.js",
     "lint": "eslint src --max-warnings=0",
-    "test": "bun test",
+    "test": "node --test",
     "check-docs": "./scripts/check-docs.sh"
   },
   "dependencies": {
