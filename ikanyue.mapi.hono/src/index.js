@@ -25,7 +25,7 @@ serve(
         port: port,
     },
     (info) => {
-        console.log(`🚀 ikanyue-hono API 服务已启动`);
+        console.log('🚀 ikanyue-hono API 服务已启动');
         console.log(`📍 服务地址: http://localhost:${info.port}`);
         console.log(`🕐 启动时间: ${new Date().toLocaleString('zh-CN')}`);
     }
