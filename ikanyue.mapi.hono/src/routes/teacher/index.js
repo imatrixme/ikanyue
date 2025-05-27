@@ -16,15 +16,15 @@ const { teacherDeleteHandler } = require('./delete');
  * 注册教师相关路由
  */
 function teacherRoutes(routes) {
-    routes.use(authMiddleware).group('/v1/teacher', (teacher) => {
-        teacher.post('/find').handler(teacherFindHandler);
+  routes.use(authMiddleware).group('/v1/teacher', (teacher) => {
+    teacher.get('/find').handler(teacherFindHandler);
 
-        teacher.use(isAdminMiddleware).group('', (teacher) => {
-            teacher.post('/update').handler(teacherUpdateHandler);
-            teacher.post('/create').handler(teacherCreateHandler);
-            teacher.post('/delete').handler(teacherDeleteHandler);
-        });
+    teacher.use(isAdminMiddleware).group('', (teacher) => {
+      teacher.post('/update').handler(teacherUpdateHandler);
+      teacher.post('/create').handler(teacherCreateHandler);
+      teacher.post('/delete').handler(teacherDeleteHandler);
     });
+  });
 }
 
 module.exports = teacherRoutes;

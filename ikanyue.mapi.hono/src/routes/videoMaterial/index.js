@@ -17,12 +17,15 @@ const { videoMaterialDeleteHandler } = require('./delete');
  * 注册视频材料相关路由
  */
 function videoMaterialRoutes(routes) {
-    routes.use(authMiddleware, isTeacherMiddleware).group('/v1/material/video', (video) => {
-        video.post('/find').handler(videoMaterialFindHandler);
-        video.post('/create').handler(videoMaterialCreateHandler);
-        video.post('/update').handler(videoMaterialUpdateHandler);
-        video.use(isAdminMiddleware).post('/delete').handler(videoMaterialDeleteHandler);
+  routes.group('/v1/material/video', (video) => {
+    video.get('/find').handler(videoMaterialFindHandler);
+
+    video.use(authMiddleware, isTeacherMiddleware).group('', (video) => {
+      video.post('/create').handler(videoMaterialCreateHandler);
+      video.post('/update').handler(videoMaterialUpdateHandler);
+      video.use(isAdminMiddleware).post('/delete').handler(videoMaterialDeleteHandler);
     });
+  });
 }
 
 module.exports = videoMaterialRoutes;

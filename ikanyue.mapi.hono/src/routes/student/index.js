@@ -17,12 +17,12 @@ const { studentDeleteHandler } = require('./delete');
  * 注册学生相关路由
  */
 function studentRoutes(routes) {
-    routes.use(authMiddleware).group('/v1/student', (student) => {
-        student.post('/find').handler(studentFindHandler);
-        student.use(isTeacherMiddleware).post('/update').handler(studentUpdateHandler);
-        student.use(isAdminMiddleware).post('/create').handler(studentCreateHandler);
-        student.use(isAdminMiddleware).post('/delete').handler(studentDeleteHandler);
-    });
+  routes.use(authMiddleware).group('/v1/student', (student) => {
+    student.get('/find').handler(studentFindHandler);
+    student.use(isTeacherMiddleware).post('/update').handler(studentUpdateHandler);
+    student.use(isAdminMiddleware).post('/create').handler(studentCreateHandler);
+    student.use(isAdminMiddleware).post('/delete').handler(studentDeleteHandler);
+  });
 }
 
 module.exports = studentRoutes;

@@ -16,15 +16,18 @@ const { activityDeleteHandler } = require('../activity/delete');
  * 注册活动相关路由
  */
 function activityRoutes(routes) {
-    routes.use(authMiddleware).group('/v1/activity', (activity) => {
-        activity.post('/find').handler(activityFindHandler);
+  routes.group('/v1/activity', (activity) => {
+    activity.get('/find').handler(activityFindHandler);
 
-        activity.use(isTeacherMiddleware, isAdminMiddleware).group('', (activity) => {
-            activity.post('/update').handler(activityUpdateHandler);
-            activity.post('/create').handler(activityCreateHandler);
-            activity.post('/delete').handler(activityDeleteHandler);
-        });
-    });
+    activity
+      .use(authMiddleware)
+      .use(isAdminMiddleware)
+      .group('', (activity) => {
+        activity.post('/update').handler(activityUpdateHandler);
+        activity.post('/create').handler(activityCreateHandler);
+        activity.post('/delete').handler(activityDeleteHandler);
+      });
+  });
 }
 
 module.exports = activityRoutes;
