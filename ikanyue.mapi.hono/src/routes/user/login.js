@@ -32,7 +32,7 @@ const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 const uuid = require('licia/uuid');
 
-module.exports = async function login(c) {
+async function userLoginHandler(c) {
     const body = await c.req.json();
     const cellphone = body.cellphone || '';
     const password = body.password || '';
@@ -164,4 +164,6 @@ module.exports = async function login(c) {
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
-};
+}
+
+module.exports = { userLoginHandler };

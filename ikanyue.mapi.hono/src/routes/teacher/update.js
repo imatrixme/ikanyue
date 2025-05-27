@@ -8,7 +8,7 @@ const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
 
-module.exports = async function update(c) {
+async function teacherUpdateHandler(c) {
     const body = await c.req.json();
     const id = body.id;
 
@@ -60,4 +60,6 @@ module.exports = async function update(c) {
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
-};
+}
+
+module.exports = { teacherUpdateHandler };

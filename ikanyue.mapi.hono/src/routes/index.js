@@ -30,16 +30,13 @@ function registerRoutes(app) {
         });
     });
 
-    // API v1 分组
-    routes.group('/v1', (v1) => {
-        // 注册各个模块的路由 - 各模块自行管理中间件
-        userRoutes(v1);
-        studentRoutes(v1);
-        teacherRoutes(v1);
-        activityRoutes(v1);
-        videoMaterialRoutes(v1);
-        audioMaterialRoutes(v1);
-    });
+    // 注册各个模块的路由 - 各模块自行定义完整路径
+    userRoutes(routes);
+    studentRoutes(routes);
+    teacherRoutes(routes);
+    activityRoutes(routes);
+    videoMaterialRoutes(routes);
+    audioMaterialRoutes(routes);
 
     // 开发环境专用路由
     if (process.env.NODE_ENV === 'development') {

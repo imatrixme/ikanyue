@@ -28,7 +28,7 @@ const uuid = require('licia/uuid');
 const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 
-module.exports = async function create(c) {
+async function teacherCreateHandler(c) {
     // 获取请求参数
     const body = await c.req.json();
     const data = { ...body };
@@ -81,4 +81,6 @@ module.exports = async function create(c) {
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
-};
+}
+
+module.exports = { teacherCreateHandler };

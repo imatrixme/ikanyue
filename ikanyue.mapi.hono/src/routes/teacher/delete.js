@@ -7,7 +7,7 @@
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 
-module.exports = async function deleteTeacher(c) {
+async function teacherDeleteHandler(c) {
     const body = await c.req.json();
     const id = body.id;
 
@@ -34,4 +34,6 @@ module.exports = async function deleteTeacher(c) {
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
-};
+}
+
+module.exports = { teacherDeleteHandler };
