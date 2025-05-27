@@ -60,6 +60,31 @@ flowchart TD
 -   **教师**: 可以查看所有学生信息，创建和更新学生档案
 -   **管理员**: 拥有所有权限，包括删除操作
 
+## 路由注册实现
+
+```javascript
+/**
+ * 注册学生相关路由
+ * @param {*} app - Hono 应用实例
+ * @param {*} authMiddleware - 认证中间件
+ */
+function studentRoutes(app, authMiddleware) {
+    // 查询学生列表（需要认证）
+    app.post('/v1/student/find', authMiddleware(), studentFindHandler);
+
+    // 创建学生（需要认证）
+    app.post('/v1/student/create', authMiddleware(), studentCreateHandler);
+
+    // 更新学生信息（需要认证）
+    app.post('/v1/student/update', authMiddleware(), studentUpdateHandler);
+
+    // 删除学生（需要认证）
+    app.post('/v1/student/delete', authMiddleware(), studentDeleteHandler);
+}
+
+module.exports = studentRoutes;
+```
+
 ## 依赖关系
 
 ### 路由处理器
@@ -72,8 +97,6 @@ flowchart TD
 ### 中间件依赖
 
 -   [认证中间件](mdc:src/middleware/auth.js.md) - 用户身份验证
--   [教师权限中间件](mdc:src/middleware/isTeacher.js.md) - 教师权限验证
--   [管理员权限中间件](mdc:src/middleware/isAdmin.js.md) - 管理员权限验证
 
 ## 数据模型
 

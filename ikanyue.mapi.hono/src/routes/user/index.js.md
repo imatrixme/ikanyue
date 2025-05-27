@@ -67,20 +67,21 @@ flowchart TD
 ```javascript
 /**
  * 注册用户相关路由
- * @param {Hono} app - Hono 应用实例
+ * @param {*} app - Hono 应用实例
+ * @param {*} authMiddleware - 认证中间件
  */
-function registerUserRoutes(app) {
-    // 登录 - 无需认证
-    app.post('/v1/user/login', loginHandler);
+function userRoutes(app, authMiddleware) {
+    // 用户登录（无需认证）
+    app.post('/v1/user/login', userLogin);
 
-    // 更新用户信息 - 需要认证
-    app.post('/v1/user/update', authMiddleware, updateHandler);
+    // 更新用户信息（需要认证）
+    app.post('/v1/user/update', authMiddleware(), userUpdateHandler);
 
-    // 刷新令牌 - 需要认证
-    app.post('/v1/user/refresh', authMiddleware, refreshHandler);
+    // 刷新用户令牌（需要认证）
+    app.post('/v1/user/refresh', authMiddleware(), userRefreshHandler);
 }
 
-module.exports = { registerUserRoutes };
+module.exports = userRoutes;
 ```
 
 ## 错误处理

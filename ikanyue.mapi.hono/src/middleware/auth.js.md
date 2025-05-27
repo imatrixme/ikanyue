@@ -64,7 +64,6 @@ protectedRoutes.use('*', authMiddleware());
 
 ```http
 GET /v1/user/profile
-Authorization: Bearer jwt_token_here
 token: jwt_token_here
 ```
 

@@ -14,17 +14,20 @@ flowchart TD
     C -->|通过| E[参数验证]
     E --> F{参数是否有效?}
     F -->|无效| G[返回参数错误]
-    F -->|有效| H[获取用户ID]
-    H --> I[更新用户数据]
-    I --> J{更新是否成功?}
-    J -->|失败| K[返回更新失败]
-    J -->|成功| L[返回更新结果]
+    F -->|有效| H[获取用户ID和角色]
+    H --> I{检查用户是否存在?}
+    I -->|不存在| L2[返回用户不存在]
+    I -->|存在| J[根据角色更新对应表]
+    J --> K{更新是否成功?}
+    K -->|失败| L3[返回更新失败]
+    K -->|成功| L[返回更新结果]
 
     style A fill:#e1f5fe
     style L fill:#4caf50
     style D fill:#f44336
     style G fill:#f44336
-    style K fill:#f44336
+    style L2 fill:#f44336
+    style L3 fill:#f44336
 ```
 
 ## 接口信息
@@ -35,24 +38,33 @@ flowchart TD
 
 ## 请求参数
 
-| 参数名  | 类型   | 必填 | 说明         |
-| ------- | ------ | ---- | ------------ |
-| name    | string | 否   | 用户姓名     |
-| avatar  | string | 否   | 头像 URL     |
-| phone   | string | 否   | 手机号码     |
-| profile | object | 否   | 用户资料信息 |
+| 参数名   | 类型   | 必填 | 说明                      |
+| -------- | ------ | ---- | ------------------------- |
+| realname | string | 否   | 真实姓名                  |
+| nickname | string | 否   | 昵称                      |
+| avatar   | string | 否   | 头像 URL                  |
+| gender   | number | 否   | 性别 (0:未知，1:男，2:女) |
+| age      | number | 否   | 年龄                      |
+| province | string | 否   | 省份                      |
+| city     | string | 否   | 城市                      |
+| address  | string | 否   | 地址                      |
+| email    | string | 否   | 邮箱地址                  |
+| bio      | string | 否   | 个人简介                  |
 
 ## 请求示例
 
 ```json
 {
-    "name": "新姓名",
+    "realname": "张三",
+    "nickname": "小张",
     "avatar": "https://example.com/avatar.jpg",
-    "phone": "13800138000",
-    "profile": {
-        "bio": "个人简介",
-        "location": "所在地"
-    }
+    "gender": 1,
+    "age": 25,
+    "province": "广东省",
+    "city": "深圳市",
+    "address": "南山区科技园",
+    "email": "zhangsan@example.com",
+    "bio": "个人简介"
 }
 ```
 

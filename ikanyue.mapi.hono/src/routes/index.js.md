@@ -35,10 +35,9 @@ flowchart TD
 
 ```javascript
 app.get('/', (c) => {
-    return c.data({
-        service: 'ikanyue-hono API',
+    return c.json({
+        message: 'ikanyue-hono API 服务运行正常',
         version: '1.0.0',
-        status: 'running',
         timestamp: new Date().toISOString(),
     });
 });
@@ -51,9 +50,38 @@ app.get('/', (c) => {
 -   **用户模块** (`/v1/user/*`)
 -   **学生模块** (`/v1/student/*`)
 -   **教师模块** (`/v1/teacher/*`)
--   **音频材料** (`/v1/audioMaterial/*`)
--   **视频材料** (`/v1/videoMaterial/*`)
--   **活动模块** (`/v1/activity/*`)
+-   **活动模块** (`/v1/activity/*`) - 需要管理员权限
+-   **视频材料** (`/v1/videoMaterial/*`) - 需要教师权限
+-   **音频材料** (`/v1/audioMaterial/*`) - 需要教师权限
+
+### 3. 错误处理机制
+
+```javascript
+// 404 处理
+app.notFound((c) => {
+    return c.json(
+        {
+            code: 404,
+            message: '接口不存在',
+            data: null,
+        },
+        404
+    );
+});
+
+// 全局错误处理
+app.onError((err, c) => {
+    console.error('应用错误:', err);
+    return c.json(
+        {
+            code: 500,
+            message: '服务器内部错误',
+            data: null,
+        },
+        500
+    );
+});
+```
 
 ## 路由模块依赖
 
@@ -88,14 +116,9 @@ curl http://localhost:1337/
 
 ```json
 {
-    "code": 10000,
-    "message": null,
-    "data": {
-        "service": "ikanyue-hono API",
-        "version": "1.0.0",
-        "status": "running",
-        "timestamp": "2024-12-26T02:01:18.000Z"
-    }
+    "message": "ikanyue-hono API 服务运行正常",
+    "version": "1.0.0",
+    "timestamp": "2024-12-26T02:01:18.000Z"
 }
 ```
 
