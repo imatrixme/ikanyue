@@ -8,10 +8,10 @@ const { isTeacherMiddleware } = require('../../middleware/isTeacher');
 const { isAdminMiddleware } = require('../../middleware/isAdmin');
 
 // 导入处理器
-const { activityFindHandler } = require('./find');
-const { activityCreateHandler } = require('./create');
-const { activityUpdateHandler } = require('./update');
-const { activityDeleteHandler } = require('./delete');
+const { activityFindHandler } = require('../activity/find');
+const { activityCreateHandler } = require('../activity/create');
+const { activityUpdateHandler } = require('../activity/update');
+const { activityDeleteHandler } = require('../activity/delete');
 /**
  * 注册活动相关路由
  */

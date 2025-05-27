@@ -5,13 +5,7 @@
 
 const { createRouteBuilder } = require('../utils/routeBuilder');
 
-// 导入路由模块
-const userRoutes = require('./user');
-const studentRoutes = require('./student');
-const teacherRoutes = require('./teacher');
-const activityRoutes = require('./activity');
-const videoMaterialRoutes = require('./videoMaterial');
-const audioMaterialRoutes = require('./audioMaterial');
+const { registerBizRoutes } = require('../config/router');
 
 /**
  * 注册所有路由
@@ -23,20 +17,14 @@ function registerRoutes(app) {
 
     // 健康检查路由
     routes.get('/').handler((c) => {
-        return c.json({
-            message: 'ikanyue-hono API 服务运行正常',
-            version: '1.0.0',
+        return c.data({
+            status: 'ok',
             timestamp: new Date().toISOString(),
         });
     });
 
-    // 注册各个模块的路由 - 各模块自行定义完整路径
-    userRoutes(routes);
-    studentRoutes(routes);
-    teacherRoutes(routes);
-    activityRoutes(routes);
-    videoMaterialRoutes(routes);
-    audioMaterialRoutes(routes);
+    // 注册各个业务模块的路由 - 各模块自行定义完整路径
+    registerBizRoutes(routes);
 
     // 开发环境专用路由
     if (process.env.NODE_ENV === 'development') {

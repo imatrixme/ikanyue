@@ -1,4 +1,4 @@
-# 应用入口文件 (index.js)
+# 应用入口文件 (app.js)
 
 ## 功能描述
 
@@ -67,7 +67,7 @@ const isBun = typeof Bun !== 'undefined';
 ### Bun 环境
 
 ```
-🚀 ikanyue-hono API 应用已准备就绪 (Bun 环境)
+🚀 API 应用已准备就绪 (Bun 环境)
 📍 端口: 1337
 🕐 时间: 2024/12/26 10:01:18
 ```
@@ -75,7 +75,7 @@ const isBun = typeof Bun !== 'undefined';
 ### Node.js 环境
 
 ```
-🚀 ikanyue-hono API 服务已启动 (Node.js 环境)
+🚀 API 服务已启动 (Node.js 环境)
 📍 服务地址: http://localhost:1337
 🕐 启动时间: 2024/12/26 10:01:18
 ```

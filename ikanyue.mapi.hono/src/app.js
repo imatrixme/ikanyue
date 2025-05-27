@@ -5,7 +5,7 @@
 
 const { Hono } = require('hono');
 const { responseMiddleware } = require('./middleware/response');
-const { registerRoutes } = require('./routes');
+const { registerRoutes } = require('./bonelayer/router');
 
 // 创建 Hono 应用实例
 const app = new Hono();
@@ -24,7 +24,7 @@ const isBun = typeof Bun !== 'undefined';
 
 if (isBun) {
     // Bun 环境
-    console.log('🚀 ikanyue-hono API 应用已准备就绪 (Bun 环境)');
+    console.log('🚀 API 应用已准备就绪 (Bun 环境)');
     console.log(`📍 端口: ${port}`);
     console.log(`🕐 时间: ${new Date().toLocaleString('zh-CN')}`);
 
@@ -43,7 +43,7 @@ if (isBun) {
             port: port,
         },
         (info) => {
-            console.log('🚀 ikanyue-hono API 服务已启动 (Node.js 环境)');
+            console.log('🚀 API 服务已启动 (Node.js 环境)');
             console.log(`📍 服务地址: http://localhost:${info.port}`);
             console.log(`🕐 启动时间: ${new Date().toLocaleString('zh-CN')}`);
         }
