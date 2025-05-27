@@ -16,30 +16,30 @@ const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 
 module.exports = async function deleteStudent(c) {
-    const body = await c.req.json();
-    const id = body.id;
+  const body = await c.req.parseBody();
+  const id = body.id;
 
-    if (!id) {
-        return c.error(400, '缺少学生ID');
+  if (!id) {
+    return c.error(400, '缺少学生ID');
+  }
+
+  try {
+    // 先检查记录是否存在
+    const [checkErr, existingStudent] = await to(pb.getOne('students', id));
+
+    if (checkErr) {
+      return c.error(404, '学生不存在');
     }
 
-    try {
-        // 先检查记录是否存在
-        const [checkErr, existingStudent] = await to(pb.getOne('students', id));
+    // 删除记录
+    const [err, success] = await to(pb.collection('students').delete(id));
 
-        if (checkErr) {
-            return c.error(404, '学生不存在');
-        }
-
-        // 删除记录
-        const [err, success] = await to(pb.collection('students').delete(id));
-
-        if (err) {
-            return c.error(500, err.message || '删除学生失败');
-        }
-
-        return c.data({ success: true, message: '学生已成功删除' });
-    } catch (error) {
-        return c.error(500, error.message || '服务器内部错误');
+    if (err) {
+      return c.error(500, err.message || '删除学生失败');
     }
+
+    return c.data({ success: true, message: '学生已成功删除' });
+  } catch (error) {
+    return c.error(500, error.message || '服务器内部错误');
+  }
 };

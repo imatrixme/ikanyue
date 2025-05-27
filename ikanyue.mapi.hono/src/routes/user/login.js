@@ -6,11 +6,12 @@
  * 示例请求:
  * POST /v1/user/login
  *
- * 请求体:
- * {
- *   "cellphone": "13800138000",  // 必传参数: 手机号
- *   "password": "yourpassword"    // 必传参数: 密码
- * }
+ * 请求体 (application/x-www-form-urlencoded):
+ * cellphone=13800138000&password=yourpassword
+ *
+ * 参数说明:
+ * - cellphone: 手机号 (必传)
+ * - password: 密码 (必传)
  *
  * 成功响应:
  * {
@@ -33,7 +34,7 @@ const { jwtAuth } = require('../../utils/jwtAuth');
 const uuid = require('licia/uuid');
 
 async function userLoginHandler(c) {
-  const body = await c.req.json();
+  const body = await c.req.parseBody();
   const cellphone = body.cellphone || '';
   const password = body.password || '';
 

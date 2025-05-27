@@ -26,51 +26,51 @@ const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
 
 module.exports = async function update(c) {
-    const body = await c.req.json();
-    const id = body.id;
+  const body = await c.req.parseBody();
+  const id = body.id;
 
-    if (!id) {
-        return c.error(400, '缺少学生ID');
+  if (!id) {
+    return c.error(400, '缺少学生ID');
+  }
+
+  try {
+    // 先检查记录是否存在
+    const [checkErr, existingStudent] = await to(pb.getOne('students', id));
+
+    if (checkErr) {
+      return c.error(404, '学生不存在');
     }
 
-    try {
-        // 先检查记录是否存在
-        const [checkErr, existingStudent] = await to(pb.getOne('students', id));
+    // 获取请求参数
+    const data = { ...body };
+    delete data.id; // 从更新数据中移除 id
 
-        if (checkErr) {
-            return c.error(404, '学生不存在');
-        }
-
-        // 获取请求参数
-        const data = { ...body };
-        delete data.id; // 从更新数据中移除 id
-
-        // 密码单独处理
-        if (data.password) {
-            data.password = md5(data.password);
-        }
-
-        // 防止修改敏感字段
-        delete data.sn;
-        delete data.created;
-        delete data.updated;
-        delete data.blocked; // 只能通过专门的接口修改
-        delete data.tokenKey;
-
-        // 头像字段处理
-        if (data.avatar !== undefined && (!data.avatar || data.avatar.trim() === '')) {
-            data.avatar = process.env.DEFAULT_AVATAR || '';
-        }
-
-        // 更新记录
-        const [err, student] = await to(pb.collection('students').update(id, data));
-
-        if (err) {
-            return c.error(500, err.message || '更新学生信息失败');
-        }
-
-        return c.data(student);
-    } catch (error) {
-        return c.error(500, error.message || '服务器内部错误');
+    // 密码单独处理
+    if (data.password) {
+      data.password = md5(data.password);
     }
+
+    // 防止修改敏感字段
+    delete data.sn;
+    delete data.created;
+    delete data.updated;
+    delete data.blocked; // 只能通过专门的接口修改
+    delete data.tokenKey;
+
+    // 头像字段处理
+    if (data.avatar !== undefined && (!data.avatar || data.avatar.trim() === '')) {
+      data.avatar = process.env.DEFAULT_AVATAR || '';
+    }
+
+    // 更新记录
+    const [err, student] = await to(pb.collection('students').update(id, data));
+
+    if (err) {
+      return c.error(500, err.message || '更新学生信息失败');
+    }
+
+    return c.data(student);
+  } catch (error) {
+    return c.error(500, error.message || '服务器内部错误');
+  }
 };

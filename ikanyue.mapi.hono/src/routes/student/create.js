@@ -29,53 +29,53 @@ const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 
 module.exports = async function create(c) {
-    // 获取请求参数
-    const body = await c.req.json();
-    const data = { ...body };
+  // 获取请求参数
+  const body = await c.req.parseBody();
+  const data = { ...body };
 
-    // 检查必要字段
-    if (!data.cellphone || !data.password) {
-        return c.error(400, '缺少必要信息（手机号、密码）');
+  // 检查必要字段
+  if (!data.cellphone || !data.password) {
+    return c.error(400, '缺少必要信息（手机号、密码）');
+  }
+
+  try {
+    // 检查手机号是否已存在
+    const existingStudents = await pb.collection('students').getList(1, 1, {
+      filter: `cellphone="${data.cellphone}"`,
+    });
+
+    if (existingStudents.items.length > 0) {
+      return c.error(409, '手机号已注册');
     }
 
-    try {
-        // 检查手机号是否已存在
-        const existingStudents = await pb.collection('students').getList(1, 1, {
-            filter: `cellphone="${data.cellphone}"`,
-        });
+    // 添加基本信息
+    data.sn = uuid();
+    data.password = md5(data.password); // 密码加密
+    data.hours = data.hours || 0;
+    data.blocked = false;
+    data.gender = data.gender || 0;
+    data.tokenKey = uuid();
 
-        if (existingStudents.items.length > 0) {
-            return c.error(409, '手机号已注册');
-        }
-
-        // 添加基本信息
-        data.sn = uuid();
-        data.password = md5(data.password); // 密码加密
-        data.hours = data.hours || 0;
-        data.blocked = false;
-        data.gender = data.gender || 0;
-        data.tokenKey = uuid();
-
-        // 设置默认头像
-        if (!data.avatar || data.avatar.trim() === '') {
-            data.avatar = process.env.DEFAULT_AVATAR || '';
-        }
-
-        // 创建学生记录
-        const [err, student] = await to(pb.collection('students').create(data));
-
-        if (err) {
-            console.error('创建学生失败:', err);
-            return c.error(500, err.message || '创建学生失败');
-        }
-
-        // 生成 JWT token
-        student.token = jwtAuth.sign(c.req, student.id, student.sn, 'student', false);
-        student.role = 'student';
-        student.isAdmin = false;
-
-        return c.data(student);
-    } catch (error) {
-        return c.error(500, error.message || '服务器内部错误');
+    // 设置默认头像
+    if (!data.avatar || data.avatar.trim() === '') {
+      data.avatar = process.env.DEFAULT_AVATAR || '';
     }
+
+    // 创建学生记录
+    const [err, student] = await to(pb.collection('students').create(data));
+
+    if (err) {
+      console.error('创建学生失败:', err);
+      return c.error(500, err.message || '创建学生失败');
+    }
+
+    // 生成 JWT token
+    student.token = jwtAuth.sign(c.req, student.id, student.sn, 'student', false);
+    student.role = 'student';
+    student.isAdmin = false;
+
+    return c.data(student);
+  } catch (error) {
+    return c.error(500, error.message || '服务器内部错误');
+  }
 };

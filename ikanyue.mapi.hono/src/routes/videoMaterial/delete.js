@@ -12,39 +12,39 @@ const to = require('await-to-js').default;
  * @param {Object} c - Hono 上下文对象
  */
 async function videoMaterialDeleteHandler(c) {
-    const body = await c.req.json();
-    const { id } = body;
+  const body = await c.req.parseBody();
+  const { id } = body;
 
-    // ID必填验证
-    if (!id || !id.trim()) {
-        return c.error(400, '视频材料ID不能为空');
+  // ID必填验证
+  if (!id || !id.trim()) {
+    return c.error(400, '视频材料ID不能为空');
+  }
+
+  try {
+    // 检查视频材料是否存在
+    const [checkErr, existingVideo] = await to(pb.collection('video_materials').getOne(id.trim()));
+
+    if (checkErr) {
+      if (checkErr.status === 404) {
+        return c.error(404, '视频材料不存在');
+      }
+      console.error('视频材料查询失败:', checkErr);
+      return c.error(500, '查询失败，请稍后重试');
     }
 
-    try {
-        // 检查视频材料是否存在
-        const [checkErr, existingVideo] = await to(pb.collection('video_materials').getOne(id.trim()));
+    // 删除视频材料记录
+    const [err, success] = await to(pb.collection('video_materials').delete(id.trim()));
 
-        if (checkErr) {
-            if (checkErr.status === 404) {
-                return c.error(404, '视频材料不存在');
-            }
-            console.error('视频材料查询失败:', checkErr);
-            return c.error(500, '查询失败，请稍后重试');
-        }
-
-        // 删除视频材料记录
-        const [err, success] = await to(pb.collection('video_materials').delete(id.trim()));
-
-        if (err) {
-            console.error('视频材料删除失败:', err);
-            return c.error(500, '删除失败，请稍后重试');
-        }
-
-        return c.data({ success: true, message: '视频材料删除成功' }, '视频材料删除成功');
-    } catch (error) {
-        console.error('视频材料删除异常:', error);
-        return c.error(500, '服务器内部错误');
+    if (err) {
+      console.error('视频材料删除失败:', err);
+      return c.error(500, '删除失败，请稍后重试');
     }
+
+    return c.data({ success: true, message: '视频材料删除成功' }, '视频材料删除成功');
+  } catch (error) {
+    console.error('视频材料删除异常:', error);
+    return c.error(500, '服务器内部错误');
+  }
 }
 
 module.exports = { videoMaterialDeleteHandler };
