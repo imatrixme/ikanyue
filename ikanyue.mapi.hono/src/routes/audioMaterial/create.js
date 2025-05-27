@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/audioMaterial/create.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -43,7 +43,7 @@ async function audioMaterialCreateHandler(c) {
         };
 
         // 创建音频材料记录
-        const [err, newRecord] = await to(pb.collection('audioMaterials').create(createData));
+        const [err, newRecord] = await to(pb.collection('audio_materials').create(createData));
 
         if (err) {
             console.error('音频材料创建失败:', err);

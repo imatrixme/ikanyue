@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/videoMaterial/find.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -30,7 +30,7 @@ async function videoMaterialFindHandler(c) {
     try {
         // 查询单个视频材料
         if (id) {
-            const [err, record] = await to(pb.collection('videoMaterials').getOne(id));
+            const [err, record] = await to(pb.collection('video_materials').getOne(id));
 
             if (err) {
                 if (err.status === 404) {
@@ -97,7 +97,7 @@ async function videoMaterialFindHandler(c) {
 
         // 查询视频材料列表
         const [err, result] = await to(
-            pb.collection('videoMaterials').getList(page, limit, {
+            pb.collection('video_materials').getList(page, limit, {
                 filter: filter,
                 sort: sort,
             })

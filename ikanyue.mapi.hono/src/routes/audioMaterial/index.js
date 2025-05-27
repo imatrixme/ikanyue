@@ -16,16 +16,16 @@ const { audioMaterialDeleteHandler } = require('./delete');
  */
 function audioMaterialRoutes(app, authMiddleware, isTeacherMiddleware) {
     // 音频材料查询接口
-    app.post('/v1/audioMaterial/find', authMiddleware, audioMaterialFindHandler);
+    app.post('/v1/audioMaterial/find', authMiddleware(), audioMaterialFindHandler);
 
     // 音频材料创建接口 (需要教师权限)
-    app.post('/v1/audioMaterial/create', authMiddleware, isTeacherMiddleware(), audioMaterialCreateHandler);
+    app.post('/v1/audioMaterial/create', authMiddleware(), isTeacherMiddleware(), audioMaterialCreateHandler);
 
     // 音频材料更新接口 (需要教师权限)
-    app.post('/v1/audioMaterial/update', authMiddleware, isTeacherMiddleware(), audioMaterialUpdateHandler);
+    app.post('/v1/audioMaterial/update', authMiddleware(), isTeacherMiddleware(), audioMaterialUpdateHandler);
 
     // 音频材料删除接口 (需要教师权限)
-    app.post('/v1/audioMaterial/delete', authMiddleware, isTeacherMiddleware(), audioMaterialDeleteHandler);
+    app.post('/v1/audioMaterial/delete', authMiddleware(), isTeacherMiddleware(), audioMaterialDeleteHandler);
 }
 
 module.exports = audioMaterialRoutes;

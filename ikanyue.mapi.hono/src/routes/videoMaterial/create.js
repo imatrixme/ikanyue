@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/videoMaterial/create.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -95,7 +95,7 @@ async function videoMaterialCreateHandler(c) {
         };
 
         // 创建视频材料记录
-        const [err, record] = await to(pb.collection('videoMaterials').create(createData));
+        const [err, record] = await to(pb.collection('video_materials').create(createData));
 
         if (err) {
             console.error('视频材料创建失败:', err);

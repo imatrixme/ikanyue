@@ -16,16 +16,16 @@ const { activityDeleteHandler } = require('./delete');
  */
 function activityRoutes(app, authMiddleware, isAdminMiddleware) {
     // 活动查询接口
-    app.post('/v1/activity/find', authMiddleware, activityFindHandler);
+    app.post('/v1/activity/find', authMiddleware(), activityFindHandler);
 
     // 活动创建接口 (需要管理员权限)
-    app.post('/v1/activity/create', authMiddleware, isAdminMiddleware(), activityCreateHandler);
+    app.post('/v1/activity/create', authMiddleware(), isAdminMiddleware(), activityCreateHandler);
 
     // 活动更新接口 (需要管理员权限)
-    app.post('/v1/activity/update', authMiddleware, isAdminMiddleware(), activityUpdateHandler);
+    app.post('/v1/activity/update', authMiddleware(), isAdminMiddleware(), activityUpdateHandler);
 
     // 活动删除接口 (需要管理员权限)
-    app.post('/v1/activity/delete', authMiddleware, isAdminMiddleware(), activityDeleteHandler);
+    app.post('/v1/activity/delete', authMiddleware(), isAdminMiddleware(), activityDeleteHandler);
 }
 
 module.exports = activityRoutes;

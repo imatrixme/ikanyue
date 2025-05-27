@@ -16,16 +16,16 @@ const { videoMaterialDeleteHandler } = require('./delete');
  */
 function videoMaterialRoutes(app, authMiddleware, isTeacherMiddleware) {
     // 视频材料查询接口
-    app.post('/v1/videoMaterial/find', authMiddleware, videoMaterialFindHandler);
+    app.post('/v1/videoMaterial/find', authMiddleware(), videoMaterialFindHandler);
 
     // 视频材料创建接口 (需要教师权限)
-    app.post('/v1/videoMaterial/create', authMiddleware, isTeacherMiddleware(), videoMaterialCreateHandler);
+    app.post('/v1/videoMaterial/create', authMiddleware(), isTeacherMiddleware(), videoMaterialCreateHandler);
 
     // 视频材料更新接口 (需要教师权限)
-    app.post('/v1/videoMaterial/update', authMiddleware, isTeacherMiddleware(), videoMaterialUpdateHandler);
+    app.post('/v1/videoMaterial/update', authMiddleware(), isTeacherMiddleware(), videoMaterialUpdateHandler);
 
     // 视频材料删除接口 (需要教师权限)
-    app.post('/v1/videoMaterial/delete', authMiddleware, isTeacherMiddleware(), videoMaterialDeleteHandler);
+    app.post('/v1/videoMaterial/delete', authMiddleware(), isTeacherMiddleware(), videoMaterialDeleteHandler);
 }
 
 module.exports = videoMaterialRoutes;

@@ -26,7 +26,7 @@ const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const { jwtAuth } = require('../../utils/jwtAuth');
 
-module.exports = async function refresh(c) {
+async function userRefreshHandler(c) {
     // 从JWT令牌中获取用户信息
     const user = c.get('user');
     if (!user) {
@@ -125,4 +125,6 @@ module.exports = async function refresh(c) {
         console.error('刷新用户信息失败:', error);
         return c.error(500, '服务器内部错误');
     }
-};
+}
+
+module.exports = { userRefreshHandler };

@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/activity/delete.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**

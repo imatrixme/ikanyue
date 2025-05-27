@@ -3,10 +3,10 @@
  */
 
 // 导入路由处理器
-const studentFind = require('./find');
-const studentCreate = require('./create');
-const studentUpdate = require('./update');
-const studentDelete = require('./delete');
+const { studentFindHandler } = require('./find');
+const { studentCreateHandler } = require('./create');
+const { studentUpdateHandler } = require('./update');
+const { studentDeleteHandler } = require('./delete');
 
 /**
  * 注册学生相关路由
@@ -15,16 +15,16 @@ const studentDelete = require('./delete');
  */
 function studentRoutes(app, authMiddleware) {
     // 查询学生列表（需要认证）
-    app.post('/v1/student/find', authMiddleware(), studentFind);
+    app.post('/v1/student/find', authMiddleware(), studentFindHandler);
 
     // 创建学生（需要认证）
-    app.post('/v1/student/create', authMiddleware(), studentCreate);
+    app.post('/v1/student/create', authMiddleware(), studentCreateHandler);
 
     // 更新学生信息（需要认证）
-    app.post('/v1/student/update', authMiddleware(), studentUpdate);
+    app.post('/v1/student/update', authMiddleware(), studentUpdateHandler);
 
     // 删除学生（需要认证）
-    app.post('/v1/student/delete', authMiddleware(), studentDelete);
+    app.post('/v1/student/delete', authMiddleware(), studentDeleteHandler);
 }
 
 module.exports = studentRoutes;

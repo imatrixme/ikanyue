@@ -3,10 +3,10 @@
  */
 
 // 导入路由处理器
-const teacherFind = require('./find');
-const teacherCreate = require('./create');
-const teacherUpdate = require('./update');
-const teacherDelete = require('./delete');
+const { teacherFindHandler } = require('./find');
+const { teacherCreateHandler } = require('./create');
+const { teacherUpdateHandler } = require('./update');
+const { teacherDeleteHandler } = require('./delete');
 
 /**
  * 注册教师相关路由
@@ -15,16 +15,16 @@ const teacherDelete = require('./delete');
  */
 function teacherRoutes(app, authMiddleware) {
     // 查询教师列表（需要认证）
-    app.post('/v1/teacher/find', authMiddleware(), teacherFind);
+    app.post('/v1/teacher/find', authMiddleware(), teacherFindHandler);
 
     // 创建教师（需要认证）
-    app.post('/v1/teacher/create', authMiddleware(), teacherCreate);
+    app.post('/v1/teacher/create', authMiddleware(), teacherCreateHandler);
 
     // 更新教师信息（需要认证）
-    app.post('/v1/teacher/update', authMiddleware(), teacherUpdate);
+    app.post('/v1/teacher/update', authMiddleware(), teacherUpdateHandler);
 
     // 删除教师（需要认证）
-    app.post('/v1/teacher/delete', authMiddleware(), teacherDelete);
+    app.post('/v1/teacher/delete', authMiddleware(), teacherDeleteHandler);
 }
 
 module.exports = teacherRoutes;

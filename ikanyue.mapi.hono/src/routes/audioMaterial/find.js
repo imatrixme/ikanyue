@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/audioMaterial/find.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -33,7 +33,7 @@ async function audioMaterialFindHandler(c) {
 
         // 查询音频材料
         const [err, result] = await to(
-            pb.collection('audioMaterials').getList(page, limit, {
+            pb.collection('audio_materials').getList(page, limit, {
                 filter: filter,
                 sort: '-created',
             })

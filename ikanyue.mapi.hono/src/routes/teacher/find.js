@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/teacher/find.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**

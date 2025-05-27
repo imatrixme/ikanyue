@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/videoMaterial/update.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -24,7 +24,7 @@ async function videoMaterialUpdateHandler(c) {
 
     try {
         // 检查视频材料是否存在
-        const [checkErr, existingVideo] = await to(pb.collection('videoMaterials').getOne(id.trim()));
+        const [checkErr, existingVideo] = await to(pb.collection('video_materials').getOne(id.trim()));
 
         if (checkErr) {
             if (checkErr.status === 404) {
@@ -139,7 +139,7 @@ async function videoMaterialUpdateHandler(c) {
         }
 
         // 更新视频材料记录
-        const [err, record] = await to(pb.collection('videoMaterials').update(id.trim(), processedData));
+        const [err, record] = await to(pb.collection('video_materials').update(id.trim(), processedData));
 
         if (err) {
             console.error('视频材料更新失败:', err);

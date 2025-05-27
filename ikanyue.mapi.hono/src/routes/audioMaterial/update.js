@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/audioMaterial/update.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -24,7 +24,7 @@ async function audioMaterialUpdateHandler(c) {
 
     try {
         // 检查音频材料是否存在
-        const [checkErr, existingAudio] = await to(pb.collection('audioMaterials').getOne(id.trim()));
+        const [checkErr, existingAudio] = await to(pb.collection('audio_materials').getOne(id.trim()));
 
         if (checkErr) {
             if (checkErr.status === 404) {
@@ -139,7 +139,7 @@ async function audioMaterialUpdateHandler(c) {
         }
 
         // 更新音频材料记录
-        const [err, record] = await to(pb.collection('audioMaterials').update(id.trim(), processedData));
+        const [err, record] = await to(pb.collection('audio_materials').update(id.trim(), processedData));
 
         if (err) {
             console.error('音频材料更新失败:', err);

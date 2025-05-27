@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/audioMaterial/delete.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -22,7 +22,7 @@ async function audioMaterialDeleteHandler(c) {
 
     try {
         // 检查音频材料是否存在
-        const [checkErr, existingAudio] = await to(pb.collection('audioMaterials').getOne(id.trim()));
+        const [checkErr, existingAudio] = await to(pb.collection('audio_materials').getOne(id.trim()));
 
         if (checkErr) {
             if (checkErr.status === 404) {
@@ -33,7 +33,7 @@ async function audioMaterialDeleteHandler(c) {
         }
 
         // 删除音频材料记录
-        const [err, success] = await to(pb.collection('audioMaterials').delete(id.trim()));
+        const [err, success] = await to(pb.collection('audio_materials').delete(id.trim()));
 
         if (err) {
             console.error('音频材料删除失败:', err);

@@ -4,7 +4,7 @@
  * 对应原项目: api/controllers/videoMaterial/delete.js
  */
 
-const { pb } = require('../../utils/pocketbase.js');
+const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 
 /**
@@ -22,7 +22,7 @@ async function videoMaterialDeleteHandler(c) {
 
     try {
         // 检查视频材料是否存在
-        const [checkErr, existingVideo] = await to(pb.collection('videoMaterials').getOne(id.trim()));
+        const [checkErr, existingVideo] = await to(pb.collection('video_materials').getOne(id.trim()));
 
         if (checkErr) {
             if (checkErr.status === 404) {
@@ -33,7 +33,7 @@ async function videoMaterialDeleteHandler(c) {
         }
 
         // 删除视频材料记录
-        const [err, success] = await to(pb.collection('videoMaterials').delete(id.trim()));
+        const [err, success] = await to(pb.collection('video_materials').delete(id.trim()));
 
         if (err) {
             console.error('视频材料删除失败:', err);

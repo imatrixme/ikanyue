@@ -33,7 +33,7 @@
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 
-module.exports = async function update(c) {
+async function userUpdateHandler(c) {
     // 从JWT token中获取用户信息
     const user = c.get('user');
     if (!user) {
@@ -126,4 +126,6 @@ module.exports = async function update(c) {
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
-};
+}
+
+module.exports = { userUpdateHandler };

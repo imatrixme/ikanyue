@@ -101,6 +101,9 @@ async function initPocketBase() {
             return pb.collection(collectionName);
         };
 
+        // 添加文件操作的引用
+        pbClient.files = pb.files;
+
         // 为所有方法添加错误处理，以便在 PocketBase 服务器离线时提供更友好的错误信息
         pbClient.getList = async function (collectionName, page = 1, perPage = 50, filter = {}) {
             try {
