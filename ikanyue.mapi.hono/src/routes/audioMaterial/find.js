@@ -13,7 +13,20 @@ const { processAudioMaterialFiles, processBatchFiles } = require('../../utils/fi
  * @param {Object} c - Hono 上下文对象
  */
 async function audioMaterialFindHandler(c) {
-  const query = c.req.query();
+  // 同时支持GET查询参数和POST form数据
+  let params = {};
+
+  if (c.req.method === 'GET') {
+    params = c.req.query();
+  } else if (c.req.method === 'POST') {
+    const formData = await c.req.parseBody();
+    const queryParams = c.req.query();
+    // POST时优先使用form数据，缺失的参数用query参数补充
+    params = { ...queryParams, ...formData };
+  } else {
+    params = c.req.query();
+  }
+
   const {
     id = '',
     page = 1,
@@ -26,7 +39,7 @@ async function audioMaterialFindHandler(c) {
     difficulty = '',
     tags = '',
     sort = '-created',
-  } = query;
+  } = params;
 
   try {
     // 查询单个音频材料
