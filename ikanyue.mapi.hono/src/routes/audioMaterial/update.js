@@ -12,7 +12,7 @@ const to = require('await-to-js').default;
  * @param {Object} c - Hono 上下文对象
  */
 async function audioMaterialUpdateHandler(c) {
-  const body = await c.req.parseBody();
+  const body = await c.req.json();
 
   const { id, ...updateData } = body;
 

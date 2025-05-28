@@ -6,6 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
+const { processVideoMaterialFiles, processBatchFiles } = require('../../utils/fileUrl.js');
 
 /**
  * 视频材料查询处理器
@@ -40,7 +41,10 @@ async function videoMaterialFindHandler(c) {
         return c.error(500, '查询失败，请稍后重试');
       }
 
-      return c.data(record, '查询成功');
+      // 处理文件URL
+      const processedRecord = processVideoMaterialFiles(record);
+
+      return c.data(processedRecord, '查询成功');
     }
 
     // 参数验证
@@ -108,9 +112,12 @@ async function videoMaterialFindHandler(c) {
       return c.error(500, '查询失败，请稍后重试');
     }
 
+    // 处理每个视频材料的文件URL
+    const processedItems = processBatchFiles(result.items, processVideoMaterialFiles);
+
     return c.data(
       {
-        items: result.items,
+        items: processedItems,
         totalItems: result.totalItems,
         totalPages: result.totalPages,
         page: result.page,
