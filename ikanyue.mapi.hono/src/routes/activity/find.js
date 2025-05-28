@@ -6,33 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
-
-/**
- * 处理活动数据中的图片字段，转换为完整的URL
- * @param {Object} record - 活动记录
- * @returns {Object} - 处理后的活动记录
- */
-function processActivityImages(record) {
-  let s3Url = `${process.env.PB_URL}/api/files`;
-  if (process.env.S3_URL && process.env.S3_BUCKET) {
-    s3Url = `${process.env.S3_URL}/${process.env.S3_BUCKET}`;
-  }
-  // 处理封面图
-  if (record.coverImage) {
-    // record.coverImageUrl = pb.files.getURL(record, record.coverImage);
-    record.coverImageUrl = `${s3Url}/${record.collectionId}/${record.id}/${record.coverImage}`;
-  }
-
-  // 处理活动图片集
-  if (record.images && Array.isArray(record.images) && record.images.length > 0) {
-    // record.imageUrls = record.images.map((image) => pb.files.getURL(record, image));
-    record.imageUrls = record.images.map(
-      (image) => `${s3Url}/${record.collectionId}/${record.id}/${image}`
-    );
-  }
-
-  return record;
-}
+const { processActivityFiles, processBatchFiles } = require('../../utils/fileUrl.js');
 
 /**
  * 活动查询处理器
@@ -48,7 +22,7 @@ async function activityFindHandler(c) {
     sort = '-created',
     tags = '',
     type = '',
-    location = ''
+    location = '',
   } = query;
 
   try {
@@ -65,7 +39,7 @@ async function activityFindHandler(c) {
       }
 
       // 处理图片URL
-      const processedRecord = processActivityImages(record);
+      const processedRecord = processActivityFiles(record);
 
       return c.data(processedRecord, '查询成功');
     }
@@ -111,7 +85,7 @@ async function activityFindHandler(c) {
     const [err, result] = await to(
       pb.collection('activities').getList(page, limit, {
         filter: filter,
-        sort: sort
+        sort: sort,
       })
     );
 
@@ -121,7 +95,7 @@ async function activityFindHandler(c) {
     }
 
     // 处理每个活动的图片URL
-    const processedItems = result.items.map((item) => processActivityImages(item));
+    const processedItems = processBatchFiles(result.items, processActivityFiles);
 
     return c.data(
       {
@@ -129,7 +103,7 @@ async function activityFindHandler(c) {
         totalItems: result.totalItems,
         totalPages: result.totalPages,
         page: result.page,
-        perPage: result.perPage
+        perPage: result.perPage,
       },
       '查询成功'
     );
