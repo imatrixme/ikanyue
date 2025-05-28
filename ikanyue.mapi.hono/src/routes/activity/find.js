@@ -13,14 +13,19 @@ const to = require('await-to-js').default;
  * @returns {Object} - 处理后的活动记录
  */
 function processActivityImages(record) {
+  const s3Url = process.env.S3_URL || `${process.env.PB_URL}/api/files`;
   // 处理封面图
   if (record.coverImage) {
-    record.coverImageUrl = pb.files.getURL(record, record.coverImage);
+    // record.coverImageUrl = pb.files.getURL(record, record.coverImage);
+    record.coverImageUrl = `${s3Url}/${record.collectionId}/${record.id}/${record.coverImage}`;
   }
 
   // 处理活动图片集
   if (record.images && Array.isArray(record.images) && record.images.length > 0) {
-    record.imageUrls = record.images.map((image) => pb.files.getURL(record, image));
+    // record.imageUrls = record.images.map((image) => pb.files.getURL(record, image));
+    record.imageUrls = record.images.map(
+      (image) => `${s3Url}/${record.collectionId}/${record.id}/${image}`
+    );
   }
 
   return record;
@@ -40,7 +45,7 @@ async function activityFindHandler(c) {
     sort = '-created',
     tags = '',
     type = '',
-    location = '',
+    location = ''
   } = query;
 
   try {
@@ -103,7 +108,7 @@ async function activityFindHandler(c) {
     const [err, result] = await to(
       pb.collection('activities').getList(page, limit, {
         filter: filter,
-        sort: sort,
+        sort: sort
       })
     );
 
@@ -121,7 +126,7 @@ async function activityFindHandler(c) {
         totalItems: result.totalItems,
         totalPages: result.totalPages,
         page: result.page,
-        perPage: result.perPage,
+        perPage: result.perPage
       },
       '查询成功'
     );
