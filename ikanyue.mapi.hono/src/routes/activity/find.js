@@ -13,7 +13,10 @@ const to = require('await-to-js').default;
  * @returns {Object} - 处理后的活动记录
  */
 function processActivityImages(record) {
-  const s3Url = process.env.S3_URL || `${process.env.PB_URL}/api/files`;
+  let s3Url = `${process.env.PB_URL}/api/files`;
+  if (process.env.S3_URL && process.env.S3_BUCKET) {
+    s3Url = `${process.env.S3_URL}/${process.env.S3_BUCKET}`;
+  }
 
   // 处理封面图
   if (record.coverImage) {
