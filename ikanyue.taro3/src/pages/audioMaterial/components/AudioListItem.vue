@@ -29,13 +29,17 @@
             <view class="meta-line">
                 <text class="meta-text">📂 {{ audio.type || '未分类' }}</text>
                 <text class="meta-text">🕐 {{ formatDate(audio.publishedAt || audio.favoriteTime) }}</text>
-                <text v-if="audio.difficulty" class="meta-text">⭐ 难度{{ audio.difficulty }}</text>
+                <text v-if="audio.difficulty" class="meta-text" :key="`difficulty-${audio.id}`"
+                    >⭐ 难度{{ audio.difficulty }}</text
+                >
             </view>
 
-            <view v-if="audio.tags && audio.tags.length" class="tags-line">
-                <text v-for="(tag, index) in audio.tags.split(',')" :key="index" class="tag">
-                    {{ tag.trim() }}
-                </text>
+            <view class="tags-line">
+                <template v-if="audio.tags && audio.tags.length">
+                    <text v-for="(tag, index) in audio.tags.split(',')" :key="`tag-${audio.id}-${index}`" class="tag">
+                        {{ tag.trim() }}
+                    </text>
+                </template>
             </view>
         </view>
     </view>

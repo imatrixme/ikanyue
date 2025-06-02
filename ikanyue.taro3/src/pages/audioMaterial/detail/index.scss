@@ -35,25 +35,27 @@
     justify-content: center;
     align-items: center;
     color: #fff;
-    padding: 20px;
+    padding: 0;
     text-align: center;
 }
 
 .header-title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
     width: 100%;
-    position: relative;
     margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .header-title {
     font-size: 22px;
     font-weight: bold;
     line-height: 1.4;
-    max-width: 80%;
     text-align: center;
+    width: 100%;
+    word-wrap: break-word;
 }
 
 .favorite-btn-detail {

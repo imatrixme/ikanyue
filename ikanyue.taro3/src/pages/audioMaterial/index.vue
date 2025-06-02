@@ -20,16 +20,22 @@
             :enable-flex="true"
             :scroll-with-animation="true"
             :enhanced="true"
+            :key="`scroll-${activeTab}`"
         >
-            <AudioListItem v-for="audio in audioList" :key="audio.id" :audio="audio" @click="goToDetail" />
+            <AudioListItem
+                v-for="audio in audioList"
+                :key="`${activeTab}-${audio.id}`"
+                :audio="audio"
+                @click="goToDetail"
+            />
 
             <!-- 加载更多指示器 (仅"全部材料"标签页显示) -->
-            <view v-if="activeTab === 'all' && hasMore && audioList.length > 0" class="load-more">
+            <view v-if="activeTab === 'all' && hasMore && audioList.length > 0" class="load-more" :key="'load-more'">
                 <nut-icon v-if="loadingMore" name="loading" size="20" />
                 <text v-else>上拉加载更多</text>
             </view>
 
-            <view v-else-if="activeTab === 'all' && !hasMore && audioList.length > 0" class="no-more">
+            <view v-else-if="activeTab === 'all' && !hasMore && audioList.length > 0" class="no-more" :key="'no-more'">
                 <text>没有更多内容了</text>
             </view>
         </scroll-view>
@@ -114,19 +120,27 @@ defineExpose({
 });
 
 // Tab切换事件
-const onTabChange = (value) => {
+const onTabChange = async (value) => {
     console.log('[AudioMaterial] Tab切换到:', value);
+
+    // 先设置loading状态
+    loading.value = true;
     activeTab.value = value;
-    loadCurrentTabData();
+
+    // 短暂延迟确保DOM更新完成
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // 然后加载数据
+    await loadCurrentTabData();
 };
 
 // 加载当前Tab对应的数据
-const loadCurrentTabData = () => {
+const loadCurrentTabData = async () => {
     console.log('[AudioMaterial] 开始加载数据，当前Tab:', activeTab.value);
     if (activeTab.value === 'all') {
-        loadAllAudioData();
+        await loadAllAudioData();
     } else {
-        loadFavoriteAudioData();
+        await loadFavoriteAudioData();
     }
 };
 

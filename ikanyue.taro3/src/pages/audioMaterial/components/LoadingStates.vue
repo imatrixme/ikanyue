@@ -84,12 +84,13 @@ const getEmptySubtitle = () => {
     left: 0;
     right: 0;
     margin: 0 auto;
+    text-align: center;
 }
 
 .state-text {
     margin-top: 16px;
     font-size: 15px;
-    color: #666;
+    color: #ccc;
     text-align: center;
     line-height: 1.5;
 }
