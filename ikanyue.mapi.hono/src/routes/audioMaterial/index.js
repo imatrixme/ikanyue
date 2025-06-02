@@ -18,7 +18,6 @@ const { audioMaterialDeleteHandler } = require('./delete');
  */
 function audioMaterialRoutes(routes) {
   // 查询接口 - 无需认证
-  routes.post('/v1/audioMaterial/find').handler(audioMaterialFindHandler);
   routes.get('/v1/audioMaterial/find').handler(audioMaterialFindHandler);
 
   // 创建接口 - 需要教师权限
