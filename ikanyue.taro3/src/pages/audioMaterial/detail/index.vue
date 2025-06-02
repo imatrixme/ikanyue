@@ -29,7 +29,9 @@
             <AudioHeader :audio-detail="audioDetail" />
 
             <!-- 音频播放器 -->
-            <AudioPlayer :audio-source="audioDetail.audioSource" :duration="duration" @time-update="onTimeUpdate" />
+            <view class="player-wrapper">
+                <AudioPlayer :audio-source="audioDetail.audioSource" :duration="duration" @time-update="onTimeUpdate" />
+            </view>
 
             <!-- 内容信息 -->
             <AudioContent :audio-detail="audioDetail" />
@@ -135,8 +137,12 @@ const toggleFavorite = async () => {
 
 // 音频时间更新回调
 const onTimeUpdate = (currentTime) => {
-    // 可以在这里处理时间更新，如保存播放进度等
-    console.log('当前播放时间:', currentTime);
+    try {
+        // 可以在这里处理时间更新，如保存播放进度等
+        console.log('当前播放时间:', currentTime);
+    } catch (error) {
+        console.error('时间更新处理错误:', error);
+    }
 };
 </script>
 

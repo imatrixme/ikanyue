@@ -141,13 +141,23 @@ const initAudioContext = () => {
 
         audioContext.value.onError((err) => {
             console.error('音频播放错误:', err);
-            Taro.showToast({
-                title: '音频播放错误',
-                icon: 'none',
-                duration: 2000,
-            });
-            isPlaying.value = false;
-            clearPlayTimer();
+
+            // 使用 try-catch 包装，防止错误传播
+            try {
+                Taro.showToast({
+                    title: '音频暂时无法播放',
+                    icon: 'none',
+                    duration: 2000,
+                });
+
+                // 重置播放状态
+                isPlaying.value = false;
+                clearPlayTimer();
+
+                // 不抛出错误，避免影响其他组件渲染
+            } catch (toastError) {
+                console.error('显示错误提示失败:', toastError);
+            }
         });
 
         audioContext.value.onTimeUpdate(() => {
@@ -159,10 +169,16 @@ const initAudioContext = () => {
 
         // 设置音频源
         if (props.audioSource) {
-            audioContext.value.src = props.audioSource;
+            try {
+                audioContext.value.src = props.audioSource;
+            } catch (srcError) {
+                console.error('设置音频源失败:', srcError);
+                // 不抛出错误，避免影响页面渲染
+            }
         }
     } catch (err) {
         console.error('初始化音频上下文失败:', err);
+        // 不抛出错误，避免影响其他组件
     }
 };
 

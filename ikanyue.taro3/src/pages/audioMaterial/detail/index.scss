@@ -10,6 +10,11 @@
     position: relative;
 }
 
+.player-wrapper {
+    position: relative;
+    z-index: 10;
+}
+
 .audio-header {
     position: relative;
     height: 280px;
