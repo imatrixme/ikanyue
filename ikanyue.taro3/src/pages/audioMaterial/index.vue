@@ -29,7 +29,7 @@
                 <text v-else>上拉加载更多</text>
             </view>
 
-            <view v-else-if="audioList.length > 0" class="no-more">
+            <view v-else-if="activeTab === 'all' && !hasMore && audioList.length > 0" class="no-more">
                 <text>没有更多内容了</text>
             </view>
         </scroll-view>
@@ -264,6 +264,6 @@ const goToDetail = (audio) => {
 };
 </script>
 
-<style lang="scss" scoped>
-@import '@nutui/nutui-taro/dist/styles/variables.scss';
+<style lang="scss">
+@import './index.scss';
 </style>

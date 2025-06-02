@@ -51,9 +51,13 @@ const handleRetry = () => {
     align-items: center;
     justify-content: center;
     padding: 80px 20px;
-    min-height: 50vh;
+    min-height: 60vh;
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
 }
 
 .state-text {

@@ -182,6 +182,19 @@
 
 .player-progress {
     margin: 20px 0;
+
+    /* 原生slider样式 */
+    slider {
+        width: 100%;
+        height: 4px;
+        margin: 10px 0;
+    }
+
+    /* 确保不显示任何数值 */
+    slider::after,
+    slider::before {
+        display: none !important;
+    }
 }
 
 .player-time {

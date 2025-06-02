@@ -75,16 +75,18 @@
                 </view>
 
                 <view class="player-progress">
-                    <nut-range
-                        :model-value="currentTime"
+                    <slider
+                        :value="currentTime"
                         :max="duration"
-                        @update:model-value="onSliderDrag"
+                        @changing="onSliderDrag"
                         @change="onSliderRelease"
                         :step="1"
-                        active-color="#ff4949"
-                        inactive-color="#e5e5e5"
-                        button-color="#ff4949"
+                        activeColor="#ff4949"
+                        backgroundColor="#e5e5e5"
                         :disabled="!audioDetail.audioSource"
+                        :show-value="false"
+                        block-color="#ff4949"
+                        block-size="16"
                     />
                     <view class="player-time">
                         <text>{{ formatTime(currentTime) }}</text>
@@ -371,19 +373,19 @@ const handleForward = () => {
     currentTime.value = newTime;
 };
 
-const onSliderDrag = (value) => {
+const onSliderDrag = (e) => {
     if (!audioContext.value) return;
 
-    const time = Array.isArray(value) ? value[0] : value;
+    const time = e.detail.value;
     // 拖动时只更新显示时间，不跳转音频
     isDragging.value = true;
     currentTime.value = time;
 };
 
-const onSliderRelease = (value) => {
+const onSliderRelease = (e) => {
     if (!audioContext.value) return;
 
-    const time = Array.isArray(value) ? value[0] : value;
+    const time = e.detail.value;
     // 释放时才跳转音频
     audioContext.value.seek(time);
     currentTime.value = time;
