@@ -20,6 +20,7 @@ import {
     Range,
     Tabs,
     TabPane,
+    Image,
 } from '@nutui/nutui-taro';
 import '@nutui/nutui-taro/dist/style.css';
 
@@ -48,5 +49,6 @@ App.use(Button)
     .use(Popover)
     .use(Range)
     .use(Tabs)
-    .use(TabPane);
+    .use(TabPane)
+    .use(Image);
 export default App;

@@ -12,7 +12,8 @@
     flex: 1;
     height: 0;
     min-height: 0;
-    padding: 16px 16px 20px 16px;
+    padding: 16px 12px 20px 12px;
+    box-sizing: border-box;
 }
 
 .load-more {
@@ -35,7 +36,7 @@
     padding: 20px;
     font-size: 14px;
     color: #ccc;
-    width: 100%;
+    // width: 100%;
     text-align: center;
     margin: 0 auto;
 }

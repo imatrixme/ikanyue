@@ -108,6 +108,8 @@ const formatDate = (dateStr) => {
     position: relative;
     height: 104px; /* 固定高度 */
     box-sizing: border-box;
+    width: 100%; /* 确保完整宽度 */
+    max-width: 100%; /* 防止超出容器 */
 }
 
 .cover-wrapper {
