@@ -31,7 +31,7 @@
 
             <!-- 加载更多指示器 (仅"全部材料"标签页显示) -->
             <view v-if="activeTab === 'all' && hasMore && audioList.length > 0" class="load-more" :key="'load-more'">
-                <nut-icon v-if="loadingMore" name="loading" size="20" />
+                <text v-if="loadingMore">正在加载...</text>
                 <text v-else>上拉加载更多</text>
             </view>
 

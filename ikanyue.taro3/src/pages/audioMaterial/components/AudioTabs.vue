@@ -55,43 +55,48 @@ const handleTabClick = (value) => {
 
 <style lang="scss">
 .tab-container {
-    background-color: #ffffff;
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 20px 16px 16px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     position: sticky;
     top: 0;
     z-index: 10;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .custom-tabs {
     display: flex;
-    background-color: #f8f8f8;
-    border-radius: 8px;
-    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 6px;
     width: 100%;
     box-sizing: border-box;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .tab-item {
     flex: 1;
     text-align: center;
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 500;
-    color: #666666;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #64748b;
     background-color: transparent;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    letter-spacing: 0.025em;
 
     &.active {
-        background-color: #ff4949;
+        background: linear-gradient(135deg, #ff6b6b, #ff4949);
         color: #ffffff;
-        box-shadow: 0 2px 8px rgba(255, 73, 73, 0.3);
+        box-shadow: 0 4px 12px rgba(255, 73, 73, 0.25), 0 2px 4px rgba(255, 73, 73, 0.15);
+        transform: translateY(-1px);
     }
 
     &:active {
-        transform: scale(0.96);
+        transform: scale(0.97) translateY(-1px);
     }
 }
 </style>
