@@ -213,18 +213,16 @@ export default {
             this.networkError = false;
 
             try {
-                // 计算时间范围
+                // 计算时间范围 - 扩大范围以包含历史数据
                 const now = new Date();
-                // 上个月的第一天
-                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                // 三个月后的最后一天
-                const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 4, 0);
+                // 从2020年开始，覆盖所有可能的历史活动
+                const startDate = new Date('2020-01-01');
+                // 到未来一年，覆盖所有可能的未来活动
+                const endDate = new Date(now.getFullYear() + 1, 11, 31);
 
                 const params = {
-                    start_time_gte: lastMonth.toISOString(),
-                    start_time_lte: threeMonthsLater.toISOString(),
-                    status: 'all',
-                    sort: 'startTime',
+                    start_time_gte: startDate.toISOString(),
+                    start_time_lte: endDate.toISOString(),
                     perPage: 1000,
                 };
 
@@ -326,8 +324,8 @@ export default {
                 endTime: threeMonthsLater,
             });
 
-            // 已过期的活动（上个月到昨天）
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            // 已过期的活动（扩大范围以包含更早的活动）
+            const veryEarlyDate = new Date('2020-01-01'); // 设置一个更早的开始时间
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
             yesterday.setHours(23, 59, 59, 999);
@@ -336,7 +334,7 @@ export default {
                 title: '过往',
                 dateText: '已结束',
                 type: 'range',
-                startTime: lastMonth,
+                startTime: veryEarlyDate, // 使用更早的开始时间
                 endTime: yesterday,
             });
 
@@ -399,7 +397,9 @@ export default {
             );
 
             this.activities = this.allActivities.filter((activity) => {
-                if (!activity.startTime) return false;
+                if (!activity.startTime) {
+                    return false;
+                }
 
                 // 解析活动开始时间
                 const activityDate = new Date(activity.startTime);
