@@ -2,15 +2,15 @@
     <view class="audio-player">
         <view class="player-controls">
             <view class="player-btn secondary" @tap="handleRewind">
-                <text class="control-icon">⏪</text>
+                <nut-icon name="left" size="16" color="#666666" />
             </view>
 
             <view class="player-btn primary" @tap="togglePlay" :class="{ playing: isPlaying }">
-                <text class="control-icon">{{ isPlaying ? '⏸️' : '▶️' }}</text>
+                <nut-icon :name="isPlaying ? 'pause' : 'play-start'" size="24" color="#ffffff" />
             </view>
 
             <view class="player-btn secondary" @tap="handleForward">
-                <text class="control-icon">⏩</text>
+                <nut-icon name="right" size="16" color="#666666" />
             </view>
         </view>
 
@@ -291,10 +291,6 @@ const formatTime = (seconds) => {
             transform: scale(0.95);
             background-color: #e8e8e8;
         }
-
-        .control-icon {
-            font-size: 16px;
-        }
     }
 
     &.primary {
@@ -311,15 +307,7 @@ const formatTime = (seconds) => {
             background: linear-gradient(135deg, #4ecdc4, #44a08d);
             box-shadow: 0 4px 12px rgba(68, 160, 141, 0.3);
         }
-
-        .control-icon {
-            font-size: 24px;
-        }
     }
-}
-
-.control-icon {
-    line-height: 1;
 }
 
 .player-progress {

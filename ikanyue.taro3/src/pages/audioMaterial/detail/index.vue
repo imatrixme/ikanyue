@@ -8,7 +8,7 @@
 
         <!-- 网络错误 -->
         <view v-else-if="error" class="error-container">
-            <view class="error-icon">⚠️</view>
+            <nut-icon name="failure" size="40" color="#ff4949" />
             <text class="error-text">获取音频详情失败</text>
             <view class="retry-btn" @tap="loadAudioDetail">重新加载</view>
         </view>
@@ -17,7 +17,11 @@
         <view v-else class="content-wrapper">
             <!-- 固定收藏按钮 -->
             <view class="fixed-favorite-btn" @tap="toggleFavorite">
-                <text class="favorite-text">{{ isFavorited ? '❤️' : '🤍' }}</text>
+                <nut-icon
+                    :name="isFavorited ? 'heart-fill' : 'heart'"
+                    size="20"
+                    :color="isFavorited ? '#ff4949' : '#666666'"
+                />
                 <text class="favorite-label">{{ isFavorited ? '已收藏' : '收藏' }}</text>
             </view>
 

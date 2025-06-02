@@ -14,15 +14,15 @@
 
             <view class="header-meta">
                 <view class="meta-item">
-                    <text class="meta-icon">📂</text>
+                    <nut-icon name="category" size="12" color="#ffffff" />
                     <text>{{ audioDetail.type || '未分类' }}</text>
                 </view>
                 <view class="meta-item">
-                    <text class="meta-icon">🕐</text>
+                    <nut-icon name="clock" size="12" color="#ffffff" />
                     <text>{{ formatDate(audioDetail.publishedAt) }}</text>
                 </view>
                 <view v-if="audioDetail.difficulty" class="meta-item">
-                    <text class="meta-icon">⭐</text>
+                    <nut-icon name="star-fill" size="12" color="#ffffff" />
                     <text>难度{{ audioDetail.difficulty }}</text>
                 </view>
             </view>
@@ -122,10 +122,6 @@ const formatDate = (dateStr) => {
     text {
         line-height: 1;
     }
-}
-
-.meta-icon {
-    font-size: 12px;
 }
 
 .audio-tags {

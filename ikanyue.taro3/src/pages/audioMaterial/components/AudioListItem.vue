@@ -12,7 +12,7 @@
             />
             <view class="duration">{{ formatDuration(audio.duration) }}</view>
             <view class="play-btn">
-                <text class="play-text">▶️</text>
+                <nut-icon name="play-start" size="20" color="#ffffff" />
             </view>
         </view>
 
@@ -27,11 +27,18 @@
             </view>
 
             <view class="meta-line">
-                <text class="meta-text">📂 {{ audio.type || '未分类' }}</text>
-                <text class="meta-text">🕐 {{ formatDate(audio.publishedAt || audio.favoriteTime) }}</text>
-                <text v-if="audio.difficulty" class="meta-text" :key="`difficulty-${audio.id}`"
-                    >⭐ 难度{{ audio.difficulty }}</text
-                >
+                <view class="meta-item">
+                    <nut-icon name="category" size="10" color="#999999" />
+                    <text class="meta-text">{{ audio.type || '未分类' }}</text>
+                </view>
+                <view class="meta-item">
+                    <nut-icon name="clock" size="10" color="#999999" />
+                    <text class="meta-text">{{ formatDate(audio.publishedAt || audio.favoriteTime) }}</text>
+                </view>
+                <view v-if="audio.difficulty" class="meta-item">
+                    <nut-icon name="star-fill" size="10" color="#999999" />
+                    <text class="meta-text">难度{{ audio.difficulty }}</text>
+                </view>
             </view>
 
             <view class="tags-line">
@@ -158,11 +165,6 @@ const formatDate = (dateStr) => {
     justify-content: center;
 }
 
-.play-text {
-    font-size: 10px;
-    line-height: 1;
-}
-
 .content-wrapper {
     flex: 1;
     display: flex;
@@ -208,6 +210,12 @@ const formatDate = (dateStr) => {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 4px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .meta-text {
