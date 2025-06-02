@@ -16,6 +16,10 @@ import {
     CellGroup,
     Picker,
     Input,
+    Popover,
+    Range,
+    Tabs,
+    TabPane,
 } from '@nutui/nutui-taro';
 import '@nutui/nutui-taro/dist/style.css';
 
@@ -40,5 +44,9 @@ App.use(Button)
     .use(Cell)
     .use(CellGroup)
     .use(Picker)
-    .use(Input);
+    .use(Input)
+    .use(Popover)
+    .use(Range)
+    .use(Tabs)
+    .use(TabPane);
 export default App;

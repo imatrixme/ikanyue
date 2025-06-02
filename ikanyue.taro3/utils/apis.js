@@ -120,7 +120,7 @@ const refreshLogin = () => {
  */
 const findAudioMaterials = (params = {}) => {
     return new Promise((resolve, reject) => {
-        iNet.get('/v1/audio-material/list', params)
+        iNet.get('/v1/audioMaterial/find', params)
             .then((res) => {
                 resolve(res);
             })
@@ -138,7 +138,7 @@ const findAudioMaterials = (params = {}) => {
  */
 const findAudioMaterialDetail = (params = {}) => {
     return new Promise((resolve, reject) => {
-        iNet.get('/v1/audio-material/find', params)
+        iNet.get('/v1/audioMaterial/find', params)
             .then((res) => {
                 resolve(res);
             })
@@ -162,7 +162,7 @@ const findAudioMaterialDetail = (params = {}) => {
  */
 const findVideoMaterials = (params = {}) => {
     return new Promise((resolve, reject) => {
-        iNet.get('/v1/video-material/list', params)
+        iNet.get('/v1/videoMaterial/find', params)
             .then((res) => {
                 resolve(res);
             })
@@ -180,7 +180,7 @@ const findVideoMaterials = (params = {}) => {
  */
 const findVideoMaterialDetail = (params = {}) => {
     return new Promise((resolve, reject) => {
-        iNet.get('/v1/video-material/find', params)
+        iNet.get('/v1/videoMaterial/find', params)
             .then((res) => {
                 resolve(res);
             })

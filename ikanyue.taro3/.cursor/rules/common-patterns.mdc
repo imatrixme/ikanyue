@@ -1,0 +1,351 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 常用开发模式和代码片段
+
+## Vue 3 + Taro 页面模板
+
+### 标准页面结构
+```vue
+<template>
+  <view class="page-container">
+    <!-- 页面内容 -->
+  </view>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import Taro from '@tarojs/taro'
+
+// 响应式数据
+const loading = ref(false)
+const data = ref([])
+
+// 页面生命周期
+onMounted(() => {
+  // 页面初始化逻辑
+})
+
+// 方法定义
+const handleAction = () => {
+  // 处理用户操作
+}
+</script>
+
+<style lang="scss" scoped>
+@import "@nutui/nutui-taro/dist/styles/variables.scss";
+
+.page-container {
+  // 页面样式
+}
+</style>
+```
+
+### 页面配置模板
+```javascript
+// index.config.js
+export default definePageConfig({
+  navigationBarTitleText: '页面标题',
+  navigationBarBackgroundColor: '#ffffff',
+  navigationBarTextStyle: 'black',
+  enablePullDownRefresh: false,
+  disableScroll: false
+})
+```
+
+## 常用 Hooks 模式
+
+### 数据获取 Hook
+```javascript
+import { ref } from 'vue'
+import { request } from '../utils/request'
+
+export function useApiData(apiUrl) {
+  const data = ref(null)
+  const loading = ref(false)
+  const error = ref(null)
+
+  const fetchData = async (params = {}) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const result = await request(apiUrl, params)
+      data.value = result
+    } catch (err) {
+      error.value = err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    data,
+    loading,
+    error,
+    fetchData
+  }
+}
+```
+
+### 页面状态管理 Hook
+```javascript
+import { ref, computed } from 'vue'
+
+export function usePageState() {
+  const currentPage = ref(1)
+  const pageSize = ref(10)
+  const total = ref(0)
+  const list = ref([])
+
+  const hasMore = computed(() => {
+    return currentPage.value * pageSize.value < total.value
+  })
+
+  const loadMore = () => {
+    if (hasMore.value) {
+      currentPage.value++
+    }
+  }
+
+  const reset = () => {
+    currentPage.value = 1
+    list.value = []
+    total.value = 0
+  }
+
+  return {
+    currentPage,
+    pageSize,
+    total,
+    list,
+    hasMore,
+    loadMore,
+    reset
+  }
+}
+```
+
+## NutUI 常用组件模式
+
+### 列表组件
+```vue
+<template>
+  <nut-cell-group>
+    <nut-cell
+      v-for="item in list"
+      :key="item.id"
+      :title="item.title"
+      :desc="item.desc"
+      is-link
+      @click="handleItemClick(item)"
+    >
+      <template #icon>
+        <nut-avatar :url="item.avatar" />
+      </template>
+    </nut-cell>
+  </nut-cell-group>
+</template>
+```
+
+### 表单组件
+```vue
+<template>
+  <nut-form ref="formRef" :model="formData" :rules="rules">
+    <nut-form-item label="用户名" prop="username">
+      <nut-input
+        v-model="formData.username"
+        placeholder="请输入用户名"
+        clear-icon
+      />
+    </nut-form-item>
+    
+    <nut-form-item label="密码" prop="password">
+      <nut-input
+        v-model="formData.password"
+        type="password"
+        placeholder="请输入密码"
+      />
+    </nut-form-item>
+    
+    <nut-button type="primary" @click="handleSubmit">
+      提交
+    </nut-button>
+  </nut-form>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const formRef = ref()
+const formData = ref({
+  username: '',
+  password: ''
+})
+
+const rules = {
+  username: [{ required: true, message: '请输入用户名' }],
+  password: [{ required: true, message: '请输入密码' }]
+}
+
+const handleSubmit = () => {
+  formRef.value.validate().then(() => {
+    // 表单验证通过，提交数据
+  }).catch(() => {
+    // 验证失败
+  })
+}
+</script>
+```
+
+## 路由导航模式
+
+### 页面跳转
+```javascript
+import Taro from '@tarojs/taro'
+
+// 跳转到 tabBar 页面
+const navigateToTab = () => {
+  Taro.switchTab({
+    url: '/pages/activity/index'
+  })
+}
+
+// 跳转到普通页面
+const navigateToPage = (id) => {
+  Taro.navigateTo({
+    url: `/pages/activityDetail/index?id=${id}`
+  })
+}
+
+// 返回上一页
+const goBack = () => {
+  Taro.navigateBack()
+}
+
+// 重定向
+const redirectTo = () => {
+  Taro.redirectTo({
+    url: '/pages/login/index'
+  })
+}
+```
+
+### 路由参数获取
+```javascript
+import { ref, onMounted } from 'vue'
+import Taro from '@tarojs/taro'
+
+const routeParams = ref({})
+
+onMounted(() => {
+  const instance = Taro.getCurrentInstance()
+  routeParams.value = instance.router.params
+})
+```
+
+## 存储和缓存模式
+
+### 本地存储
+```javascript
+import Taro from '@tarojs/taro'
+
+// 设置存储
+const setStorage = (key, data) => {
+  return Taro.setStorage({
+    key,
+    data
+  })
+}
+
+// 获取存储
+const getStorage = (key) => {
+  return Taro.getStorage({
+    key
+  }).then(res => res.data)
+}
+
+// 删除存储
+const removeStorage = (key) => {
+  return Taro.removeStorage({
+    key
+  })
+}
+
+// 清空存储
+const clearStorage = () => {
+  return Taro.clearStorage()
+}
+```
+
+## 网络请求模式
+
+### 基础请求封装
+参考 [utils/request.js](mdc:utils/request.js) 的实现
+
+### API 接口管理
+参考 [utils/apis.js](mdc:utils/apis.js) 的实现
+
+## 错误处理模式
+
+### 全局错误处理
+```javascript
+// 在 app.js 中设置
+export default {
+  onError(err) {
+    console.error('小程序发生错误:', err)
+    // 可以在这里上报错误到监控系统
+  }
+}
+```
+
+### 组件级错误处理
+```javascript
+import { ref } from 'vue'
+import Taro from '@tarojs/taro'
+
+const handleError = (error, action = '操作') => {
+  console.error(`${action}失败:`, error)
+  
+  Taro.showToast({
+    title: `${action}失败，请重试`,
+    icon: 'none'
+  })
+}
+```
+
+## 性能优化模式
+
+### 图片懒加载
+```vue
+<template>
+  <nut-image
+    :src="imageSrc"
+    lazy-load
+    show-loading
+    @load="handleImageLoad"
+    @error="handleImageError"
+  />
+</template>
+```
+
+### 长列表优化
+```vue
+<template>
+  <scroll-view
+    scroll-y
+    @scrolltolower="loadMore"
+    :enable-flex="true"
+  >
+    <view v-for="item in list" :key="item.id">
+      <!-- 列表项 -->
+    </view>
+    
+    <view v-if="loading" class="loading">
+      <nut-loading />
+    </view>
+  </scroll-view>
+</template>
+```

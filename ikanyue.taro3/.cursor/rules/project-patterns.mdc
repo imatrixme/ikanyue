@@ -1,0 +1,132 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目开发模式和最佳实践
+
+## 代码风格规范
+
+### Vue 组件开发
+- 所有组件使用 Vue 3 Composition API `<script setup>` 语法
+- 组件文件命名使用 PascalCase（如：`UserProfile.vue`）
+- 页面组件统一命名为 `index.vue`
+- 使用 `definePageConfig` 替代页面配置对象
+
+### 文件命名约定
+- 目录使用 kebab-case（如：`activity-detail/`）
+- JavaScript/Vue 文件使用 camelCase（如：`userManager.js`）
+- 配置文件使用 `.config.js` 后缀
+- 样式文件使用 `.scss` 后缀
+
+### 导入导出规范
+```javascript
+// 优先使用命名导出
+export function getUserInfo() {}
+export const API_BASE_URL = ''
+
+// 页面配置使用默认导出
+export default definePageConfig({
+  navigationBarTitleText: '页面标题'
+})
+```
+
+## 状态管理模式
+
+### 页面级状态
+- 使用 Vue 3 Composition API 进行状态管理
+- 复杂状态逻辑抽离为自定义 Hooks
+- 页面间数据传递优先使用路由参数
+
+### 全局状态
+- 用户信息通过 [utils/usermanager.js](mdc:utils/usermanager.js) 管理
+- 避免过度使用全局状态，保持组件独立性
+- 临时数据优先使用 sessionStorage
+
+## 网络请求模式
+
+### API 调用规范
+```javascript
+// 统一使用 request 封装
+import { request } from '../utils/request'
+import { API_ENDPOINTS } from '../utils/apis'
+
+// 在组件中调用
+const fetchData = async () => {
+  try {
+    const result = await request(API_ENDPOINTS.USER_INFO)
+    // 处理数据
+  } catch (error) {
+    // 错误处理
+  }
+}
+```
+
+### 错误处理
+- 网络错误统一在 request 层处理
+- 业务错误在组件层处理
+- 提供友好的用户提示
+
+## 样式开发模式
+
+### 样式组织
+- 页面样式放在对应的 `.scss` 文件中
+- 全局样式在 [src/app.scss](mdc:src/app.scss)
+- 复用样式抽离为 mixins 或 utility classes
+
+### NutUI 使用规范
+```scss
+// 引入 NutUI 变量
+@import "@nutui/nutui-taro/dist/styles/variables.scss";
+
+// 使用 NutUI 组件
+.page-container {
+  // 自定义样式
+}
+```
+
+### 响应式设计
+- 基于 375px 设计稿开发
+- 使用 Taro 的 pxtransform 自动转换单位
+- 注意不同设备的适配
+
+## 性能优化模式
+
+### 代码分割
+- 页面按需加载
+- 大型组件使用动态导入
+- 图片资源优化和懒加载
+
+### 包大小控制
+- NutUI 组件按需引入
+- 删除未使用的代码和资源
+- 合理配置 webpack 优化
+
+### 小程序性能
+- 避免频繁的 setData 操作
+- 合理使用页面生命周期
+- 控制页面层级深度
+
+## 调试和测试
+
+### 开发调试
+- 使用微信开发者工具进行调试
+- 利用 Taro 的多端调试能力
+- 配置 source map 便于调试
+
+### 错误监控
+- 实现全局错误捕获
+- 记录关键用户行为
+- 性能监控和优化
+
+## 部署流程
+
+### 构建配置
+- 开发环境：`npm run dev:weapp`
+- 生产构建：`npm run build:weapp`
+- 多端构建支持 H5、支付宝等平台
+
+### 版本管理
+- 使用语义化版本号
+- 配置 [project.config.json](mdc:project.config.json) 项目信息
+- 提交前检查代码质量

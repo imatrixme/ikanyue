@@ -1,19 +1,25 @@
+@import '@nutui/nutui-taro/dist/styles/variables.scss';
+
 .audio-detail-page {
     background-color: #f8f8f8;
     min-height: 100vh;
+}
+
+.content-wrapper {
     padding-bottom: 80px;
+    position: relative;
 }
 
 .audio-header {
     position: relative;
-    height: 240px;
+    height: 280px;
     overflow: hidden;
 }
 
 .audio-cover {
     width: 100%;
     height: 100%;
-    filter: blur(10px);
+    filter: blur(8px);
     transform: scale(1.1);
 }
 
@@ -23,73 +29,159 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     color: #fff;
-    padding: 0 20px;
+    padding: 20px;
     text-align: center;
 }
 
+.header-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    margin-bottom: 16px;
+}
+
 .header-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
-    margin-bottom: 10px;
+    line-height: 1.4;
+    max-width: 80%;
+    text-align: center;
+}
+
+.favorite-btn-detail {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+
+    &:active {
+        transform: scale(0.9);
+        background-color: rgba(255, 255, 255, 0.25);
+    }
 }
 
 .header-meta {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 14px;
-    margin-bottom: 20px;
+
+    text {
+        line-height: 1;
+    }
+}
+
+.meta-icon {
+    font-size: 12px;
 }
 
 .audio-tags {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .audio-tag {
     font-size: 12px;
     background-color: rgba(255, 255, 255, 0.2);
     color: #fff;
-    padding: 2px 10px;
-    border-radius: 12px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    backdrop-filter: blur(4px);
 }
 
 .audio-player {
-    margin: -30px 16px 0;
+    margin: -40px 16px 0;
     background-color: #fff;
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 16px;
+    padding: 20px;
     position: relative;
     z-index: 10;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .player-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin: 16px 0;
+    gap: 24px;
+    margin: 20px 0;
 }
 
 .player-btn {
-    width: 60px;
-    height: 60px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f2f2f2;
+    transition: all 0.2s ease;
+
+    &.secondary {
+        width: 48px;
+        height: 48px;
+        background-color: #f5f5f5;
+
+        &:active {
+            transform: scale(0.95);
+            background-color: #e8e8e8;
+        }
+
+        .control-icon {
+            font-size: 16px;
+        }
+    }
+
+    &.primary {
+        width: 72px;
+        height: 72px;
+        background: linear-gradient(135deg, #ff6b6b, #ff4949);
+        box-shadow: 0 4px 12px rgba(255, 73, 73, 0.3);
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        &.playing {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            box-shadow: 0 4px 12px rgba(68, 160, 141, 0.3);
+        }
+
+        .control-icon {
+            font-size: 24px;
+        }
+    }
+}
+
+.control-icon {
+    line-height: 1;
 }
 
 .player-progress {
-    margin: 10px 0 20px;
+    margin: 20px 0;
 }
 
 .player-time {
@@ -97,46 +189,120 @@
     justify-content: space-between;
     font-size: 12px;
     color: #999;
+    margin-top: 8px;
 }
 
-.audio-content {
-    margin: 16px;
-    background-color: #fff;
-    border-radius: 12px;
-    padding: 16px;
+.player-controls-extra {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.speed-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.speed-options {
+    display: flex;
+    gap: 8px;
+}
+
+.speed-option {
+    padding: 4px 12px;
+    font-size: 12px;
+    background-color: #f5f5f5;
+    color: #666;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+
+    &.active {
+        background-color: #ff4949;
+        color: #fff;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
 }
 
 .content-title {
     font-size: 16px;
     font-weight: bold;
     margin-bottom: 16px;
-    position: relative;
-    padding-left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
 }
 
-.content-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 4px;
-    height: 16px;
-    width: 4px;
-    background-color: #3370ff;
-    border-radius: 2px;
+.content-icon {
+    font-size: 16px;
 }
 
 .content-text {
     font-size: 14px;
     line-height: 1.6;
-    color: #333;
-    white-space: pre-wrap;
+    color: #555;
+
+    p {
+        margin-bottom: 12px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 16px 0 8px;
+        color: #333;
+    }
 }
 
-.description-section {
+.description-section,
+.audio-content,
+.audio-info {
     margin: 16px;
     background-color: #fff;
     border-radius: 12px;
     padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
+    }
+}
+
+.info-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #333;
 }
 
 .loading-container {
@@ -144,7 +310,31 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 200px;
+}
+
+.loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #ff4949;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #666;
 }
 
 .error-container {
@@ -152,6 +342,67 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    padding: 0 30px;
+    height: 200px;
+    padding: 20px;
+}
+
+.error-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.error-text {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.retry-btn {
+    background-color: #ff4949;
+    color: white;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+
+    &:active {
+        transform: scale(0.95);
+        background-color: #e63939;
+    }
+}
+
+/* 固定收藏按钮 */
+.fixed-favorite-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 16px;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+    transition: all 0.3s ease;
+
+    &:active {
+        transform: scale(0.95);
+        background-color: rgba(255, 255, 255, 1);
+    }
+}
+
+.favorite-text {
+    font-size: 20px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.favorite-label {
+    font-size: 10px;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
 }

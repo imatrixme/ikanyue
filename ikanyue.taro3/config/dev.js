@@ -3,8 +3,8 @@ module.exports = {
         NODE_ENV: '"development"',
     },
     defineConstants: {
-        SERVICE_URL: JSON.stringify('https://mapi.ikanyue.com'),
-        STAGE: JSON.stringify('RELEASE'),
+        SERVICE_URL: JSON.stringify('http://localhost:1337'),
+        STAGE: JSON.stringify('TEST'),
     },
     mini: {},
     h5: {},
