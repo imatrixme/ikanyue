@@ -43,8 +43,15 @@
 
             <view class="tags-line">
                 <template v-if="audio.tags && audio.tags.length">
-                    <text v-for="(tag, index) in audio.tags.split(',')" :key="`tag-${audio.id}-${index}`" class="tag">
+                    <text
+                        v-for="(tag, index) in audio.tags.split(',').slice(0, 3)"
+                        :key="`tag-${audio.id}-${index}`"
+                        class="tag"
+                    >
                         {{ tag.trim() }}
+                    </text>
+                    <text v-if="audio.tags.split(',').length > 3" class="tag-more">
+                        +{{ audio.tags.split(',').length - 3 }}
                     </text>
                 </template>
             </view>
@@ -183,10 +190,11 @@ const formatDate = (dateStr) => {
     color: #333333;
     line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-lines: 1;
 }
 
 .desc-line {
@@ -226,8 +234,9 @@ const formatDate = (dateStr) => {
 
 .tags-line {
     display: flex;
-    flex-wrap: wrap;
     gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .tag {
@@ -237,6 +246,19 @@ const formatDate = (dateStr) => {
     padding: 2px 6px;
     border-radius: 6px;
     line-height: 1.2;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.tag-more {
+    font-size: 10px;
+    background-color: #e5e7eb;
+    color: #6b7280;
+    padding: 2px 6px;
+    border-radius: 6px;
+    line-height: 1.2;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 /* 点击效果 */

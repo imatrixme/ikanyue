@@ -19,7 +19,6 @@
             @scrolltolower="loadMore"
             :enable-flex="true"
             :scroll-with-animation="true"
-            :enhanced="true"
             :key="`scroll-${activeTab}`"
         >
             <AudioListItem
