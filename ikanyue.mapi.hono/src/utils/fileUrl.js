@@ -37,13 +37,25 @@ function processAudioMaterialFiles(record) {
   const processedRecord = { ...record };
 
   // 处理音频源文件URL
+  // PocketBase文件字段可能是字符串或文件对象
   if (record.audioSource) {
-    processedRecord.audioSourceUrl = getFileUrl(record, record.audioSource);
+    // 如果是文件对象，取文件名；如果是字符串，直接使用
+    const audioFileName =
+      typeof record.audioSource === 'object' ? record.audioSource.name || record.audioSource : record.audioSource;
+    if (audioFileName) {
+      processedRecord.audioSourceUrl = getFileUrl(record, audioFileName);
+    }
   }
 
   // 处理封面图片URL
+  // PocketBase文件字段可能是字符串或文件对象
   if (record.coverImage) {
-    processedRecord.coverImageUrl = getFileUrl(record, record.coverImage);
+    // 如果是文件对象，取文件名；如果是字符串，直接使用
+    const coverFileName =
+      typeof record.coverImage === 'object' ? record.coverImage.name || record.coverImage : record.coverImage;
+    if (coverFileName) {
+      processedRecord.coverImageUrl = getFileUrl(record, coverFileName);
+    }
   }
 
   return processedRecord;

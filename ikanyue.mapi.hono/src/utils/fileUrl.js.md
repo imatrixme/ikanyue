@@ -37,12 +37,19 @@ flowchart TD
 
 ### processAudioMaterialFiles(record)
 
-**功能**: 处理音频材料记录的文件 URL
+**功能**: 处理音频材料记录的文件 URL，支持 PocketBase 文件字段类型
 
 **处理字段**:
 
-- `audioSource` → `audioSourceUrl`
-- `coverImage` → `coverImageUrl`
+- `audioSource` → `audioSourceUrl` (支持文件对象和字符串)
+- `coverImage` → `coverImageUrl` (支持文件对象和字符串)
+
+**文件字段处理**:
+
+- 自动检测 PocketBase 文件字段格式
+- 支持文件对象 `{name: "filename"}` 格式
+- 兼容传统字符串文件名格式
+- 确保生成正确的 S3 或本地文件 URL
 
 ### processVideoMaterialFiles(record)
 
@@ -104,7 +111,8 @@ PB_URL=http://localhost:8090
 ```javascript
 const { processAudioMaterialFiles } = require('./utils/fileUrl.js');
 
-const audioRecord = {
+// 传统字符串文件名格式（兼容）
+const audioRecord1 = {
   id: 'audio_123',
   collectionId: 'audio_materials',
   title: '英语听力',
@@ -112,11 +120,26 @@ const audioRecord = {
   coverImage: 'cover.jpg',
 };
 
-const processed = processAudioMaterialFiles(audioRecord);
-console.log(processed.audioSourceUrl);
+const processed1 = processAudioMaterialFiles(audioRecord1);
+console.log(processed1.audioSourceUrl);
 // https://s3.amazonaws.com/bucket/audio_materials/audio_123/lesson1.mp3
-console.log(processed.coverImageUrl);
+console.log(processed1.coverImageUrl);
 // https://s3.amazonaws.com/bucket/audio_materials/audio_123/cover.jpg
+
+// PocketBase文件字段对象格式（新支持）
+const audioRecord2 = {
+  id: 'audio_456',
+  collectionId: 'audio_materials',
+  title: '日语对话',
+  audioSource: { name: 'dialog.mp3', size: 1024000 },
+  coverImage: { name: 'poster.jpg', size: 256000 },
+};
+
+const processed2 = processAudioMaterialFiles(audioRecord2);
+console.log(processed2.audioSourceUrl);
+// https://s3.amazonaws.com/bucket/audio_materials/audio_456/dialog.mp3
+console.log(processed2.coverImageUrl);
+// https://s3.amazonaws.com/bucket/audio_materials/audio_456/poster.jpg
 ```
 
 ### 批量处理

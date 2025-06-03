@@ -88,7 +88,7 @@ flowchart TD
     "type": "listening",
     "description": "基础英语听力材料",
     "audioSource": "audio_file.mp3",
-    "audioSourceUrl": "https://s3.amazonaws.com/bucket/collection_id/record_id/audio_file.mp3",
+    "audioSourceUrl": "https://s3.amazonaws.com/bucket/audio_materials/record_id/audio_file.mp3",
     "content": "音频内容描述",
     "publishedAt": "2024-01-01",
     "author": "张老师",
@@ -96,7 +96,7 @@ flowchart TD
     "sequence": 1,
     "status": "published",
     "coverImage": "cover.jpg",
-    "coverImageUrl": "https://s3.amazonaws.com/bucket/collection_id/record_id/cover.jpg",
+    "coverImageUrl": "https://s3.amazonaws.com/bucket/audio_materials/record_id/cover.jpg",
     "language": "中文",
     "difficulty": 3,
     "tags": "听力,初级",
@@ -105,6 +105,8 @@ flowchart TD
   }
 }
 ```
+
+**注意**：响应中包含原始文件字段（`audioSource`、`coverImage`）和处理后的 URL 字段（`audioSourceUrl`、`coverImageUrl`），以确保向后兼容性。
 
 ### 成功响应（列表）
 
@@ -120,9 +122,9 @@ flowchart TD
         "type": "listening",
         "description": "基础英语听力材料",
         "audioSource": "audio_file.mp3",
-        "audioSourceUrl": "https://s3.amazonaws.com/bucket/collection_id/record_id/audio_file.mp3",
+        "audioSourceUrl": "https://s3.amazonaws.com/bucket/audio_materials/record_id/audio_file.mp3",
         "coverImage": "cover.jpg",
-        "coverImageUrl": "https://s3.amazonaws.com/bucket/collection_id/record_id/cover.jpg",
+        "coverImageUrl": "https://s3.amazonaws.com/bucket/audio_materials/record_id/cover.jpg",
         "duration": 180,
         "status": "published",
         "language": "中文",
@@ -170,8 +172,16 @@ flowchart TD
 - 检查环境变量 S3_URL 和 S3_BUCKET
 - 如果配置了 S3，使用 S3 URL 格式
 - 否则使用 PocketBase 本地文件 URL
+- 支持 PocketBase 文件字段类型（文件对象和字符串）
 - 处理 audioSource 和 coverImage 字段
 - 生成 audioSourceUrl 和 coverImageUrl 字段
+
+**文件字段兼容性**：
+
+- **文件对象格式**: `{name: "filename.mp3", size: 1024000}` → 提取 `name` 属性
+- **字符串格式**: `"filename.mp3"` → 直接使用文件名
+- **S3 托管**: 自动生成 S3 存储 URL
+- **本地文件**: 降级到 PocketBase 文件服务 URL
 
 ### 查询条件支持
 

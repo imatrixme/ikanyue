@@ -36,8 +36,9 @@ flowchart TD
     Z -->|格式错误| AA[返回400: 时间格式错误]
     Z -->|验证通过| BB[执行更新操作]
     BB --> CC{更新结果}
-    CC -->|成功| DD[返回更新成功]
+    CC -->|成功| DD[处理文件URL]
     CC -->|失败| EE[返回500: 更新失败]
+    DD --> GG[返回处理后记录]
     E --> FF[请求结束]
     H --> FF
     K --> FF
@@ -49,7 +50,7 @@ flowchart TD
     W --> FF
     X --> FF
     AA --> FF
-    DD --> FF
+    GG --> FF
     EE --> FF
 ```
 
@@ -112,6 +113,7 @@ flowchart TD
     "type": "listening",
     "description": "适合高级学员的英语听力训练",
     "audioSource": "advanced_listening.mp3",
+    "audioSourceUrl": "https://s3.amazonaws.com/bucket/audio_materials/audio_123/advanced_listening.mp3",
     "content": "包含商务对话、学术讲座等",
     "publishedAt": "2024-01-15",
     "author": "李老师",
@@ -119,6 +121,7 @@ flowchart TD
     "sequence": 5,
     "status": "published",
     "coverImage": "advanced_cover.jpg",
+    "coverImageUrl": "https://s3.amazonaws.com/bucket/audio_materials/audio_123/advanced_cover.jpg",
     "language": "英文",
     "difficulty": 4,
     "tags": "听力,高级,商务",
@@ -163,6 +166,7 @@ flowchart TD
 3. **参数验证**: 对每个字段进行相应验证
 4. **类型转换**: 自动处理数值类型转换
 5. **数据更新**: 执行 PocketBase 更新操作
+6. **文件 URL 处理**: 为更新后的记录生成完整文件访问 URL
 
 ### 允许更新字段
 
@@ -220,6 +224,7 @@ flowchart TD
 ## 依赖关系
 
 - 依赖工具类：[pocketbase.js](mdc:src/utils/pocketbase.js) - 数据库操作
+- 依赖工具类：[fileUrl.js](mdc:src/utils/fileUrl.js) - 文件 URL 处理
 - 依赖中间件：[auth.js](mdc:src/middleware/auth.js) - 用户认证
 - 依赖中间件：[response.js](mdc:src/middleware/response.js) - 响应格式化
 - 外部依赖：`await-to-js` - 错误处理

@@ -6,6 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
+const { processAudioMaterialFiles } = require('../../utils/fileUrl.js');
 
 /**
  * 音频材料创建处理器
@@ -105,7 +106,10 @@ async function audioMaterialCreateHandler(c) {
       return c.error(500, '创建失败，请稍后重试');
     }
 
-    return c.data(newRecord, '音频材料创建成功');
+    // 处理文件URL
+    const processedRecord = processAudioMaterialFiles(newRecord);
+
+    return c.data(processedRecord, '音频材料创建成功');
   } catch (error) {
     console.error('音频材料创建异常:', error);
     return c.error(500, '服务器内部错误');

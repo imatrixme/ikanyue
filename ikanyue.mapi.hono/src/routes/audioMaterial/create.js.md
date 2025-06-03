@@ -23,17 +23,18 @@ flowchart TD
     M --> N[验证发布时间]
     N --> O[执行PocketBase创建]
     O --> P{创建结果}
-    P -->|成功| Q[返回创建成功]
+    P -->|成功| Q[处理文件URL]
     P -->|失败| R[返回500: 创建失败]
-    E --> S[请求结束]
-    F --> S
-    G --> S
-    H --> S
-    I --> S
-    J --> S
-    K --> S
-    Q --> S
-    R --> S
+    Q --> S[返回处理后记录]
+    E --> T[请求结束]
+    F --> T
+    G --> T
+    H --> T
+    I --> T
+    J --> T
+    K --> T
+    S --> T
+    R --> T
 ```
 
 ## 接口信息
@@ -93,6 +94,7 @@ flowchart TD
     "type": "listening",
     "description": "基础英语听力材料",
     "audioSource": "audio_file.mp3",
+    "audioSourceUrl": "https://s3.amazonaws.com/bucket/audio_materials/new_record_id/audio_file.mp3",
     "content": "详细的音频内容",
     "publishedAt": "2024-01-01",
     "author": "张老师",
@@ -100,6 +102,7 @@ flowchart TD
     "sequence": 1,
     "status": "draft",
     "coverImage": "cover.jpg",
+    "coverImageUrl": "https://s3.amazonaws.com/bucket/audio_materials/new_record_id/cover.jpg",
     "language": "中文",
     "difficulty": 3,
     "tags": "听力,初级",
@@ -108,6 +111,8 @@ flowchart TD
   }
 }
 ```
+
+**注意**：响应中自动包含文件字段的完整 URL（`audioSourceUrl`、`coverImageUrl`），便于前端直接使用。
 
 ### 错误响应
 
@@ -144,6 +149,14 @@ flowchart TD
 3. **枚举值验证**: 检查 language 和 status 的有效值
 4. **时间格式验证**: 验证 publishedAt 的日期格式
 5. **可选字段处理**: 只有非空字段才会被添加到创建数据中
+6. **文件 URL 生成**: 自动为 audioSource 和 coverImage 生成完整访问 URL
+
+### 文件 URL 处理
+
+- **S3 存储优先**: 检查环境变量配置，优先使用 S3 存储 URL
+- **本地文件降级**: 未配置 S3 时使用 PocketBase 本地文件服务
+- **字段兼容**: 支持 PocketBase 文件字段类型和传统字符串格式
+- **URL 字段**: 为 `audioSource` 生成 `audioSourceUrl`，为 `coverImage` 生成 `coverImageUrl`
 
 ### 数据构建
 
@@ -194,6 +207,7 @@ flowchart TD
 ## 依赖关系
 
 - 依赖工具类：[pocketbase.js](mdc:src/utils/pocketbase.js) - 数据库操作
+- 依赖工具类：[fileUrl.js](mdc:src/utils/fileUrl.js) - 文件 URL 处理
 - 依赖中间件：[auth.js](mdc:src/middleware/auth.js) - 用户认证
 - 依赖中间件：[response.js](mdc:src/middleware/response.js) - 响应格式化
 - 外部依赖：`await-to-js` - 错误处理
