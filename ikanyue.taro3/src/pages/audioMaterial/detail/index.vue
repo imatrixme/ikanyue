@@ -30,7 +30,11 @@
 
             <!-- 音频播放器 -->
             <view class="player-wrapper">
-                <AudioPlayer :audio-source="audioDetail.audioSource" :duration="duration" @time-update="onTimeUpdate" />
+                <AudioPlayer
+                    :audio-source-url="audioDetail.audioSourceUrl"
+                    :duration="audioDetail.duration || duration"
+                    @time-update="onTimeUpdate"
+                />
             </view>
 
             <!-- 内容信息 -->
@@ -86,12 +90,9 @@ const loadAudioDetail = async () => {
 
     try {
         const res = await Api.findAudioMaterialDetail({ id: audioId.value });
-        console.log('获取音频详情:', res);
-
         audioDetail.value = res;
         duration.value = res.duration || 0;
     } catch (err) {
-        console.error('加载音频详情失败:', err);
         error.value = true;
         Taro.showToast({
             title: '加载失败',
@@ -139,9 +140,8 @@ const toggleFavorite = async () => {
 const onTimeUpdate = (currentTime) => {
     try {
         // 可以在这里处理时间更新，如保存播放进度等
-        console.log('当前播放时间:', currentTime);
     } catch (error) {
-        console.error('时间更新处理错误:', error);
+        // 静默处理错误
     }
 };
 </script>

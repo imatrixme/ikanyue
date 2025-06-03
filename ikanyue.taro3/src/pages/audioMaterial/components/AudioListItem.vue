@@ -3,7 +3,7 @@
         <!-- 左侧封面图 -->
         <view class="cover-wrapper">
             <image
-                :src="audio.coverImage || defaultCoverImage"
+                :src="audio.coverImageUrl || defaultCoverImage"
                 mode="aspectFill"
                 class="cover-image"
                 lazy-load

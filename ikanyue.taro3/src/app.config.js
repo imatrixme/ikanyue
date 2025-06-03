@@ -54,4 +54,5 @@ export default defineAppConfig({
         request: 10000,
         downloadFile: 60000,
     },
+    requiredBackgroundModes: ['audio'],
 });
