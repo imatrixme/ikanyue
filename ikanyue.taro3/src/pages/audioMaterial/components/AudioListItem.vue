@@ -23,7 +23,7 @@
             </view>
 
             <view class="desc-line">
-                <text class="description">{{ audio.description }}</text>
+                <text class="description">{{ cleanDescription(audio.description) }}</text>
             </view>
 
             <view class="meta-line">
@@ -108,6 +108,28 @@ const formatDate = (dateStr) => {
         .getDate()
         .toString()
         .padStart(2, '0')}`;
+};
+
+const cleanDescription = (description) => {
+    if (!description) return '';
+
+    // 移除所有HTML标签
+    let cleaned = description.replace(/<[^>]+>/g, '');
+
+    // 处理常见的HTML实体
+    cleaned = cleaned
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&hellip;/g, '...');
+
+    // 移除多余的空白字符
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+    return cleaned;
 };
 </script>
 

@@ -119,15 +119,15 @@ const formatTime = (seconds) => {
 // 新增：平滑跳转方法，避免停止重播造成的闪动
 const seekToTimeSmooth = (time) => {
     const wasPlaying = isPlaying.value;
-    
+
     // 立即设置目标时间，防止UI闪动
     currentTime.value = time;
     lastUpdateTime = time;
-    
+
     // 暂停进度更新，防止被覆盖
     stopTaroProgressTimer();
     isSeekingActive = true;
-    
+
     try {
         // 首先尝试直接跳转
         Taro.seekBackgroundAudio({
@@ -136,7 +136,7 @@ const seekToTimeSmooth = (time) => {
                 // 跳转成功，恢复正常状态
                 isSeekingActive = false;
                 isOperating.value = false;
-                
+
                 if (wasPlaying && isPlaying.value) {
                     // 延迟启动定时器，确保跳转完成
                     setTimeout(() => {
@@ -147,7 +147,7 @@ const seekToTimeSmooth = (time) => {
             fail: (error) => {
                 // 直接跳转失败，尝试温和的方式
                 handleSeekFallback(time, wasPlaying);
-            }
+            },
         });
     } catch (error) {
         // API调用失败，使用fallback
@@ -172,27 +172,27 @@ const handleSeekFallback = (time, wasPlaying) => {
                 // 播放失败，保持UI状态
                 isSeekingActive = false;
                 isOperating.value = false;
-            }
+            },
         });
     } else {
         // 如果正在播放，保持当前状态，只更新UI
         // 这样避免了停止重播造成的闪动
         isSeekingActive = false;
         isOperating.value = false;
-        
+
         // 重启定时器，让音频继续自然播放
         setTimeout(() => {
             if (isPlaying.value) {
                 startTaroProgressTimer();
             }
         }, 500);
-        
+
         // 显示提示，让用户知道跳转可能不精确
-        Taro.showToast({
-            title: '跳转完成',
-            icon: 'none',
-            duration: 1000
-        });
+        // Taro.showToast({
+        //     title: '跳转完成',
+        //     icon: 'none',
+        //     duration: 1000,
+        // });
     }
 };
 
@@ -206,7 +206,7 @@ const trySeekAfterPlay = (time) => {
                 lastUpdateTime = time;
                 isSeekingActive = false;
                 isOperating.value = false;
-                
+
                 if (isPlaying.value) {
                     startTaroProgressTimer();
                 }
@@ -215,16 +215,16 @@ const trySeekAfterPlay = (time) => {
                 // 最终失败，保持当前状态
                 isSeekingActive = false;
                 isOperating.value = false;
-                
+
                 if (isPlaying.value) {
                     startTaroProgressTimer();
                 }
-            }
+            },
         });
     } catch (error) {
         isSeekingActive = false;
         isOperating.value = false;
-        
+
         if (isPlaying.value) {
             startTaroProgressTimer();
         }
@@ -433,9 +433,9 @@ const togglePlay = () => {
 
 const handleRewind = () => {
     if (isOperating.value) return; // 防止重复操作
-    
+
     const newTime = Math.max(0, currentTime.value - 10);
-    
+
     if (usingTaroAudio.value) {
         // 立即更新UI，防止闪动
         isOperating.value = true;
@@ -453,9 +453,9 @@ const handleRewind = () => {
 
 const handleForward = () => {
     if (isOperating.value) return; // 防止重复操作
-    
+
     const newTime = Math.min(duration.value, currentTime.value + 10);
-    
+
     if (usingTaroAudio.value) {
         // 立即更新UI，防止闪动
         isOperating.value = true;
@@ -583,8 +583,6 @@ const seekToTime = (time) => {
         lastUpdateTime = time;
     }
 };
-
-
 
 const changePlaybackRate = (rate) => {
     if (!audioContext.value || !isReady.value) return;
