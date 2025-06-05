@@ -38,8 +38,8 @@ export default defineAppConfig({
             },
             {
                 pagePath: 'pages/audioMaterial/index',
-                iconPath: 'imgs/record.png',
-                selectedIconPath: 'imgs/record-sel.png',
+                iconPath: 'imgs/audio.png',
+                selectedIconPath: 'imgs/audio-sel.png',
                 text: '音频',
             },
             {
