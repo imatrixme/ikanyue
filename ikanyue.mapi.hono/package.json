@@ -12,7 +12,11 @@
     "start:bun": "NODE_ENV=production bun run src/app.js",
     "lint": "eslint src --max-warnings=0",
     "test": "node --test",
-    "check-docs": "./scripts/check-docs.sh"
+    "check-docs": "./scripts/check-docs.sh",
+    "swagger:collect": "node scripts/collect-swagger.js",
+    "swagger:serve": "node scripts/serve-swagger.js",
+    "swagger:dev": "npm run swagger:collect && npm run swagger:serve",
+    "swagger:build": "npm run swagger:collect && echo '✅ Swagger 文档已生成到 docs/swagger.json'"
   },
   "dependencies": {
     "@hono/node-server": "^1.4.1",

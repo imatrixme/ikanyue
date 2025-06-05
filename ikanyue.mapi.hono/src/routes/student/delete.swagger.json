@@ -1,0 +1,204 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "删除学生信息",
+    "version": "1.0.0",
+    "description": "删除学生信息接口，提供安全的学生记录删除功能。会先验证记录存在性，然后执行删除操作。"
+  },
+  "paths": {
+    "/v1/student/delete": {
+      "post": {
+        "summary": "删除学生信息",
+        "description": "根据学生ID删除指定的学生记录。会先检查记录是否存在，确保删除操作的安全性。",
+        "tags": ["Student"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteStudentRequest"
+              },
+              "example": {
+                "id": "student_67894a2b-f8c7-4b2a-9d1e-3456789abcde"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteStudentResponse"
+                },
+                "example": {
+                  "code": 10000,
+                  "message": null,
+                  "data": {
+                    "success": true,
+                    "message": "学生已成功删除"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "缺少学生ID",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "认证失败",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "学生不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "学生不存在",
+                  "data": null
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "deleteFailed": {
+                    "summary": "删除失败",
+                    "value": {
+                      "code": 500,
+                      "message": "删除学生失败",
+                      "data": null
+                    }
+                  },
+                  "serverError": {
+                    "summary": "系统异常",
+                    "value": {
+                      "code": 500,
+                      "message": "服务器内部错误",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DeleteStudentRequest": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "学生记录ID",
+            "example": "student_67894a2b-f8c7-4b2a-9d1e-3456789abcde"
+          }
+        }
+      },
+      "DeleteStudentData": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "删除是否成功",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "删除结果消息",
+            "example": "学生已成功删除"
+          }
+        }
+      },
+      "DeleteStudentResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "data": {
+            "$ref": "#/components/schemas/DeleteStudentData"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "null",
+            "example": null
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "需要认证的 JWT Token"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Student",
+      "description": "学生管理相关接口"
+    }
+  ]
+} 

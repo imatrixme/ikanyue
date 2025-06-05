@@ -33,6 +33,31 @@ function registerRoutes(app) {
         });
     }
 
+    // Swagger 文档路由 - 生产环境返回 404
+    routes.get('/swagger').handler((c) => {
+        if (process.env.NODE_ENV === 'production') {
+            return c.json(
+                {
+                    code: 404,
+                    message: '接口不存在',
+                    data: null,
+                },
+                404
+            );
+        }
+
+        // 开发环境提示使用独立服务
+        return c.json({
+            code: 200,
+            message: 'Swagger 文档已独立部署，请访问独立端口',
+            data: {
+                swaggerUI: 'http://localhost:3001/swagger',
+                swaggerJSON: 'http://localhost:3001/swagger.json',
+                tip: '请运行 npm run swagger:dev 启动 Swagger 服务',
+            },
+        });
+    });
+
     // 404 处理
     routes.get('/*').handler((c) => {
         return c.json(
