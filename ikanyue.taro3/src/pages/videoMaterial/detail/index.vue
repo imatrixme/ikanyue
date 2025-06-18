@@ -1,190 +1,154 @@
 <template>
-    <view>
+    <view class="video-detail-page">
         <!-- 加载中 -->
         <view v-if="loading" class="loading-container">
-            <nut-icon name="loading" size="30"></nut-icon>
-            <text style="margin-top: 10px; font-size: 14px; color: #666">加载中...</text>
+            <view class="loading-spinner">
+                <nut-icon name="loading" size="32" color="#6366f1" class="spin" />
+            </view>
+            <text class="loading-text">加载中...</text>
         </view>
 
         <!-- 网络错误 -->
         <view v-else-if="error" class="error-container">
-            <nut-empty description="获取视频详情失败"></nut-empty>
-            <nut-button type="primary" size="small" @click="loadVideoDetail" style="margin-top: 16px">
-                重新加载
-            </nut-button>
+            <nut-icon name="failure" size="40" color="#ef4444" />
+            <text class="error-text">获取视频详情失败</text>
+            <view class="retry-btn" @tap="loadVideoDetail">重新加载</view>
         </view>
 
         <!-- 内容展示 -->
-        <view v-else class="video-detail-page">
+        <view v-else class="content-wrapper">
+            <!-- 固定收藏按钮 -->
+            <view class="fixed-favorite-btn" @tap="toggleFavorite">
+                <nut-icon
+                    :name="isFavorited ? 'heart-fill' : 'heart'"
+                    size="20"
+                    :color="isFavorited ? '#ff4949' : '#666666'"
+                />
+                <text class="favorite-label">{{ isFavorited ? '已收藏' : '收藏' }}</text>
+            </view>
+
+            <!-- 头部区域 -->
+            <VideoHeader :video-detail="videoDetail" />
+
             <!-- 视频播放器 -->
-            <view class="video-player-container">
-                <video
-                    class="video-player"
-                    :src="videoDetail.videoSource"
-                    :poster="videoDetail.coverImage || defaultCoverImage"
-                    controls
-                    autoplay
-                    initial-time="0"
-                    show-fullscreen-btn
-                    show-play-btn
-                    show-center-play-btn
-                    enable-progress-gesture
-                    object-fit="contain"
-                    @error="onVideoError"
+            <view class="player-wrapper">
+                <VideoPlayer
+                    :video-source-url="videoDetail.videoSourceUrl"
+                    :cover-image="videoDetail.coverImageUrl"
+                    :duration="videoDetail.duration || duration"
+                    @time-update="onTimeUpdate"
                 />
             </view>
 
-            <!-- 视频信息 -->
-            <view class="video-info">
-                <text class="video-title">{{ videoDetail.title }}</text>
-                <view class="meta-info">
-                    <text>{{ videoDetail.type }}</text>
-                    <text>{{ formatDate(videoDetail.publishedAt) }}</text>
-                </view>
-
-                <view class="meta-row">
-                    <text class="meta-label">作者:</text>
-                    <text class="meta-value">{{ videoDetail.author }}</text>
-                </view>
-
-                <view class="meta-row">
-                    <text class="meta-label">时长:</text>
-                    <text class="meta-value">{{ formatDuration(videoDetail.duration) }}</text>
-                </view>
-
-                <view class="meta-row" v-if="videoDetail.resolution">
-                    <text class="meta-label">分辨率:</text>
-                    <text class="meta-value">{{ videoDetail.resolution }}</text>
-                </view>
-
-                <view class="meta-row" v-if="videoDetail.language">
-                    <text class="meta-label">语言:</text>
-                    <text class="meta-value">{{ videoDetail.language }}</text>
-                </view>
-
-                <view class="meta-row" v-if="videoDetail.difficulty !== undefined">
-                    <text class="meta-label">难度等级:</text>
-                    <text class="meta-value">{{ getDifficultyText(videoDetail.difficulty) }}</text>
-                </view>
-
-                <view class="tags-container" v-if="videoDetail.tags && videoDetail.tags.length">
-                    <view class="tags">
-                        <text v-for="(tag, index) in videoDetail.tags" :key="index" class="tag">
-                            {{ tag }}
-                        </text>
-                    </view>
-                </view>
-            </view>
-
-            <!-- 视频描述 -->
-            <view class="content-section" v-if="videoDetail.description">
-                <view class="section-title">视频简介</view>
-                <text class="content-text">{{ videoDetail.description }}</text>
-            </view>
-
-            <!-- 详细内容 -->
-            <view class="content-section" v-if="videoDetail.content">
-                <view class="section-title">详细内容</view>
-                <text class="content-text">{{ videoDetail.content }}</text>
-            </view>
-
-            <!-- 字幕提示 -->
-            <view class="content-section" v-if="videoDetail.subtitles">
-                <view class="section-title">字幕说明</view>
-                <text class="content-text">本视频提供字幕服务，可在播放器中开启查看。</text>
-            </view>
+            <!-- 内容信息 -->
+            <VideoContent :video-detail="videoDetail" />
         </view>
     </view>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../../utils/apis';
+import favoriteManager from '../../../../utils/favoriteManager';
 
-export default {
-    name: 'VideoMaterialDetail',
-    data() {
-        return {
-            videoId: '',
-            videoDetail: {},
-            loading: true,
-            error: false,
-            defaultCoverImage: 'https://img.yzcdn.cn/vant/cat.jpeg',
-        };
-    },
-    onLoad(options) {
-        if (options.id) {
-            this.videoId = options.id;
-            this.loadVideoDetail();
-        } else {
-            Taro.showToast({
-                title: '参数错误',
-                icon: 'none',
-                duration: 2000,
-            });
-            setTimeout(() => {
-                Taro.navigateBack();
-            }, 2000);
-        }
-    },
-    methods: {
-        async loadVideoDetail() {
-            this.loading = true;
-            this.error = false;
+// 导入组件
+import VideoHeader from './components/VideoHeader.vue';
+import VideoPlayer from './components/VideoPlayer.vue';
+import VideoContent from './components/VideoContent.vue';
 
-            try {
-                const res = await Api.findVideoMaterialDetail({ id: this.videoId });
-                console.log('获取视频详情:', res);
+// 响应式数据
+const videoId = ref('');
+const videoDetail = ref({});
+const loading = ref(true);
+const error = ref(false);
+const isFavorited = ref(false);
+const duration = ref(0);
 
-                this.videoDetail = res;
-            } catch (error) {
-                console.error('加载视频详情失败:', error);
-                this.error = true;
-                Taro.showToast({
-                    title: '加载失败',
-                    icon: 'none',
-                    duration: 2000,
-                });
-            } finally {
-                this.loading = false;
-            }
-        },
+// 页面生命周期
+onMounted(() => {
+    const instance = Taro.getCurrentInstance();
+    const { id } = instance.router.params;
 
-        onVideoError(e) {
-            console.error('视频播放错误:', e);
-            Taro.showToast({
-                title: '视频加载失败',
-                icon: 'none',
-                duration: 2000,
-            });
-        },
+    if (id) {
+        videoId.value = id;
+        loadVideoDetail();
+        checkFavoriteStatus();
+    } else {
+        Taro.showToast({
+            title: '参数错误',
+            icon: 'none',
+            duration: 2000,
+        });
+        setTimeout(() => {
+            Taro.navigateBack();
+        }, 2000);
+    }
+});
 
-        formatDuration(seconds) {
-            if (!seconds) return '00:00';
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const remainingSeconds = Math.floor(seconds % 60);
+// 方法定义
+const loadVideoDetail = async () => {
+    loading.value = true;
+    error.value = false;
 
-            if (hours > 0) {
-                return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds
-                    .toString()
-                    .padStart(2, '0')}`;
-            } else {
-                return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-            }
-        },
+    try {
+        const res = await Api.findVideoMaterialDetail({ id: videoId.value });
+        console.log('[VideoDetail] 获取视频详情:', res);
+        videoDetail.value = res;
+        duration.value = res.duration || 0;
+    } catch (err) {
+        console.error('[VideoDetail] 加载视频详情失败:', err);
+        error.value = true;
+        Taro.showToast({
+            title: '加载失败',
+            icon: 'none',
+            duration: 2000,
+        });
+    } finally {
+        loading.value = false;
+    }
+};
 
-        formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-        },
+// 检查收藏状态
+const checkFavoriteStatus = async () => {
+    if (videoId.value) {
+        isFavorited.value = await favoriteManager.isFavoriteVideo(videoId.value);
+    }
+};
 
-        getDifficultyText(level) {
-            const difficulties = ['', '入门', '初级', '中级', '高级', '专家'];
-            return difficulties[level] || '未知';
-        },
-    },
+// 切换收藏状态
+const toggleFavorite = async () => {
+    if (!videoDetail.value.id) {
+        return;
+    }
+
+    try {
+        const newStatus = await favoriteManager.toggleFavoriteVideo(videoDetail.value);
+        isFavorited.value = newStatus;
+
+        Taro.showToast({
+            title: newStatus ? '已收藏' : '已取消收藏',
+            icon: 'success',
+            duration: 1500,
+        });
+    } catch (error) {
+        console.error('[VideoDetail] 切换收藏状态失败:', error);
+        Taro.showToast({
+            title: '操作失败',
+            icon: 'none',
+            duration: 2000,
+        });
+    }
+};
+
+// 视频时间更新回调
+const onTimeUpdate = (currentTime) => {
+    try {
+        // 可以在这里处理时间更新，如保存播放进度等
+        console.log('[VideoDetail] 视频时间更新:', currentTime);
+    } catch (error) {
+        // 静默处理错误
+    }
 };
 </script>
 

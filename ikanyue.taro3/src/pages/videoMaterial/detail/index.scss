@@ -1,102 +1,9 @@
+@import '@nutui/nutui-taro/dist/styles/variables.scss';
+
 .video-detail-page {
-    background-color: #f8f8f8;
+    background: linear-gradient(180deg, #f8f9ff 0%, #f0f2ff 100%);
     min-height: 100vh;
-    padding-bottom: 30px;
-}
-
-.video-player-container {
-    width: 100%;
-    background-color: #000;
     position: relative;
-}
-
-.video-player {
-    width: 100%;
-}
-
-.video-info {
-    background-color: #fff;
-    padding: 16px;
-    margin-bottom: 16px;
-}
-
-.video-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 12px;
-}
-
-.meta-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 14px;
-    color: #999;
-}
-
-.meta-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
-
-.meta-label {
-    color: #666;
-}
-
-.meta-value {
-    color: #333;
-}
-
-.tags-container {
-    margin-top: 12px;
-}
-
-.tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.tag {
-    font-size: 12px;
-    background-color: #f0f0f0;
-    color: #666;
-    padding: 2px 8px;
-    border-radius: 10px;
-}
-
-.content-section {
-    background-color: #fff;
-    padding: 16px;
-    margin-top: 16px;
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    position: relative;
-    padding-left: 12px;
-}
-
-.section-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 4px;
-    height: 16px;
-    width: 4px;
-    background-color: #3370ff;
-    border-radius: 2px;
-}
-
-.content-text {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #333;
-    white-space: pre-wrap;
 }
 
 .loading-container {
@@ -104,7 +11,34 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 400px;
+    background: #ffffff;
+    margin: 16px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.loading-spinner {
+    margin-bottom: 16px;
+
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
 .error-container {
@@ -112,6 +46,66 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    padding: 0 30px;
+    padding: 60px 32px;
+    background: #ffffff;
+    margin: 16px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.error-text {
+    font-size: 16px;
+    color: #ef4444;
+    margin: 16px 0 24px;
+    text-align: center;
+}
+
+.retry-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ff4949);
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 120px;
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+.content-wrapper {
+    padding-bottom: 100px; // 为固定按钮留出空间
+}
+
+.fixed-favorite-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.favorite-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.player-wrapper {
+    position: relative;
+    z-index: 1;
 }
