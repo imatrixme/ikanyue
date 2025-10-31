@@ -6,6 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
+const { processAudioMaterialFiles } = require('../../utils/fileUrl.js');
 
 /**
  * 音频材料更新处理器
@@ -13,7 +14,6 @@ const to = require('await-to-js').default;
  */
 async function audioMaterialUpdateHandler(c) {
   const body = await c.req.parseBody();
-  const user = c.get('user');
 
   const { id, ...updateData } = body;
 
@@ -47,14 +47,12 @@ async function audioMaterialUpdateHandler(c) {
       'publishedAt',
       'author',
       'duration',
-      'tags',
       'sequence',
       'status',
       'coverImage',
       'language',
       'difficulty',
-      'quality',
-      'transcript',
+      'tags',
     ];
 
     allowedFields.forEach((field) => {
@@ -68,54 +66,47 @@ async function audioMaterialUpdateHandler(c) {
       return c.error(400, '没有提供要更新的字段');
     }
 
-    // 字段验证和处理
-    if (processedData.title !== undefined) {
-      if (!processedData.title || !processedData.title.trim()) {
-        return c.error(400, '音频标题不能为空');
-      }
-      processedData.title = processedData.title.trim();
+    // 基本字段验证
+    if (processedData.title !== undefined && (!processedData.title || !processedData.title.trim())) {
+      return c.error(400, '音频标题不能为空');
     }
 
-    if (processedData.type !== undefined) {
-      if (!processedData.type || !processedData.type.trim()) {
-        return c.error(400, '音频类型不能为空');
-      }
-      processedData.type = processedData.type.trim();
+    if (processedData.audioSource !== undefined && (!processedData.audioSource || !processedData.audioSource.trim())) {
+      return c.error(400, '音频源文件不能为空');
     }
 
-    if (processedData.audioSource !== undefined) {
-      if (!processedData.audioSource || !processedData.audioSource.trim()) {
-        return c.error(400, '音频文件URL不能为空');
-      }
-      processedData.audioSource = processedData.audioSource.trim();
-    }
-
-    if (processedData.author !== undefined) {
-      if (!processedData.author || !processedData.author.trim()) {
-        return c.error(400, '音频作者不能为空');
-      }
-      processedData.author = processedData.author.trim();
-    }
-
+    // 数值类型验证
     if (processedData.duration !== undefined) {
-      if (isNaN(processedData.duration) || processedData.duration < 0) {
+      const duration = parseFloat(processedData.duration);
+      if (isNaN(duration) || duration < 0) {
         return c.error(400, '音频时长必须为非负数');
       }
-      processedData.duration = parseInt(processedData.duration, 10);
+      processedData.duration = duration;
     }
 
     if (processedData.sequence !== undefined) {
-      if (isNaN(processedData.sequence) || processedData.sequence < 0) {
+      const sequence = parseInt(processedData.sequence, 10);
+      if (isNaN(sequence) || sequence < 0) {
         return c.error(400, '排序序号必须为非负整数');
       }
-      processedData.sequence = parseInt(processedData.sequence, 10);
+      processedData.sequence = sequence;
     }
 
     if (processedData.difficulty !== undefined) {
-      if (isNaN(processedData.difficulty) || processedData.difficulty < 1 || processedData.difficulty > 5) {
+      const difficulty = parseInt(processedData.difficulty, 10);
+      if (isNaN(difficulty) || difficulty < 1 || difficulty > 5) {
         return c.error(400, '难度等级必须为1-5之间的整数');
       }
-      processedData.difficulty = parseInt(processedData.difficulty, 10);
+      processedData.difficulty = difficulty;
+    }
+
+    // 枚举值验证
+    if (processedData.language !== undefined && !['中文', '英文'].includes(processedData.language)) {
+      return c.error(400, '语言选项只能是"中文"或"英文"');
+    }
+
+    if (processedData.status !== undefined && !['draft', 'published'].includes(processedData.status)) {
+      return c.error(400, '状态只能是"draft"或"published"');
     }
 
     // 发布时间验证
@@ -124,18 +115,6 @@ async function audioMaterialUpdateHandler(c) {
       if (isNaN(publishDate.getTime())) {
         return c.error(400, '发布时间格式不正确');
       }
-    }
-
-    // 文本字段清理
-    ['description', 'content', 'coverImage', 'language', 'quality', 'transcript'].forEach((field) => {
-      if (processedData[field] !== undefined) {
-        processedData[field] = processedData[field].trim();
-      }
-    });
-
-    // 数组字段处理
-    if (processedData.tags !== undefined) {
-      processedData.tags = Array.isArray(processedData.tags) ? processedData.tags : [];
     }
 
     // 更新音频材料记录
@@ -149,7 +128,10 @@ async function audioMaterialUpdateHandler(c) {
       return c.error(500, '更新失败，请稍后重试');
     }
 
-    return c.data(record, '音频材料更新成功');
+    // 处理文件URL
+    const processedRecord = processAudioMaterialFiles(record);
+
+    return c.data(processedRecord, '音频材料更新成功');
   } catch (error) {
     console.error('音频材料更新异常:', error);
     return c.error(500, '服务器内部错误');

@@ -6,13 +6,27 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
+const { processVideoMaterialFiles, processBatchFiles } = require('../../utils/fileUrl.js');
 
 /**
  * 视频材料查询处理器
  * @param {Object} c - Hono 上下文对象
  */
 async function videoMaterialFindHandler(c) {
-  const query = c.req.query();
+  // 同时支持GET查询参数和POST form数据
+  let params = {};
+
+  if (c.req.method === 'GET') {
+    params = c.req.query();
+  } else if (c.req.method === 'POST') {
+    const formData = await c.req.parseBody();
+    const queryParams = c.req.query();
+    // POST时优先使用form数据，缺失的参数用query参数补充
+    params = { ...queryParams, ...formData };
+  } else {
+    params = c.req.query();
+  }
+
   const {
     id = '',
     page = 1,
@@ -25,7 +39,7 @@ async function videoMaterialFindHandler(c) {
     difficulty = '',
     resolution = '',
     author = '',
-  } = query;
+  } = params;
 
   try {
     // 查询单个视频材料
@@ -40,7 +54,10 @@ async function videoMaterialFindHandler(c) {
         return c.error(500, '查询失败，请稍后重试');
       }
 
-      return c.data(record, '查询成功');
+      // 处理文件URL
+      const processedRecord = processVideoMaterialFiles(record);
+
+      return c.data(processedRecord, '查询成功');
     }
 
     // 参数验证
@@ -108,9 +125,12 @@ async function videoMaterialFindHandler(c) {
       return c.error(500, '查询失败，请稍后重试');
     }
 
+    // 处理每个视频材料的文件URL
+    const processedItems = processBatchFiles(result.items, processVideoMaterialFiles);
+
     return c.data(
       {
-        items: result.items,
+        items: processedItems,
         totalItems: result.totalItems,
         totalPages: result.totalPages,
         page: result.page,

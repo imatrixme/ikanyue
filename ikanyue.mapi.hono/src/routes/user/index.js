@@ -14,16 +14,13 @@ const { userRefreshHandler } = require('./refresh');
  * 注册用户相关路由
  */
 function userRoutes(routes) {
-    routes.group('/v1/user', (user) => {
-        // 用户登录 - 无需认证
-        user.post('/login').handler(userLoginHandler);
+  routes.group('/v1/user', (user) => {
+    // 用户登录 - 无需认证
+    user.post('/login').handler(userLoginHandler);
 
-        // 需要认证的路由组
-        user.use(authMiddleware).group('', (authUser) => {
-            authUser.post('/update').handler(userUpdateHandler);
-            authUser.post('/refresh').handler(userRefreshHandler);
-        });
-    });
+    user.post('/update').use(authMiddleware).handler(userUpdateHandler);
+    user.post('/refresh').use(authMiddleware).handler(userRefreshHandler);
+  });
 }
 
 module.exports = userRoutes;

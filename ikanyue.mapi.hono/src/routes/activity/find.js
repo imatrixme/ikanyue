@@ -6,6 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
+<<<<<<< HEAD
 
 /**
  * 处理活动数据中的图片字段，转换为完整的URL
@@ -34,6 +35,9 @@ function processActivityImages(record) {
 
   return record;
 }
+=======
+const { processActivityFiles, processBatchFiles } = require('../../utils/fileUrl.js');
+>>>>>>> f4b01bff4fad4693f3b8927cbae9e7eafe2d0338
 
 /**
  * 活动查询处理器
@@ -66,7 +70,7 @@ async function activityFindHandler(c) {
       }
 
       // 处理图片URL
-      const processedRecord = processActivityImages(record);
+      const processedRecord = processActivityFiles(record);
 
       return c.data(processedRecord, '查询成功');
     }
@@ -122,7 +126,7 @@ async function activityFindHandler(c) {
     }
 
     // 处理每个活动的图片URL
-    const processedItems = result.items.map((item) => processActivityImages(item));
+    const processedItems = processBatchFiles(result.items, processActivityFiles);
 
     return c.data(
       {
