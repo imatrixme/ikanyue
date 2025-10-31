@@ -3,7 +3,7 @@ module.exports = {
         NODE_ENV: '"development"',
     },
     defineConstants: {
-        SERVICE_URL: JSON.stringify('http://192.168.2.110:1337'),
+        SERVICE_URL: JSON.stringify('http://172.19.66.185:1337'),
         STAGE: JSON.stringify('TEST'),
     },
     mini: {},
