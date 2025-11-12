@@ -22,41 +22,44 @@
         <nut-popup
             position="bottom"
             :visible="showLogin"
-            @close="showLogin = false"
+            @close="handleLoginPopupClose"
             :close-on-click-overlay="true"
             closeable
-            :style="{ height: '55%', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }"
-            @click-overlay="showLogin = false"
-            @click-close-icon="showLogin = false"
+            :style="{ height: '60%', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }"
+            @click-overlay="handleLoginPopupClose"
+            @click-close-icon="handleLoginPopupClose"
         >
             <view class="login-popup">
                 <view class="login-header">
                     <view class="login-title">账号登录</view>
                 </view>
-                <view class="login-form">
-                    <nut-input
-                        v-model="loginForm.phone"
-                        placeholder="请输入手机号"
-                        type="digit"
-                        class="login-input"
-                        clearable
-                    />
-                    <nut-input
-                        v-model="loginForm.password"
-                        placeholder="请输入密码"
-                        type="password"
-                        class="login-input"
-                        clearable
-                    />
+                <view class="login-desc">
+                    <text>为了保证账号安全，请使用微信官方授权方式完成登录。</text>
+                </view>
+                <view class="wechat-login">
+                    <view class="wechat-login__title">微信授权登录</view>
                     <nut-button
-                        type="primary"
+                        type="default"
                         block
-                        class="login-submit-btn"
-                        @click="handlePasswordLogin"
-                        :loading="loading"
+                        plain
+                        class="wechat-login__profile-btn"
+                        :loading="wechatProfileLoading"
+                        @click="handleWechatProfile"
                     >
-                        登录
+                        授权头像昵称
                     </nut-button>
+                    <button
+                        class="wechat-login__phone-btn"
+                        open-type="getPhoneNumber"
+                        :loading="wechatLoginLoading"
+                        :disabled="!wechatUserInfo || wechatLoginLoading"
+                        @getphonenumber="handleWechatPhone"
+                    >
+                        使用微信手机号一键登录
+                    </button>
+                    <view class="wechat-login__tips">
+                        <text>需先授权头像昵称，再授权手机号完成注册登录</text>
+                    </view>
                 </view>
             </view>
         </nut-popup>
@@ -64,7 +67,7 @@
 </template>
 
 <script>
-import Taro, { getCurrentInstance } from '@tarojs/taro';
+import Taro from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
 import { Api } from '../../../utils/apis';
 import dayjs from 'dayjs';
@@ -81,11 +84,9 @@ export default {
             },
             userInfo: undefined,
             showLogin: false,
-            loading: false,
-            loginForm: {
-                phone: '',
-                password: '',
-            },
+            wechatUserInfo: null,
+            wechatProfileLoading: false,
+            wechatLoginLoading: false,
         };
     },
     mounted() {
@@ -139,57 +140,109 @@ export default {
             this.showLogin = true;
             console.log('显示登录弹窗', this.showLogin);
         },
-        // 处理密码登录
-        handlePasswordLogin() {
-            // 表单验证
-            if (!this.loginForm.phone || !this.loginForm.password) {
+        handleLoginPopupClose() {
+            this.showLogin = false;
+            this.resetWechatAuthState();
+        },
+        resetWechatAuthState() {
+            this.wechatUserInfo = null;
+            this.wechatProfileLoading = false;
+            this.wechatLoginLoading = false;
+        },
+        async ensureWechatCode() {
+            const loginResult = await Taro.login();
+            if (!loginResult || !loginResult.code) {
+                throw new Error('获取微信登录态失败，请稍后重试');
+            }
+            return loginResult.code;
+        },
+        async handleWechatProfile() {
+            if (this.wechatProfileLoading) {
+                return;
+            }
+            if (!Taro.getUserProfile) {
                 Taro.showToast({
-                    title: '请输入手机号和密码',
+                    title: '当前基础库版本过低，无法使用微信授权',
                     icon: 'none',
                 });
                 return;
             }
-
-            // 手机号格式验证
-            if (!/^1\d{10}$/.test(this.loginForm.phone)) {
+            this.wechatProfileLoading = true;
+            try {
+                const result = await Taro.getUserProfile({
+                    desc: '用于完善个人资料',
+                });
+                this.wechatUserInfo = result.userInfo || null;
                 Taro.showToast({
-                    title: '请输入正确的手机号',
+                    title: '授权成功',
+                    icon: 'success',
+                });
+            } catch (error) {
+                console.error('获取微信用户信息失败', error);
+                Taro.showToast({
+                    title: '已取消授权',
+                    icon: 'none',
+                });
+            } finally {
+                this.wechatProfileLoading = false;
+            }
+        },
+        async handleWechatPhone(event) {
+            if (this.wechatLoginLoading) {
+                return;
+            }
+            if (!this.wechatUserInfo) {
+                Taro.showToast({
+                    title: '请先授权头像昵称',
                     icon: 'none',
                 });
                 return;
             }
-
-            this.loading = true;
-            console.log('开始登录请求');
-
-            Api.loginWithPassword(this.loginForm.phone, this.loginForm.password)
-                .then((res) => {
-                    console.log('登录成功响应:', res);
-                    this.showLogin = false;
-
-                    // 确保立即从缓存获取最新用户信息
-                    setTimeout(() => {
-                        this.refreshUserInfo();
-                        // 强制视图更新
-                        this.$forceUpdate();
-                        console.log('登录后用户信息:', this.userInfo);
-                    }, 100);
-
-                    Taro.showToast({
-                        title: '登录成功',
-                        icon: 'success',
-                    });
-                })
-                .catch((err) => {
-                    console.error('登录失败:', err);
-                    Taro.showToast({
-                        title: err.message || '登录失败，请重试',
-                        icon: 'none',
-                    });
-                })
-                .finally(() => {
-                    this.loading = false;
+            const detail = event?.detail || {};
+            if (detail.errMsg !== 'getPhoneNumber:ok') {
+                Taro.showToast({
+                    title: '未获取到手机号',
+                    icon: 'none',
                 });
+                return;
+            }
+            if (!detail.encryptedData || !detail.iv) {
+                Taro.showToast({
+                    title: '微信未返回手机号信息',
+                    icon: 'none',
+                });
+                return;
+            }
+            this.wechatLoginLoading = true;
+            try {
+                const code = await this.ensureWechatCode();
+                await Api.loginWithWechat({
+                    code,
+                    userInfo: this.wechatUserInfo,
+                    phone: {
+                        encryptedData: detail.encryptedData,
+                        iv: detail.iv,
+                    },
+                });
+                this.showLogin = false;
+                this.resetWechatAuthState();
+                setTimeout(() => {
+                    this.refreshUserInfo();
+                    this.$forceUpdate();
+                }, 100);
+                Taro.showToast({
+                    title: '登录成功',
+                    icon: 'success',
+                });
+            } catch (error) {
+                console.error('微信登录失败', error);
+                Taro.showToast({
+                    title: error?.message || '登录失败，请重试',
+                    icon: 'none',
+                });
+            } finally {
+                this.wechatLoginLoading = false;
+            }
         },
     },
 };
@@ -222,24 +275,11 @@ export default {
         }
     }
 
-    .login-form {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-
-        .login-input {
-            margin-top: 20px;
-        }
-
-        .login-submit-btn {
-            margin-top: 30px;
-            height: 45px;
-            border-radius: 22px;
-            font-size: 16px;
-            background: linear-gradient(to right, #ff4949, #ff7f50);
-            border: none;
-            box-shadow: 0 3px 10px rgba(255, 73, 73, 0.3);
-        }
+    .login-desc {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 12px;
     }
 }
 </style>

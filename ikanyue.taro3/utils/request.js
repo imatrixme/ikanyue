@@ -7,7 +7,7 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
     headers_['X-Ca-Stage'] = STAGE;
     headers_['X-Ca-Nonce'] = Math.floor(Date.now());
     headers_['X-Ca-Source'] = 'wechat_mp';
-    headers_['Content-Type'] = method === 'GET' ? 'application/json' : 'application/x-www-form-urlencoded';
+    headers_['Content-Type'] = 'application/json';
 
     return new Promise((resolve, reject) => {
         if (authcheck) {

@@ -31,6 +31,29 @@ const loginWithPassword = (cellphone, password) => {
 };
 
 /**
+ * 微信授权登录
+ * @param {Object} payload - 微信登录参数
+ * @param {string} payload.code - wx.login 返回的 code
+ * @param {Object} payload.userInfo - getUserProfile 返回的用户资料
+ * @param {Object} payload.phone - 微信加密手机号数据
+ * @returns {Promise}
+ */
+const loginWithWechat = (payload) => {
+    return new Promise((resolve, reject) => {
+        iNet.post('/v1/user/wechat-login', payload, false)
+            .then((res) => {
+                console.log('微信登录API返回结果:', res);
+                UserManager.updateUserInfoCache(res);
+                resolve(res);
+            })
+            .catch((err) => {
+                console.error('微信登录API错误:', err);
+                reject(err);
+            });
+    });
+};
+
+/**
  * 更新用户信息
  * @param {Object} userInfo - 要更新的用户信息
  * @returns {Promise} - 更新结果Promise
@@ -192,6 +215,7 @@ const findVideoMaterialDetail = (params = {}) => {
 
 const Api = {
     loginWithPassword,
+    loginWithWechat,
     updateUserInfo,
     refreshLogin,
     findActivities,
