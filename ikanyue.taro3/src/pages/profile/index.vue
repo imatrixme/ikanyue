@@ -37,28 +37,18 @@
                     <text>为了保证账号安全，请使用微信官方授权方式完成登录。</text>
                 </view>
                 <view class="wechat-login">
-                    <view class="wechat-login__title">微信授权登录</view>
-                    <nut-button
-                        type="default"
-                        block
-                        plain
-                        class="wechat-login__profile-btn"
-                        :loading="wechatProfileLoading"
-                        @click="handleWechatProfile"
-                    >
-                        授权头像昵称
-                    </nut-button>
                     <button
                         class="wechat-login__phone-btn"
                         open-type="getPhoneNumber"
-                        :loading="wechatLoginLoading"
-                        :disabled="!wechatUserInfo || wechatLoginLoading"
+                        :loading="wechatLoginLoading || wechatProfileLoading"
+                        :disabled="wechatLoginLoading || wechatProfileLoading"
+                        @tap="handleWechatTap"
                         @getphonenumber="handleWechatPhone"
                     >
                         使用微信手机号一键登录
                     </button>
-                    <view class="wechat-login__tips">
-                        <text>需先授权头像昵称，再授权手机号完成注册登录</text>
+                    <view class="wechat-login__note">
+                        <text>用于同步课堂报名、老师回访等账号服务</text>
                     </view>
                 </view>
             </view>
@@ -149,20 +139,13 @@ export default {
             this.wechatProfileLoading = false;
             this.wechatLoginLoading = false;
         },
-        async ensureWechatCode() {
-            const loginResult = await Taro.login();
-            if (!loginResult || !loginResult.code) {
-                throw new Error('获取微信登录态失败，请稍后重试');
-            }
-            return loginResult.code;
-        },
-        async handleWechatProfile() {
-            if (this.wechatProfileLoading) {
+        async handleWechatTap() {
+            if (this.wechatUserInfo || this.wechatProfileLoading) {
                 return;
             }
             if (!Taro.getUserProfile) {
                 Taro.showToast({
-                    title: '当前基础库版本过低，无法使用微信授权',
+                    title: '当前基础库版本过低，无法授权',
                     icon: 'none',
                 });
                 return;
@@ -173,10 +156,6 @@ export default {
                     desc: '用于完善个人资料',
                 });
                 this.wechatUserInfo = result.userInfo || null;
-                Taro.showToast({
-                    title: '授权成功',
-                    icon: 'success',
-                });
             } catch (error) {
                 console.error('获取微信用户信息失败', error);
                 Taro.showToast({
@@ -187,21 +166,41 @@ export default {
                 this.wechatProfileLoading = false;
             }
         },
+        async ensureWechatCode() {
+            const loginResult = await Taro.login();
+            if (!loginResult || !loginResult.code) {
+                throw new Error('获取微信登录态失败，请稍后重试');
+            }
+            return loginResult.code;
+        },
+        async ensureWechatProfile() {
+            if (this.wechatUserInfo) {
+                return this.wechatUserInfo;
+            }
+            if (!Taro.getUserProfile) {
+                throw new Error('当前基础库版本过低，无法获取微信资料');
+            }
+            const result = await Taro.getUserProfile({
+                desc: '用于完善个人资料',
+            });
+            this.wechatUserInfo = result.userInfo || null;
+            return this.wechatUserInfo;
+        },
         async handleWechatPhone(event) {
             if (this.wechatLoginLoading) {
-                return;
-            }
-            if (!this.wechatUserInfo) {
-                Taro.showToast({
-                    title: '请先授权头像昵称',
-                    icon: 'none',
-                });
                 return;
             }
             const detail = event?.detail || {};
             if (detail.errMsg !== 'getPhoneNumber:ok') {
                 Taro.showToast({
                     title: '未获取到手机号',
+                    icon: 'none',
+                });
+                return;
+            }
+            if (!this.wechatUserInfo) {
+                Taro.showToast({
+                    title: '请先允许获取头像昵称',
                     icon: 'none',
                 });
                 return;
@@ -215,6 +214,7 @@ export default {
             }
             this.wechatLoginLoading = true;
             try {
+                await this.ensureWechatProfile();
                 const code = await this.ensureWechatCode();
                 await Api.loginWithWechat({
                     code,

@@ -1,6 +1,7 @@
 <template>
     <view class="userinfo-page">
-        <nut-form>
+        <view class="userinfo-content">
+            <nut-form>
             <nut-form-item label="昵称">
                 <view class="input-field">
                     <input v-model="currentNickname" placeholder="请输入昵称" type="text" class="native-input" />
@@ -38,17 +39,21 @@
                     <nut-icon name="right" size="14px" color="#999"></nut-icon>
                 </view>
             </nut-form-item>
-        </nut-form>
+            </nut-form>
 
-        <view class="info-tips">
-            <text>
-                *
-                以上信息不会泄露给任何第三方，仅用于评估交流计划。由于声乐学习与年龄、地域语言习惯密切相关，如实填写以上信息，将有助于我们制定更具针对性的学习计划。姓名、电话号码将用于日常教学联系，包括但不限于预约、问题与反馈等。
-            </text>
+            <view class="info-tips">
+                <text>
+                    *
+                    以上信息不会泄露给任何第三方，仅用于评估交流计划。由于声乐学习与年龄、地域语言习惯密切相关，如实填写以上信息，将有助于我们制定更具针对性的学习计划。姓名、电话号码将用于日常教学联系，包括但不限于预约、问题与反馈等。
+                </text>
+            </view>
+            <view class="info-action">
+                <nut-button type="primary" size="large" class="savebtn" @click="saveInfo">保存</nut-button>
+            </view>
         </view>
 
-        <view class="info-action">
-            <nut-button type="primary" size="large" class="savebtn" @click="saveInfo">保存</nut-button>
+        <view class="logout-footer">
+            <view class="logout-link" @click="logout">退出登录</view>
         </view>
 
         <!-- 性别选择器 -->
@@ -253,6 +258,16 @@ export default {
                 .finally(() => {
                     Taro.hideLoading();
                 });
+        },
+        logout: () => {
+            UserManager.logout();
+            Taro.showToast({
+                title: '已退出',
+                icon: 'none',
+            });
+            setTimeout(() => {
+                Taro.switchTab({ url: '/pages/profile/index' });
+            }, 500);
         },
     },
 };
