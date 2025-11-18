@@ -10,7 +10,8 @@ const path = require('path');
 
 // 根据环境加载不同的.env文件
 const nodeEnv = process.env.NODE_ENV || 'development';
-const envPath = path.resolve(process.cwd(), nodeEnv === 'production' ? '.env' : `.env.${nodeEnv}`);
+// prod -> .env.production; other envs -> .env.<env>; fallback to .env
+const envPath = path.resolve(process.cwd(), nodeEnv === 'production' ? '.env.production' : `.env.${nodeEnv}`);
 
 // 首先尝试加载环境特定的.env文件，如果失败则加载默认的.env文件
 try {
