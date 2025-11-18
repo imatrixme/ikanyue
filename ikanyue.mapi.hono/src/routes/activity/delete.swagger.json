@@ -1,0 +1,241 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "活动删除接口",
+    "version": "1.0.0",
+    "description": "删除指定活动，需要管理员权限。删除前会检查活动是否存在"
+  },
+  "paths": {
+    "/v1/activity/delete": {
+      "post": {
+        "summary": "删除活动",
+        "description": "删除指定的活动记录，需要管理员权限。删除前会验证活动是否存在",
+        "tags": ["Activity"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "要删除的活动ID，必填",
+                    "example": "activity_123"
+                  }
+                }
+              },
+              "example": {
+                "id": "activity_123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "活动删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 10000
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "活动删除成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "活动删除成功"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 10000,
+                  "message": "活动删除成功",
+                  "data": {
+                    "success": true,
+                    "message": "活动删除成功"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "活动ID不能为空"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权访问",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 401
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "未授权访问"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足（非管理员）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 403
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "权限不足"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "活动不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 404
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "活动不存在"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 500
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                },
+                "examples": {
+                  "query_failed": {
+                    "summary": "查询失败",
+                    "value": {
+                      "code": 500,
+                      "message": "查询失败，请稍后重试",
+                      "data": null
+                    }
+                  },
+                  "delete_failed": {
+                    "summary": "删除失败",
+                    "value": {
+                      "code": 500,
+                      "message": "删除失败，请稍后重试",
+                      "data": null
+                    }
+                  },
+                  "server_error": {
+                    "summary": "服务器异常",
+                    "value": {
+                      "code": 500,
+                      "message": "服务器内部错误",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "管理员 JWT 令牌"
+      }
+    }
+  }
+} 

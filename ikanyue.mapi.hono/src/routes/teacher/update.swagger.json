@@ -1,0 +1,339 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "更新教师信息",
+    "version": "1.0.0",
+    "description": "更新教师信息接口，支持修改教师的基本信息，包括个人资料、密码等。具有安全字段保护机制，敏感字段需要专门接口修改。"
+  },
+  "paths": {
+    "/v1/teacher/update": {
+      "post": {
+        "summary": "更新教师信息",
+        "description": "更新指定教师的基本信息。会自动过滤敏感字段，支持密码修改时的自动加密。",
+        "tags": ["Teacher"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeacherRequest"
+              },
+              "example": {
+                "id": "teacher_67894a2b-f8c7-4b2a-9d1e-3456789abcde",
+                "realname": "李老师",
+                "nickName": "小李",
+                "avatar": "https://example.com/new_avatar.jpg",
+                "gender": "1",
+                "age": 31,
+                "province": "广东省",
+                "city": "深圳市",
+                "address": "南山区科技园B座",
+                "qualification": "高级教师资格证",
+                "experience": 8,
+                "bio": "资深英语教师，专注于口语教学",
+                "password": "newpassword123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTeacherResponse"
+                },
+                "example": {
+                  "code": 10000,
+                  "message": null,
+                  "data": {
+                    "id": "teacher_67894a2b-f8c7-4b2a-9d1e-3456789abcde",
+                    "sn": "sn_unique_id_12345",
+                    "cellphone": "13900139000",
+                    "realname": "李老师",
+                    "nickName": "小李",
+                    "avatar": "https://example.com/new_avatar.jpg",
+                    "gender": "1",
+                    "age": 31,
+                    "province": "广东省",
+                    "city": "深圳市",
+                    "address": "南山区科技园B座",
+                    "qualification": "高级教师资格证",
+                    "experience": 8,
+                    "bio": "资深英语教师，专注于口语教学",
+                    "blocked": false,
+                    "verified": true,
+                    "idAdmin": false,
+                    "created": "2024-12-26 09:00:00.000Z",
+                    "updated": "2024-12-26 10:30:15.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "缺少教师ID",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "教师不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "教师不存在",
+                  "data": null
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "更新教师信息失败",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateTeacherRequest": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "教师记录ID",
+            "example": "teacher_67894a2b-f8c7-4b2a-9d1e-3456789abcde"
+          },
+          "realname": {
+            "type": "string",
+            "description": "真实姓名",
+            "example": "李老师"
+          },
+          "nickName": {
+            "type": "string",
+            "description": "昵称",
+            "example": "小李"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL",
+            "format": "uri",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别 (0:未知，1:男，2:女)",
+            "enum": ["0", "1", "2"],
+            "example": "1"
+          },
+          "age": {
+            "type": "integer",
+            "description": "年龄",
+            "minimum": 1,
+            "maximum": 150,
+            "example": 31
+          },
+          "province": {
+            "type": "string",
+            "description": "省份",
+            "example": "广东省"
+          },
+          "city": {
+            "type": "string",
+            "description": "城市",
+            "example": "深圳市"
+          },
+          "address": {
+            "type": "string",
+            "description": "地址",
+            "example": "南山区科技园B座"
+          },
+          "qualification": {
+            "type": "string",
+            "description": "教师资格",
+            "example": "高级教师资格证"
+          },
+          "experience": {
+            "type": "number",
+            "description": "教学经验（年）",
+            "minimum": 0,
+            "example": 8
+          },
+          "bio": {
+            "type": "string",
+            "description": "个人简介",
+            "example": "资深英语教师，专注于口语教学"
+          },
+          "password": {
+            "type": "string",
+            "description": "新密码（可选，会自动加密）",
+            "minLength": 6,
+            "example": "newpassword123"
+          }
+        }
+      },
+      "UpdatedTeacherData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "教师 ID"
+          },
+          "sn": {
+            "type": "string",
+            "description": "教师序列号"
+          },
+          "cellphone": {
+            "type": "string",
+            "description": "手机号"
+          },
+          "realname": {
+            "type": "string",
+            "description": "真实姓名"
+          },
+          "nickName": {
+            "type": "string",
+            "description": "昵称"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL"
+          },
+          "gender": {
+            "type": "string",
+            "description": "性别 (0:未知，1:男，2:女)"
+          },
+          "age": {
+            "type": "integer",
+            "description": "年龄"
+          },
+          "province": {
+            "type": "string",
+            "description": "省份"
+          },
+          "city": {
+            "type": "string",
+            "description": "城市"
+          },
+          "address": {
+            "type": "string",
+            "description": "地址"
+          },
+          "qualification": {
+            "type": "string",
+            "description": "教师资格"
+          },
+          "experience": {
+            "type": "number",
+            "description": "教学经验（年）"
+          },
+          "bio": {
+            "type": "string",
+            "description": "个人简介"
+          },
+          "blocked": {
+            "type": "boolean",
+            "description": "是否被屏蔽"
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "是否已审核"
+          },
+          "idAdmin": {
+            "type": "boolean",
+            "description": "是否为管理员"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "UpdateTeacherResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "data": {
+            "$ref": "#/components/schemas/UpdatedTeacherData"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "null",
+            "example": null
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "需要认证的 JWT Token"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Teacher",
+      "description": "教师管理相关接口"
+    }
+  ]
+} 

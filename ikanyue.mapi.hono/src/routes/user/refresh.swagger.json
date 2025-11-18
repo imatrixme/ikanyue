@@ -1,0 +1,196 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "刷新用户令牌",
+    "version": "1.0.0",
+    "description": "刷新用户令牌接口，为已认证用户生成新的访问令牌，延长用户的登录状态"
+  },
+  "paths": {
+    "/v1/user/refresh": {
+      "post": {
+        "summary": "刷新用户令牌",
+        "description": "为已认证用户生成新的访问令牌，延长用户的登录状态",
+        "tags": ["User"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "令牌刷新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 10000
+                    },
+                    "message": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": null
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "description": "新的JWT令牌"
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "用户ID"
+                            },
+                            "email": {
+                              "type": "string",
+                              "description": "用户邮箱"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "用户姓名"
+                            },
+                            "avatar": {
+                              "type": "string",
+                              "description": "用户头像URL"
+                            },
+                            "emailVisibility": {
+                              "type": "boolean",
+                              "description": "邮箱可见性"
+                            },
+                            "verified": {
+                              "type": "boolean",
+                              "description": "邮箱验证状态"
+                            },
+                            "created": {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "创建时间"
+                            },
+                            "updated": {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "更新时间"
+                            }
+                          }
+                        },
+                        "expires": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "令牌过期时间"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 10000,
+                  "message": null,
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InU3YzNxOHlxMXdrc2QzeiIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM1MjU0MjkyLCJleHAiOjE3MzU4NTkwOTJ9.abc123def456",
+                    "user": {
+                      "id": "u7c3q8yq1wksd3z",
+                      "email": "test@example.com",
+                      "name": "测试用户",
+                      "avatar": "https://example.com/avatar.jpg",
+                      "emailVisibility": true,
+                      "verified": true,
+                      "created": "2024-12-26T10:00:00.000Z",
+                      "updated": "2024-12-26T10:08:12.000Z"
+                    },
+                    "expires": "2024-01-02T10:08:12.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "examples": {
+                  "authFailed": {
+                    "summary": "认证失败",
+                    "value": {
+                      "code": 40101,
+                      "message": "认证失败",
+                      "data": null
+                    }
+                  },
+                  "tokenExpired": {
+                    "summary": "令牌过期",
+                    "value": {
+                      "code": 40102,
+                      "message": "令牌过期",
+                      "data": null
+                    }
+                  },
+                  "userNotExists": {
+                    "summary": "用户不存在",
+                    "value": {
+                      "code": 40103,
+                      "message": "用户不存在",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 50001
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "生成令牌失败"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 

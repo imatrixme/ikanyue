@@ -44,7 +44,8 @@ async function userUpdateHandler(c) {
   const userRole = user.role;
 
   // 获取要更新的字段
-  const body = await c.req.parseBody();
+  const contentType = c.req.header('content-type') || '';
+  const body = contentType.includes('application/json') ? await c.req.json() : await c.req.parseBody();
   const updateData = {};
   const allowedFields = [
     'realname',

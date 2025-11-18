@@ -1,0 +1,419 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "更新音频材料",
+    "version": "1.0.0",
+    "description": "更新现有音频材料的信息，支持修改标题、类型、描述、音频源、内容等所有字段，需要教师权限"
+  },
+  "paths": {
+    "/v1/audioMaterial/update": {
+      "post": {
+        "summary": "更新音频材料",
+        "description": "更新现有音频材料的信息，支持部分字段更新",
+        "tags": ["AudioMaterial"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "音频材料更新数据",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "音频材料ID",
+                    "example": "a7c3q8yq1wksd3z"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "音频材料标题",
+                    "example": "高级英语听力练习"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "音频类型",
+                    "example": "listening"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "音频描述",
+                    "example": "适合高级学员的英语听力训练"
+                  },
+                  "audioSource": {
+                    "type": "string",
+                    "description": "音频源文件",
+                    "example": "advanced_listening.mp3"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "音频内容",
+                    "example": "包含商务对话、学术讲座等"
+                  },
+                  "publishedAt": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "发布时间",
+                    "example": "2024-01-15"
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "作者",
+                    "example": "李老师"
+                  },
+                  "duration": {
+                    "type": "number",
+                    "description": "音频时长（秒）",
+                    "minimum": 0,
+                    "example": 300
+                  },
+                  "sequence": {
+                    "type": "number",
+                    "description": "排序序号",
+                    "minimum": 0,
+                    "example": 5
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["draft", "published"],
+                    "description": "状态",
+                    "example": "published"
+                  },
+                  "coverImage": {
+                    "type": "string",
+                    "description": "封面图片文件",
+                    "example": "advanced_cover.jpg"
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": ["中文", "英文"],
+                    "description": "语言",
+                    "example": "英文"
+                  },
+                  "difficulty": {
+                    "type": "number",
+                    "description": "难度等级（1-5）",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "example": 4
+                  },
+                  "tags": {
+                    "type": "string",
+                    "description": "标签",
+                    "example": "听力,高级,商务"
+                  }
+                }
+              },
+              "example": {
+                "id": "a7c3q8yq1wksd3z",
+                "title": "高级英语听力练习",
+                "description": "适合高级学员的英语听力训练",
+                "duration": 300,
+                "difficulty": 4,
+                "status": "published"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "音频材料更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 10000
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "音频材料更新成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "音频材料ID"
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "音频材料标题"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "音频类型"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "音频描述"
+                        },
+                        "audioSource": {
+                          "type": "string",
+                          "description": "音频源文件"
+                        },
+                        "content": {
+                          "type": "string",
+                          "description": "音频内容"
+                        },
+                        "publishedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "发布时间"
+                        },
+                        "author": {
+                          "type": "string",
+                          "description": "作者"
+                        },
+                        "duration": {
+                          "type": "number",
+                          "description": "音频时长（秒）"
+                        },
+                        "sequence": {
+                          "type": "number",
+                          "description": "排序序号"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["draft", "published"],
+                          "description": "状态"
+                        },
+                        "language": {
+                          "type": "string",
+                          "enum": ["中文", "英文"],
+                          "description": "语言"
+                        },
+                        "difficulty": {
+                          "type": "number",
+                          "description": "难度等级"
+                        },
+                        "tags": {
+                          "type": "string",
+                          "description": "标签"
+                        },
+                        "coverImage": {
+                          "type": "string",
+                          "description": "封面图片文件"
+                        },
+                        "created": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "创建时间"
+                        },
+                        "updated": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "更新时间"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 10000,
+                  "message": "音频材料更新成功",
+                  "data": {
+                    "id": "a7c3q8yq1wksd3z",
+                    "title": "高级英语听力练习",
+                    "type": "listening",
+                    "description": "适合高级学员的英语听力训练",
+                    "audioSource": "advanced_listening.mp3",
+                    "content": "包含商务对话、学术讲座等",
+                    "publishedAt": "2024-01-15T00:00:00.000Z",
+                    "author": "李老师",
+                    "duration": 300,
+                    "sequence": 5,
+                    "status": "published",
+                    "coverImage": "advanced_cover.jpg",
+                    "language": "英文",
+                    "difficulty": 4,
+                    "tags": "听力,高级,商务",
+                    "created": "2024-12-26T10:00:00.000Z",
+                    "updated": "2024-12-26T15:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40001
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                },
+                "examples": {
+                  "idEmpty": {
+                    "summary": "ID为空",
+                    "value": {
+                      "code": 40001,
+                      "message": "音频材料ID不能为空",
+                      "data": null
+                    }
+                  },
+                  "noUpdateFields": {
+                    "summary": "无更新字段",
+                    "value": {
+                      "code": 40001,
+                      "message": "没有提供要更新的字段",
+                      "data": null
+                    }
+                  },
+                  "titleEmpty": {
+                    "summary": "标题为空",
+                    "value": {
+                      "code": 40001,
+                      "message": "音频材料标题不能为空",
+                      "data": null
+                    }
+                  },
+                  "difficultyInvalid": {
+                    "summary": "难度等级错误",
+                    "value": {
+                      "code": 40001,
+                      "message": "难度等级必须为1-5之间的整数",
+                      "data": null
+                    }
+                  },
+                  "languageInvalid": {
+                    "summary": "语言选项错误",
+                    "value": {
+                      "code": 40001,
+                      "message": "语言只能是'中文'或'英文'",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40101
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "认证失败"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40301
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "需要教师权限"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "音频材料不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40401
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "音频材料不存在"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 50001
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "更新音频材料失败"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 

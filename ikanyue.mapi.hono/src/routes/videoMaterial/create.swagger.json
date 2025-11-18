@@ -1,0 +1,418 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "创建视频材料",
+    "version": "1.0.0",
+    "description": "创建新的视频材料记录，支持设置标题、类型、描述、视频源、内容等完整信息，需要教师权限"
+  },
+  "paths": {
+    "/v1/videoMaterial/create": {
+      "post": {
+        "summary": "创建视频材料",
+        "description": "创建新的视频材料记录，支持完整的视频材料信息设置",
+        "tags": ["VideoMaterial"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "视频材料创建数据",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "视频材料标题",
+                    "example": "商务英语视频教程1"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "视频类型",
+                    "example": "tutorial"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "视频描述",
+                    "example": "商务英语入门视频教程"
+                  },
+                  "videoSource": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "视频源URL",
+                    "example": "https://example.com/videos/business_english_1.mp4"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "视频内容描述",
+                    "example": "详细的视频教程内容说明"
+                  },
+                  "publishedAt": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "发布时间",
+                    "example": "2024-01-01"
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "作者",
+                    "example": "王老师"
+                  },
+                  "duration": {
+                    "type": "number",
+                    "description": "视频时长（秒）",
+                    "minimum": 0,
+                    "example": 1200
+                  },
+                  "sequence": {
+                    "type": "number",
+                    "description": "排序序号",
+                    "minimum": 0,
+                    "example": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["draft", "published"],
+                    "description": "状态",
+                    "default": "draft",
+                    "example": "draft"
+                  },
+                  "coverImage": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "封面图片URL",
+                    "example": "https://example.com/covers/video_cover.jpg"
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": ["中文", "英文"],
+                    "description": "语言",
+                    "example": "中文"
+                  },
+                  "difficulty": {
+                    "type": "number",
+                    "description": "难度等级（1-5）",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "example": 3
+                  },
+                  "tags": {
+                    "type": "string",
+                    "description": "标签",
+                    "example": "商务英语,入门"
+                  },
+                  "resolution": {
+                    "type": "string",
+                    "enum": ["480p", "720p", "1080p", "4k"],
+                    "description": "视频分辨率",
+                    "example": "1080p"
+                  },
+                  "subtitles": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "字幕文件URL",
+                    "example": "https://example.com/subtitles/video_1_zh.srt"
+                  }
+                }
+              },
+              "example": {
+                "title": "商务英语视频教程1",
+                "type": "tutorial",
+                "description": "商务英语入门视频教程",
+                "videoSource": "https://example.com/videos/business_english_1.mp4",
+                "content": "详细的视频教程内容说明",
+                "publishedAt": "2024-01-01",
+                "author": "王老师",
+                "duration": 1200,
+                "sequence": 1,
+                "status": "draft",
+                "coverImage": "https://example.com/covers/video_cover.jpg",
+                "language": "中文",
+                "difficulty": 3,
+                "tags": "商务英语,入门",
+                "resolution": "1080p",
+                "subtitles": "https://example.com/subtitles/video_1_zh.srt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "视频材料创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 10000
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "视频材料创建成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "视频材料ID"
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "视频材料标题"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "视频类型"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "视频描述"
+                        },
+                        "videoSource": {
+                          "type": "string",
+                          "description": "视频源URL"
+                        },
+                        "content": {
+                          "type": "string",
+                          "description": "视频内容"
+                        },
+                        "publishedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "发布时间"
+                        },
+                        "author": {
+                          "type": "string",
+                          "description": "作者"
+                        },
+                        "duration": {
+                          "type": "number",
+                          "description": "视频时长（秒）"
+                        },
+                        "sequence": {
+                          "type": "number",
+                          "description": "排序序号"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["draft", "published"],
+                          "description": "状态"
+                        },
+                        "language": {
+                          "type": "string",
+                          "enum": ["中文", "英文"],
+                          "description": "语言"
+                        },
+                        "difficulty": {
+                          "type": "number",
+                          "description": "难度等级"
+                        },
+                        "tags": {
+                          "type": "string",
+                          "description": "标签"
+                        },
+                        "coverImage": {
+                          "type": "string",
+                          "description": "封面图片URL"
+                        },
+                        "resolution": {
+                          "type": "string",
+                          "enum": ["480p", "720p", "1080p", "4k"],
+                          "description": "视频分辨率"
+                        },
+                        "subtitles": {
+                          "type": "string",
+                          "description": "字幕文件URL"
+                        },
+                        "created": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "创建时间"
+                        },
+                        "updated": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "更新时间"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "code": 10000,
+                  "message": "视频材料创建成功",
+                  "data": {
+                    "id": "v7c3q8yq1wksd3z",
+                    "title": "商务英语视频教程1",
+                    "type": "tutorial",
+                    "description": "商务英语入门视频教程",
+                    "videoSource": "https://example.com/videos/business_english_1.mp4",
+                    "content": "详细的视频教程内容说明",
+                    "publishedAt": "2024-01-01T00:00:00.000Z",
+                    "author": "王老师",
+                    "duration": 1200,
+                    "sequence": 1,
+                    "status": "draft",
+                    "coverImage": "https://example.com/covers/video_cover.jpg",
+                    "language": "中文",
+                    "difficulty": 3,
+                    "tags": "商务英语,入门",
+                    "resolution": "1080p",
+                    "subtitles": "https://example.com/subtitles/video_1_zh.srt",
+                    "created": "2024-12-26T10:00:00.000Z",
+                    "updated": "2024-12-26T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40001
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                },
+                "examples": {
+                  "titleEmpty": {
+                    "summary": "标题为空",
+                    "value": {
+                      "code": 40001,
+                      "message": "视频材料标题不能为空",
+                      "data": null
+                    }
+                  },
+                  "difficultyInvalid": {
+                    "summary": "难度等级错误",
+                    "value": {
+                      "code": 40001,
+                      "message": "难度等级必须为1-5之间的整数",
+                      "data": null
+                    }
+                  },
+                  "languageInvalid": {
+                    "summary": "语言选项错误",
+                    "value": {
+                      "code": 40001,
+                      "message": "语言只能是'中文'或'英文'",
+                      "data": null
+                    }
+                  },
+                  "resolutionInvalid": {
+                    "summary": "分辨率选项错误",
+                    "value": {
+                      "code": 40001,
+                      "message": "分辨率只能是'480p'、'720p'、'1080p'或'4k'",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40101
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "认证失败"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 40301
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "需要教师权限"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 50001
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "创建视频材料失败"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 
