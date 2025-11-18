@@ -16,6 +16,7 @@
                 <text class="province" v-if="userInfo.province !== undefined">{{ userInfo.province }}</text>
             </view>
             <nut-button type="default" class="modifybtn" @click="modifyInfo">修改信息</nut-button>
+            <view class="promo-link" @click="goPromo">我要推广</view>
         </view>
 
         <!-- 登录弹窗 -->
@@ -124,6 +125,9 @@ export default {
                 return;
             }
             Taro.navigateTo({ url: '/pages/userinfo/index' });
+        },
+        goPromo() {
+            Taro.navigateTo({ url: '/pages/prompt/index' });
         },
         // 显示登录弹窗
         showLoginPopup() {

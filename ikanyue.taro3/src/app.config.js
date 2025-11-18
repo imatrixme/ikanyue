@@ -7,6 +7,7 @@ export default defineAppConfig({
         'pages/userinfo/index',
         'pages/activityDetail/index',
         'pages/webview/index',
+        'pages/prompt/index',
         'pages/audioMaterial/index',
         'pages/audioMaterial/detail/index',
         'pages/videoMaterial/index',
