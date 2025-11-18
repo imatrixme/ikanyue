@@ -11,9 +11,8 @@
     height: 88vh;
 
     .logo {
-        width: 100px;
-        border-radius: 25%;
-        // border: 1px solid #f0f0f0;
+        width: 180px;
+        border-radius: 12px;
     }
 
     .content {
@@ -29,7 +28,7 @@
             color: #202020;
         }
         .slogan {
-            font-size: 14px;
+            font-size: 12px;
             color: #888888;
         }
     }
@@ -48,6 +47,15 @@
     align-items: center;
     height: 88vh;
 
+    .avatar-box {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
     .avatar {
         width: 100px;
         height: 100px;
@@ -55,6 +63,31 @@
         border: 1px solid #eee;
         background-color: #f0f0f0;
         overflow: hidden;
+        position: relative;
+        z-index: 1;
+    }
+
+    .brand-badge {
+        position: absolute;
+        top: 86px; // 100px avatar height - 14px (badge half height)
+        left: 50%;
+        transform: translateX(-50%);
+        width: 66px; // 2/3 of avatar width
+        height: 26px;
+        padding: 1px 2px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #1a1a1a, #222);
+        border: 1px solid #2a2a2a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+
+        &__logo {
+            width: 58px;
+            height: 16px;
+            filter: sepia(1) saturate(10) hue-rotate(-15deg) brightness(1.1);
+        }
     }
 
     .content {
@@ -80,12 +113,6 @@
         padding: 0 32px;
     }
 
-    .promo-link {
-        margin-top: 8px;
-        font-size: 14px;
-        color: #888;
-        text-decoration: underline;
-    }
 }
 
 .wechat-login {

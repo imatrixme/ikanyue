@@ -10,13 +10,17 @@
         </view>
 
         <view class="loginview" v-if="isLogin()">
-            <image class="avatar" :src="images.avatar" mode="widthFix" />
+            <view class="avatar-box">
+                <image class="avatar" :src="displayAvatar" mode="aspectFill" />
+                <view class="brand-badge">
+                    <image class="brand-badge__logo" :src="images.logoBadge" mode="widthFix" />
+                </view>
+            </view>
             <view class="content">
                 <text class="nickname">{{ userInfo.nickname }}</text>
                 <text class="province" v-if="userInfo.province !== undefined">{{ userInfo.province }}</text>
             </view>
             <nut-button type="default" class="modifybtn" @click="modifyInfo">修改信息</nut-button>
-            <view class="promo-link" @click="goPromo">我要推广</view>
         </view>
 
         <!-- 登录弹窗 -->
@@ -70,8 +74,9 @@ export default {
         return {
             dayjs: dayjs,
             images: {
-                logo: require('../../imgs/kanyue_logo_1.png'),
-                avatar: require('../../imgs/kanyue_logo_avatar_1.png'),
+                logo: require('../../imgs/logo_kanyue@512.png'),
+                logoBadge: require('../../imgs/logo_kanyue@512.png'),
+                avatarFallback: require('../../imgs/logo_kanyue@512.png'),
             },
             userInfo: undefined,
             showLogin: false,
@@ -79,6 +84,11 @@ export default {
             wechatProfileLoading: false,
             wechatLoginLoading: false,
         };
+    },
+    computed: {
+        displayAvatar() {
+            return this.userInfo?.avatarUrl || this.userInfo?.avatar || this.images.avatarFallback;
+        },
     },
     mounted() {
         this.refreshUserInfo();
@@ -125,9 +135,6 @@ export default {
                 return;
             }
             Taro.navigateTo({ url: '/pages/userinfo/index' });
-        },
-        goPromo() {
-            Taro.navigateTo({ url: '/pages/prompt/index' });
         },
         // 显示登录弹窗
         showLoginPopup() {

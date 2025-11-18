@@ -38,18 +38,6 @@ export default defineAppConfig({
                 text: '活动',
             },
             {
-                pagePath: 'pages/audioMaterial/index',
-                iconPath: 'imgs/audio.png',
-                selectedIconPath: 'imgs/audio-sel.png',
-                text: '音频',
-            },
-            {
-                pagePath: 'pages/videoMaterial/index',
-                iconPath: 'imgs/audio.png',
-                selectedIconPath: 'imgs/audio-sel.png',
-                text: '视频',
-            },
-            {
                 pagePath: 'pages/profile/index',
                 iconPath: 'imgs/profile.png',
                 selectedIconPath: 'imgs/profile-sel.png',
