@@ -38,7 +38,7 @@ flowchart TD
 
 | 字段 | 类型 | 必填 | 说明 |
 | ---- | ---- | ---- | ---- |
-| `code` | string | 是 | `wx.login` 返回的 `code` |
+| `code` | string | 是 | `wx.login` 返回的 `code`，也可传 `authCode`/`auth_code` 或放在查询参数中 |
 | `userInfo` | object | 否 | `getUserProfile` 返回的用户资料，用于头像 / 昵称 |
 | `userInfo.avatarUrl` | string | 否 | 头像地址 |
 | `userInfo.nickName` | string | 否 | 昵称 |
@@ -97,4 +97,3 @@ flowchart TD
 ## 更新记录
 
 - 2025-11-12：新增接口，支持微信授权快捷登录
-

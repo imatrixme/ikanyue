@@ -61,8 +61,34 @@ function normalizeNickname(userInfo = {}, fallback) {
   return nickName;
 }
 
+function normalizeRequestBody(payload) {
+  if (!payload) {
+    return {};
+  }
+
+  if (typeof payload === 'string') {
+    try {
+      return JSON.parse(payload);
+    } catch (error) {
+      console.warn('无法解析请求体 JSON:', error);
+      return {};
+    }
+  }
+
+  if (typeof FormData !== 'undefined' && payload instanceof FormData) {
+    const normalized = {};
+    payload.forEach((value, key) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+
+  return payload;
+}
+
 async function userWechatLoginHandler(c) {
   const contentType = c.req.header('content-type') || '';
+  const query = c.req.query();
   let body = {};
   if (contentType.includes('application/json')) {
     body = await c.req.json();
@@ -70,7 +96,22 @@ async function userWechatLoginHandler(c) {
     body = await c.req.parseBody();
   }
 
-  const code = (body.code || '').trim();
+  body = normalizeRequestBody(body);
+
+  const resolveParam = (...values) => {
+    for (const value of values) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+      const str = `${value}`.trim();
+      if (str) {
+        return str;
+      }
+    }
+    return '';
+  };
+
+  const code = resolveParam(body.code, body.authCode, body.auth_code, query.code, query.authCode, query.auth_code);
   const userInfo = body.userInfo || {};
   const phonePayload = body.phone || {};
   const rawData = body.rawData || '';
