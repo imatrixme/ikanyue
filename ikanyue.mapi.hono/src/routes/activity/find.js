@@ -6,38 +6,7 @@
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
-<<<<<<< HEAD
-
-/**
- * 处理活动数据中的图片字段，转换为完整的URL
- * @param {Object} record - 活动记录
- * @returns {Object} - 处理后的活动记录
- */
-function processActivityImages(record) {
-  let s3Url = `${process.env.PB_URL}/api/files`;
-  if (process.env.S3_URL && process.env.S3_BUCKET) {
-    s3Url = `${process.env.S3_URL}/${process.env.S3_BUCKET}`;
-  }
-
-  // 处理封面图
-  if (record.coverImage) {
-    // record.coverImageUrl = pb.files.getURL(record, record.coverImage);
-    record.coverImageUrl = `${s3Url}/${record.collectionId}/${record.id}/${record.coverImage}`;
-  }
-
-  // 处理活动图片集
-  if (record.images && Array.isArray(record.images) && record.images.length > 0) {
-    // record.imageUrls = record.images.map((image) => pb.files.getURL(record, image));
-    record.imageUrls = record.images.map(
-      (image) => `${s3Url}/${record.collectionId}/${record.id}/${image}`
-    );
-  }
-
-  return record;
-}
-=======
 const { processActivityFiles, processBatchFiles } = require('../../utils/fileUrl.js');
->>>>>>> f4b01bff4fad4693f3b8927cbae9e7eafe2d0338
 
 /**
  * 活动查询处理器
