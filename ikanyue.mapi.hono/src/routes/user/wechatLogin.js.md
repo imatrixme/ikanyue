@@ -78,9 +78,10 @@ flowchart TD
    - 按 `wechatId` / `wechatUnionId` 精确匹配
    - 若未匹配，再按 `cellphone` 匹配现有学生账号
 5. **自动建档**：找不到任何记录时，创建学生账号，默认昵称 `微信用户xxxx`。
-6. **封禁判断**：命中账号但 `blocked=true` 时返回 403。
-7. **登录元数据**：统一更新 `lastLoginAt`、`lastLoginIp`、`lastLoginMethod='wechat'`。
-8. **响应格式**：生成 JWT（角色固定 `student`、`isAdmin=false`），并返回 PocketBase 记录。
+6. **资料保留**：匹配到已有学生账号时，不会用微信返回的昵称/头像/真实姓名覆盖数据库中的自定义信息，仅刷新 `wechatId`/`wechatUnionId`/`wechatUserInfo`，并强制使用最新微信手机号回写 `cellphone`。如果数据库中的 `nickName`/`nickname`、`avatar`、`gender`、`age` 等字段为空，则使用微信资料进行补全。
+7. **封禁判断**：命中账号但 `blocked=true` 时返回 403。
+8. **登录元数据**：统一更新 `lastLoginAt`、`lastLoginIp`、`lastLoginMethod='wechat'`。
+9. **响应格式**：生成 JWT（角色固定 `student`、`isAdmin=false`），并返回 PocketBase 记录。
 
 ## 数据库存取
 

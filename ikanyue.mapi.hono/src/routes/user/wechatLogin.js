@@ -175,6 +175,7 @@ async function userWechatLoginHandler(c) {
     city: userInfo.city || '',
     province: userInfo.province || '',
     country: userInfo.country || '',
+    age: userInfo.age ?? '',
   };
 
   if (student) {
@@ -182,19 +183,38 @@ async function userWechatLoginHandler(c) {
       return c.error(403, '该账号已被封禁，请联系客服');
     }
 
-    const nickname = normalizeNickname(hydratedUserInfo, student.nickName || student.nickname || `用户${cellphone.slice(-4)}`);
     const updateData = {
       wechatId: openid,
       wechatUnionId: unionid || '',
       wechatUserInfo: hydratedUserInfo,
-      nickName: nickname,
-      nickname,
-      avatar: hydratedUserInfo.avatarUrl || student.avatar || DEFAULT_AVATAR,
       ...loginMeta,
     };
 
-    if (!student.cellphone || student.cellphone === '') {
-      updateData.cellphone = cellphone;
+    updateData.cellphone = cellphone;
+
+    const hasNickname = Boolean((student.nickName || student.nickname || '').trim());
+    if (!hasNickname) {
+      const nickname = normalizeNickname(hydratedUserInfo, `微信用户${cellphone.slice(-4)}`);
+      if (nickname) {
+        updateData.nickName = nickname;
+        updateData.nickname = nickname;
+      }
+    }
+
+    const avatarFromWechat = hydratedUserInfo.avatarUrl || DEFAULT_AVATAR;
+    if (!student.avatar || !student.avatar.trim()) {
+      updateData.avatar = avatarFromWechat;
+    }
+
+    const hasGender = !(student.gender === undefined || student.gender === null || `${student.gender}` === '');
+    if (!hasGender && hydratedUserInfo.gender !== '' && hydratedUserInfo.gender !== undefined && hydratedUserInfo.gender !== null) {
+      updateData.gender = hydratedUserInfo.gender;
+    }
+
+    const hasAge = !(student.age === undefined || student.age === null || `${student.age}` === '');
+    if (!hasAge && hydratedUserInfo.age !== '' && hydratedUserInfo.age !== undefined && hydratedUserInfo.age !== null) {
+      const parsedAge = Number(hydratedUserInfo.age);
+      updateData.age = Number.isNaN(parsedAge) ? hydratedUserInfo.age : parsedAge;
     }
 
     const [updateErr, updatedStudent] = await to(pb.collection('students').update(student.id, updateData));
