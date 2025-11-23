@@ -4,7 +4,7 @@
             <image class="logo" :src="images.logo" mode="widthFix" />
             <view class="content">
                 <!-- <text class="incname">看乐艺术</text> -->
-                <text class="slogan">提高歌唱水平，提升音乐认知</text>
+                <text class="slogan">理解音乐·看见音乐·成为音乐</text>
             </view>
             <nut-button type="primary" class="loginbtn" @click="showLoginPopup">登录·注册</nut-button>
         </view>
