@@ -7,7 +7,15 @@ const { jwtAuth } = require('../utils/jwtAuth');
  */
 function authMiddleware() {
     return async (c, next) => {
-        const token = c.req.header('token') || c.req.header('jwtoken') || '';
+        const bearer = c.req.header('authorization') || '';
+        const tokenHeader = c.req.header('token') || c.req.header('jwtoken') || '';
+        const token = (() => {
+            if (tokenHeader) return tokenHeader;
+            if (bearer.toLowerCase().startsWith('bearer ')) {
+                return bearer.slice(7).trim();
+            }
+            return bearer;
+        })();
 
         if (token.length === 0) {
             return c.json(
@@ -34,15 +42,18 @@ function authMiddleware() {
             );
         }
 
-        if (user.expiredAt && user.expiredAt < dayjs().second()) {
-            return c.json(
-                {
-                    code: 403,
-                    message: '令牌过期，请重新登录',
-                    data: null,
-                },
-                200
-            );
+        if (user.expiredAt) {
+            const nowTs = dayjs().unix();
+            if (user.expiredAt < nowTs) {
+                return c.json(
+                    {
+                        code: 403,
+                        message: '令牌过期，请重新登录',
+                        data: null,
+                    },
+                    200
+                );
+            }
         }
 
         // 将用户信息存储到上下文中

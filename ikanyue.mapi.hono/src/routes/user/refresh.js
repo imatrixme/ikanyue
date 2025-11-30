@@ -36,8 +36,6 @@ async function userRefreshHandler(c) {
     const userId = user.id;
     const userSn = user.sn;
     const userRole = user.role;
-    const isAdmin = user.isAdmin || false;
-
     try {
         let userData;
 

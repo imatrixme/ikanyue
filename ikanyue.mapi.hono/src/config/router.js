@@ -5,15 +5,19 @@ const teacherRoutes = require('../routes/teacher');
 const activityRoutes = require('../routes/activity');
 const videoMaterialRoutes = require('../routes/videoMaterial');
 const audioMaterialRoutes = require('../routes/audioMaterial');
+const attendanceRoutes = require('../routes/attendance');
+const lessonRecordRoutes = require('../routes/lessonRecord');
 
 const registerBizRoutes = function (routes) {
-  // 注册各个模块的路由 - 各模块自行定义完整路径
-  userRoutes(routes);
-  studentRoutes(routes);
-  teacherRoutes(routes);
-  activityRoutes(routes);
-  videoMaterialRoutes(routes);
-  audioMaterialRoutes(routes);
+    // 注册各个模块的路由 - 各模块自行定义完整路径
+    userRoutes(routes);
+    studentRoutes(routes);
+    teacherRoutes(routes);
+    activityRoutes(routes);
+    videoMaterialRoutes(routes);
+    audioMaterialRoutes(routes);
+    attendanceRoutes(routes);
+    lessonRecordRoutes(routes);
 };
 
 module.exports = { registerBizRoutes };

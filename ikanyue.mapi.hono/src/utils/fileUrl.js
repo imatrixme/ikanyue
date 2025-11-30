@@ -10,20 +10,20 @@
  * @returns {string} - 完整的文件URL
  */
 function getFileUrl(record, filename) {
-  if (!filename) return '';
+    if (!filename) return '';
 
-  // 如果已经是完整URL，直接返回
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
+    // 如果已经是完整URL，直接返回
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+        return filename;
+    }
 
-  // 优先使用S3配置
-  if (process.env.S3_URL && process.env.S3_BUCKET) {
-    return `${process.env.S3_URL}/${process.env.S3_BUCKET}/${record.collectionId}/${record.id}/${filename}`;
-  }
+    // 优先使用S3配置
+    if (process.env.S3_URL && process.env.S3_BUCKET) {
+        return `${process.env.S3_URL}/${process.env.S3_BUCKET}/${record.collectionId}/${record.id}/${filename}`;
+    }
 
-  // 使用PocketBase本地文件服务
-  return `${process.env.PB_URL}/api/files/${record.collectionId}/${record.id}/${filename}`;
+    // 使用PocketBase本地文件服务
+    return `${process.env.PB_URL}/api/files/${record.collectionId}/${record.id}/${filename}`;
 }
 
 /**
@@ -32,33 +32,33 @@ function getFileUrl(record, filename) {
  * @returns {Object} - 处理后的记录，包含完整URL字段
  */
 function processAudioMaterialFiles(record) {
-  if (!record) return record;
+    if (!record) return record;
 
-  const processedRecord = { ...record };
+    const processedRecord = { ...record };
 
-  // 处理音频源文件URL
-  // PocketBase文件字段可能是字符串或文件对象
-  if (record.audioSource) {
+    // 处理音频源文件URL
+    // PocketBase文件字段可能是字符串或文件对象
+    if (record.audioSource) {
     // 如果是文件对象，取文件名；如果是字符串，直接使用
-    const audioFileName =
+        const audioFileName =
       typeof record.audioSource === 'object' ? record.audioSource.name || record.audioSource : record.audioSource;
-    if (audioFileName) {
-      processedRecord.audioSourceUrl = getFileUrl(record, audioFileName);
+        if (audioFileName) {
+            processedRecord.audioSourceUrl = getFileUrl(record, audioFileName);
+        }
     }
-  }
 
-  // 处理封面图片URL
-  // PocketBase文件字段可能是字符串或文件对象
-  if (record.coverImage) {
+    // 处理封面图片URL
+    // PocketBase文件字段可能是字符串或文件对象
+    if (record.coverImage) {
     // 如果是文件对象，取文件名；如果是字符串，直接使用
-    const coverFileName =
+        const coverFileName =
       typeof record.coverImage === 'object' ? record.coverImage.name || record.coverImage : record.coverImage;
-    if (coverFileName) {
-      processedRecord.coverImageUrl = getFileUrl(record, coverFileName);
+        if (coverFileName) {
+            processedRecord.coverImageUrl = getFileUrl(record, coverFileName);
+        }
     }
-  }
 
-  return processedRecord;
+    return processedRecord;
 }
 
 /**
@@ -67,26 +67,26 @@ function processAudioMaterialFiles(record) {
  * @returns {Object} - 处理后的记录，包含完整URL字段
  */
 function processVideoMaterialFiles(record) {
-  if (!record) return record;
+    if (!record) return record;
 
-  const processedRecord = { ...record };
+    const processedRecord = { ...record };
 
-  // 处理视频源文件URL
-  if (record.videoSource) {
-    processedRecord.videoSourceUrl = getFileUrl(record, record.videoSource);
-  }
+    // 处理视频源文件URL
+    if (record.videoSource) {
+        processedRecord.videoSourceUrl = getFileUrl(record, record.videoSource);
+    }
 
-  // 处理封面图片URL
-  if (record.coverImage) {
-    processedRecord.coverImageUrl = getFileUrl(record, record.coverImage);
-  }
+    // 处理封面图片URL
+    if (record.coverImage) {
+        processedRecord.coverImageUrl = getFileUrl(record, record.coverImage);
+    }
 
-  // 处理预览图URL
-  if (record.thumbnail) {
-    processedRecord.thumbnailUrl = getFileUrl(record, record.thumbnail);
-  }
+    // 处理预览图URL
+    if (record.thumbnail) {
+        processedRecord.thumbnailUrl = getFileUrl(record, record.thumbnail);
+    }
 
-  return processedRecord;
+    return processedRecord;
 }
 
 /**
@@ -95,21 +95,21 @@ function processVideoMaterialFiles(record) {
  * @returns {Object} - 处理后的记录，包含完整URL字段
  */
 function processActivityFiles(record) {
-  if (!record) return record;
+    if (!record) return record;
 
-  const processedRecord = { ...record };
+    const processedRecord = { ...record };
 
-  // 处理封面图
-  if (record.coverImage) {
-    processedRecord.coverImageUrl = getFileUrl(record, record.coverImage);
-  }
+    // 处理封面图
+    if (record.coverImage) {
+        processedRecord.coverImageUrl = getFileUrl(record, record.coverImage);
+    }
 
-  // 处理活动图片集
-  if (record.images && Array.isArray(record.images) && record.images.length > 0) {
-    processedRecord.imageUrls = record.images.map((image) => getFileUrl(record, image));
-  }
+    // 处理活动图片集
+    if (record.images && Array.isArray(record.images) && record.images.length > 0) {
+        processedRecord.imageUrls = record.images.map((image) => getFileUrl(record, image));
+    }
 
-  return processedRecord;
+    return processedRecord;
 }
 
 /**
@@ -119,14 +119,14 @@ function processActivityFiles(record) {
  * @returns {Array} - 处理后的记录列表
  */
 function processBatchFiles(records, processor) {
-  if (!Array.isArray(records)) return records;
-  return records.map(processor);
+    if (!Array.isArray(records)) return records;
+    return records.map(processor);
 }
 
 module.exports = {
-  getFileUrl,
-  processAudioMaterialFiles,
-  processVideoMaterialFiles,
-  processActivityFiles,
-  processBatchFiles,
+    getFileUrl,
+    processAudioMaterialFiles,
+    processVideoMaterialFiles,
+    processActivityFiles,
+    processBatchFiles,
 };

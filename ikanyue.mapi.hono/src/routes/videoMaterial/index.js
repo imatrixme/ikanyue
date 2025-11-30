@@ -17,21 +17,21 @@ const { videoMaterialDeleteHandler } = require('./delete');
  * 注册视频材料相关路由
  */
 function videoMaterialRoutes(routes) {
-  // 查询接口 - 无需认证
-  routes.post('/v1/videoMaterial/find').handler(videoMaterialFindHandler);
-  routes.get('/v1/videoMaterial/find').handler(videoMaterialFindHandler);
+    // 查询接口 - 无需认证
+    routes.post('/v1/videoMaterial/find').handler(videoMaterialFindHandler);
+    routes.get('/v1/videoMaterial/find').handler(videoMaterialFindHandler);
 
-  // 创建接口 - 需要教师权限
-  routes.post('/v1/videoMaterial/create').use(authMiddleware, isTeacherMiddleware).handler(videoMaterialCreateHandler);
+    // 创建接口 - 需要教师权限
+    routes.post('/v1/videoMaterial/create').use(authMiddleware, isTeacherMiddleware).handler(videoMaterialCreateHandler);
 
-  // 更新接口 - 需要教师权限
-  routes.post('/v1/videoMaterial/update').use(authMiddleware, isTeacherMiddleware).handler(videoMaterialUpdateHandler);
+    // 更新接口 - 需要教师权限
+    routes.post('/v1/videoMaterial/update').use(authMiddleware, isTeacherMiddleware).handler(videoMaterialUpdateHandler);
 
-  // 删除接口 - 需要管理员权限
-  routes
-    .post('/v1/videoMaterial/delete')
-    .use(authMiddleware, isTeacherMiddleware, isAdminMiddleware)
-    .handler(videoMaterialDeleteHandler);
+    // 删除接口 - 需要管理员权限
+    routes
+        .post('/v1/videoMaterial/delete')
+        .use(authMiddleware, isTeacherMiddleware, isAdminMiddleware)
+        .handler(videoMaterialDeleteHandler);
 }
 
 module.exports = videoMaterialRoutes;

@@ -15,14 +15,14 @@ const { userRefreshHandler } = require('./refresh');
  * 注册用户相关路由
  */
 function userRoutes(routes) {
-  routes.group('/v1/user', (user) => {
+    routes.group('/v1/user', (user) => {
     // 用户登录 - 无需认证
-    user.post('/login').handler(userLoginHandler);
-    user.post('/wechat-login').handler(userWechatLoginHandler);
+        user.post('/login').handler(userLoginHandler);
+        user.post('/wechat-login').handler(userWechatLoginHandler);
 
-    user.post('/update').use(authMiddleware).handler(userUpdateHandler);
-    user.post('/refresh').use(authMiddleware).handler(userRefreshHandler);
-  });
+        user.post('/update').use(authMiddleware).handler(userUpdateHandler);
+        user.post('/refresh').use(authMiddleware).handler(userRefreshHandler);
+    });
 }
 
 module.exports = userRoutes;

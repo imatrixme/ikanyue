@@ -311,6 +311,131 @@ Authorization: Bearer <jwt_token>
 
 ---
 
+## 上课与签到接口
+
+### 1. 查询上课记录
+
+#### GET /v1/lesson-record/find
+
+分页查询当前登录用户的上课记录（需要认证）
+
+| 查询参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `page` | 页码 | `1` |
+| `perPage` | 每页数量（≤50） | `10` |
+| `status` | 过滤状态：`scheduled`、`completed`、`cancelled`、`all` | `all` |
+
+**响应示例**:
+
+```json
+{
+    "code": 10000,
+    "data": {
+        "list": [
+            {
+                "id": "0brzgp5qxtmzqr3",
+                "title": "声乐体验课",
+                "teacher": "Ivy",
+                "startTime": "2025-11-26T02:00:00.000Z",
+                "status": "completed",
+                "attendanceId": "k0zi70hon2ihoei",
+                "attendanceStatus": "signed",
+                "attendanceSignedAt": "2025-11-26T02:05:00.000Z"
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "perPage": 10,
+            "total": 2,
+            "totalPages": 1
+        }
+    }
+}
+```
+
+### 2. 上课记录详情
+
+#### GET /v1/lesson-record/:id （或 `/detail?id=`）
+
+返回单条上课记录及其关联的签到摘要（需要认证）。
+
+---
+
+### 3. 查询签到记录
+
+#### GET /v1/attendance/find
+
+分页查询当前用户的签到记录，可按状态或课程过滤（需要认证）。
+
+| 查询参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `page` | 页码 | `1` |
+| `perPage` | 每页数量（≤50） | `10` |
+| `status` | `pending`、`signed`、`missed`、`abnormal`、`all` | `all` |
+| `lessonId` | 只获取某节课的签到 | - |
+
+**响应示例**:
+
+```json
+{
+    "code": 10000,
+    "data": {
+        "list": [
+            {
+                "id": "k0zi70hon2ihoei",
+                "status": "signed",
+                "signedAt": "2025-11-26T02:05:00.000Z",
+                "location": "杭州滨江校区A座101",
+                "lessonId": "0brzgp5qxtmzqr3",
+                "lesson": {
+                    "id": "0brzgp5qxtmzqr3",
+                    "title": "声乐体验课",
+                    "teacher": "Ivy",
+                    "startTime": "2025-11-26T02:00:00.000Z"
+                }
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "perPage": 10,
+            "total": 2,
+            "totalPages": 1
+        }
+    }
+}
+```
+
+### 4. 签到详情
+
+#### GET /v1/attendance/:id （或 `/detail?id=`）
+
+返回单条签到记录，包含课程、设备、定位等扩展信息（需要认证）。如果记录不属于当前用户返回 403。
+
+### 5. 提交/补录签到
+
+#### POST /v1/attendance
+
+创建或更新签到记录（需要认证）。如果同一课已有记录会自动覆盖。
+
+**请求体**:
+
+```json
+{
+    "lessonId": "0brzgp5qxtmzqr3",      // 可选，但 lessonId 或 activityId 至少一个
+    "activityId": "",                   // 当来源于活动时填写
+    "status": "signed",                 // pending | signed | missed | abnormal
+    "signedAt": "2025-11-26T02:05:00Z", // 默认当前时间
+    "remark": "提前10分钟到场",
+    "location": "杭州滨江校区A座101",
+    "geo": { "latitude": 30.186, "longitude": 120.197 },
+    "deviceInfo": { "model": "iPhone 15", "platform": "iOS" }
+}
+```
+
+成功后返回新的签到记录，并确保 `lesson_records.attendanceId` 自动关联。
+
+---
+
 ## 错误代码说明
 
 | 错误代码 | 说明                       |

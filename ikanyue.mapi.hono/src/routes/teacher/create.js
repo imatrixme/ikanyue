@@ -29,58 +29,58 @@ const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 
 async function teacherCreateHandler(c) {
-  // 获取请求参数
-  const body = await c.req.parseBody();
-  const data = { ...body };
+    // 获取请求参数
+    const body = await c.req.parseBody();
+    const data = { ...body };
 
-  // 检查必要字段
-  if (!data.cellphone || !data.password) {
-    return c.error(400, '缺少必要信息（手机号、密码）');
-  }
+    // 检查必要字段
+    if (!data.cellphone || !data.password) {
+        return c.error(400, '缺少必要信息（手机号、密码）');
+    }
 
-  try {
+    try {
     // 检查手机号是否已存在
-    const existingTeachers = await pb.collection('teachers').getList(1, 1, {
-      filter: `cellphone="${data.cellphone}"`,
-    });
+        const existingTeachers = await pb.collection('teachers').getList(1, 1, {
+            filter: `cellphone="${data.cellphone}"`,
+        });
 
-    if (existingTeachers.items.length > 0) {
-      return c.error(409, '手机号已注册');
+        if (existingTeachers.items.length > 0) {
+            return c.error(409, '手机号已注册');
+        }
+
+        // 添加基本信息
+        data.sn = uuid();
+        data.password = md5(data.password); // 密码加密
+        data.hours = data.hours || 0;
+        data.blocked = false;
+        data.gender = data.gender || 0;
+        data.verified = false; // 教师需要审核
+        data.verifiedAt = null;
+        data.verifiedBy = null;
+        data.isAdmin = false;
+        data.tokenKey = uuid();
+
+        // 设置默认头像
+        if (!data.avatar || data.avatar.trim() === '') {
+            data.avatar = process.env.DEFAULT_AVATAR || '';
+        }
+
+        // 创建教师记录
+        const [err, teacher] = await to(pb.collection('teachers').create(data));
+
+        if (err) {
+            console.error('创建教师失败:', err);
+            return c.error(500, err.message || '创建教师失败');
+        }
+
+        // 生成 JWT token
+        teacher.token = jwtAuth.sign(c.req, teacher.id, teacher.sn, 'teacher', false);
+        teacher.role = 'teacher';
+
+        return c.data(teacher);
+    } catch (error) {
+        return c.error(500, error.message || '服务器内部错误');
     }
-
-    // 添加基本信息
-    data.sn = uuid();
-    data.password = md5(data.password); // 密码加密
-    data.hours = data.hours || 0;
-    data.blocked = false;
-    data.gender = data.gender || 0;
-    data.verified = false; // 教师需要审核
-    data.verifiedAt = null;
-    data.verifiedBy = null;
-    data.isAdmin = false;
-    data.tokenKey = uuid();
-
-    // 设置默认头像
-    if (!data.avatar || data.avatar.trim() === '') {
-      data.avatar = process.env.DEFAULT_AVATAR || '';
-    }
-
-    // 创建教师记录
-    const [err, teacher] = await to(pb.collection('teachers').create(data));
-
-    if (err) {
-      console.error('创建教师失败:', err);
-      return c.error(500, err.message || '创建教师失败');
-    }
-
-    // 生成 JWT token
-    teacher.token = jwtAuth.sign(c.req, teacher.id, teacher.sn, 'teacher', false);
-    teacher.role = 'teacher';
-
-    return c.data(teacher);
-  } catch (error) {
-    return c.error(500, error.message || '服务器内部错误');
-  }
 }
 
 module.exports = { teacherCreateHandler };
