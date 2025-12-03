@@ -14,6 +14,21 @@ Backend rewrite of the legacy Sails.js 看粤语 API using Hono.js. Provides a c
 
 ## Project Conventions
 
+### Development Philosophy (Sprint Mode)
+**1. KISS (Keep It Simple, Stupid) is the Supreme Law**
+- Prioritize working code over "clean" architecture.
+- Do not create extra protocols, factories, or coordinators unless absolutely necessary.
+- **Forbidden:** Do not strictly enforce SOLID principles or BDD (Given-When-Then) patterns if they increase file count or complexity.
+- If a View has logic that works and isn't reused, keep it in the View.
+
+**2. Defensive Testing Strategy**
+- **UI Code:** No unit tests. Verify SwiftUI Views and Animations manually (e.g., Visual check for "Shake to Zen").
+- **Core Logic:** Mandatory TDD/RGR (Red-Green-Refactor) for critical paths:
+    - Audio Mixing Algorithms (`MixerManager`)
+    - Playback State (`AudioEngine`)
+    - Purchase Logic (`PurchaseManager`)
+- **AI Prompt Rule:** When asking Assistant to modify core logic, explicitly instruct it to: *"Write a unit test that verifies the existing behavior/boundary conditions FIRST, then write the implementation code to pass it."*
+
 ### Code Style
 - CommonJS modules, linted via ESLint (4-space indent, single quotes, required semicolons, no-unused-vars warns)
 - `.prettierrc` exists (2-space tabWidth) but lint rules take precedence; follow ESLint formatting when in doubt

@@ -25,6 +25,7 @@
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const { jwtAuth } = require('../../utils/jwtAuth');
+const { getFileUrl } = require('../../utils/fileUrl');
 
 async function userRefreshHandler(c) {
     // 从JWT令牌中获取用户信息
@@ -62,10 +63,14 @@ async function userRefreshHandler(c) {
 
             await pb.collection('students').update(userId, updateData);
 
-            // 检查头像是否为空，如果为空则设置默认头像
-            if (!student.avatar || student.avatar.trim() === '') {
-                student.avatar = process.env.DEFAULT_AVATAR || '';
-            }
+            const avatarFile =
+                (Array.isArray(student.avatarFile) && student.avatarFile[0]) ||
+                student.avatarFile ||
+                student.avatar ||
+                '';
+            const avatarUrl = getFileUrl(student, avatarFile) || avatarFile || student.avatar || process.env.DEFAULT_AVATAR || '';
+            student.avatar = avatarFile || student.avatar || process.env.DEFAULT_AVATAR || '';
+            student.avatarUrl = avatarUrl;
 
             // 生成新的JWT令牌
             student.token = jwtAuth.sign(c.req, userId, userSn, 'student', false);
@@ -100,10 +105,14 @@ async function userRefreshHandler(c) {
 
             await pb.collection('teachers').update(userId, updateData);
 
-            // 检查头像是否为空，如果为空则设置默认头像
-            if (!teacher.avatar || teacher.avatar.trim() === '') {
-                teacher.avatar = process.env.DEFAULT_AVATAR || '';
-            }
+            const avatarFile =
+                (Array.isArray(teacher.avatarFile) && teacher.avatarFile[0]) ||
+                teacher.avatarFile ||
+                teacher.avatar ||
+                '';
+            const avatarUrl = getFileUrl(teacher, avatarFile) || avatarFile || teacher.avatar || process.env.DEFAULT_AVATAR || '';
+            teacher.avatar = avatarFile || teacher.avatar || process.env.DEFAULT_AVATAR || '';
+            teacher.avatarUrl = avatarUrl;
 
             // 检查是否为管理员
             const currentIsAdmin = teacher.isAdmin || false;

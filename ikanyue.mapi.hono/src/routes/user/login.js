@@ -32,6 +32,7 @@ const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 const uuid = require('licia/uuid');
+const { getFileUrl } = require('../../utils/fileUrl');
 
 async function userLoginHandler(c) {
     const body = await c.req.parseBody();
@@ -79,9 +80,19 @@ async function userLoginHandler(c) {
             const studentData = updatedStudent || student;
 
             // 检查头像是否为空，如果为空则设置默认头像
-            if (!studentData.avatar || studentData.avatar.trim() === '') {
-                studentData.avatar = process.env.DEFAULT_AVATAR || 'https://example.com/default-avatar.png';
-            }
+            const studentAvatarFile =
+                (Array.isArray(studentData.avatarFile) && studentData.avatarFile[0]) ||
+                studentData.avatarFile ||
+                studentData.avatar ||
+                '';
+            const studentAvatarUrl =
+                getFileUrl(studentData, studentAvatarFile) ||
+                studentAvatarFile ||
+                studentData.avatar ||
+                process.env.DEFAULT_AVATAR ||
+                'https://example.com/default-avatar.png';
+            studentData.avatar = studentAvatarFile || studentData.avatar || process.env.DEFAULT_AVATAR || 'https://example.com/default-avatar.png';
+            studentData.avatarUrl = studentAvatarUrl;
 
             // 修复字段名不一致问题
             if (studentData.idAdmin !== undefined) {
@@ -139,9 +150,19 @@ async function userLoginHandler(c) {
             const teacherData = updatedTeacher || teacher;
 
             // 检查头像是否为空，如果为空则设置默认头像
-            if (!teacherData.avatar || teacherData.avatar.trim() === '') {
-                teacherData.avatar = process.env.DEFAULT_AVATAR || 'https://example.com/default-avatar.png';
-            }
+            const teacherAvatarFile =
+                (Array.isArray(teacherData.avatarFile) && teacherData.avatarFile[0]) ||
+                teacherData.avatarFile ||
+                teacherData.avatar ||
+                '';
+            const teacherAvatarUrl =
+                getFileUrl(teacherData, teacherAvatarFile) ||
+                teacherAvatarFile ||
+                teacherData.avatar ||
+                process.env.DEFAULT_AVATAR ||
+                'https://example.com/default-avatar.png';
+            teacherData.avatar = teacherAvatarFile || teacherData.avatar || process.env.DEFAULT_AVATAR || 'https://example.com/default-avatar.png';
+            teacherData.avatarUrl = teacherAvatarUrl;
 
             // 修复字段名不一致问题
             let isAdmin;

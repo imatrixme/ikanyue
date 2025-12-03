@@ -10,6 +10,7 @@ const { userLoginHandler } = require('./login');
 const { userWechatLoginHandler } = require('./wechatLogin');
 const { userUpdateHandler } = require('./update');
 const { userRefreshHandler } = require('./refresh');
+const { userAvatarUploadHandler } = require('./avatar');
 
 /**
  * 注册用户相关路由
@@ -22,6 +23,7 @@ function userRoutes(routes) {
 
         user.post('/update').use(authMiddleware).handler(userUpdateHandler);
         user.post('/refresh').use(authMiddleware).handler(userRefreshHandler);
+        user.post('/avatar').use(authMiddleware).handler(userAvatarUploadHandler);
     });
 }
 
