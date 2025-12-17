@@ -3,6 +3,7 @@ const userRoutes = require('../routes/user');
 const studentRoutes = require('../routes/student');
 const teacherRoutes = require('../routes/teacher');
 const activityRoutes = require('../routes/activity');
+const activitySignupRoutes = require('../routes/activitySignup');
 const videoMaterialRoutes = require('../routes/videoMaterial');
 const audioMaterialRoutes = require('../routes/audioMaterial');
 const attendanceRoutes = require('../routes/attendance');
@@ -14,6 +15,7 @@ const registerBizRoutes = function (routes) {
     studentRoutes(routes);
     teacherRoutes(routes);
     activityRoutes(routes);
+    activitySignupRoutes(routes);
     videoMaterialRoutes(routes);
     audioMaterialRoutes(routes);
     attendanceRoutes(routes);
