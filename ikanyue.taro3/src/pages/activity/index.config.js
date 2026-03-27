@@ -1,5 +1,5 @@
 export default definePageConfig({
-    navigationBarTitleText: '活动',
+    navigationBarTitleText: '首页',
     disableScroll: true,
     enablePullDownRefresh: true,
 });

@@ -7,11 +7,14 @@
                     v-for="(group, index) in dateGroups"
                     :key="index"
                     class="date-item"
-                    :class="{ active: selectedGroupIndex === index }"
+                    :class="{
+                        active: selectedGroupIndex === index,
+                        'date-item--navigation': group.action === 'navigate-image',
+                    }"
                     @tap="selectDateGroup(index)"
                 >
                     <text class="day">{{ group.dateText }}</text>
-                    <text class="date">{{ group.title }}</text>
+                    <text v-if="group.title" class="date">{{ group.title }}</text>
                 </view>
             </scroll-view>
         </view>
@@ -88,6 +91,13 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+
+const IMAGE_DETAIL_URLS = {
+    about: 'https://kyoss.abcmem.com/ikanyue-public/guanyu-kanyue.JPG',
+    learnWhat: 'https://kyoss.abcmem.com/ikanyue-public/zai-kanyue-xue-shenme.JPG',
+};
+
+const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
 export default {
     data() {
@@ -268,7 +278,7 @@ export default {
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
             groups.push({
-                title: '明天',
+                title: WEEKDAY_LABELS[tomorrow.getDay()],
                 dateText: `${tomorrow.getMonth() + 1}月${tomorrow.getDate()}日`,
                 date: tomorrow,
                 type: 'day',
@@ -280,7 +290,7 @@ export default {
             const dayAfterTomorrow = new Date(now);
             dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
             groups.push({
-                title: '后天',
+                title: WEEKDAY_LABELS[dayAfterTomorrow.getDay()],
                 dateText: `${dayAfterTomorrow.getMonth() + 1}月${dayAfterTomorrow.getDate()}日`,
                 date: dayAfterTomorrow,
                 type: 'day',
@@ -300,9 +310,8 @@ export default {
             for (let i = 3; i < 7; i++) {
                 const date = new Date(now);
                 date.setDate(date.getDate() + i);
-                const dayOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
                 groups.push({
-                    title: dayOfWeek,
+                    title: WEEKDAY_LABELS[date.getDay()],
                     dateText: `${date.getMonth() + 1}月${date.getDate()}日`,
                     date: date,
                     type: 'day',
@@ -311,31 +320,22 @@ export default {
                 });
             }
 
-            // 一周后的所有活动
-            const oneWeekLater = new Date(now);
-            oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-            const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 4, 0);
-
             groups.push({
-                title: '更晚',
-                dateText: `一周后`,
-                type: 'range',
-                startTime: oneWeekLater,
-                endTime: threeMonthsLater,
+                title: '',
+                dateText: '看乐教学',
+                type: 'navigation',
+                action: 'navigate-image',
+                imageUrl: IMAGE_DETAIL_URLS.learnWhat,
+                detailTitle: '看乐教学',
             });
 
-            // 已过期的活动（扩大范围以包含更早的活动）
-            const veryEarlyDate = new Date('2020-01-01'); // 设置一个更早的开始时间
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            yesterday.setHours(23, 59, 59, 999);
-
             groups.push({
-                title: '过往',
-                dateText: '已结束',
-                type: 'range',
-                startTime: veryEarlyDate, // 使用更早的开始时间
-                endTime: yesterday,
+                title: '',
+                dateText: '关于看乐',
+                type: 'navigation',
+                action: 'navigate-image',
+                imageUrl: IMAGE_DETAIL_URLS.about,
+                detailTitle: '关于看乐',
             });
 
             this.dateGroups = groups;
@@ -363,6 +363,17 @@ export default {
 
         // 选择日期组
         selectDateGroup(index) {
+            const group = this.dateGroups[index];
+
+            if (!group) {
+                return;
+            }
+
+            if (group.action === 'navigate-image') {
+                this.goToImageDetail(group);
+                return;
+            }
+
             this.selectedGroupIndex = index;
             this.filterActivitiesByDate();
         },
@@ -373,6 +384,10 @@ export default {
 
             if (!group || !this.allActivities.length) {
                 this.activities = [];
+                return;
+            }
+
+            if (group.action === 'navigate-image') {
                 return;
             }
 
@@ -426,6 +441,22 @@ export default {
         goToDetail(id) {
             Taro.navigateTo({
                 url: `/pages/activityDetail/index?id=${id}`,
+            });
+        },
+
+        goToImageDetail(group) {
+            if (!group?.imageUrl) {
+                return;
+            }
+
+            const params = [`imageUrl=${encodeURIComponent(group.imageUrl)}`];
+
+            if (group.detailTitle) {
+                params.push(`title=${encodeURIComponent(group.detailTitle)}`);
+            }
+
+            Taro.navigateTo({
+                url: `/pages/imageDetail/index?${params.join('&')}`,
             });
         },
     },

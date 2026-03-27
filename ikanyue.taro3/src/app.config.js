@@ -6,6 +6,7 @@ export default defineAppConfig({
         'pages/pricing/index',
         'pages/userinfo/index',
         'pages/activityDetail/index',
+        'pages/imageDetail/index',
         'pages/webview/index',
         'pages/prompt/index',
         'pages/audioMaterial/index',
@@ -35,7 +36,7 @@ export default defineAppConfig({
                 pagePath: 'pages/activity/index',
                 iconPath: 'imgs/record.png',
                 selectedIconPath: 'imgs/record-sel.png',
-                text: '活动',
+                text: '首页',
             },
             {
                 pagePath: 'pages/profile/index',

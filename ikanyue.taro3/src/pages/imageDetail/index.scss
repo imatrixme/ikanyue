@@ -1,0 +1,42 @@
+.image-detail-page {
+    min-height: 100vh;
+    background: #f6f7fb;
+}
+
+.image-detail-page--status {
+    display: flex;
+    min-height: 100vh;
+    padding: 48px 32px;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.detail-scroll {
+    height: 100vh;
+}
+
+.detail-image {
+    display: block;
+    width: 100%;
+    background: #fff;
+}
+
+.status-text {
+    color: #666;
+    font-size: 30px;
+    line-height: 1.6;
+}
+
+.back-button {
+    min-width: 240px;
+    height: 80px;
+    border: none;
+    border-radius: 999px;
+    background: #ff4949;
+    color: #fff;
+    font-size: 30px;
+    line-height: 80px;
+}

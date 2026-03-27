@@ -77,8 +77,9 @@
         height: 26px;
         padding: 1px 2px;
         border-radius: 999px;
-        background: linear-gradient(180deg, #1a1a1a, #222);
-        border: 1px solid #2a2a2a;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -87,7 +88,7 @@
         &__logo {
             width: 58px;
             height: 16px;
-            filter: sepia(1) saturate(10) hue-rotate(-15deg) brightness(1.1);
+            filter: none;
         }
     }
 
