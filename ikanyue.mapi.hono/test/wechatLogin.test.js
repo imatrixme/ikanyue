@@ -262,6 +262,7 @@ test('wechat login does not persist an empty wechatUnionId on new student creati
         assert.ok(createPayload);
         assert.equal(createPayload.wechatId, 'openid_2');
         assert.equal('wechatUnionId' in createPayload, false);
+        assert.equal(createPayload.idcard, null);
     } finally {
         restore();
     }

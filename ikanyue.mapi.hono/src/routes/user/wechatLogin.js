@@ -320,6 +320,7 @@ async function userWechatLoginHandler(c) {
             nickname,
             avatar: hydratedUserInfo.avatarUrl || DEFAULT_AVATAR,
             gender: hydratedUserInfo.gender || 0,
+            idcard: null,
             blocked: false,
             wechatUserInfo: hydratedUserInfo,
             ...loginMeta,
