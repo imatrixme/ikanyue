@@ -22,6 +22,10 @@ function buildFilter(expressions = []) {
     return `(${expressions.join(') || (')})`;
 }
 
+function normalizeCellphone(cellphone = '') {
+    return `${cellphone}`.trim().replace(/\s+/g, '').replace(/^\+?86/, '');
+}
+
 async function findStudentByWechat(openid, unionid) {
     const filter = buildFilter(
         [openid ? `wechatId="${openid}"` : null, unionid ? `wechatUnionId="${unionid}"` : null].filter(Boolean)
@@ -42,12 +46,13 @@ async function findStudentByWechat(openid, unionid) {
 }
 
 async function findStudentByCellphone(cellphone) {
-    if (!cellphone) {
+    const normalizedCellphone = normalizeCellphone(cellphone);
+    if (!normalizedCellphone) {
         return null;
     }
     const [err, list] = await to(
         pb.collection('students').getList(1, 1, {
-            filter: `cellphone="${cellphone}"`,
+            filter: `cellphone="${normalizedCellphone}"`,
         })
     );
     if (err) {
@@ -59,6 +64,93 @@ async function findStudentByCellphone(cellphone) {
 function normalizeNickname(userInfo = {}, fallback) {
     const nickName = userInfo.nickName || fallback;
     return nickName;
+}
+
+function extractErrorText(error) {
+    if (!error) {
+        return '';
+    }
+
+    const segments = [
+        error.message,
+        error.response?.message,
+        error.response?.data ? JSON.stringify(error.response.data) : '',
+        error.data ? JSON.stringify(error.data) : '',
+    ];
+
+    return segments
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+}
+
+function isDuplicateCreateError(error) {
+    if (!error) {
+        return false;
+    }
+
+    if (error.status === 409) {
+        return true;
+    }
+
+    const errorText = extractErrorText(error);
+    return [
+        'already exists',
+        'duplicate',
+        'must be unique',
+        'validation_not_unique',
+        'value must be unique',
+        'unique constraint',
+        '手机号已注册',
+    ].some((keyword) => errorText.includes(keyword));
+}
+
+function buildWechatStudentUpdateData(student, { openid, unionid, hydratedUserInfo, loginMeta, cellphone }) {
+    const updateData = {
+        wechatId: openid,
+        wechatUnionId: unionid || '',
+        wechatUserInfo: hydratedUserInfo,
+        cellphone,
+        ...loginMeta,
+    };
+
+    const hasNickname = Boolean((student.nickName || student.nickname || '').trim());
+    if (!hasNickname) {
+        const nickname = normalizeNickname(hydratedUserInfo, `微信用户${cellphone.slice(-4)}`);
+        if (nickname) {
+            updateData.nickName = nickname;
+            updateData.nickname = nickname;
+        }
+    }
+
+    const avatarFromWechat = hydratedUserInfo.avatarUrl || DEFAULT_AVATAR;
+    if (!student.avatar || !student.avatar.trim()) {
+        updateData.avatar = avatarFromWechat;
+    }
+
+    const hasGender = !(student.gender === undefined || student.gender === null || `${student.gender}` === '');
+    if (!hasGender && hydratedUserInfo.gender !== '' && hydratedUserInfo.gender !== undefined && hydratedUserInfo.gender !== null) {
+        updateData.gender = hydratedUserInfo.gender;
+    }
+
+    const hasAge = !(student.age === undefined || student.age === null || `${student.age}` === '');
+    if (!hasAge && hydratedUserInfo.age !== '' && hydratedUserInfo.age !== undefined && hydratedUserInfo.age !== null) {
+        const parsedAge = Number(hydratedUserInfo.age);
+        updateData.age = Number.isNaN(parsedAge) ? hydratedUserInfo.age : parsedAge;
+    }
+
+    return updateData;
+}
+
+async function updateStudentWechatProfile(student, context) {
+    const updateData = buildWechatStudentUpdateData(student, context);
+    const [updateErr, updatedStudent] = await to(pb.collection('students').update(student.id, updateData));
+
+    if (updateErr) {
+        throw updateErr;
+    }
+
+    return updatedStudent;
 }
 
 function normalizeRequestBody(payload) {
@@ -148,7 +240,7 @@ async function userWechatLoginHandler(c) {
         return c.error(400, '微信手机号解析失败，请重新授权');
     }
 
-    const cellphone = decryptedPhone?.purePhoneNumber || decryptedPhone?.phoneNumber || '';
+    const cellphone = normalizeCellphone(decryptedPhone?.purePhoneNumber || decryptedPhone?.phoneNumber || '');
     if (!cellphone) {
         return c.error(400, '未获取到有效的手机号');
     }
@@ -183,46 +275,18 @@ async function userWechatLoginHandler(c) {
             return c.error(403, '该账号已被封禁，请联系客服');
         }
 
-        const updateData = {
-            wechatId: openid,
-            wechatUnionId: unionid || '',
-            wechatUserInfo: hydratedUserInfo,
-            ...loginMeta,
-        };
-
-        updateData.cellphone = cellphone;
-
-        const hasNickname = Boolean((student.nickName || student.nickname || '').trim());
-        if (!hasNickname) {
-            const nickname = normalizeNickname(hydratedUserInfo, `微信用户${cellphone.slice(-4)}`);
-            if (nickname) {
-                updateData.nickName = nickname;
-                updateData.nickname = nickname;
-            }
-        }
-
-        const avatarFromWechat = hydratedUserInfo.avatarUrl || DEFAULT_AVATAR;
-        if (!student.avatar || !student.avatar.trim()) {
-            updateData.avatar = avatarFromWechat;
-        }
-
-        const hasGender = !(student.gender === undefined || student.gender === null || `${student.gender}` === '');
-        if (!hasGender && hydratedUserInfo.gender !== '' && hydratedUserInfo.gender !== undefined && hydratedUserInfo.gender !== null) {
-            updateData.gender = hydratedUserInfo.gender;
-        }
-
-        const hasAge = !(student.age === undefined || student.age === null || `${student.age}` === '');
-        if (!hasAge && hydratedUserInfo.age !== '' && hydratedUserInfo.age !== undefined && hydratedUserInfo.age !== null) {
-            const parsedAge = Number(hydratedUserInfo.age);
-            updateData.age = Number.isNaN(parsedAge) ? hydratedUserInfo.age : parsedAge;
-        }
-
-        const [updateErr, updatedStudent] = await to(pb.collection('students').update(student.id, updateData));
-        if (updateErr) {
+        try {
+            student = await updateStudentWechatProfile(student, {
+                openid,
+                unionid,
+                hydratedUserInfo,
+                loginMeta,
+                cellphone,
+            });
+        } catch (updateErr) {
             console.error('更新学生微信信息失败:', updateErr);
             return c.error(500, '更新用户信息失败，请稍后重试');
         }
-        student = updatedStudent;
     } else {
         const nickname = normalizeNickname(hydratedUserInfo, `微信用户${cellphone.slice(-4)}`);
         const newStudentData = {
@@ -243,10 +307,43 @@ async function userWechatLoginHandler(c) {
 
         const [createErr, createdStudent] = await to(pb.collection('students').create(newStudentData));
         if (createErr) {
-            console.error('创建微信学生失败:', createErr);
-            return c.error(500, '创建用户失败，请稍后重试');
+            const duplicateCreate = isDuplicateCreateError(createErr);
+            if (duplicateCreate) {
+                console.warn('创建微信学生命中重复约束，尝试恢复已有账号:', createErr);
+            } else {
+                console.error('创建微信学生失败:', createErr);
+            }
+
+            if (!duplicateCreate) {
+                return c.error(500, '创建用户失败，请稍后重试');
+            }
+
+            try {
+                const existingStudent =
+                    (await findStudentByWechat(openid, unionid)) || (await findStudentByCellphone(cellphone));
+
+                if (!existingStudent) {
+                    return c.error(500, '创建用户失败，请稍后重试');
+                }
+
+                if (existingStudent.blocked) {
+                    return c.error(403, '该账号已被封禁，请联系客服');
+                }
+
+                student = await updateStudentWechatProfile(existingStudent, {
+                    openid,
+                    unionid,
+                    hydratedUserInfo,
+                    loginMeta,
+                    cellphone,
+                });
+            } catch (recoveryErr) {
+                console.error('恢复微信学生登录失败:', recoveryErr);
+                return c.error(500, '创建用户失败，请稍后重试');
+            }
+        } else {
+            student = createdStudent;
         }
-        student = createdStudent;
     }
 
     if (!student.avatar || student.avatar.trim() === '') {
