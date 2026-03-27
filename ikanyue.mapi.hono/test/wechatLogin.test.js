@@ -173,3 +173,96 @@ test('wechat login reuses an existing student when create hits a duplicate const
         restore();
     }
 });
+
+test('wechat login does not persist an empty wechatUnionId on new student creation', async () => {
+    let createPayload = null;
+
+    const pocketbaseMock = {
+        collection(name) {
+            assert.equal(name, 'students');
+
+            return {
+                async getList() {
+                    return { items: [] };
+                },
+                async create(data) {
+                    createPayload = data;
+
+                    return {
+                        id: 'student_2',
+                        sn: data.sn,
+                        cellphone: data.cellphone,
+                        avatar: data.avatar,
+                    };
+                },
+                async update() {
+                    throw new Error('update should not be called for a fresh create');
+                },
+            };
+        },
+    };
+
+    const jwtAuthMock = {
+        jwtAuth: {
+            sign() {
+                return 'jwt-token-2';
+            },
+        },
+    };
+
+    const wechatMock = {
+        async exchangeCodeForSession() {
+            return {
+                openid: 'openid_2',
+                unionid: '',
+                session_key: 'session-key',
+            };
+        },
+        decryptPhoneNumber() {
+            return {
+                purePhoneNumber: '13800138001',
+            };
+        },
+        validateUserSignature() {
+            return true;
+        },
+    };
+
+    const { handler, restore } = loadWechatLoginHandler({
+        pocketbaseMock,
+        jwtAuthMock,
+        wechatMock,
+    });
+
+    try {
+        const app = new Hono();
+        app.use('*', responseMiddleware());
+        app.post('/v1/user/wechat-login', handler);
+
+        const response = await app.request('http://localhost/v1/user/wechat-login', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: 'wx-code-2',
+                userInfo: {
+                    nickName: '看乐用户2',
+                },
+                phone: {
+                    encryptedData: 'encrypted-data',
+                    iv: 'iv-data',
+                },
+            }),
+        });
+
+        const payload = await response.json();
+
+        assert.equal(payload.code, 10000);
+        assert.ok(createPayload);
+        assert.equal(createPayload.wechatId, 'openid_2');
+        assert.equal('wechatUnionId' in createPayload, false);
+    } finally {
+        restore();
+    }
+});

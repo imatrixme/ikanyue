@@ -26,6 +26,20 @@ function normalizeCellphone(cellphone = '') {
     return `${cellphone}`.trim().replace(/\s+/g, '').replace(/^\+?86/, '');
 }
 
+function buildWechatIdentityData(openid, unionid) {
+    const data = {};
+
+    if (openid) {
+        data.wechatId = openid;
+    }
+
+    if (unionid) {
+        data.wechatUnionId = unionid;
+    }
+
+    return data;
+}
+
 async function findStudentByWechat(openid, unionid) {
     const filter = buildFilter(
         [openid ? `wechatId="${openid}"` : null, unionid ? `wechatUnionId="${unionid}"` : null].filter(Boolean)
@@ -84,6 +98,15 @@ function extractErrorText(error) {
         .toLowerCase();
 }
 
+function extractValidationFieldNames(error) {
+    const responseData = error?.response?.data || error?.data;
+    if (!responseData || typeof responseData !== 'object' || Array.isArray(responseData)) {
+        return [];
+    }
+
+    return Object.keys(responseData);
+}
+
 function isDuplicateCreateError(error) {
     if (!error) {
         return false;
@@ -107,11 +130,10 @@ function isDuplicateCreateError(error) {
 
 function buildWechatStudentUpdateData(student, { openid, unionid, hydratedUserInfo, loginMeta, cellphone }) {
     const updateData = {
-        wechatId: openid,
-        wechatUnionId: unionid || '',
         wechatUserInfo: hydratedUserInfo,
         cellphone,
         ...loginMeta,
+        ...buildWechatIdentityData(openid, unionid),
     };
 
     const hasNickname = Boolean((student.nickName || student.nickname || '').trim());
@@ -299,17 +321,20 @@ async function userWechatLoginHandler(c) {
             avatar: hydratedUserInfo.avatarUrl || DEFAULT_AVATAR,
             gender: hydratedUserInfo.gender || 0,
             blocked: false,
-            wechatId: openid,
-            wechatUnionId: unionid || '',
             wechatUserInfo: hydratedUserInfo,
             ...loginMeta,
+            ...buildWechatIdentityData(openid, unionid),
         };
 
         const [createErr, createdStudent] = await to(pb.collection('students').create(newStudentData));
         if (createErr) {
             const duplicateCreate = isDuplicateCreateError(createErr);
             if (duplicateCreate) {
-                console.warn('创建微信学生命中重复约束，尝试恢复已有账号:', createErr);
+                const conflictFields = extractValidationFieldNames(createErr);
+                console.warn(
+                    '创建微信学生命中重复约束，尝试恢复已有账号:',
+                    conflictFields.length ? { conflictFields } : createErr
+                );
             } else {
                 console.error('创建微信学生失败:', createErr);
             }
