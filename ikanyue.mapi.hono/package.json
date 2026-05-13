@@ -12,6 +12,7 @@
     "start:bun": "NODE_ENV=production bun run src/app.js",
     "lint": "eslint src --max-warnings=0",
     "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js'",
     "check-docs": "./scripts/check-docs.sh",
     "swagger:collect": "node scripts/collect-swagger.js",
     "swagger:serve": "node scripts/serve-swagger.js",
@@ -41,4 +42,4 @@
   "engines": {
     "bun": "^1.0.0"
   }
-} 
+}

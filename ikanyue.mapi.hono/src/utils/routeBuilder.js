@@ -3,6 +3,27 @@
  * 提供链式 API 来定义路由、中间件和处理器
  */
 
+function normalizeMiddlewares(middlewareFuncs) {
+    return middlewareFuncs.map((mw) => {
+        // 只有无参函数才按中间件工厂尝试调用，避免提前执行 (c, next) 中间件。
+        if (typeof mw === 'function' && mw.length === 0) {
+            try {
+                const result = mw();
+                // 如果调用结果是函数，说明是工厂函数
+                if (typeof result === 'function') {
+                    return result;
+                }
+                // 否则原函数就是中间件
+                return mw;
+            } catch (e) {
+                // 如果调用出错，说明原函数就是中间件
+                return mw;
+            }
+        }
+        return mw;
+    });
+}
+
 class RouteBuilder {
     constructor(app, method, path, inheritedMiddlewares = []) {
         this.app = app;
@@ -23,33 +44,21 @@ class RouteBuilder {
     }
 
     /**
+     * 设置路由处理器（别名方法）
+     * @param {Function} handlerFunc 路由处理函数
+     * @returns {RouteBuilder} 返回自身以支持链式调用
+     */
+    setHandler(handlerFunc) {
+        return this.handler(handlerFunc);
+    }
+
+    /**
      * 添加中间件
      * @param {...Function} middlewareFuncs 中间件函数或中间件工厂函数
      * @returns {RouteBuilder} 返回自身以支持链式调用
      */
     use(...middlewareFuncs) {
-        // 智能处理中间件函数和工厂函数
-        const processedMiddlewares = middlewareFuncs.map((mw) => {
-            // 如果是函数且返回函数，则认为是工厂函数，需要调用
-            if (typeof mw === 'function') {
-                try {
-                    const result = mw();
-                    // 如果调用结果是函数，说明是工厂函数
-                    if (typeof result === 'function') {
-                        return result;
-                    } else {
-                        // 否则原函数就是中间件
-                        return mw;
-                    }
-                } catch (e) {
-                    // 如果调用出错，说明原函数就是中间件
-                    return mw;
-                }
-            }
-            return mw;
-        });
-
-        this.middlewares.push(...processedMiddlewares);
+        this.middlewares.push(...normalizeMiddlewares(middlewareFuncs));
         return this;
     }
 
@@ -68,6 +77,33 @@ class RouteBuilder {
      * @returns {RouteBuilder} 返回自身以支持链式调用
      */
     middlewares(...middlewareFuncs) {
+        return this.use(...middlewareFuncs);
+    }
+
+    /**
+     * 添加认证中间件（别名方法）
+     * @param {...Function} middlewareFuncs 中间件函数
+     * @returns {RouteBuilder} 返回自身以支持链式调用
+     */
+    auth(...middlewareFuncs) {
+        return this.use(...middlewareFuncs);
+    }
+
+    /**
+     * 添加教师权限中间件（别名方法）
+     * @param {...Function} middlewareFuncs 中间件函数
+     * @returns {RouteBuilder} 返回自身以支持链式调用
+     */
+    teacher(...middlewareFuncs) {
+        return this.use(...middlewareFuncs);
+    }
+
+    /**
+     * 添加管理员权限中间件（别名方法）
+     * @param {...Function} middlewareFuncs 中间件函数
+     * @returns {RouteBuilder} 返回自身以支持链式调用
+     */
+    admin(...middlewareFuncs) {
         return this.use(...middlewareFuncs);
     }
 
@@ -101,7 +137,7 @@ class RouteBuilder {
      */
     when(condition, ...middlewareFuncs) {
         if (condition) {
-            this.middlewares.push(...middlewareFuncs);
+            this.middlewares.push(...normalizeMiddlewares(middlewareFuncs));
         }
         return this;
     }
@@ -140,27 +176,27 @@ class RouteFactory {
             this.currentBuilder = null;
         }
 
-        // 智能处理中间件函数和工厂函数
-        const processedMiddlewares = middlewareFuncs.map((mw) => {
-            if (typeof mw === 'function') {
-                try {
-                    const result = mw();
-                    if (typeof result === 'function') {
-                        return result;
-                    } else {
-                        return mw;
-                    }
-                } catch (e) {
-                    return mw;
-                }
-            }
-            return mw;
-        });
+        const processedMiddlewares = normalizeMiddlewares(middlewareFuncs);
 
         // 创建新的factory实例，继承当前所有中间件加上新的中间件
         const newFactory = new RouteFactory(this.app, [...this.getAllInheritedMiddlewares(), ...processedMiddlewares]);
 
         return newFactory;
+    }
+
+    /**
+     * 添加全局中间件
+     * @param {...Function} middlewareFuncs 中间件函数
+     * @returns {RouteFactory} 返回自身以支持链式调用
+     */
+    addGlobalMiddleware(...middlewareFuncs) {
+        if (this.currentBuilder) {
+            this.currentBuilder.build();
+            this.currentBuilder = null;
+        }
+
+        this.inheritedMiddlewares.push(...normalizeMiddlewares(middlewareFuncs));
+        return this;
     }
 
     /**
@@ -266,14 +302,18 @@ class RouteFactory {
                 if (['get', 'post', 'put', 'delete', 'patch'].includes(prop)) {
                     return (path) => target.createRoute(prop, prefix + path);
                 }
-                return target[prop];
+                if (prop === 'group') {
+                    return (childPrefix, childCallback) => target.group(prefix + childPrefix, childCallback);
+                }
+                const value = target[prop];
+                return typeof value === 'function' ? value.bind(target) : value;
             },
         });
 
         // 为proxy添加when方法支持
         proxy.when = (condition, ...middlewareFuncs) => {
             if (condition) {
-                groupFactory.use(...middlewareFuncs);
+                groupFactory.groupMiddlewares.push(...normalizeMiddlewares(middlewareFuncs));
             }
             return proxy;
         };
