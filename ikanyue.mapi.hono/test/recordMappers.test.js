@@ -112,3 +112,99 @@ test('mapActivitySignupRecord maps activity expansion with file URLs and default
         }
     }
 });
+
+test('mapAttendanceRecord maps expanded lessons and supports disabling lesson embedding', () => {
+    const record = {
+        id: 'attendance_2',
+        userId: 'student_2',
+        lessonId: ['lesson_1'],
+        status: 'signed',
+        signedAt: '2026-05-14T03:00:00Z',
+        expand: {
+            lessonId: {
+                id: 'lesson_1',
+                title: '视唱练耳',
+                teacher: '李老师',
+                location: '教室A',
+                status: 'done',
+            },
+        },
+    };
+
+    const withLesson = mapAttendanceRecord(record);
+    assert.deepEqual(withLesson.lesson, {
+        id: 'lesson_1',
+        title: '视唱练耳',
+        teacher: '李老师',
+        startTime: null,
+        endTime: null,
+        location: '教室A',
+        status: 'done',
+    });
+
+    const withoutLesson = mapAttendanceRecord(record, { includeLesson: false });
+    assert.equal('lesson' in withoutLesson, false);
+});
+
+test('record mappers return null for empty records and map inline attendance records', () => {
+    assert.equal(mapAttendanceRecord(null), null);
+    assert.equal(mapLessonRecord(undefined), null);
+    assert.equal(mapActivitySignupRecord(null), null);
+
+    const mapped = mapLessonRecord({
+        id: 'lesson_record_2',
+        userId: ['student_2'],
+        activityId: ['activity_2'],
+        attendanceId: ['attendance_2'],
+        attendance: {
+            id: 'attendance_inline',
+            userId: 'student_2',
+            status: 'pending',
+            created: '2026-05-14T04:00:00Z',
+        },
+        materials: [{ id: 'material_1' }],
+    });
+
+    assert.equal(mapped.userId, 'student_2');
+    assert.deepEqual(mapped.materials, [{ id: 'material_1' }]);
+    assert.equal(mapped.attendance.id, 'attendance_inline');
+    assert.equal(mapped.attendance.signedAt, '2026-05-14T04:00:00Z');
+});
+
+test('mapActivitySignupRecord handles camelCase activity fields and missing expansion', () => {
+    const withoutActivity = mapActivitySignupRecord({
+        id: 'signup_2',
+        userId: 'student_2',
+        activityId: 'activity_2',
+        realName: '李同学',
+        age: 12,
+        status: 'cancelled',
+    });
+
+    assert.equal(withoutActivity.realName, '李同学');
+    assert.equal(withoutActivity.age, 12);
+    assert.equal(withoutActivity.status, 'cancelled');
+    assert.equal(withoutActivity.activity, null);
+
+    const withActivity = mapActivitySignupRecord({
+        id: 'signup_3',
+        userId: 'student_3',
+        activityId: 'activity_3',
+        expand: {
+            activityId: {
+                id: 'activity_3',
+                collectionId: 'activities',
+                description: '体验活动',
+                tags: ['声乐'],
+                maxParticipants: 10,
+                currentParticipants: 5,
+                externalLink: 'https://example.com/activity',
+            },
+        },
+    });
+
+    assert.equal(withActivity.activity.maxParticipants, 10);
+    assert.equal(withActivity.activity.currentParticipants, 5);
+    assert.equal(withActivity.activity.externalLink, 'https://example.com/activity');
+    assert.deepEqual(withActivity.activity.tags, ['声乐']);
+});

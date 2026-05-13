@@ -194,8 +194,20 @@ function normalizeRequestBody(payload) {
         payload.forEach((value, key) => {
             normalized[key] = value;
         });
-        return normalized;
+        payload = normalized;
     }
+
+    ['phone', 'userInfo'].forEach((fieldName) => {
+        if (typeof payload[fieldName] !== 'string') {
+            return;
+        }
+        try {
+            payload[fieldName] = JSON.parse(payload[fieldName]);
+        } catch (error) {
+            console.warn(`无法解析 ${fieldName} JSON:`, error);
+            payload[fieldName] = {};
+        }
+    });
 
     return payload;
 }

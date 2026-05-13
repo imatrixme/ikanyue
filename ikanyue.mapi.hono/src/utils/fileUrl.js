@@ -12,18 +12,21 @@
 function getFileUrl(record, filename) {
     if (!filename) return '';
 
+    const normalizedFilename = typeof filename === 'object' ? filename.name || '' : `${filename}`;
+    if (!normalizedFilename) return '';
+
     // 如果已经是完整URL，直接返回
-    if (filename.startsWith('http://') || filename.startsWith('https://')) {
-        return filename;
+    if (normalizedFilename.startsWith('http://') || normalizedFilename.startsWith('https://')) {
+        return normalizedFilename;
     }
 
     // 优先使用S3配置
     if (process.env.S3_URL && process.env.S3_BUCKET) {
-        return `${process.env.S3_URL}/${process.env.S3_BUCKET}/${record.collectionId}/${record.id}/${filename}`;
+        return `${process.env.S3_URL}/${process.env.S3_BUCKET}/${record.collectionId}/${record.id}/${normalizedFilename}`;
     }
 
     // 使用PocketBase本地文件服务
-    return `${process.env.PB_URL}/api/files/${record.collectionId}/${record.id}/${filename}`;
+    return `${process.env.PB_URL}/api/files/${record.collectionId}/${record.id}/${normalizedFilename}`;
 }
 
 /**

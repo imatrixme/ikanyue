@@ -29,7 +29,7 @@ class RouteBuilder {
         this.app = app;
         this.method = method;
         this.path = path;
-        this.middlewares = [...inheritedMiddlewares]; // 继承的中间件
+        this.middlewareStack = [...inheritedMiddlewares]; // 继承的中间件
         this.handlerFunc = null; // 改名避免与方法冲突
     }
 
@@ -58,7 +58,7 @@ class RouteBuilder {
      * @returns {RouteBuilder} 返回自身以支持链式调用
      */
     use(...middlewareFuncs) {
-        this.middlewares.push(...normalizeMiddlewares(middlewareFuncs));
+        this.middlewareStack.push(...normalizeMiddlewares(middlewareFuncs));
         return this;
     }
 
@@ -117,13 +117,13 @@ class RouteBuilder {
         }
 
         // 组合所有中间件和处理器
-        const allHandlers = [...this.middlewares, this.handlerFunc];
+        const allHandlers = [...this.middlewareStack, this.handlerFunc];
 
         // 注册到 Hono 应用
         this.app[this.method](this.path, ...allHandlers);
 
         // 重置状态以便重用
-        this.middlewares = [];
+        this.middlewareStack = [];
         this.handlerFunc = null;
 
         return this;
@@ -137,7 +137,7 @@ class RouteBuilder {
      */
     when(condition, ...middlewareFuncs) {
         if (condition) {
-            this.middlewares.push(...normalizeMiddlewares(middlewareFuncs));
+            this.middlewareStack.push(...normalizeMiddlewares(middlewareFuncs));
         }
         return this;
     }
@@ -148,7 +148,7 @@ class RouteBuilder {
      * @returns {RouteBuilder} 返回自身以支持链式调用
      */
     group(...middlewareFuncs) {
-        this.middlewares.push(...middlewareFuncs);
+        this.middlewareStack.push(...normalizeMiddlewares(middlewareFuncs));
         return this;
     }
 }
@@ -332,9 +332,9 @@ class RouteFactory {
  * @returns {RouteFactory} 路由工厂实例
  */
 function createRouteBuilder(app, ...globalMiddlewares) {
-    const factory = new RouteFactory(app);
+    let factory = new RouteFactory(app);
     if (globalMiddlewares.length > 0) {
-        factory.use(...globalMiddlewares);
+        factory = factory.use(...globalMiddlewares);
     }
     return factory;
 }

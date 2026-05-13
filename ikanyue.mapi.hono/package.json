@@ -12,7 +12,7 @@
     "start:bun": "NODE_ENV=production bun run src/app.js",
     "lint": "eslint src --max-warnings=0",
     "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js'",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js' --test-coverage-lines=90 --test-coverage-branches=90 --test-coverage-functions=90",
     "check-docs": "./scripts/check-docs.sh",
     "swagger:collect": "node scripts/collect-swagger.js",
     "swagger:serve": "node scripts/serve-swagger.js",
