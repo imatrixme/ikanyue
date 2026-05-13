@@ -1,0 +1,67 @@
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+config/local.js
+
+# JavaScript dependencies and outputs
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.turbo/
+**/.nuxt/
+**/.nitro/
+**/.output/
+**/.cache/
+**/.swc/
+**/coverage/
+**/logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Taro outputs
+**/deploy_versions/
+**/.temp/
+**/.rn_temp/
+
+# API local data
+**/.tmp/
+**/database/
+**/pb_data/
+dump.rdb
+
+# Flutter and Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/build/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/android/.gradle/
+**/android/local.properties
+**/android/key.properties
+**/*.keystore
+**/*.jks
+
+# Optional backup location for old nested Git repositories during final migration
+.monorepo/git-backups/

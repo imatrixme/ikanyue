@@ -1,0 +1,16 @@
+[submodule "ikanyue.taro3"]
+	path = ikanyue.taro3
+	url = git@github.com:imatrixme/ikanyue.taro3.git
+	branch = 2604/jieshao
+[submodule "ikanyue.mapi.hono"]
+	path = ikanyue.mapi.hono
+	url = git@github.com:imatrixme/ikanyue.mapi.hono.git
+	branch = master
+[submodule "ikanyue.flutter"]
+	path = ikanyue.flutter
+	url = git@github.com:imatrixme/ikanyue.flutter.git
+	branch = douyin
+[submodule "ikanyue.m.nuxt"]
+	path = ikanyue.m.nuxt
+	url = git@github.com:imatrixme/ikanyue.m.nuxt.git
+	branch = master
