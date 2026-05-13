@@ -29,7 +29,7 @@ The current priority is practical regression coverage for application logic that
    - Rationale: these tests run quickly and do not require platform tooling.
    - Alternative considered: app automation tests. Rejected for this change because the goal is coverage entry points, not UI workflow validation.
 
-3. Use each project runner's native coverage mode.
+3. Use each project runner's native coverage mode and enforce local thresholds where support exists.
    - Rationale: coverage output remains understandable to contributors working inside that submodule.
    - Alternative considered: shared coverage aggregation in the parent repository. Rejected until there is a concrete reporting requirement.
 
@@ -37,4 +37,4 @@ The current priority is practical regression coverage for application logic that
 
 - Testable seams may be limited in the existing Taro project → Prefer small extracted pure helpers only when needed for meaningful unit tests.
 - Hono API code may depend on runtime state or external services → Use request-level tests against the app object where available, and mock or avoid external dependencies.
-- Coverage thresholds may fail immediately if enabled too aggressively → Add coverage commands first; only add thresholds if current coverage can satisfy them without broad, unrelated test work.
+- Coverage thresholds may fail immediately if enabled too aggressively → Enable thresholds only for the tested unit layer and keep them inside each submodule's own runner.
