@@ -33,7 +33,7 @@ export function getSafeHtml(html) {
         // 添加样式
         content = content
             .replace(/<p([^>]*)>/gi, '<p$1 style="margin-bottom:12px;">')
-            .replace(/<img([^>]*)>/gi, '<img$1 style="max-width:100%;height:auto;margin:10px 0;" />')
+            .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 style="max-width:100%;height:auto;margin:10px 0;" />')
             .replace(/<a([^>]*)>/gi, '<a$1 style="color:#ff4949;text-decoration:underline;">')
             .replace(/<h1([^>]*)>/gi, '<h1$1 style="font-size:20px;font-weight:bold;margin:16px 0 8px 0;">')
             .replace(/<h2([^>]*)>/gi, '<h2$1 style="font-size:18px;font-weight:bold;margin:16px 0 8px 0;">')
@@ -80,6 +80,7 @@ export function getSafeHtml(html) {
  */
 export function htmlToText(html) {
     if (!html) return '';
+    if (typeof html !== 'string') return '';
 
     try {
         // 替换换行标签为特殊标记
