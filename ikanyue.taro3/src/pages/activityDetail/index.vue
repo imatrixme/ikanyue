@@ -103,6 +103,11 @@
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { getSafeHtml, htmlToText } from './htmlUtils';
+import {
+    formatDateOnly as formatActivityDateOnly,
+    formatTimeOnly as formatActivityTimeOnly,
+    mapActivityDetail,
+} from '../activity/pageLogic';
 
 export default {
     data() {
@@ -163,24 +168,9 @@ export default {
             this.loading = true;
             try {
                 const res = await Api.findActivities({ id });
-                if (res) {
-                    // 将API返回的字段适配到本地的驼峰命名
-                    this.activity = {
-                        ...this.activity,
-                        id: res.id,
-                        title: res.title,
-                        description: res.description || '',
-                        coverImage: res.coverImageUrl,
-                        images: res.images || [],
-                        startTime: res.startTime,
-                        endTime: res.endTime,
-                        location: res.location,
-                        price: res.price,
-                        externalLink: res.external_link || res.externalLink,
-                        tags: res.tags || [],
-                        maxParticipants: res.max_participants || res.maxParticipants || 0,
-                        currentParticipants: res.current_participants || res.currentParticipants || 0,
-                    };
+                const mappedActivity = mapActivityDetail(this.activity, res);
+                if (mappedActivity) {
+                    this.activity = mappedActivity;
 
                     // 处理HTML内容
                     if (this.activity.description) {
@@ -210,32 +200,12 @@ export default {
 
         // 只格式化日期部分 (月日)
         formatDateOnly(timestamp) {
-            if (!timestamp) return '';
-
-            const date = new Date(timestamp);
-
-            // 检查日期是否有效
-            if (isNaN(date.getTime())) return '';
-
-            const month = (date.getMonth() + 1).toString();
-            const day = date.getDate().toString();
-
-            return `${month}月${day}日`;
+            return formatActivityDateOnly(timestamp);
         },
 
         // 只格式化时间部分 (时分)
         formatTimeOnly(timestamp) {
-            if (!timestamp) return '';
-
-            const date = new Date(timestamp);
-
-            // 检查日期是否有效
-            if (isNaN(date.getTime())) return '';
-
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            return `${hours}:${minutes}`;
+            return formatActivityTimeOnly(timestamp);
         },
 
         // 格式化日期时间

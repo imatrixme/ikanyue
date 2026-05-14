@@ -46,6 +46,14 @@ import { ref, computed, onMounted, reactive } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import favoriteManager from '../../../utils/favoriteManager';
+import {
+    applyMaterialListResponse,
+    buildFavoriteStatus,
+    buildVideoDetailUrl,
+    createMaterialListParams,
+    shouldLoadMore,
+    sortFavoritesByTimeDesc,
+} from './pageLogic';
 
 // 导入组件
 import VideoTabs from './components/VideoTabs.vue';
@@ -150,21 +158,17 @@ const loadAllVideoData = async () => {
     networkError.value = false;
 
     try {
-        const params = {
-            page: 1,
-            perPage: pageSize.value,
-            status: 'published',
-            sort: '-sequence',
-        };
+        const params = createMaterialListParams(1, pageSize.value);
         console.log('[VideoMaterial] API请求参数:', params);
 
         const res = await Api.findVideoMaterials(params);
         console.log('[VideoMaterial] API返回数据:', res);
 
-        videoList.value = res.items || [];
-        total.value = res.totalItems || 0;
-        currentPage.value = 1;
-        hasMore.value = (res.items || []).length >= pageSize.value;
+        const nextState = applyMaterialListResponse(res, 1, pageSize.value);
+        videoList.value = nextState.items;
+        total.value = nextState.totalItems;
+        currentPage.value = nextState.currentPage;
+        hasMore.value = nextState.hasMore;
 
         console.log(`[VideoMaterial] 加载了 ${videoList.value.length} 条视频数据`);
 
@@ -196,9 +200,7 @@ const loadFavoriteVideoData = async () => {
         console.log('[VideoMaterial] 收藏视频数据:', favoriteVideos);
 
         // 按收藏时间倒序排列
-        videoList.value = favoriteVideos.sort((a, b) => {
-            return new Date(b.favoriteTime) - new Date(a.favoriteTime);
-        });
+        videoList.value = sortFavoritesByTimeDesc(favoriteVideos);
 
         console.log(`[VideoMaterial] 加载了 ${videoList.value.length} 条收藏视频数据`);
 
@@ -220,7 +222,7 @@ const loadFavoriteVideoData = async () => {
 
 // 加载更多数据
 const loadMore = async () => {
-    if (activeTab.value !== 'all' || loadingMore.value || !hasMore.value) {
+    if (!shouldLoadMore({ activeTab: activeTab.value, hasMore: hasMore.value, loadingMore: loadingMore.value })) {
         return;
     }
 
@@ -229,23 +231,19 @@ const loadMore = async () => {
 
     try {
         const nextPage = currentPage.value + 1;
-        const params = {
-            page: nextPage,
-            perPage: pageSize.value,
-            status: 'published',
-            sort: '-sequence',
-        };
+        const params = createMaterialListParams(nextPage, pageSize.value);
 
         const res = await Api.findVideoMaterials(params);
-        const newItems = res.items || [];
+        const nextState = applyMaterialListResponse(res, nextPage, pageSize.value);
+        const newItems = nextState.items;
 
         if (newItems.length > 0) {
             videoList.value.push(...newItems);
-            currentPage.value = nextPage;
+            currentPage.value = nextState.currentPage;
             console.log(`[VideoMaterial] 加载了 ${newItems.length} 条更多数据`);
         }
 
-        hasMore.value = newItems.length >= pageSize.value;
+        hasMore.value = nextState.hasMore;
 
         // 更新新加载项目的收藏状态
         await loadFavoriteStatus();
@@ -265,11 +263,10 @@ const loadMore = async () => {
 const loadFavoriteStatus = async () => {
     try {
         const favoriteVideos = await favoriteManager.getFavoriteVideos();
-        const favoriteMap = {};
-        favoriteVideos.forEach((video) => {
-            favoriteMap[video.id] = true;
+        Object.keys(favoriteStatus).forEach((key) => {
+            delete favoriteStatus[key];
         });
-        Object.assign(favoriteStatus, favoriteMap);
+        Object.assign(favoriteStatus, buildFavoriteStatus(favoriteVideos));
     } catch (error) {
         console.error('[VideoMaterial] 加载收藏状态失败:', error);
     }
@@ -279,7 +276,7 @@ const loadFavoriteStatus = async () => {
 const goToDetail = (video) => {
     console.log('[VideoMaterial] 跳转到视频详情:', video.id);
     Taro.navigateTo({
-        url: `/pages/videoMaterial/detail/index?id=${video.id}`,
+        url: buildVideoDetailUrl(video),
     });
 };
 </script>

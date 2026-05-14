@@ -48,6 +48,7 @@ import { ref, onMounted } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../../utils/apis';
 import favoriteManager from '../../../../utils/favoriteManager';
+import { applyAudioDetailResponse } from '../pageLogic';
 
 // 导入组件
 import AudioHeader from './components/AudioHeader.vue';
@@ -90,8 +91,9 @@ const loadAudioDetail = async () => {
 
     try {
         const res = await Api.findAudioMaterialDetail({ id: audioId.value });
-        audioDetail.value = res;
-        duration.value = res.duration || 0;
+        const nextState = applyAudioDetailResponse(res);
+        audioDetail.value = nextState.detail;
+        duration.value = nextState.duration;
     } catch (err) {
         error.value = true;
         Taro.showToast({

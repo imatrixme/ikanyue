@@ -46,6 +46,14 @@ import { ref, computed, onMounted, reactive } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import favoriteManager from '../../../utils/favoriteManager';
+import {
+    applyMaterialListResponse,
+    buildAudioDetailUrl,
+    buildFavoriteStatus,
+    createMaterialListParams,
+    shouldLoadMore,
+    sortFavoritesByTimeDesc,
+} from './pageLogic';
 
 // 导入组件
 import AudioTabs from './components/AudioTabs.vue';
@@ -150,21 +158,17 @@ const loadAllAudioData = async () => {
     networkError.value = false;
 
     try {
-        const params = {
-            page: 1,
-            perPage: pageSize.value,
-            status: 'published',
-            sort: '-sequence',
-        };
+        const params = createMaterialListParams(1, pageSize.value);
         console.log('[AudioMaterial] API请求参数:', params);
 
         const res = await Api.findAudioMaterials(params);
         console.log('[AudioMaterial] API返回数据:', res);
 
-        audioList.value = res.items || [];
-        total.value = res.totalItems || 0;
-        currentPage.value = 1;
-        hasMore.value = (res.items || []).length >= pageSize.value;
+        const nextState = applyMaterialListResponse(res, 1, pageSize.value);
+        audioList.value = nextState.items;
+        total.value = nextState.totalItems;
+        currentPage.value = nextState.currentPage;
+        hasMore.value = nextState.hasMore;
 
         console.log(`[AudioMaterial] 加载了 ${audioList.value.length} 条音频数据`);
 
@@ -196,9 +200,7 @@ const loadFavoriteAudioData = async () => {
         console.log('[AudioMaterial] 收藏音频数据:', favoriteAudios);
 
         // 按收藏时间倒序排列
-        audioList.value = favoriteAudios.sort((a, b) => {
-            return new Date(b.favoriteTime) - new Date(a.favoriteTime);
-        });
+        audioList.value = sortFavoritesByTimeDesc(favoriteAudios);
 
         console.log(`[AudioMaterial] 加载了 ${audioList.value.length} 条收藏数据`);
 
@@ -215,7 +217,7 @@ const loadFavoriteAudioData = async () => {
 
 // 加载更多数据 (仅适用于"全部材料")
 const loadMore = () => {
-    if (activeTab.value !== 'all' || !hasMore.value || loadingMore.value) {
+    if (!shouldLoadMore({ activeTab: activeTab.value, hasMore: hasMore.value, loadingMore: loadingMore.value })) {
         return;
     }
 
@@ -223,17 +225,13 @@ const loadMore = () => {
 
     const nextPage = currentPage.value + 1;
 
-    Api.findAudioMaterials({
-        page: nextPage,
-        perPage: pageSize.value,
-        status: 'published',
-        sort: '-sequence',
-    })
+    Api.findAudioMaterials(createMaterialListParams(nextPage, pageSize.value))
         .then(async (res) => {
-            const newItems = res.items || [];
+            const nextState = applyMaterialListResponse(res, nextPage, pageSize.value);
+            const newItems = nextState.items;
             audioList.value.push(...newItems);
-            currentPage.value = nextPage;
-            hasMore.value = newItems.length >= pageSize.value;
+            currentPage.value = nextState.currentPage;
+            hasMore.value = nextState.hasMore;
 
             // 更新新加载项目的收藏状态
             await loadFavoriteStatus();
@@ -261,10 +259,7 @@ const loadFavoriteStatus = async () => {
             delete favoriteStatus[key];
         });
 
-        // 设置当前音频的收藏状态
-        audioList.value.forEach((audio) => {
-            favoriteStatus[audio.id] = favoriteIds.includes(audio.id);
-        });
+        Object.assign(favoriteStatus, buildFavoriteStatus(audioList.value, favoriteIds));
     } catch (error) {
         console.error('加载收藏状态失败:', error);
     }
@@ -272,7 +267,7 @@ const loadFavoriteStatus = async () => {
 
 const goToDetail = (audio) => {
     Taro.navigateTo({
-        url: `/pages/audioMaterial/detail/index?id=${audio.id}`,
+        url: buildAudioDetailUrl(audio),
     });
 };
 </script>

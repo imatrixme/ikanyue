@@ -8,7 +8,12 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov'],
             include: [
+                'src/pages/activity/pageLogic.js',
                 'src/pages/activityDetail/htmlUtils.js',
+                'src/pages/audioMaterial/pageLogic.js',
+                'src/pages/userinfo/pageLogic.js',
+                'src/pages/videoMaterial/pageLogic.js',
+                'utils/apis.js',
                 'utils/favoriteManager.js',
                 'utils/request.js',
                 'utils/usermanager.js',

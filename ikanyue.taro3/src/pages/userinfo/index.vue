@@ -82,6 +82,7 @@
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
+import { buildUserUpdatePayload, createGenderOptions, hydrateUserInfoForm, selectPickerOption } from './pageLogic';
 import './index.scss';
 
 var that;
@@ -101,11 +102,7 @@ export default {
             currentNickname: undefined,
             currentCellphone: undefined,
             currentAge: 18,
-            genders: [
-                { text: '未知', value: 0 },
-                { text: '男', value: 1 },
-                { text: '女', value: 2 },
-            ],
+            genders: createGenderOptions(),
             provinces: [
                 { text: '安徽省', value: 'AnHui' },
                 { text: '澳门特别行政区', value: 'AoMen' },
@@ -158,16 +155,16 @@ export default {
     },
     methods: {
         onProvinceConfirm({ selectedValue, selectedOptions }) {
-            if (selectedOptions && selectedOptions.length > 0) {
-                const province = selectedOptions[0];
+            const province = selectPickerOption(selectedOptions);
+            if (province) {
                 that.currentProvinceText = province.text;
                 that.currentProvinceValue = province.value;
                 that.selectedProvinceValue = province.value;
             }
         },
         onGenderConfirm({ selectedValue, selectedOptions }) {
-            if (selectedOptions && selectedOptions.length > 0) {
-                const gender = selectedOptions[0];
+            const gender = selectPickerOption(selectedOptions);
+            if (gender) {
                 that.currentGenderText = gender.text;
                 that.currentGenderValue = Number(gender.value);
                 that.selectedGenderValue = gender.value.toString();
@@ -188,48 +185,11 @@ export default {
             const userInfo = UserManager.getUserInfo();
 
             that.userInfo = userInfo;
-            that.currentCellphone = userInfo.cellphone;
-            that.currentRealname = userInfo.realname;
-            that.currentNickname = userInfo.nickname;
-            that.currentAge = userInfo.age || 18;
-
-            // 设置省份
-            if (userInfo.province) {
-                // 查找对应的省份对象
-                const provinceObj = that.provinces.find((p) => p.text === userInfo.province);
-                if (provinceObj) {
-                    that.currentProvinceText = provinceObj.text;
-                    that.currentProvinceValue = provinceObj.value;
-                    that.selectedProvinceValue = provinceObj.value;
-                } else {
-                    that.currentProvinceText = userInfo.province;
-                }
-            }
-
-            // 设置性别 - 修复性别显示问题
-            // 确保将gender转换为数字类型
-            const genderValue = userInfo.gender !== undefined ? Number(userInfo.gender) : 0;
-
-            // 找到对应的性别对象
-            const genderObj = that.genders.find((g) => g.value === genderValue);
-
-            that.currentGenderValue = genderValue;
-            that.currentGenderText = genderObj ? genderObj.text : '未知';
-            that.selectedGenderValue = genderValue.toString();
+            Object.assign(that, hydrateUserInfoForm(userInfo, that.provinces, that.genders));
         },
 
         saveInfo: () => {
-            // 确保性别是数字类型
-            const genderValue = Number(that.currentGenderValue);
-
-            const params = {
-                realname: that.currentRealname,
-                nickname: that.currentNickname,
-                age: Number(that.currentAge), // 确保年龄是数字
-                cellphone: that.currentCellphone,
-                province: that.currentProvinceText,
-                gender: genderValue,
-            };
+            const params = buildUserUpdatePayload(that);
 
             Taro.showLoading({ title: '保存中...' });
             Api.updateUserInfo(params)

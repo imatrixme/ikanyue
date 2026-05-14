@@ -91,13 +91,14 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
-
-const IMAGE_DETAIL_URLS = {
-    about: 'https://kyoss.abcmem.com/ikanyue-public/guanyu-kanyue.JPG',
-    learnWhat: 'https://kyoss.abcmem.com/ikanyue-public/zai-kanyue-xue-shenme.JPG',
-};
-
-const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+import {
+    buildImageDetailUrl,
+    createActivityQueryParams,
+    createDateGroups,
+    filterActivitiesByDateGroup,
+    formatDateOnly as formatActivityDateOnly,
+    formatTimeOnly as formatActivityTimeOnly,
+} from './pageLogic';
 
 export default {
     data() {
@@ -223,20 +224,7 @@ export default {
             this.networkError = false;
 
             try {
-                // 计算时间范围 - 扩大范围以包含历史数据
-                const now = new Date();
-                // 从2020年开始，覆盖所有可能的历史活动
-                const startDate = new Date('2020-01-01');
-                // 到未来一年，覆盖所有可能的未来活动
-                const endDate = new Date(now.getFullYear() + 1, 11, 31);
-
-                const params = {
-                    start_time_gte: startDate.toISOString(),
-                    start_time_lte: endDate.toISOString(),
-                    perPage: 1000,
-                };
-
-                const res = await Api.findActivities(params);
+                const res = await Api.findActivities(createActivityQueryParams());
                 console.log('获取活动数据:', res);
 
                 // 保存所有活动数据
@@ -259,106 +247,17 @@ export default {
 
         // 生成日期分组
         generateDateGroups() {
-            const groups = [];
-            const now = new Date();
-            now.setHours(0, 0, 0, 0);
-
-            // 今天
-            const today = new Date(now);
-            groups.push({
-                title: '今天',
-                dateText: `${today.getMonth() + 1}月${today.getDate()}日`,
-                date: today,
-                type: 'day',
-                startTime: today,
-                endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999),
-            });
-
-            // 明天
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            groups.push({
-                title: WEEKDAY_LABELS[tomorrow.getDay()],
-                dateText: `${tomorrow.getMonth() + 1}月${tomorrow.getDate()}日`,
-                date: tomorrow,
-                type: 'day',
-                startTime: tomorrow,
-                endTime: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59, 999),
-            });
-
-            // 后天
-            const dayAfterTomorrow = new Date(now);
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-            groups.push({
-                title: WEEKDAY_LABELS[dayAfterTomorrow.getDay()],
-                dateText: `${dayAfterTomorrow.getMonth() + 1}月${dayAfterTomorrow.getDate()}日`,
-                date: dayAfterTomorrow,
-                type: 'day',
-                startTime: dayAfterTomorrow,
-                endTime: new Date(
-                    dayAfterTomorrow.getFullYear(),
-                    dayAfterTomorrow.getMonth(),
-                    dayAfterTomorrow.getDate(),
-                    23,
-                    59,
-                    59,
-                    999
-                ),
-            });
-
-            // 剩余的一周内的日期（第4天到第7天）
-            for (let i = 3; i < 7; i++) {
-                const date = new Date(now);
-                date.setDate(date.getDate() + i);
-                groups.push({
-                    title: WEEKDAY_LABELS[date.getDay()],
-                    dateText: `${date.getMonth() + 1}月${date.getDate()}日`,
-                    date: date,
-                    type: 'day',
-                    startTime: date,
-                    endTime: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999),
-                });
-            }
-
-            groups.push({
-                title: '',
-                dateText: '看乐教学',
-                type: 'navigation',
-                action: 'navigate-image',
-                imageUrl: IMAGE_DETAIL_URLS.learnWhat,
-                detailTitle: '看乐教学',
-            });
-
-            groups.push({
-                title: '',
-                dateText: '关于看乐',
-                type: 'navigation',
-                action: 'navigate-image',
-                imageUrl: IMAGE_DETAIL_URLS.about,
-                detailTitle: '关于看乐',
-            });
-
-            this.dateGroups = groups;
+            this.dateGroups = createDateGroups();
         },
 
         // 只格式化日期部分 (月日)
         formatDateOnly(timestamp) {
-            if (!timestamp) return '';
-            const date = new Date(timestamp);
-            if (isNaN(date.getTime())) return '';
-            const month = (date.getMonth() + 1).toString();
-            const day = date.getDate().toString();
-            return `${month}月${day}日`;
+            return formatActivityDateOnly(timestamp);
         },
 
         // 只格式化时间部分 (时分)
         formatTimeOnly(timestamp) {
-            if (!timestamp) return '';
-            const date = new Date(timestamp);
-            if (isNaN(date.getTime())) return '';
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
+            return formatActivityTimeOnly(timestamp);
         },
 
         // 选择日期组
@@ -381,60 +280,7 @@ export default {
         // 根据选中的日期筛选活动
         filterActivitiesByDate() {
             const group = this.dateGroups[this.selectedGroupIndex];
-
-            if (!group || !this.allActivities.length) {
-                this.activities = [];
-                return;
-            }
-
-            if (group.action === 'navigate-image') {
-                return;
-            }
-
-            // 转换日期组的开始和结束时间为UTC格式，便于比较
-            const groupStartDate = new Date(group.startTime);
-            const groupEndDate = new Date(group.endTime);
-            const groupStartUtc = Date.UTC(
-                groupStartDate.getFullYear(),
-                groupStartDate.getMonth(),
-                groupStartDate.getDate(),
-                groupStartDate.getHours(),
-                groupStartDate.getMinutes(),
-                groupStartDate.getSeconds()
-            );
-            const groupEndUtc = Date.UTC(
-                groupEndDate.getFullYear(),
-                groupEndDate.getMonth(),
-                groupEndDate.getDate(),
-                groupEndDate.getHours(),
-                groupEndDate.getMinutes(),
-                groupEndDate.getSeconds()
-            );
-
-            this.activities = this.allActivities.filter((activity) => {
-                if (!activity.startTime) {
-                    return false;
-                }
-
-                // 解析活动开始时间
-                const activityDate = new Date(activity.startTime);
-                if (isNaN(activityDate.getTime())) {
-                    return false;
-                }
-
-                // 将活动时间转换为UTC时间以便比较
-                const activityUtc = Date.UTC(
-                    activityDate.getFullYear(),
-                    activityDate.getMonth(),
-                    activityDate.getDate(),
-                    activityDate.getHours(),
-                    activityDate.getMinutes(),
-                    activityDate.getSeconds()
-                );
-
-                // 判断活动时间是否在范围内
-                return activityUtc >= groupStartUtc && activityUtc <= groupEndUtc;
-            });
+            this.activities = filterActivitiesByDateGroup(this.allActivities, group);
         },
 
         // 跳转到详情页
@@ -445,18 +291,13 @@ export default {
         },
 
         goToImageDetail(group) {
-            if (!group?.imageUrl) {
+            const url = buildImageDetailUrl(group);
+            if (!url) {
                 return;
             }
 
-            const params = [`imageUrl=${encodeURIComponent(group.imageUrl)}`];
-
-            if (group.detailTitle) {
-                params.push(`title=${encodeURIComponent(group.detailTitle)}`);
-            }
-
             Taro.navigateTo({
-                url: `/pages/imageDetail/index?${params.join('&')}`,
+                url,
             });
         },
     },

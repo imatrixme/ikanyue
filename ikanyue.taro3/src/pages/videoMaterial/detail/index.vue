@@ -51,6 +51,7 @@ import { ref, onMounted } from 'vue';
 import Taro from '@tarojs/taro';
 import { Api } from '../../../../utils/apis';
 import favoriteManager from '../../../../utils/favoriteManager';
+import { applyVideoDetailResponse } from '../pageLogic';
 
 // 导入组件
 import VideoHeader from './components/VideoHeader.vue';
@@ -94,8 +95,9 @@ const loadVideoDetail = async () => {
     try {
         const res = await Api.findVideoMaterialDetail({ id: videoId.value });
         console.log('[VideoDetail] 获取视频详情:', res);
-        videoDetail.value = res;
-        duration.value = res.duration || 0;
+        const nextState = applyVideoDetailResponse(res);
+        videoDetail.value = nextState.detail;
+        duration.value = nextState.duration;
     } catch (err) {
         console.error('[VideoDetail] 加载视频详情失败:', err);
         error.value = true;
