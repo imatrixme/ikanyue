@@ -30,7 +30,8 @@ async function audioMaterialFindHandler(c) {
     const {
         id = '',
         page = 1,
-        limit = 20,
+        limit: rawLimit,
+        perPage,
         title = '',
         type = '',
         author = '',
@@ -40,6 +41,7 @@ async function audioMaterialFindHandler(c) {
         tags = '',
         sort = '-created',
     } = params;
+    const limit = rawLimit || perPage || 20;
 
     try {
     // 查询单个音频材料

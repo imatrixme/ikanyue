@@ -17,13 +17,19 @@ async function activityFindHandler(c) {
     const {
         id = '',
         page = 1,
-        limit = 20,
+        limit: rawLimit,
+        perPage,
         status = 'active',
         sort = '-created',
         tags = '',
         type = '',
-        location = ''
+        location = '',
+        start_time_gte: startTimeGte,
+        start_time_lte: startTimeLte,
+        startTimeGte: camelStartTimeGte,
+        startTimeLte: camelStartTimeLte,
     } = query;
+    const limit = rawLimit || perPage || 20;
 
     try {
     // 查询单个活动
@@ -77,6 +83,16 @@ async function activityFindHandler(c) {
         // 地点过滤
         if (location.trim()) {
             filters.push(`location ~ "${location.trim()}"`);
+        }
+
+        const startTimeLowerBound = startTimeGte || camelStartTimeGte || '';
+        if (startTimeLowerBound.trim()) {
+            filters.push(`startTime >= "${startTimeLowerBound.trim()}"`);
+        }
+
+        const startTimeUpperBound = startTimeLte || camelStartTimeLte || '';
+        if (startTimeUpperBound.trim()) {
+            filters.push(`startTime <= "${startTimeUpperBound.trim()}"`);
         }
 
         const filter = filters.length > 0 ? filters.join(' && ') : '';

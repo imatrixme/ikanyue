@@ -30,7 +30,8 @@ async function videoMaterialFindHandler(c) {
     const {
         id = '',
         page = 1,
-        limit = 20,
+        limit: rawLimit,
+        perPage,
         status = 'published',
         sort = '-publishedAt',
         tags = '',
@@ -40,6 +41,7 @@ async function videoMaterialFindHandler(c) {
         resolution = '',
         author = '',
     } = params;
+    const limit = rawLimit || perPage || 20;
 
     try {
     // 查询单个视频材料
