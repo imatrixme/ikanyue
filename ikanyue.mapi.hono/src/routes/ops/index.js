@@ -4,6 +4,7 @@ const { createOpsHandlers } = require('./handlers');
 function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.post('/ops/auth/login').handler(handlers.login);
     routes.get('/ops/share/:token').handler(handlers.viewSharedReport);
+    routes.get('/ops/public/operation-slots').handler(handlers.publicOperationSlots);
 
     routes.get('/ops/auth/me').use(opsAuthMiddleware).handler(handlers.me);
     routes.get('/ops/dashboard').use(opsAuthMiddleware).handler(handlers.dashboard);

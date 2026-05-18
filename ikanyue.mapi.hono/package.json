@@ -13,6 +13,8 @@
     "lint": "eslint src --max-warnings=0",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js' --test-coverage-lines=90 --test-coverage-branches=90 --test-coverage-functions=90",
+    "ops:schema:check": "node scripts/check-ops-schema.js",
+    "ops:schema:apply": "node scripts/pb-ensure-ops-schema.js",
     "check-docs": "./scripts/check-docs.sh",
     "swagger:collect": "node scripts/collect-swagger.js",
     "swagger:serve": "node scripts/serve-swagger.js",

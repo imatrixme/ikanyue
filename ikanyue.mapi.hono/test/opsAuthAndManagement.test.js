@@ -94,6 +94,7 @@ test('ops dashboard and operation slots provide first-phase management data', as
     const slot = await jsonRequest(app, '/ops/operationSlots', { token: adminToken });
     assert.equal(slot.code, 10000);
     assert.equal(slot.data.items[0].placement, 'home-banner');
+    assert.equal(slot.data.items[0].targetUrl, '/pages/assessmentReport/index?token=demo');
 
     const createdSlot = await jsonRequest(app, '/ops/operationSlots', {
         method: 'POST',
@@ -108,4 +109,11 @@ test('ops dashboard and operation slots provide first-phase management data', as
     });
     assert.equal(createdSlot.code, 10000);
     assert.equal(createdSlot.data.title, '测评入口');
+    assert.equal(createdSlot.data.targetType, 'assessment');
+
+    const publicSlots = await jsonRequest(app, '/ops/public/operation-slots?channel=wechat-mini&placement=home-banner&now=2026-05-18T00:00:00.000Z');
+    assert.equal(publicSlots.code, 10000);
+    assert.deepEqual(publicSlots.data.items.map((item) => item.id), ['slot_1']);
+    assert.equal(publicSlots.data.items[0].imageUrl, 'https://example.com/banner.png');
+    assert.equal(publicSlots.data.items[0].targetUrl, '/pages/assessmentReport/index?token=demo');
 });

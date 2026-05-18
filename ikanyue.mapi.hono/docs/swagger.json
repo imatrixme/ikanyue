@@ -1452,6 +1452,195 @@
         }
       }
     },
+    "/v1/activity-signup": {
+      "post": {
+        "tags": [
+          "Activity"
+        ],
+        "summary": "活动报名",
+        "description": "当前登录用户报名指定活动",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "activityId",
+                  "realName",
+                  "age"
+                ],
+                "properties": {
+                  "activityId": {
+                    "type": "string",
+                    "example": "activity_123"
+                  },
+                  "realName": {
+                    "type": "string",
+                    "example": "张三"
+                  },
+                  "age": {
+                    "type": "number",
+                    "example": 12
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "报名成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activity-signup/detail": {
+      "get": {
+        "tags": [
+          "Activity"
+        ],
+        "summary": "报名记录详情",
+        "description": "查询单条报名记录详情（当前用户）",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "signup_123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activity-signup/{id}": {
+      "get": {
+        "tags": [
+          "Activity"
+        ],
+        "summary": "报名记录详情（Path）",
+        "description": "通过路径参数查询单条报名记录详情（当前用户）",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "signup_123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activity-signup/find": {
+      "get": {
+        "tags": [
+          "Activity"
+        ],
+        "summary": "查询我的报名记录",
+        "description": "分页查询当前登录用户的活动报名记录",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "registered"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "activity_123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/audioMaterial/create": {
       "post": {
         "summary": "创建音频材料",
@@ -4794,6 +4983,69 @@
         }
       }
     },
+    "/v1/user/wechat-login": {
+      "post": {
+        "summary": "微信授权登录",
+        "description": "校验微信 code、解密手机号并创建/更新学生账号，返回 JWT",
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WechatLoginRequest"
+              },
+              "example": {
+                "code": "081sZK0000klhC2kYM300f0Pua0sZK1h",
+                "userInfo": {
+                  "nickName": "小明",
+                  "avatarUrl": "https://example.com/avatar.jpg",
+                  "gender": 1
+                },
+                "phone": {
+                  "encryptedData": "SOME_BASE64_DATA",
+                  "iv": "SOME_IV_VALUE"
+                },
+                "rawData": "{\"nickName\":\"小明\"}",
+                "signature": "c4d5dbb4f43c28f5f1f03296d706c9ef0e69a4ac"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WechatLoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 10000
+                    },
+                    "message": {
+                      "type": "null",
+                      "example": null
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WechatLoginResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/videoMaterial/create": {
       "post": {
         "summary": "创建视频材料",
@@ -6529,6 +6781,27 @@
           }
         }
       },
+      "StandardResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "number",
+            "example": 10000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateStudentRequest": {
         "type": "object",
         "required": [
@@ -7705,6 +7978,139 @@
             "type": "string",
             "description": "最后登录方式",
             "example": "password"
+          }
+        },
+        "required": [
+          "id",
+          "sn",
+          "cellphone",
+          "role",
+          "token",
+          "isAdmin"
+        ]
+      },
+      "WechatLoginRequest": {
+        "type": "object",
+        "required": [
+          "code",
+          "phone"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "wx.login 返回的 code"
+          },
+          "userInfo": {
+            "type": "object",
+            "description": "getUserProfile 返回的数据",
+            "properties": {
+              "nickName": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "gender": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              "language": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              }
+            }
+          },
+          "phone": {
+            "type": "object",
+            "required": [
+              "encryptedData",
+              "iv"
+            ],
+            "properties": {
+              "encryptedData": {
+                "type": "string",
+                "description": "getPhoneNumber 返回的加密数据"
+              },
+              "iv": {
+                "type": "string",
+                "description": "getPhoneNumber 返回的初始向量"
+              }
+            }
+          },
+          "rawData": {
+            "type": "string",
+            "description": "微信返回的原始用户信息（可选）"
+          },
+          "signature": {
+            "type": "string",
+            "description": "rawData 对应的签名（可选）"
+          }
+        }
+      },
+      "WechatLoginResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sn": {
+            "type": "string"
+          },
+          "cellphone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "student"
+            ]
+          },
+          "token": {
+            "type": "string"
+          },
+          "nickName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string",
+            "format": "uri"
+          },
+          "wechatId": {
+            "type": "string"
+          },
+          "wechatUnionId": {
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginIp": {
+            "type": "string"
+          },
+          "lastLoginMethod": {
+            "type": "string",
+            "enum": [
+              "wechat"
+            ],
+            "example": "wechat"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "example": false
           }
         },
         "required": [

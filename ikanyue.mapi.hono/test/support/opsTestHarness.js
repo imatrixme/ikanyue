@@ -118,7 +118,30 @@ function createOpsSeed() {
             { id: 'video_1', title: '音阶练习', author: '王老师', status: 'published' },
         ],
         operation_slots: [
-            { id: 'slot_1', channel: 'wechat-mini', placement: 'home-banner', title: '首页焦点', status: 'active' },
+            {
+                id: 'slot_1',
+                channel: 'wechat-mini',
+                placement: 'home-banner',
+                title: '首页焦点',
+                description: '展示测评入口',
+                status: 'active',
+                sortOrder: 10,
+                targetType: 'assessment_report',
+                targetId: 'report_1',
+                targetUrl: '/pages/assessmentReport/index?token=demo',
+                imageUrl: 'https://example.com/banner.png',
+            },
+            { id: 'slot_2', channel: 'wechat-mini', placement: 'home-banner', title: '已下线', status: 'disabled', sortOrder: 1 },
+            { id: 'slot_3', channel: 'app', placement: 'home-banner', title: 'App 专属', status: 'active', sortOrder: 1 },
+            {
+                id: 'slot_4',
+                channel: 'wechat-mini',
+                placement: 'home-banner',
+                title: '未来可见',
+                status: 'active',
+                visibleFrom: '2099-01-01T00:00:00.000Z',
+                sortOrder: 2,
+            },
         ],
         assessment_templates: [
             {

@@ -38,7 +38,7 @@ const MANAGEMENT_CONFIG = {
         collection: 'operation_slots',
         resourceType: 'operation_slot',
         adminOnlyWrite: true,
-        fields: ['id', 'channel', 'placement', 'title', 'status', 'sortOrder', 'visibleFrom', 'visibleTo', 'created', 'updated'],
+        fields: ['id', 'channel', 'placement', 'title', 'description', 'status', 'sortOrder', 'visibleFrom', 'visibleTo', 'imageUrl', 'targetType', 'targetId', 'targetUrl', 'metadata', 'created', 'updated'],
         searchable: ['title', 'placement'],
     },
     auditLogs: {
@@ -136,6 +136,32 @@ class OpsManagementService {
         return mapRecord(updated, config.fields);
     }
 
+    async publicOperationSlots(query = {}) {
+        const config = getConfig('operationSlots');
+        const filters = ['status = "active"'];
+        const channel = normalizeString(query.channel || 'wechat-mini');
+        const placement = normalizeString(query.placement);
+        if (channel) {
+            filters.push(`channel = "${channel}"`);
+        }
+        if (placement) {
+            filters.push(`placement = "${placement}"`);
+        }
+
+        const result = await this.repository.list(config.collection, 1, 100, {
+            filter: filters.join(' && '),
+            sort: 'sortOrder,-created',
+        });
+        const now = parseDate(query.now) || new Date();
+        return {
+            items: (result.items || [])
+                .filter((record) => isVisibleSlot(record, now))
+                .sort(compareSlots)
+                .map((record) => mapRecord(record, config.fields)),
+            pagination: buildPagination(result, 1, 100),
+        };
+    }
+
     async assertRead(config, user) {
         this.rbacService.assertTeacher(user);
         if (config.adminOnly) {
@@ -204,6 +230,29 @@ function sanitizeManagementPayload(data = {}) {
         }
         return acc;
     }, {});
+}
+
+function isVisibleSlot(record, now) {
+    const visibleFrom = parseDate(record.visibleFrom);
+    const visibleTo = parseDate(record.visibleTo);
+    return (!visibleFrom || visibleFrom <= now) && (!visibleTo || visibleTo >= now);
+}
+
+function parseDate(value) {
+    if (!value) {
+        return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function compareSlots(left, right) {
+    const leftOrder = Number(left.sortOrder ?? 0);
+    const rightOrder = Number(right.sortOrder ?? 0);
+    if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+    }
+    return String(right.created || '').localeCompare(String(left.created || ''));
 }
 
 module.exports = { MANAGEMENT_CONFIG, OpsManagementService };

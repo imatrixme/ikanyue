@@ -16,6 +16,10 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return safe(c, () => services.managementService.dashboard(c.get('user')));
         },
 
+        async publicOperationSlots(c) {
+            return safe(c, () => services.managementService.publicOperationSlots(c.req.query()));
+        },
+
         async list(c) {
             return safe(c, () => services.managementService.list(c.req.param('resource'), c.get('user'), c.req.query()));
         },
