@@ -7,7 +7,7 @@ import { Panel, SectionHeader } from '../ui/Card'
 
 interface ReportsViewProps {
   data: ListResult<AssessmentReport> | null
-  onPreviewShare: () => void
+  onPreviewShare: (reportId: string) => void
 }
 
 export function ReportsView({ data, onPreviewShare }: ReportsViewProps) {
@@ -32,7 +32,7 @@ export function ReportsView({ data, onPreviewShare }: ReportsViewProps) {
             </div>
             <div className="flex items-center gap-2">
               <div className="min-w-20 text-right text-2xl font-semibold tabular-nums">{report.totalScore}</div>
-              <Button variant="secondary" onClick={onPreviewShare} icon={<Link2 className="h-4 w-4" aria-hidden="true" />}>分享</Button>
+              <Button variant="secondary" onClick={() => onPreviewShare(report.id)} icon={<Link2 className="h-4 w-4" aria-hidden="true" />}>分享</Button>
               <Button variant="ghost" icon={<ExternalLink className="h-4 w-4" aria-hidden="true" />}>查看</Button>
             </div>
           </article>

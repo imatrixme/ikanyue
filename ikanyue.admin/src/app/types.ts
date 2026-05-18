@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import type { AssessmentAnswers } from './assessment'
 
 export type Role = 'teacher' | 'admin'
 
@@ -60,7 +61,7 @@ export interface ListResult<T> {
 
 export interface ResourceRecord {
   id: string
-  [key: string]: string | number | boolean | null | undefined
+  [key: string]: unknown
 }
 
 export interface AssessmentOption {
@@ -113,6 +114,24 @@ export interface AssessmentReport {
   grade: string
   created?: string
   reportJson?: unknown
+}
+
+export interface AssessmentRecord {
+  id: string
+  studentId: string
+  teacherId?: string
+  templateId: string
+  status: 'draft' | 'submitted'
+  answersJson?: AssessmentAnswers
+  scoreJson?: unknown
+}
+
+export interface ShareLink {
+  id: string
+  reportId: string
+  token: string
+  expiresAt?: string
+  revokedAt?: string
 }
 
 export interface SharePreview {

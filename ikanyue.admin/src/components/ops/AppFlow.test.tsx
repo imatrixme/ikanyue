@@ -38,9 +38,10 @@ describe('ops admin app flow', () => {
 
     await user.click(screen.getByRole('button', { name: '评估工作台' }))
     expect(await screen.findByText('实时评分')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: '报告' }))
+    await user.click(screen.getByRole('button', { name: '提交并生成报告' }))
     expect(await screen.findByText('评估报告')).toBeInTheDocument()
+    expect(await screen.findByText('评估报告已生成')).toBeInTheDocument()
+
     await user.click(screen.getAllByRole('button', { name: '分享' })[0])
     await waitFor(() => expect(screen.getByText('分享报告预览')).toBeInTheDocument())
     expect(await screen.findByText('声乐阶段评估报告')).toBeInTheDocument()
@@ -56,7 +57,111 @@ describe('ops admin app flow', () => {
     await user.click(screen.getByRole('button', { name: '刷新' }))
 
     expect(await screen.findByText('小李')).toBeInTheDocument()
-    expect(screen.queryByText('小张')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText('小张')).not.toBeInTheDocument())
+  })
+
+  it('creates managed resources and template drafts from the app', async () => {
+    const user = userEvent.setup()
+    render(<App api={createMockOpsApi()} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '活动' }))
+    await user.click(await screen.findByRole('button', { name: '新建活动' }))
+    expect(await screen.findByText('已创建记录')).toBeInTheDocument()
+    expect(await screen.findByText(/新活动/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '评估表' }))
+    await user.click(await screen.findByRole('button', { name: '新建模板' }))
+    expect(await screen.findByText('已创建模板草稿')).toBeInTheDocument()
+    expect(await screen.findByText('声乐阶段测评 副本')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '发布' })[0])
+    expect(await screen.findByText('模板已发布')).toBeInTheDocument()
+  })
+
+  it('surfaces create, publish, assessment, and share failures', async () => {
+    const user = userEvent.setup()
+    const api: OpsApi = {
+      ...createMockOpsApi(),
+      createResource: async () => {
+        throw new Error('create down')
+      },
+      publishTemplate: async () => {
+        throw new Error('publish down')
+      },
+      createAssessment: async () => {
+        throw new Error('assessment down')
+      },
+      createShareLink: async () => {
+        throw new Error('share down')
+      },
+    }
+    render(<App api={api} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '活动' }))
+    await user.click(await screen.findByRole('button', { name: '新建活动' }))
+    expect(await screen.findByText('create down')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '评估表' }))
+    await user.click(await screen.findAllByRole('button', { name: '发布' }).then((buttons) => buttons[0]))
+    expect(await screen.findByText('publish down')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '评估工作台' }))
+    await user.click(await screen.findByRole('button', { name: '提交并生成报告' }))
+    expect(await screen.findByText('assessment down')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '报告' }))
+    await user.click((await screen.findAllByRole('button', { name: '分享' }))[0])
+    expect(await screen.findByText('share down')).toBeInTheDocument()
+  })
+
+  it('prevents assessment submission when no student is available', async () => {
+    const user = userEvent.setup()
+    const api: OpsApi = {
+      ...createMockOpsApi(),
+      listResource: async (resource, token, query) => {
+        if (resource === 'students' && !query?.q) {
+          return { items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 0 } }
+        }
+        return createMockOpsApi().listResource(resource, token, query)
+      },
+    }
+    render(<App api={api} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '评估工作台' }))
+    await user.click(await screen.findByRole('button', { name: '提交并生成报告' }))
+    expect(await screen.findByText('缺少可用模板或学员')).toBeInTheDocument()
+  })
+
+  it('handles template creation edge states', async () => {
+    const user = userEvent.setup()
+    const api: OpsApi = {
+      ...createMockOpsApi(),
+      listTemplates: async () => ({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 0 } }),
+    }
+    render(<App api={api} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '评估表' }))
+    await user.click(await screen.findByRole('button', { name: '新建模板' }))
+    expect(await screen.findByText('没有可复制的模板')).toBeInTheDocument()
+  })
+
+  it('uses fallback error text for template creation failures', async () => {
+    const user = userEvent.setup()
+    const api: OpsApi = {
+      ...createMockOpsApi(),
+      createTemplate: async () => {
+        throw 'plain create template failure'
+      },
+    }
+    render(<App api={api} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '评估表' }))
+    await user.click(await screen.findByRole('button', { name: '新建模板' }))
+    expect(await screen.findByText('创建模板失败')).toBeInTheDocument()
   })
 
   it('keeps teacher accounts away from admin-only navigation', async () => {
@@ -150,6 +255,10 @@ describe('standalone ops components', () => {
     expect(screen.getByRole('button', { name: '加载中' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '新建活动' })).toBeInTheDocument()
 
+    render(<ResourceView resource="operationSlots" result={mockResources.operationSlots} loading={false} onSearch={() => undefined} onCreate={() => searches.push('create')} />)
+    await user.click(screen.getByRole('button', { name: '新建运营位' }))
+    expect(searches).toContain('create')
+
     render(<ResourceView resource="students" loading={false} onSearch={(keyword) => searches.push(keyword)} />)
     expect(screen.getByText('共 0 条记录')).toBeInTheDocument()
 
@@ -228,13 +337,16 @@ describe('standalone ops components', () => {
 
   it('renders templates and reports components directly', () => {
     const previews: string[] = []
-    render(<TemplatesView data={mockTemplates} />)
+    render(<TemplatesView data={mockTemplates} onCreate={() => previews.push('create')} onPublish={(id) => previews.push(id)} />)
     expect(screen.getByText('少儿节奏专项')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: '发布' })).toHaveLength(2)
+    screen.getByRole('button', { name: '新建模板' }).click()
+    screen.getAllByRole('button', { name: '发布' })[0].click()
+    expect(previews).toContain('create')
+    expect(previews).toContain('template_1')
 
-    render(<ReportsView data={mockReports} onPreviewShare={() => previews.push('preview')} />)
+    render(<ReportsView data={mockReports} onPreviewShare={(reportId) => previews.push(reportId)} />)
     screen.getAllByRole('button', { name: '分享' })[0].click()
-    expect(previews).toEqual(['preview'])
+    expect(previews).toContain('report_1')
   })
 
   it('shows non-error messages for unknown callback failures', async () => {

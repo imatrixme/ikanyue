@@ -10,10 +10,11 @@ import { Field, Input } from '../ui/Input'
 
 interface AssessmentWorkspaceProps {
   template: AssessmentTemplate | null
-  onSubmit?: () => void
+  onSubmit?: (answers: AssessmentAnswers) => void | Promise<void>
+  submitting?: boolean
 }
 
-export function AssessmentWorkspace({ template, onSubmit }: AssessmentWorkspaceProps) {
+export function AssessmentWorkspace({ template, onSubmit, submitting = false }: AssessmentWorkspaceProps) {
   const [answers, setAnswers] = useState<AssessmentAnswers>({
     pitch_stability: 'good',
     breath_support: 82,
@@ -34,7 +35,9 @@ export function AssessmentWorkspace({ template, onSubmit }: AssessmentWorkspaceP
             <h2 className="text-xl font-semibold">评估工作台</h2>
             <p className="text-sm text-[#6f7880]">{template.name} · v{template.version}</p>
           </div>
-          <Button onClick={onSubmit} icon={<Send className="h-4 w-4" aria-hidden="true" />}>提交并生成报告</Button>
+          <Button disabled={submitting} onClick={() => onSubmit?.(answers)} icon={<Send className="h-4 w-4" aria-hidden="true" />}>
+            {submitting ? '提交中' : '提交并生成报告'}
+          </Button>
         </SectionHeader>
         <div className="grid gap-4 p-4">
           {template.schemaJson.sections.map((section) => (

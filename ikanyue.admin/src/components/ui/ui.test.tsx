@@ -42,6 +42,9 @@ describe('ui primitives', () => {
     expect(screen.getByText('没有记录')).toBeInTheDocument()
     expect(statusTone('inactive')).toBe('red')
     expect(statusTone('unknown')).toBe('neutral')
+
+    rerender(<DataTable columns={resourceConfig.activities.columns} rows={[{ id: 'a2', title: null, type: 'open', location: '上海', status: null }]} />)
+    expect(screen.getAllByText('-')).toHaveLength(2)
   })
 
   it('merges tailwind utility classes predictably', () => {

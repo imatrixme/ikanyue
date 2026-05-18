@@ -12,10 +12,11 @@ interface ResourceViewProps {
   resource: OpsResource
   result?: ListResult<ResourceRecord>
   onSearch: (keyword: string) => void
+  onCreate?: () => void
   loading: boolean
 }
 
-export function ResourceView({ resource, result, onSearch, loading }: ResourceViewProps) {
+export function ResourceView({ resource, result, onSearch, onCreate, loading }: ResourceViewProps) {
   const [keyword, setKeyword] = useState('')
   const config = resourceConfig[resource]
   const Icon = config.icon
@@ -51,7 +52,7 @@ export function ResourceView({ resource, result, onSearch, loading }: ResourceVi
           <Button variant="secondary" onClick={() => onSearch(keyword)} icon={<RotateCw className="h-4 w-4" aria-hidden="true" />}>
             {loading ? '加载中' : '刷新'}
           </Button>
-          {config.createLabel ? <Button icon={<Plus className="h-4 w-4" aria-hidden="true" />}>{config.createLabel}</Button> : null}
+          {config.createLabel ? <Button onClick={onCreate} icon={<Plus className="h-4 w-4" aria-hidden="true" />}>{config.createLabel}</Button> : null}
         </div>
       </SectionHeader>
       <DataTable columns={config.columns} rows={result?.items || []} />

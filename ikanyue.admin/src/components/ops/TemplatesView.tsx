@@ -8,9 +8,11 @@ import { statusTone } from '../ui/status'
 
 interface TemplatesViewProps {
   data: ListResult<AssessmentTemplate> | null
+  onCreate?: () => void
+  onPublish?: (templateId: string) => void
 }
 
-export function TemplatesView({ data }: TemplatesViewProps) {
+export function TemplatesView({ data, onCreate, onPublish }: TemplatesViewProps) {
   return (
     <Panel>
       <SectionHeader>
@@ -18,7 +20,7 @@ export function TemplatesView({ data }: TemplatesViewProps) {
           <h2 className="text-xl font-semibold">评估表模板</h2>
           <p className="text-sm text-[#6f7880]">模板结构、评分规则和报告配置统一版本化。</p>
         </div>
-        <Button icon={<Plus className="h-4 w-4" aria-hidden="true" />}>新建模板</Button>
+        <Button onClick={onCreate} icon={<Plus className="h-4 w-4" aria-hidden="true" />}>新建模板</Button>
       </SectionHeader>
       <div className="grid gap-3 p-4">
         {(data?.items || []).map((template) => (
@@ -31,7 +33,7 @@ export function TemplatesView({ data }: TemplatesViewProps) {
                 </div>
                 <p className="mt-1 text-sm text-[#6f7880]">v{template.version} · {template.schemaJson.sections.length} 个维度 · {template.scoringJson.type}</p>
               </div>
-              <Button variant="secondary" icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
+              <Button variant="secondary" onClick={() => onPublish?.(template.id)} icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
                 发布
               </Button>
             </div>

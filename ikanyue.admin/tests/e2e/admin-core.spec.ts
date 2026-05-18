@@ -28,7 +28,7 @@ test('admin can complete the first-phase operations path', async ({ page }) => {
 
   await page.getByRole('button', { name: '提交并生成报告' }).click()
   await expect(page.getByRole('heading', { name: '评估报告' })).toBeVisible()
-  await page.getByRole('button', { name: '分享' }).first().click()
+  await page.getByRole('main').getByRole('button', { name: /^分享$/ }).first().click()
   await expect(page.getByRole('heading', { name: '分享报告预览' })).toBeVisible()
   await expect(page.getByText('声乐阶段评估报告')).toBeVisible()
 })
