@@ -8,6 +8,7 @@ const videoMaterialRoutes = require('../routes/videoMaterial');
 const audioMaterialRoutes = require('../routes/audioMaterial');
 const attendanceRoutes = require('../routes/attendance');
 const lessonRecordRoutes = require('../routes/lessonRecord');
+const opsRoutes = require('../routes/ops');
 
 const registerBizRoutes = function (routes) {
     // 注册各个模块的路由 - 各模块自行定义完整路径
@@ -20,6 +21,7 @@ const registerBizRoutes = function (routes) {
     audioMaterialRoutes(routes);
     attendanceRoutes(routes);
     lessonRecordRoutes(routes);
+    opsRoutes(routes);
 };
 
 module.exports = { registerBizRoutes };
