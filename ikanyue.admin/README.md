@@ -1,4 +1,21 @@
-# React + TypeScript + Vite
+# ikanyue.admin
+
+React + TypeScript + Vite operations admin for the kanyue lightweight education loop.
+
+## Docker
+
+The production image serves the built admin app with Nginx. `/ops/*` is proxied to the Hono service name used by the parent Compose stack.
+
+```bash
+docker build \
+  --build-arg VITE_OPS_API_BASE=/ops \
+  --build-arg VITE_OPS_API_MOCK=false \
+  -t openregistry.local/ikanyue/admin:latest .
+```
+
+In production this image is expected to be pushed to OpenRegistry and run by the parent repository's `compose.yaml` through 1Panel.
+
+## Vite notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
