@@ -70,6 +70,10 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return safe(c, () => services.assessmentService.listReports(c.get('user'), c.req.query()));
         },
 
+        async reportDetail(c) {
+            return safeResult(c, () => services.assessmentService.getReportDetail(c.get('user'), c.req.param('reportId')));
+        },
+
         async createShare(c) {
             const body = await readRequestBody(c);
             return safeResult(c, () => services.assessmentService.createShareLink(c.get('user'), c.req.param('reportId'), body));

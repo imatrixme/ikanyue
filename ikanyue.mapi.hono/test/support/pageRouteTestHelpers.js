@@ -6,6 +6,9 @@ const { responseMiddleware } = require('../../src/middleware/response');
 const pocketbaseModulePath = require.resolve('../../src/utils/pocketbase');
 const jwtAuthModulePath = require.resolve('../../src/utils/jwtAuth');
 const activityFindModulePath = require.resolve('../../src/routes/activity/find');
+const activitySignupCreateModulePath = require.resolve('../../src/routes/activitySignup/create');
+const activitySignupDetailModulePath = require.resolve('../../src/routes/activitySignup/detail');
+const activitySignupFindModulePath = require.resolve('../../src/routes/activitySignup/find');
 const audioMaterialFindModulePath = require.resolve('../../src/routes/audioMaterial/find');
 const videoMaterialFindModulePath = require.resolve('../../src/routes/videoMaterial/find');
 const userLoginModulePath = require.resolve('../../src/routes/user/login');
@@ -122,6 +125,9 @@ async function withEnv(env, fn) {
 
 module.exports = {
     activityFindModulePath,
+    activitySignupCreateModulePath,
+    activitySignupDetailModulePath,
+    activitySignupFindModulePath,
     audioMaterialFindModulePath,
     createCollectionMock,
     createRouteApp,
@@ -129,5 +135,6 @@ module.exports = {
     videoMaterialFindModulePath,
     withEnv,
     withMockedFindRouteModule,
+    withMockedRouteModules,
     withMockedUserRouteModules,
 };

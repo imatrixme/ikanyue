@@ -1,0 +1,167 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "轻量教务闭环运营接口",
+    "version": "1.0.0",
+    "description": "活动报名审核、报告详情和分享操作所需的 Ops API。"
+  },
+  "paths": {
+    "/ops/activitySignups": {
+      "get": {
+        "summary": "查询活动报名记录",
+        "description": "教师或管理员查询活动报名记录。教师仅能看到被授权学员范围内的报名记录。",
+        "tags": ["Ops"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 } },
+          { "name": "perPage", "in": "query", "schema": { "type": "integer", "example": 20 } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "example": "registered" } },
+          { "name": "q", "in": "query", "schema": { "type": "string", "example": "张同学" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。项目 Web 响应保持 HTTP 200，通过 code 表示业务状态。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/activitySignups/{id}": {
+      "get": {
+        "summary": "查看活动报名详情",
+        "tags": ["Ops"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "signup_1" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsRecordResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "更新活动报名状态",
+        "description": "管理员更新报名状态，服务端会过滤 blocked fields 并记录审计日志。",
+        "tags": ["Ops"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "signup_1" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["registered", "cancelled", "attended", "no_show"]
+                  },
+                  "remark": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsRecordResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/reports/{reportId}": {
+      "get": {
+        "summary": "查看评估报告详情",
+        "description": "返回隐私安全的报告详情投影，用于后台报告详情页。",
+        "tags": ["Ops"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "reportId", "in": "path", "required": true, "schema": { "type": "string", "example": "report_1" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsReportDetailResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OpsListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": { "type": "array", "items": { "type": "object" } },
+              "pagination": { "type": "object" }
+            }
+          }
+        }
+      },
+      "OpsRecordResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": { "type": "object" }
+        }
+      },
+      "OpsReportDetailResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "student": { "type": "object" },
+              "teacher": { "type": "object" },
+              "score": { "type": "object" },
+              "summary": { "type": "string" },
+              "recommendations": { "type": "array", "items": { "type": "string" } },
+              "sections": { "type": "array", "items": { "type": "object" } },
+              "generatedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

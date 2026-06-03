@@ -6,6 +6,7 @@ const {
     parseJsonField,
     sanitizePrivateFields,
 } = require('./opsUtils');
+const { projectPublicReport } = require('../reports/reportProjection');
 const { scoreAssessment, validateAssessmentTemplate } = require('./scoringService');
 
 const TEMPLATE_FIELDS = ['id', 'name', 'version', 'status', 'schemaJson', 'scoringJson', 'reportJson', 'createdBy', 'publishedAt', 'created', 'updated'];
@@ -176,6 +177,14 @@ class OpsAssessmentService {
         };
     }
 
+    async getReportDetail(user, reportId) {
+        if (!reportId) {
+            return { ok: false, code: 400, message: '缺少报告' };
+        }
+        const report = await this.loadReportWithAccess(user, reportId, 'ops.report.detail');
+        return { ok: true, data: projectPublicReport(report) };
+    }
+
     async createShareLink(user, reportId, data = {}) {
         await this.loadReportWithAccess(user, reportId, 'ops.share_link.create');
         const token = createShareToken(reportId);
@@ -226,7 +235,7 @@ class OpsAssessmentService {
         await this.repository.update('assessment_share_links', share.id, {
             accessCount: Number(share.accessCount || 0) + 1,
         });
-        return { ok: true, data: sanitizePrivateFields(parseJsonField(report.reportJson, report)) };
+        return { ok: true, data: projectPublicReport(report) };
     }
 
     async loadRecordWithAccess(user, id, action) {
@@ -251,8 +260,8 @@ class OpsAssessmentService {
         const reportJson = {
             id: record.id,
             title: template.reportJson?.title || template.name,
-            student: sanitizePrivateFields(student),
-            teacher: sanitizePrivateFields(teacher),
+            student: projectSnapshot(student),
+            teacher: projectSnapshot(teacher),
             template: template,
             answers,
             score,
@@ -266,13 +275,17 @@ class OpsAssessmentService {
             totalScore: score.totalScore,
             grade: score.grade,
             reportJson,
-            studentSnapshotJson: sanitizePrivateFields(student),
-            teacherSnapshotJson: sanitizePrivateFields(teacher),
+            studentSnapshotJson: projectSnapshot(student),
+            teacherSnapshotJson: projectSnapshot(teacher),
             templateSnapshotJson: template,
             answersSnapshotJson: answers,
             scoreSnapshotJson: score,
         });
     }
+}
+
+function projectSnapshot(record) {
+    return sanitizePrivateFields(record);
 }
 
 function buildTemplatePayload(data, user) {

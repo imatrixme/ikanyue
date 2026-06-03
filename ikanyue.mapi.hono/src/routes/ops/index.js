@@ -18,6 +18,7 @@ function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.post('/ops/assessments/:id/submit').use(opsAuthMiddleware).handler(handlers.submitAssessment);
 
     routes.get('/ops/reports').use(opsAuthMiddleware).handler(handlers.listReports);
+    routes.get('/ops/reports/:reportId').use(opsAuthMiddleware).handler(handlers.reportDetail);
     routes.post('/ops/reports/:reportId/share-links').use(opsAuthMiddleware).handler(handlers.createShare);
     routes.post('/ops/share-links/:id/revoke').use(opsAuthMiddleware).handler(handlers.revokeShare);
 

@@ -16,6 +16,7 @@ test('ops assessment workflow publishes template, submits record, snapshots repo
     const app = createOpsApp(repository);
     const adminToken = createToken(seed.teachers[1]);
     const teacherToken = createToken(seed.teachers[0]);
+    const initialReportCount = repository.data.assessment_report_snapshots.length;
 
     const createdTemplate = await jsonRequest(app, '/ops/assessment-templates', {
         method: 'POST',
@@ -66,7 +67,7 @@ test('ops assessment workflow publishes template, submits record, snapshots repo
     assert.equal(submitted.data.record.status, 'submitted');
     assert.equal(submitted.data.record.totalScore, 86);
     assert.equal(submitted.data.record.grade, 'B');
-    assert.equal(repository.data.assessment_report_snapshots.length, 1);
+    assert.equal(repository.data.assessment_report_snapshots.length, initialReportCount + 1);
 
     const share = await jsonRequest(app, `/ops/reports/${submitted.data.report.id}/share-links`, {
         method: 'POST',

@@ -31,7 +31,7 @@ class InMemoryOpsRepository {
     }
 
     async list(name, page = 1, perPage = 20, options = {}) {
-        const all = this.ensure(name).filter((record) => matchFilter(record, options.filter || ''));
+        const all = sortRecords(this.ensure(name).filter((record) => matchFilter(record, options.filter || '')), options.sort);
         const start = (Number(page) - 1) * Number(perPage);
         return {
             items: all.slice(start, start + Number(perPage)).map(clone),
@@ -109,7 +109,7 @@ function createOpsSeed() {
             { id: 'rel_1', teacherId: 'teacher_1', studentId: 'student_1', status: 'active' },
         ],
         activities: [
-            { id: 'activity_1', title: '公开课', status: 'active', location: '上海' },
+            { id: 'activity_1', title: '公开课', status: 'active', location: '上海', maxParticipants: 20 },
         ],
         audio_materials: [
             { id: 'audio_1', title: '气息练习', author: '王老师', status: 'published' },
@@ -156,8 +156,64 @@ function createOpsSeed() {
             },
         ],
         assessment_records: [],
-        assessment_report_snapshots: [],
+        assessment_report_snapshots: [
+            {
+                id: 'report_1',
+                assessmentRecordId: 'assessment_seed_1',
+                studentId: 'student_1',
+                teacherId: 'teacher_1',
+                templateId: 'template_1',
+                totalScore: 91,
+                grade: 'A',
+                reportJson: {
+                    id: 'report_1',
+                    title: '声乐阶段报告',
+                    student: { realName: '张同学', cellphone: 'secret-phone', wechatId: 'secret-openid' },
+                    teacher: { realName: 'teacher_1', token: 'secret-token' },
+                    score: {
+                        totalScore: 91,
+                        grade: 'A',
+                        sections: [{ key: 'pitch', title: '音准', score: 55, maxScore: 60, comment: '稳定', recommendations: ['慢练音阶'] }],
+                    },
+                    summary: '音准稳定',
+                    recommendations: ['保持气息'],
+                    generatedAt: '2026-05-20T08:00:00.000Z',
+                },
+                created: '2026-05-20T08:00:00.000Z',
+            },
+            {
+                id: 'report_2',
+                assessmentRecordId: 'assessment_seed_2',
+                studentId: 'student_2',
+                teacherId: 'admin_1',
+                templateId: 'template_1',
+                totalScore: 76,
+                grade: 'C',
+                reportJson: { title: '其他学员报告', score: { totalScore: 76, grade: 'C' } },
+                created: '2026-05-21T08:00:00.000Z',
+            },
+        ],
         assessment_share_links: [],
+        activity_signups: [
+            {
+                id: 'signup_1',
+                userId: 'student_1',
+                activityId: 'activity_1',
+                realName: '张同学',
+                age: 12,
+                status: 'registered',
+                created: '2026-05-19T08:00:00.000Z',
+            },
+            {
+                id: 'signup_2',
+                userId: 'student_2',
+                activityId: 'activity_1',
+                realName: '李同学',
+                age: 13,
+                status: 'registered',
+                created: '2026-05-19T09:00:00.000Z',
+            },
+        ],
         ops_audit_logs: [],
     };
 }
@@ -257,6 +313,24 @@ function matchExpression(record, expression) {
         return String(record[contains[1]] ?? '').includes(contains[2]);
     }
     return true;
+}
+
+function sortRecords(records, sort = '') {
+    const field = String(sort || '').trim();
+    if (!field) {
+        return records;
+    }
+    const descending = field.startsWith('-');
+    const key = descending ? field.slice(1) : field;
+    return [...records].sort((left, right) => {
+        const leftValue = left[key] ?? '';
+        const rightValue = right[key] ?? '';
+        if (leftValue === rightValue) {
+            return 0;
+        }
+        const result = leftValue > rightValue ? 1 : -1;
+        return descending ? -result : result;
+    });
 }
 
 function stripOuter(value) {

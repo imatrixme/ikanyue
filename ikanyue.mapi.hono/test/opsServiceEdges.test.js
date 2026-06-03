@@ -178,7 +178,8 @@ test('assessment and auth services cover list, me, submitted, and share expiry b
     assert.equal((await services.assessmentService.submitRecord(teacher, 'submitted_1')).code, 400);
 
     const scopedReports = await services.assessmentService.listReports(teacher, {});
-    assert.equal(scopedReports.items.length, 1);
+    assert.ok(scopedReports.items.some((item) => item.id === 'report_1'));
+    assert.ok(scopedReports.items.every((item) => item.teacherId === teacher.id));
     const studentReports = await services.assessmentService.listReports(admin, { studentId: 'student_1' });
     assert.equal(studentReports.items[0].id, 'report_1');
     assert.equal((await services.assessmentService.viewSharedReport('expired')).code, 404);
@@ -213,6 +214,56 @@ test('management service covers unsupported resources, teacher writes, and count
     };
     const dashboard = await services.managementService.dashboard(teacher);
     assert.equal(dashboard.cards.find((card) => card.key === 'activities').value, 0);
+});
+
+test('ops services cover default construction, repository wrapper, and share detail branches', async () => {
+    const { createShareToken, hashToken } = require('../src/services/ops/opsUtils');
+    const { OpsRepository } = require('../src/services/ops/opsRepository');
+
+    assert.ok(createOpsServices().repository);
+
+    const calls = [];
+    const repositoryWrapper = new OpsRepository({
+        collection(name) {
+            calls.push(name);
+            return {
+                getList: async () => ({ items: [] }),
+                getOne: async (id) => ({ id }),
+                create: async (data) => ({ id: 'created', ...data }),
+                update: async (id, data) => ({ id, ...data }),
+                delete: async (id) => ({ id, deleted: true }),
+            };
+        },
+    });
+    assert.deepEqual(await repositoryWrapper.list('x'), { items: [] });
+    assert.deepEqual(await repositoryWrapper.get('x', 'id_1'), { id: 'id_1' });
+    assert.equal((await repositoryWrapper.create('x', { ok: true })).ok, true);
+    assert.equal((await repositoryWrapper.update('x', 'id_1', { ok: true })).id, 'id_1');
+    assert.equal((await repositoryWrapper.delete('x', 'id_1')).deleted, true);
+    assert.deepEqual(calls, ['x', 'x', 'x', 'x', 'x']);
+
+    const seed = createOpsSeed();
+    const token = createShareToken('report_1');
+    seed.assessment_share_links.push({
+        id: 'share_live',
+        reportId: 'report_1',
+        tokenHash: hashToken(token),
+        expiresAt: '2099-01-01T00:00:00.000Z',
+        revokedAt: '',
+        accessCount: 0,
+    });
+    const repository = createOpsTestRepository(seed);
+    const services = createOpsServices(repository);
+    const teacher = { ...seed.teachers[0], role: 'teacher' };
+
+    assert.equal((await services.assessmentService.getReportDetail(teacher, '')).code, 400);
+    const detail = await services.assessmentService.getReportDetail(teacher, 'report_1');
+    assert.equal(detail.data.score.totalScore, 91);
+    const share = await services.assessmentService.createShareLink(teacher, 'report_1', { expiresAt: '2099-01-01T00:00:00.000Z' });
+    assert.equal(share.data.expiresAt, '2099-01-01T00:00:00.000Z');
+    const revoked = await services.assessmentService.revokeShareLink(teacher, share.data.id);
+    assert.ok(revoked.data.revokedAt);
+    assert.equal((await services.assessmentService.viewSharedReport(token)).data.reportId, 'report_1');
 });
 
 function fakeContext(headers) {

@@ -69,13 +69,24 @@ const OPS_COLLECTION_SCHEMAS = [
     ], [
         'CREATE INDEX idx_operation_slots_public ON operation_slots (channel, placement, status, sortOrder)',
     ]),
+    collection('activity_signups', [
+        relationField('userId', 'students', { required: true }),
+        relationField('activityId', 'activities', { required: true }),
+        textField('realName', { required: true }),
+        numberField('age'),
+        selectField('status', ['registered', 'cancelled', 'attended', 'no_show'], { required: true }),
+        textField('remark'),
+    ], [
+        'CREATE UNIQUE INDEX idx_activity_signups_user_activity ON activity_signups (userId, activityId)',
+        'CREATE INDEX idx_activity_signups_activity_status ON activity_signups (activityId, status)',
+    ]),
     collection('ops_audit_logs', [
         relationField('actorId', 'teachers'),
         selectField('actorRole', ['teacher', 'admin']),
         textField('action', { required: true }),
         textField('resourceType'),
         textField('resourceId'),
-        selectField('outcome', ['success', 'failed'], { required: true }),
+        selectField('outcome', ['allowed', 'denied', 'success', 'failed'], { required: true }),
         jsonField('metadata'),
     ], [
         'CREATE INDEX idx_ops_audit_logs_actor_created ON ops_audit_logs (actorId, created)',

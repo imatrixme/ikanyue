@@ -13,6 +13,7 @@ test('ops schema defines production PocketBase collections for admin workflows',
         'assessment_records',
         'assessment_report_snapshots',
         'assessment_share_links',
+        'activity_signups',
         'teacher_student_relations',
         'operation_slots',
         'ops_audit_logs',
@@ -32,6 +33,12 @@ test('ops schema defines production PocketBase collections for admin workflows',
     assert.ok(shareLinks.has('tokenHash'));
     assert.ok(shareLinks.has('revokedAt'));
     assert.ok(schemas.get('assessment_share_links').indexes.some((index) => index.includes('UNIQUE')));
+
+    const signups = fieldNames(schemas.get('activity_signups'));
+    assert.ok(signups.has('userId'));
+    assert.ok(signups.has('activityId'));
+    assert.ok(signups.has('status'));
+    assert.ok(schemas.get('activity_signups').indexes.some((index) => index.includes('idx_activity_signups_user_activity')));
 });
 
 test('ops schema validator reports incomplete collections', () => {

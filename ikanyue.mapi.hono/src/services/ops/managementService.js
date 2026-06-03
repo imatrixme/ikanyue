@@ -19,19 +19,74 @@ const MANAGEMENT_CONFIG = {
         collection: 'activities',
         resourceType: 'activity',
         adminOnlyWrite: true,
-        fields: ['id', 'title', 'description', 'status', 'type', 'location', 'startTime', 'endTime', 'price', 'sequence', 'created', 'updated'],
+        fields: [
+            'id',
+            'title',
+            'description',
+            'status',
+            'type',
+            'location',
+            'startTime',
+            'endTime',
+            'price',
+            'sequence',
+            'coverImage',
+            'images',
+            'tags',
+            'maxParticipants',
+            'currentParticipants',
+            'externalLink',
+            'created',
+            'updated',
+        ],
         searchable: ['title', 'location'],
     },
     audioMaterials: {
         collection: 'audio_materials',
         resourceType: 'audio_material',
-        fields: ['id', 'title', 'type', 'author', 'status', 'language', 'difficulty', 'sequence', 'created', 'updated'],
+        fields: [
+            'id',
+            'title',
+            'type',
+            'author',
+            'status',
+            'language',
+            'difficulty',
+            'sequence',
+            'coverImage',
+            'audioSource',
+            'description',
+            'content',
+            'tags',
+            'duration',
+            'created',
+            'updated',
+        ],
         searchable: ['title', 'author'],
     },
     videoMaterials: {
         collection: 'video_materials',
         resourceType: 'video_material',
-        fields: ['id', 'title', 'type', 'author', 'status', 'language', 'difficulty', 'resolution', 'sequence', 'created', 'updated'],
+        fields: [
+            'id',
+            'title',
+            'type',
+            'author',
+            'status',
+            'language',
+            'difficulty',
+            'resolution',
+            'sequence',
+            'coverImage',
+            'thumbnail',
+            'videoSource',
+            'description',
+            'content',
+            'tags',
+            'duration',
+            'created',
+            'updated',
+        ],
         searchable: ['title', 'author'],
     },
     operationSlots: {
@@ -48,6 +103,15 @@ const MANAGEMENT_CONFIG = {
         readOnly: true,
         fields: ['id', 'actorId', 'actorRole', 'action', 'resourceType', 'resourceId', 'outcome', 'metadata', 'created'],
         searchable: ['actorId', 'action', 'resourceType', 'resourceId', 'outcome'],
+    },
+    activitySignups: {
+        collection: 'activity_signups',
+        resourceType: 'activity_signup',
+        adminOnlyWrite: true,
+        teacherStudentScoped: true,
+        studentOwnerFields: ['userId'],
+        fields: ['id', 'userId', 'studentId', 'activityId', 'realName', 'age', 'status', 'remark', 'created', 'updated'],
+        searchable: ['realName', 'status'],
     },
 };
 
@@ -105,12 +169,15 @@ class OpsManagementService {
         if (config.teacherScoped) {
             await this.rbacService.assertStudentAccess(user, record.id, `ops.${config.resourceType}.detail`);
         }
+        if (config.teacherStudentScoped) {
+            await this.rbacService.assertStudentAccess(user, resolveStudentId(record), `ops.${config.resourceType}.detail`);
+        }
         return mapRecord(record, config.fields);
     }
 
     async create(resourceKey, user, data = {}) {
         const config = getConfig(resourceKey);
-        this.assertWrite(config, user);
+        await this.assertWrite(config, user);
         const payload = sanitizeManagementPayload(data);
         const created = await this.repository.create(config.collection, payload);
         await this.auditService.record({
@@ -124,7 +191,7 @@ class OpsManagementService {
 
     async update(resourceKey, id, user, data = {}) {
         const config = getConfig(resourceKey);
-        this.assertWrite(config, user);
+        await this.assertWrite(config, user);
         const payload = sanitizeManagementPayload(data);
         const updated = await this.repository.update(config.collection, id, payload);
         await this.auditService.record({
@@ -169,7 +236,7 @@ class OpsManagementService {
         }
     }
 
-    assertWrite(config, user) {
+    async assertWrite(config, user) {
         this.rbacService.assertTeacher(user);
         if (config.readOnly) {
             const error = new Error('该运营资源仅允许读取');
@@ -177,7 +244,14 @@ class OpsManagementService {
             throw error;
         }
         if (config.adminOnly || config.adminOnlyWrite) {
-            this.rbacService.assertAdmin(user);
+            try {
+                this.rbacService.assertAdmin(user);
+            } catch (error) {
+                if (error instanceof Error) {
+                    await this.auditService.denied(user, `ops.${config.resourceType}.write`, config.resourceType);
+                }
+                throw error;
+            }
         }
     }
 
@@ -197,6 +271,15 @@ class OpsManagementService {
             const studentIds = (relationResult.items || []).map((item) => item.studentId).filter(Boolean);
             filters.push(studentIds.length === 0 ? 'id = "__none__"' : `(${studentIds.map((id) => `id = "${id}"`).join(' || ')})`);
         }
+        if (config.teacherStudentScoped && !user.isAdmin) {
+            const relationResult = await this.repository.list('teacher_student_relations', 1, 100, {
+                filter: `teacherId = "${user.id}" && status = "active"`,
+            });
+            const studentIds = (relationResult.items || []).map((item) => item.studentId).filter(Boolean);
+            const ownerFields = config.studentOwnerFields || ['studentId'];
+            const studentFilters = studentIds.flatMap((id) => ownerFields.map((field) => `${field} = "${id}"`));
+            filters.push(studentFilters.length === 0 ? `${ownerFields[0]} = "__none__"` : `(${studentFilters.join(' || ')})`);
+        }
         return filters.join(' && ');
     }
 
@@ -210,6 +293,10 @@ class OpsManagementService {
             return user.isAdmin ? 0 : 0;
         }
     }
+}
+
+function resolveStudentId(record = {}) {
+    return record.studentId || record.userId || '';
 }
 
 function getConfig(resourceKey) {

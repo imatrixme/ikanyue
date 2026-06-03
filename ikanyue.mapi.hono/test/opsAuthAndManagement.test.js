@@ -79,6 +79,33 @@ test('ops management enforces teacher ownership and admin global access', async 
     assert.equal(auditLogs.code, 10000);
     assert.ok(auditLogs.data.items.some((event) => event.action === 'ops.activity.update'));
     assert.equal((await jsonRequest(app, '/ops/auditLogs', { method: 'POST', token: adminToken, body: { action: 'blocked' } })).code, 405);
+
+    const signupList = await jsonRequest(app, '/ops/activitySignups', { token: adminToken });
+    assert.equal(signupList.code, 10000);
+    assert.equal(signupList.data.items.length, 2);
+
+    const teacherSignupList = await jsonRequest(app, '/ops/activitySignups', { token: teacherToken });
+    assert.equal(teacherSignupList.code, 10000);
+    assert.deepEqual(teacherSignupList.data.items.map((item) => item.id), ['signup_1']);
+    assert.equal((await jsonRequest(app, '/ops/activitySignups/signup_2', { token: teacherToken })).code, 403);
+
+    const updatedSignup = await jsonRequest(app, '/ops/activitySignups/signup_1', {
+        method: 'POST',
+        token: adminToken,
+        body: { status: 'attended', token: 'blocked' },
+    });
+    assert.equal(updatedSignup.code, 10000);
+    assert.equal(updatedSignup.data.status, 'attended');
+    assert.equal(repository.data.activity_signups[0].token, undefined);
+    assert.ok(repository.data.ops_audit_logs.some((event) => event.action === 'ops.activity_signup.update'));
+
+    const deniedSignupUpdate = await jsonRequest(app, '/ops/activitySignups/signup_1', {
+        method: 'POST',
+        token: teacherToken,
+        body: { status: 'cancelled' },
+    });
+    assert.equal(deniedSignupUpdate.code, 403);
+    assert.ok(repository.data.ops_audit_logs.some((event) => event.action === 'ops.activity_signup.write' && event.outcome === 'denied'));
 });
 
 test('ops dashboard and operation slots provide first-phase management data', async () => {
@@ -116,4 +143,26 @@ test('ops dashboard and operation slots provide first-phase management data', as
     assert.deepEqual(publicSlots.data.items.map((item) => item.id), ['slot_1']);
     assert.equal(publicSlots.data.items[0].imageUrl, 'https://example.com/banner.png');
     assert.equal(publicSlots.data.items[0].targetUrl, '/pages/assessmentReport/index?token=demo');
+});
+
+test('ops report detail returns privacy-safe report content with scoped authorization', async () => {
+    const seed = createOpsSeed();
+    const repository = createOpsTestRepository(seed);
+    const app = createOpsApp(repository);
+    const teacherToken = createToken(seed.teachers[0]);
+    const adminToken = createToken(seed.teachers[1]);
+
+    const teacherReport = await jsonRequest(app, '/ops/reports/report_1', { token: teacherToken });
+    assert.equal(teacherReport.code, 10000);
+    assert.equal(teacherReport.data.title, '声乐阶段报告');
+    assert.equal(teacherReport.data.score.totalScore, 91);
+    assert.equal(teacherReport.data.sections[0].title, '音准');
+    assert.equal(teacherReport.data.student.cellphone, undefined);
+    assert.equal(teacherReport.data.student.wechatId, undefined);
+    assert.equal(teacherReport.data.teacher.token, undefined);
+
+    assert.equal((await jsonRequest(app, '/ops/reports/report_2', { token: teacherToken })).code, 403);
+    const adminReport = await jsonRequest(app, '/ops/reports/report_2', { token: adminToken });
+    assert.equal(adminReport.code, 10000);
+    assert.equal(adminReport.data.title, '其他学员报告');
 });
