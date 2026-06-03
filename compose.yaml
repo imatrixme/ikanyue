@@ -1,0 +1,62 @@
+services:
+  pocketbase:
+    image: elestio/pocketbase:v0.32.0
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "${POCKETBASE_PORT:-8090}:8090"
+    environment:
+      POCKETBASE_ADMIN_EMAIL: "${PB_EMAIL:-admin@example.com}"
+      POCKETBASE_ADMIN_PASSWORD: "${PB_PASSWORD:-change-me}"
+    volumes:
+      - pocketbase_data:/pb_data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  hono:
+    build:
+      context: ./ikanyue.mapi.hono
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    ports:
+      - "${HONO_PORT:-1337}:1337"
+    environment:
+      NODE_ENV: production
+      PORT: "1337"
+      PB_URL: http://pocketbase:8090
+      PB_EMAIL: "${PB_EMAIL:-admin@example.com}"
+      PB_PASSWORD: "${PB_PASSWORD:-change-me}"
+      S3_URL: "${S3_URL:-}"
+      S3_BUCKET: "${S3_BUCKET:-}"
+      DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
+      WECHAT_APPID: "${WECHAT_APPID:-}"
+      WECHAT_SECRET: "${WECHAT_SECRET:-}"
+      WECHAT_JSCODE2SESSION: "${WECHAT_JSCODE2SESSION:-https://api.weixin.qq.com/sns/jscode2session}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1337/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  admin:
+    build:
+      context: ./ikanyue.admin
+      dockerfile: Dockerfile
+      args:
+        VITE_OPS_API_BASE: "${VITE_OPS_API_BASE:-/ops}"
+        VITE_OPS_API_MOCK: "${VITE_OPS_API_MOCK:-false}"
+    restart: unless-stopped
+    depends_on:
+      hono:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT:-8080}:80"
+
+volumes:
+  pocketbase_data:

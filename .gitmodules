@@ -5,7 +5,7 @@
 [submodule "ikanyue.mapi.hono"]
 	path = ikanyue.mapi.hono
 	url = git@github.com:imatrixme/ikanyue.mapi.hono.git
-	branch = master
+	branch = 2605/newop
 [submodule "ikanyue.flutter"]
 	path = ikanyue.flutter
 	url = git@github.com:imatrixme/ikanyue.flutter.git
@@ -14,3 +14,7 @@
 	path = ikanyue.m.nuxt
 	url = git@github.com:imatrixme/ikanyue.m.nuxt.git
 	branch = master
+[submodule "ikanyue.admin"]
+	path = ikanyue.admin
+	url = git@github.com:imatrixme/ikanyue.admin.git
+	branch = 2605/newop
