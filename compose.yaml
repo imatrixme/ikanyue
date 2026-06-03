@@ -4,10 +4,16 @@ services:
     restart: unless-stopped
     user: "0:0"
     ports:
-      - "${POCKETBASE_PORT:-8090}:8090"
+      - "${BIND_ADDR:-0.0.0.0}:${POCKETBASE_PORT:-8090}:8090"
     environment:
       POCKETBASE_ADMIN_EMAIL: "${PB_EMAIL:-admin@example.com}"
       POCKETBASE_ADMIN_PASSWORD: "${PB_PASSWORD:-change-me}"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/bin/pocketbase superuser upsert "$${POCKETBASE_ADMIN_EMAIL}" "$${POCKETBASE_ADMIN_PASSWORD}" --dir=/pb_data
+        exec /usr/local/bin/pocketbase serve --http=0.0.0.0:8090 --dir=/pb_data
     volumes:
       - pocketbase_data:/pb_data
     healthcheck:
@@ -25,7 +31,7 @@ services:
       pocketbase:
         condition: service_healthy
     ports:
-      - "${HONO_PORT:-1337}:1337"
+      - "${BIND_ADDR:-0.0.0.0}:${HONO_PORT:-1337}:1337"
     environment:
       NODE_ENV: production
       PORT: "1337"
@@ -56,7 +62,7 @@ services:
       hono:
         condition: service_healthy
     ports:
-      - "${ADMIN_PORT:-8080}:80"
+      - "${BIND_ADDR:-0.0.0.0}:${ADMIN_PORT:-8080}:80"
 
 volumes:
   pocketbase_data:
