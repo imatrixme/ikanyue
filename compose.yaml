@@ -30,10 +30,10 @@ services:
       NODE_ENV: production
       PORT: "1337"
       PB_URL: http://pocketbase:8090
+      PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
       PB_EMAIL: "${PB_EMAIL:-admin@example.com}"
       PB_PASSWORD: "${PB_PASSWORD:-change-me}"
-      S3_URL: "${S3_URL:-}"
-      S3_BUCKET: "${S3_BUCKET:-}"
+      PUBLIC_ASSET_BASE_URL: "${PUBLIC_ASSET_BASE_URL:-https://kyoss.abcmem.com}"
       DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
       WECHAT_APPID: "${WECHAT_APPID:-}"
       WECHAT_SECRET: "${WECHAT_SECRET:-}"

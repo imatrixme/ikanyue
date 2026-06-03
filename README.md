@@ -104,7 +104,7 @@ cp .env.deploy.example .env.deploy
 docker compose --env-file .env.deploy up -d --build
 ```
 
-在 1Panel 中导入 `compose.yaml`，设置 `.env.deploy` 中的端口、PocketBase 超级用户、S3、微信配置。OpenResty 站点反代到 `http://127.0.0.1:${ADMIN_PORT}`。
+在 1Panel 中导入 `compose.yaml`，设置 `.env.deploy` 中的端口、PocketBase 超级用户、公开文件域名、微信配置。OpenResty 站点反代到 `http://127.0.0.1:${ADMIN_PORT}`。
 
 默认端口：
 
@@ -114,4 +114,15 @@ docker compose --env-file .env.deploy up -d --build
 | Hono API | `http://127.0.0.1:1337` |
 | PocketBase | `http://127.0.0.1:8090` |
 
-admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`。
+admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase；返回文件 URL 时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com` 拼接公开对象存储地址，业务代码不持有 S3/MinIO key。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`。
+
+旁路验证 Docker 版本时使用高位端口，不切换线上域名：
+
+```bash
+cp .env.bypass.example .env.bypass
+docker compose --env-file .env.bypass -p kanyue_bypass up -d --build
+curl -fsS http://127.0.0.1:18080/
+curl -fsS -X POST http://127.0.0.1:18080/ops/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+```
