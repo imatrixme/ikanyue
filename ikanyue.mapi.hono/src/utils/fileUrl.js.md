@@ -49,7 +49,7 @@ flowchart TD
 - 自动检测 PocketBase 文件字段格式
 - 支持文件对象 `{name: "filename"}` 格式
 - 兼容传统字符串文件名格式
-- 确保生成正确的 S3 或本地文件 URL
+- 确保生成正确的对象存储公开 URL 或本地文件 URL
 
 ### processVideoMaterialFiles(record)
 
@@ -84,7 +84,7 @@ flowchart TD
 ### 公开对象存储 URL 格式
 
 ```
-https://kyoss.abcmem.com/collection_id/record_id/filename
+https://kyoss.abcmem.com/ikanyue-mp/collection_id/record_id/filename
 ```
 
 ### PocketBase 本地 URL 格式
@@ -97,7 +97,7 @@ http://localhost:8090/api/files/collection_id/record_id/filename
 
 ```bash
 # 公开对象存储域名（优先）
-PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com
+PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp
 
 # PocketBase配置（备选）
 PB_URL=http://localhost:8090
@@ -122,9 +122,9 @@ const audioRecord1 = {
 
 const processed1 = processAudioMaterialFiles(audioRecord1);
 console.log(processed1.audioSourceUrl);
-// https://kyoss.abcmem.com/audio_materials/audio_123/lesson1.mp3
+// https://kyoss.abcmem.com/ikanyue-mp/audio_materials/audio_123/lesson1.mp3
 console.log(processed1.coverImageUrl);
-// https://kyoss.abcmem.com/audio_materials/audio_123/cover.jpg
+// https://kyoss.abcmem.com/ikanyue-mp/audio_materials/audio_123/cover.jpg
 
 // PocketBase文件字段对象格式（新支持）
 const audioRecord2 = {
@@ -137,9 +137,9 @@ const audioRecord2 = {
 
 const processed2 = processAudioMaterialFiles(audioRecord2);
 console.log(processed2.audioSourceUrl);
-// https://kyoss.abcmem.com/audio_materials/audio_456/dialog.mp3
+// https://kyoss.abcmem.com/ikanyue-mp/audio_materials/audio_456/dialog.mp3
 console.log(processed2.coverImageUrl);
-// https://kyoss.abcmem.com/audio_materials/audio_456/poster.jpg
+// https://kyoss.abcmem.com/ikanyue-mp/audio_materials/audio_456/poster.jpg
 ```
 
 ### 批量处理
@@ -169,7 +169,7 @@ const activityRecord = {
 
 const processed = processActivityFiles(activityRecord);
 console.log(processed.coverImageUrl);
-// https://kyoss.abcmem.com/activities/activity_456/cover.jpg
+// https://kyoss.abcmem.com/ikanyue-mp/activities/activity_456/cover.jpg
 console.log(processed.imageUrls);
 // ['https://s3.amazonaws.com/bucket/activities/activity_456/img1.jpg', ...]
 ```

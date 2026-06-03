@@ -33,10 +33,10 @@ function withEnv(env, fn) {
 }
 
 test('uses the public asset base URL without bucket credentials', () => {
-    withEnv({ PUBLIC_ASSET_BASE_URL: 'https://kyoss.abcmem.com/' }, () => {
+    withEnv({ PUBLIC_ASSET_BASE_URL: 'https://kyoss.abcmem.com/ikanyue-mp/' }, () => {
         assert.equal(
             getFileUrl(RECORD, 'cover.jpg'),
-            'https://kyoss.abcmem.com/activities/activity_1/cover.jpg'
+            'https://kyoss.abcmem.com/ikanyue-mp/activities/activity_1/cover.jpg'
         );
     });
 });
