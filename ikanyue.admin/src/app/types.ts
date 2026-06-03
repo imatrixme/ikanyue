@@ -10,6 +10,7 @@ export type OpsResource =
   | 'audioMaterials'
   | 'videoMaterials'
   | 'operationSlots'
+  | 'activitySignups'
   | 'auditLogs'
 
 export type AppView =
@@ -116,6 +117,27 @@ export interface AssessmentReport {
   reportJson?: unknown
 }
 
+export interface AssessmentReportSection {
+  key: string
+  title: string
+  score?: number | string
+  maxScore?: number | string
+  comment?: string
+  recommendations?: string[]
+}
+
+export interface AssessmentReportDetail {
+  id: string
+  title: string
+  student: { name?: string; realName?: string; nickName?: string }
+  teacher: { name?: string; realName?: string; nickName?: string }
+  score: { totalScore: number; grade: string; sections?: AssessmentReportSection[] }
+  summary?: string
+  recommendations?: string[]
+  sections?: AssessmentReportSection[]
+  generatedAt: string
+}
+
 export interface AssessmentRecord {
   id: string
   studentId: string
@@ -165,6 +187,8 @@ export interface AppState {
   resources: Partial<Record<OpsResource, ListResult<ResourceRecord>>>
   templates: ListResult<AssessmentTemplate> | null
   reports: ListResult<AssessmentReport> | null
+  reportDetail: AssessmentReportDetail | null
+  activeShareLink: ShareLink | null
   sharePreview: SharePreview | null
 }
 
@@ -179,4 +203,6 @@ export type AppAction =
   | { type: 'resource:set'; resource: OpsResource; payload: ListResult<ResourceRecord> }
   | { type: 'templates:set'; payload: ListResult<AssessmentTemplate> }
   | { type: 'reports:set'; payload: ListResult<AssessmentReport> }
+  | { type: 'reportDetail:set'; payload: AssessmentReportDetail | null }
+  | { type: 'shareLink:set'; payload: ShareLink | null }
   | { type: 'share:set'; payload: SharePreview }

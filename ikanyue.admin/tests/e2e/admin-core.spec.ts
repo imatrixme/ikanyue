@@ -28,7 +28,7 @@ test('admin can complete the first-phase operations path', async ({ page }) => {
 
   await page.getByRole('button', { name: '提交并生成报告' }).click()
   await expect(page.getByRole('heading', { name: '评估报告' })).toBeVisible()
-  await page.getByRole('main').getByRole('button', { name: /^分享$/ }).first().click()
+  await page.getByRole('main').getByRole('button', { name: '预览' }).first().click()
   await expect(page.getByRole('heading', { name: '分享报告预览' })).toBeVisible()
   await expect(page.getByText('声乐阶段评估报告')).toBeVisible()
 })
@@ -77,10 +77,47 @@ test('admin can filter and create operation slots', async ({ page }) => {
   await page.getByLabel('运营位搜索').fill('')
   await page.getByRole('button', { name: '刷新' }).click()
   await page.getByRole('button', { name: '新建运营位' }).click()
+  await page.getByLabel('标题').fill('端到端运营位')
+  await page.getByRole('button', { name: '保存' }).click()
 
   await expect(page.getByText('已创建记录')).toBeVisible()
-  await expect(page.getByText(/新运营位/)).toBeVisible()
+  await expect(page.getByText('端到端运营位')).toBeVisible()
   await expect(page.getByText('共 3 条记录')).toBeVisible()
+})
+
+test('admin can edit publishable content, review signups, and inspect report details', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: '登录' }).click()
+
+  await page.getByRole('button', { name: '活动' }).click()
+  await page.getByRole('button', { name: '新建活动' }).click()
+  await page.getByLabel('标题').fill('闭环公开课')
+  await page.getByLabel('状态').selectOption('active')
+  await page.getByLabel('地点').fill('上海静安')
+  await page.getByRole('button', { name: '保存' }).click()
+  await expect(page.getByText('已创建记录')).toBeVisible()
+  await expect(page.getByText('闭环公开课')).toBeVisible()
+  await page.getByRole('button', { name: '转草稿' }).first().click()
+  await expect(page.getByText('已转为草稿')).toBeVisible()
+
+  await page.getByRole('button', { name: '报名' }).click()
+  await expect(page.getByRole('heading', { name: '报名审核' })).toBeVisible()
+  await expect(page.getByText('张同学')).toBeVisible()
+  await page.getByRole('button', { name: '编辑' }).first().click()
+  await page.getByLabel('状态').selectOption('attended')
+  await page.getByRole('button', { name: '保存' }).click()
+  await expect(page.getByText('已保存记录')).toBeVisible()
+  await expect(page.getByText('attended').first()).toBeVisible()
+
+  await page.getByRole('button', { name: '报告' }).click()
+  await page.getByRole('main').getByRole('button', { name: '查看' }).first().click()
+  await expect(page.getByRole('heading', { name: '报告详情' })).toBeVisible()
+  await expect(page.getByText('阶段表现稳定')).toBeVisible()
+  await page.getByRole('main').getByRole('button', { name: '创建分享' }).first().click()
+  await expect(page.getByText('分享链接已创建')).toBeVisible()
+  await expect(page.getByText(/Token:/)).toBeVisible()
+  await page.getByRole('button', { name: '撤销分享' }).click()
+  await expect(page.getByText('分享链接已撤销')).toBeVisible()
 })
 
 test('admin can create and publish an assessment template draft', async ({ page }) => {
@@ -118,7 +155,7 @@ test('teacher can submit an assessment and share the generated report', async ({
   await expect(page.getByText('评估报告已生成')).toBeVisible()
   await expect(page.getByRole('heading', { name: '评估报告' })).toBeVisible()
 
-  await page.getByRole('main').getByRole('button', { name: /^分享$/ }).first().click()
+  await page.getByRole('main').getByRole('button', { name: '预览' }).first().click()
   await expect(page.getByRole('heading', { name: '分享报告预览' })).toBeVisible()
   await expect(page.getByText('已脱敏')).toBeVisible()
 })

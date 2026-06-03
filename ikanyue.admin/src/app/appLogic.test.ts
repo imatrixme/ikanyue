@@ -4,6 +4,7 @@ import { createMockOpsApi, createOpsApi } from './api'
 import { scoreLocalAssessment } from './assessment'
 import { filterList, mockProfiles, mockResources, mockTemplates } from './mockData'
 import { defaultResourcePayload } from './resourceDefaults'
+import { buildResourceFormState, buildResourcePayload, canEditResource, nextPublishStatus } from './resourceForms'
 import { appReducer, canAccessView, initialState } from './state'
 
 describe('ops api clients', () => {
@@ -42,6 +43,7 @@ describe('ops api clients', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'assessment_1' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'assessment_1' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { report: { id: 'report_1' } } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'report_1', title: '报告详情' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'share_1', token: 'share-token' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'share_1', revokedAt: 'now' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { title: '报告' } }) })
@@ -59,6 +61,7 @@ describe('ops api clients', () => {
     await api.createAssessment('token', { templateId: 'template_1', studentId: 'student_1' })
     await api.saveAssessment('token', 'assessment_1', { answersJson: { pitch: 1 } })
     await api.submitAssessment('token', 'assessment_1', { answersJson: { pitch: 1 } })
+    await api.getReport('token', 'report_1')
     await api.createShareLink('token', 'report_1')
     await api.revokeShareLink('token', 'share_1')
     await api.viewShare('share-token')
@@ -74,9 +77,10 @@ describe('ops api clients', () => {
     expect(fetchMock.mock.calls[7][0]).toBe('/ops/assessments')
     expect(fetchMock.mock.calls[8][0]).toBe('/ops/assessments/assessment_1/save')
     expect(fetchMock.mock.calls[9][0]).toBe('/ops/assessments/assessment_1/submit')
-    expect(fetchMock.mock.calls[10][0]).toBe('/ops/reports/report_1/share-links')
-    expect(fetchMock.mock.calls[11][0]).toBe('/ops/share-links/share_1/revoke')
-    expect(fetchMock.mock.calls[12][0]).toBe('/ops/share/share-token')
+    expect(fetchMock.mock.calls[10][0]).toBe('/ops/reports/report_1')
+    expect(fetchMock.mock.calls[11][0]).toBe('/ops/reports/report_1/share-links')
+    expect(fetchMock.mock.calls[12][0]).toBe('/ops/share-links/share_1/revoke')
+    expect(fetchMock.mock.calls[13][0]).toBe('/ops/share/share-token')
 
     vi.unstubAllGlobals()
   })
@@ -99,6 +103,8 @@ describe('ops api clients', () => {
     await expect(api.submitAssessment('token', 'missing')).rejects.toThrow('评估记录不存在')
 
     const share = await api.createShareLink('token', submitted.report.id)
+    await expect(api.getReport('token', submitted.report.id)).resolves.toMatchObject({ id: submitted.report.id, title: '声乐阶段评估报告' })
+    await expect(api.getReport('token', 'missing')).rejects.toThrow('报告不存在')
     await expect(api.viewShare(share.token)).resolves.toMatchObject({ title: '声乐阶段评估报告', score: { totalScore: submitted.report.totalScore } })
     await expect(api.revokeShareLink('token', share.id)).resolves.toHaveProperty('revokedAt')
     await expect(api.revokeShareLink('token', 'missing')).rejects.toThrow('分享链接不存在')
@@ -150,6 +156,23 @@ describe('app reducer and permissions', () => {
     expect(defaultResourcePayload('audioMaterials')).toMatchObject({ difficulty: 'L1', status: 'draft' })
     expect(defaultResourcePayload('videoMaterials')).toMatchObject({ resolution: '1080p', status: 'draft' })
     expect(defaultResourcePayload('operationSlots')).toMatchObject({ channel: 'wechat-mini', targetType: 'none' })
+    expect(defaultResourcePayload('activitySignups')).toMatchObject({ status: 'registered' })
+  })
+
+  it('builds editable resource form state, payloads, and publish status transitions', () => {
+    expect(canEditResource('activities')).toBe(true)
+    expect(canEditResource('auditLogs')).toBe(false)
+    expect(buildResourceFormState('activities', { id: 'activity_1', title: '公开课', price: 1000 })).toMatchObject({
+      title: '公开课',
+      price: '1000',
+    })
+    expect(buildResourcePayload('activities', { title: '公开课', price: '1000', sequence: '' })).toMatchObject({
+      title: '公开课',
+      price: 1000,
+    })
+    expect(nextPublishStatus('activities', 'draft')).toBe('active')
+    expect(nextPublishStatus('audioMaterials', 'published')).toBe('draft')
+    expect(nextPublishStatus('activitySignups', 'registered')).toBeNull()
   })
 })
 

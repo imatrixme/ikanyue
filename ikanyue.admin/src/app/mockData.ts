@@ -69,6 +69,10 @@ export const mockResources: Record<OpsResource, ListResult<ResourceRecord>> = {
     { id: 'slot_1', channel: 'wechat-mini', placement: 'home-banner', title: '春季测评入口', status: 'active' },
     { id: 'slot_2', channel: 'wechat-mini', placement: 'course-card', title: '一对一体验课', status: 'inactive' },
   ]),
+  activitySignups: list([
+    { id: 'signup_1', userId: 'student_1', activityId: 'activity_1', realName: '张同学', age: 12, status: 'registered', created: '2026-05-20T09:00:00.000Z' },
+    { id: 'signup_2', userId: 'student_2', activityId: 'activity_1', realName: '李同学', age: 10, status: 'attended', created: '2026-05-21T09:00:00.000Z' },
+  ]),
   auditLogs: list([
     { id: 'audit_1', actorId: 'admin_1', action: 'ops.assessment_record.submit', resourceType: 'assessment_record', outcome: 'success' },
     { id: 'audit_2', actorId: 'teacher_1', action: 'ops.student.detail', resourceType: 'student', outcome: 'denied' },

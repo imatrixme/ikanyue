@@ -11,6 +11,7 @@ import { scoreLocalAssessment, type AssessmentAnswers } from './assessment'
 import type {
   AssessmentRecord,
   AssessmentReport,
+  AssessmentReportDetail,
   AssessmentTemplate,
   DashboardData,
   ListResult,
@@ -34,6 +35,7 @@ export interface OpsApi {
   saveAssessment(token: string, id: string, data: SaveAssessmentPayload): Promise<AssessmentRecord>
   submitAssessment(token: string, id: string, data?: SaveAssessmentPayload): Promise<{ record: AssessmentRecord; report: AssessmentReport }>
   listReports(token: string, query?: ListQuery): Promise<ListResult<AssessmentReport>>
+  getReport(token: string, reportId: string): Promise<AssessmentReportDetail>
   createShareLink(token: string, reportId: string, data?: { expiresAt?: string }): Promise<ShareLink>
   revokeShareLink(token: string, id: string): Promise<ShareLink>
   viewShare(token: string): Promise<SharePreview>
@@ -163,6 +165,28 @@ export function createMockOpsApi(): OpsApi {
     async listReports() {
       return reports
     },
+    async getReport(_token, reportId) {
+      const report = reports.items.find((item) => item.id === reportId)
+      if (!report) {
+        throw new Error('报告不存在')
+      }
+      const template = templates.items.find((item) => item.id === report.templateId)
+      return {
+        id: report.id,
+        title: template?.reportJson?.title || '评估报告',
+        student: { name: report.studentId },
+        teacher: { name: report.teacherId },
+        score: {
+          totalScore: report.totalScore,
+          grade: report.grade,
+          sections: [{ key: 'overall', title: '综合表现', score: report.totalScore, maxScore: 100, comment: '系统生成报告快照' }],
+        },
+        summary: '阶段表现稳定，建议继续跟进练习。',
+        recommendations: ['保持每日练声记录', '下次课复盘节奏与气息'],
+        sections: [{ key: 'overall', title: '综合表现', score: report.totalScore, maxScore: 100, comment: '系统生成报告快照' }],
+        generatedAt: report.created || new Date().toISOString(),
+      }
+    },
     async createShareLink(_token, reportId) {
       const share = { id: `share_${shares.length + 1}`, reportId, token: `share-token-${reportId}` }
       shares.push(share)
@@ -232,6 +256,9 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     },
     listReports(token, query = {}) {
       return request<ListResult<AssessmentReport>>(`${baseUrl}/reports${toQuery(query)}`, { token })
+    },
+    getReport(token, reportId) {
+      return request<AssessmentReportDetail>(`${baseUrl}/reports/${reportId}`, { token })
     },
     createShareLink(token, reportId, data = {}) {
       return request<ShareLink>(`${baseUrl}/reports/${reportId}/share-links`, { method: 'POST', token, body: data })

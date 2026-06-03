@@ -13,6 +13,8 @@ export function defaultResourcePayload(resource: OpsResource, now = new Date()):
       return { title: `新视频 ${suffix}`, author: '待定', status: 'draft', resolution: '1080p' }
     case 'operationSlots':
       return { channel: 'wechat-mini', placement: 'home-banner', title: `新运营位 ${suffix}`, status: 'draft', targetType: 'none', sortOrder: 100 }
+    case 'activitySignups':
+      return { realName: '新报名', age: 0, status: 'registered', remark: '' }
     default:
       return { realName: `新学员 ${suffix}`, nickName: '新学员', cellphone: '13900000000', blocked: false }
   }

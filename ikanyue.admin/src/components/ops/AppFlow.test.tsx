@@ -42,7 +42,7 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('评估报告')).toBeInTheDocument()
     expect(await screen.findByText('评估报告已生成')).toBeInTheDocument()
 
-    await user.click(screen.getAllByRole('button', { name: '分享' })[0])
+    await user.click(screen.getAllByRole('button', { name: '预览' })[0])
     await waitFor(() => expect(screen.getByText('分享报告预览')).toBeInTheDocument())
     expect(await screen.findByText('声乐阶段评估报告')).toBeInTheDocument()
   })
@@ -67,8 +67,14 @@ describe('ops admin app flow', () => {
     await user.click(screen.getByRole('button', { name: '登录' }))
     await user.click(await screen.findByRole('button', { name: '活动' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
+    await user.type(await screen.findByLabelText('标题'), '端到端公开课')
+    await user.selectOptions(screen.getByLabelText('状态'), 'active')
+    await user.click(screen.getByRole('button', { name: '保存' }))
     expect(await screen.findByText('已创建记录')).toBeInTheDocument()
-    expect(await screen.findByText(/新活动/)).toBeInTheDocument()
+    expect(await screen.findByText('端到端公开课')).toBeInTheDocument()
+
+    await user.click((await screen.findAllByRole('button', { name: '转草稿' }))[0])
+    expect(await screen.findByText('已转为草稿')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '评估表' }))
     await user.click(await screen.findByRole('button', { name: '新建模板' }))
@@ -78,12 +84,15 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('模板已发布')).toBeInTheDocument()
   })
 
-  it('surfaces create, publish, assessment, and share failures', async () => {
+  it('surfaces create, update, publish, assessment, and share failures', async () => {
     const user = userEvent.setup()
     const api: OpsApi = {
       ...createMockOpsApi(),
       createResource: async () => {
         throw new Error('create down')
+      },
+      updateResource: async () => {
+        throw new Error('update down')
       },
       publishTemplate: async () => {
         throw new Error('publish down')
@@ -100,7 +109,13 @@ describe('ops admin app flow', () => {
     await user.click(screen.getByRole('button', { name: '登录' }))
     await user.click(await screen.findByRole('button', { name: '活动' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
+    await user.click(await screen.findByRole('button', { name: '保存' }))
     expect(await screen.findByText('create down')).toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: '编辑' }))[0])
+    await user.click(await screen.findByRole('button', { name: '保存' }))
+    expect(await screen.findByText('update down')).toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: '发布' }))[0])
+    expect(await screen.findByText('update down')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '评估表' }))
     await user.click(await screen.findAllByRole('button', { name: '发布' }).then((buttons) => buttons[0]))
@@ -111,8 +126,31 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('assessment down')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '报告' }))
-    await user.click((await screen.findAllByRole('button', { name: '分享' }))[0])
+    await user.click((await screen.findAllByRole('button', { name: '创建分享' }))[0])
     expect(await screen.findByText('share down')).toBeInTheDocument()
+  })
+
+  it('surfaces report detail and share revoke failures', async () => {
+    const user = userEvent.setup()
+    const api: OpsApi = {
+      ...createMockOpsApi(),
+      getReport: async () => {
+        throw new Error('detail down')
+      },
+      revokeShareLink: async () => {
+        throw new Error('revoke down')
+      },
+    }
+    render(<App api={api} />)
+
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    await user.click(await screen.findByRole('button', { name: '报告' }))
+    await user.click((await screen.findAllByRole('button', { name: '查看' }))[0])
+    expect(await screen.findByText('detail down')).toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: '创建分享' }))[0])
+    expect(await screen.findByText('分享链接已创建')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: '撤销分享' }))
+    expect(await screen.findByText('revoke down')).toBeInTheDocument()
   })
 
   it('prevents assessment submission when no student is available', async () => {
@@ -243,28 +281,47 @@ describe('standalone ops components', () => {
     await user.type(screen.getByLabelText('手机号'), '13800138002')
     await user.click(screen.getByRole('button', { name: '登录中' }))
     expect(errors).toEqual([])
+
+    render(<LoginView api={{ ...createMockOpsApi(), login: async () => { throw 'plain login' } }} loading={false} onSuccess={() => undefined} onError={(message) => errors.push(message)} />)
+    await user.click(screen.getByRole('button', { name: '登录' }))
+    expect(errors).toContain('登录失败')
   })
 
   it('renders resource search enter branch and create actions', async () => {
     const user = userEvent.setup()
     const searches: string[] = []
-    render(<ResourceView resource="activities" result={mockResources.activities} loading={true} onSearch={(keyword) => searches.push(keyword)} />)
+    const searchView = render(<ResourceView resource="activities" result={mockResources.activities} loading={true} onSearch={(keyword) => searches.push(keyword)} />)
 
     await user.type(screen.getByLabelText('活动内容搜索'), '公开课{Enter}')
     expect(searches).toContain('公开课')
     expect(screen.getByRole('button', { name: '加载中' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '新建活动' })).toBeInTheDocument()
+    searchView.unmount()
 
-    render(<ResourceView resource="operationSlots" result={mockResources.operationSlots} loading={false} onSearch={() => undefined} onCreate={() => searches.push('create')} />)
+    const slotView = render(<ResourceView resource="operationSlots" result={mockResources.operationSlots} loading={false} onSearch={() => undefined} onSave={() => searches.push('save')} />)
     await user.click(screen.getByRole('button', { name: '新建运营位' }))
-    expect(searches).toContain('create')
+    await user.click(screen.getByRole('button', { name: '保存' }))
+    expect(searches).toContain('save')
+    slotView.unmount()
 
-    render(<ResourceView resource="students" loading={false} onSearch={(keyword) => searches.push(keyword)} />)
+    const studentsView = render(<ResourceView resource="students" loading={false} onSearch={(keyword) => searches.push(keyword)} />)
     expect(screen.getByText('共 0 条记录')).toBeInTheDocument()
+    studentsView.unmount()
 
-    render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} />)
+    const teachersView = render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} />)
     expect(screen.getByText('待审核')).toBeInTheDocument()
     expect(screen.getByText('管理员')).toBeInTheDocument()
+    teachersView.unmount()
+
+    const updates: Array<Record<string, unknown>> = []
+    render(<ResourceView resource="activities" result={mockResources.activities} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} onPublish={(row) => updates.push({ publish: row.id })} />)
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    await user.clear(screen.getByLabelText('标题'))
+    await user.type(screen.getByLabelText('标题'), '编辑后的活动')
+    await user.click(screen.getByRole('button', { name: '保存' }))
+    await user.click(screen.getAllByRole('button', { name: '发布' })[0])
+    expect(updates).toContainEqual(expect.objectContaining({ title: '编辑后的活动' }))
+    expect(updates).toContainEqual({ publish: 'activity_2' })
   })
 
   it('renders template, report, shell, and assessment edge states', async () => {
@@ -344,9 +401,57 @@ describe('standalone ops components', () => {
     expect(previews).toContain('create')
     expect(previews).toContain('template_1')
 
-    render(<ReportsView data={mockReports} onPreviewShare={(reportId) => previews.push(reportId)} />)
-    screen.getAllByRole('button', { name: '分享' })[0].click()
+    render(
+      <ReportsView
+        data={mockReports}
+        detail={{
+          id: 'report_1',
+          title: '报告详情',
+          student: { name: '张同学' },
+          teacher: { name: '王老师' },
+          score: { totalScore: 86.2, grade: 'B' },
+          summary: '稳定',
+          recommendations: ['继续练习'],
+          sections: [{ key: 'pitch', title: '音准', score: 30, comment: '稳定' }],
+          generatedAt: '2026-05-18T09:00:00.000Z',
+        }}
+        shareLink={{ id: 'share_1', reportId: 'report_1', token: 'share-token' }}
+        onOpenDetail={(reportId) => previews.push(`detail:${reportId}`)}
+        onCreateShare={(reportId) => previews.push(`share:${reportId}`)}
+        onRevokeShare={(shareId) => previews.push(`revoke:${shareId}`)}
+        onPreviewShare={(reportId) => previews.push(reportId)}
+      />,
+    )
+    screen.getAllByRole('button', { name: '创建分享' })[0].click()
+    screen.getAllByRole('button', { name: '预览' })[0].click()
+    screen.getAllByRole('button', { name: '查看' })[0].click()
+    screen.getByRole('button', { name: '撤销分享' }).click()
     expect(previews).toContain('report_1')
+    expect(previews).toContain('share:report_1')
+    expect(previews).toContain('detail:report_1')
+    expect(previews).toContain('revoke:share_1')
+    expect(screen.getByText('报告详情')).toBeInTheDocument()
+
+    render(
+      <ReportsView
+        data={mockReports}
+        detail={{
+          id: 'report_2',
+          title: '空详情',
+          student: {},
+          teacher: {},
+          score: { totalScore: 0, grade: '-', sections: [{ key: 's', title: '维度' }] },
+          generatedAt: '',
+        }}
+        shareLink={{ id: 'share_2', reportId: 'report_2', token: '', revokedAt: '2026-05-20T09:00:00.000Z' }}
+        onOpenDetail={() => undefined}
+        onCreateShare={() => undefined}
+        onRevokeShare={() => undefined}
+        onPreviewShare={() => undefined}
+      />,
+    )
+    expect(screen.getAllByText('已撤销')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('-')[0]).toBeInTheDocument()
   })
 
   it('shows non-error messages for unknown callback failures', async () => {

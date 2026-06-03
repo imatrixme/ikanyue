@@ -3,8 +3,9 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { createOpsApi, type OpsApi } from './app/api'
 import type { AssessmentAnswers } from './app/assessment'
 import { defaultResourcePayload } from './app/resourceDefaults'
+import { nextPublishStatus } from './app/resourceForms'
 import { appReducer, canAccessView, initialState } from './app/state'
-import type { AppView, LoginResult, OpsResource } from './app/types'
+import type { AppView, LoginResult, OpsResource, ResourceRecord } from './app/types'
 import { AssessmentWorkspace } from './components/ops/AssessmentWorkspace'
 import { DashboardView } from './components/ops/DashboardView'
 import { LoginView } from './components/ops/LoginView'
@@ -18,7 +19,7 @@ interface AppProps {
   api?: OpsApi
 }
 
-const resourceViews: OpsResource[] = ['students', 'teachers', 'activities', 'audioMaterials', 'videoMaterials', 'operationSlots', 'auditLogs']
+const resourceViews: OpsResource[] = ['students', 'teachers', 'activities', 'audioMaterials', 'videoMaterials', 'operationSlots', 'activitySignups', 'auditLogs']
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
@@ -78,18 +79,39 @@ export default function App({ api: injectedApi }: AppProps) {
     }
   }
 
-  async function createResource(resource: OpsResource) {
+  async function saveResource(resource: OpsResource, record: ResourceRecord | null, payload: Record<string, unknown>) {
     if (!state.token) {
       return
     }
-    const payload = defaultResourcePayload(resource)
     dispatch({ type: 'loading:set', payload: true })
     try {
-      await api.createResource(resource, state.token, payload)
+      if (record?.id) {
+        await api.updateResource(resource, record.id, state.token, payload)
+      } else {
+        await api.createResource(resource, state.token, { ...defaultResourcePayload(resource), ...payload })
+      }
       dispatch({ type: 'resource:set', resource, payload: await api.listResource(resource, state.token) })
-      dispatch({ type: 'toast:set', payload: { type: 'info', message: '已创建记录' } })
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: record?.id ? '已保存记录' : '已创建记录' } })
     } catch (error) {
-      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '创建失败' } })
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '保存失败' } })
+    }
+  }
+
+  async function publishResource(resource: OpsResource, record: ResourceRecord) {
+    if (!state.token) {
+      return
+    }
+    const status = nextPublishStatus(resource, record.status)
+    if (!status) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      await api.updateResource(resource, record.id, state.token, { status })
+      dispatch({ type: 'resource:set', resource, payload: await api.listResource(resource, state.token) })
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: status === 'draft' ? '已转为草稿' : '已发布' } })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '发布失败' } })
     }
   }
 
@@ -170,6 +192,46 @@ export default function App({ api: injectedApi }: AppProps) {
     }
   }
 
+  async function openReportDetail(reportId: string) {
+    if (!state.token) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      dispatch({ type: 'reportDetail:set', payload: await api.getReport(state.token, reportId) })
+      dispatch({ type: 'shareLink:set', payload: null })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '加载报告失败' } })
+    }
+  }
+
+  async function createReportShare(reportId: string) {
+    if (!state.token) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      const share = await api.createShareLink(state.token, reportId)
+      dispatch({ type: 'shareLink:set', payload: share })
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: '分享链接已创建' } })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '创建分享失败' } })
+    }
+  }
+
+  async function revokeReportShare(shareId: string) {
+    if (!state.token) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      dispatch({ type: 'shareLink:set', payload: await api.revokeShareLink(state.token, shareId) })
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: '分享链接已撤销' } })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '撤销分享失败' } })
+    }
+  }
+
   if (!state.profile) {
     return (
       <LoginView
@@ -196,7 +258,8 @@ export default function App({ api: injectedApi }: AppProps) {
           resource={state.activeView as OpsResource}
           result={state.resources[state.activeView as OpsResource]}
           onSearch={(keyword) => searchResource(state.activeView as OpsResource, keyword)}
-          onCreate={() => createResource(state.activeView as OpsResource)}
+          onSave={(record, payload) => saveResource(state.activeView as OpsResource, record, payload)}
+          onPublish={(record) => publishResource(state.activeView as OpsResource, record)}
           loading={state.loading}
         />
       ) : null}
@@ -204,7 +267,17 @@ export default function App({ api: injectedApi }: AppProps) {
       {state.activeView === 'assessmentWorkspace' ? (
         <AssessmentWorkspace template={state.templates?.items[0] || null} onSubmit={submitAssessment} submitting={state.loading} />
       ) : null}
-      {state.activeView === 'reports' ? <ReportsView data={state.reports} onPreviewShare={previewShare} /> : null}
+      {state.activeView === 'reports' ? (
+        <ReportsView
+          data={state.reports}
+          detail={state.reportDetail}
+          shareLink={state.activeShareLink}
+          onOpenDetail={openReportDetail}
+          onCreateShare={createReportShare}
+          onRevokeShare={revokeReportShare}
+          onPreviewShare={previewShare}
+        />
+      ) : null}
       {state.activeView === 'sharePreview' ? <SharePreviewView preview={state.sharePreview} /> : null}
     </Shell>
   )

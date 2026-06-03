@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { Badge } from './Badge'
 import { statusTone } from './status'
 import type { ResourceColumn } from '../../app/resourceConfig'
@@ -7,9 +9,11 @@ interface DataTableProps {
   columns: ResourceColumn[]
   rows: ResourceRecord[]
   emptyLabel?: string
+  renderActions?: (row: ResourceRecord) => ReactNode
 }
 
-export function DataTable({ columns, rows, emptyLabel = '暂无数据' }: DataTableProps) {
+export function DataTable({ columns, rows, emptyLabel = '暂无数据', renderActions }: DataTableProps) {
+  const columnCount = columns.length + (renderActions ? 1 : 0)
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[680px] border-collapse text-sm">
@@ -20,6 +24,7 @@ export function DataTable({ columns, rows, emptyLabel = '暂无数据' }: DataTa
                 {column.label}
               </th>
             ))}
+            {renderActions ? <th className="border-b border-[#e6ebe8] px-4 py-3 font-semibold">操作</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -33,11 +38,12 @@ export function DataTable({ columns, rows, emptyLabel = '暂无数据' }: DataTa
                   </td>
                 )
               })}
+              {renderActions ? <td className="px-4 py-3">{renderActions(row)}</td> : null}
             </tr>
           ))}
           {rows.length === 0 ? (
             <tr>
-              <td className="px-4 py-8 text-center text-[#6f7880]" colSpan={columns.length}>
+              <td className="px-4 py-8 text-center text-[#6f7880]" colSpan={columnCount}>
                 {emptyLabel}
               </td>
             </tr>

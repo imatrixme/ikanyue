@@ -10,6 +10,8 @@ export const initialState: AppState = {
   resources: {},
   templates: null,
   reports: null,
+  reportDetail: null,
+  activeShareLink: null,
   sharePreview: null,
 }
 
@@ -41,6 +43,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, templates: action.payload, loading: false }
     case 'reports:set':
       return { ...state, reports: action.payload, loading: false }
+    case 'reportDetail:set':
+      return { ...state, reportDetail: action.payload, loading: false }
+    case 'shareLink:set':
+      return { ...state, activeShareLink: action.payload, loading: false }
     case 'share:set':
       return { ...state, sharePreview: action.payload, loading: false }
     default:
