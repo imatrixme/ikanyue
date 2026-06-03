@@ -1,0 +1,13 @@
+node_modules
+pb_data
+.env
+.env.*
+!.env.example
+coverage
+docs/.cache
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+.git
+.gitignore
