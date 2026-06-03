@@ -2,7 +2,7 @@
 
 ## 功能描述
 
-提供统一的文件 URL 处理功能，支持 PocketBase 本地文件服务和 S3 存储服务的 URL 生成，为不同类型的数据记录处理文件 URL 字段。
+提供统一的文件 URL 处理功能，支持公开对象存储域名和 PocketBase 文件服务的 URL 生成，为不同类型的数据记录处理文件 URL 字段。对象存储同步由 PocketBase 配置负责，业务代码不持有 S3/MinIO key，也不直接操作桶。
 
 ## 文件 URL 处理流程
 
@@ -12,9 +12,9 @@ flowchart TD
     B -->|为空| C[返回空字符串]
     B -->|不为空| D{是否为完整URL}
     D -->|是| E[直接返回原URL]
-    D -->|否| F{检查S3配置}
-    F -->|已配置S3| G[生成S3 URL]
-    F -->|未配置S3| H[生成PocketBase URL]
+    D -->|否| F{检查公开资源域名}
+    F -->|已配置| G[生成公开对象存储 URL]
+    F -->|未配置| H[生成PocketBase URL]
     G --> I[返回完整URL]
     H --> I
     C --> J[处理结束]
@@ -81,10 +81,10 @@ flowchart TD
 
 ## URL 生成策略
 
-### S3 存储 URL 格式
+### 公开对象存储 URL 格式
 
 ```
-https://s3.amazonaws.com/bucket-name/collection_id/record_id/filename
+https://kyoss.abcmem.com/collection_id/record_id/filename
 ```
 
 ### PocketBase 本地 URL 格式
@@ -96,12 +96,12 @@ http://localhost:8090/api/files/collection_id/record_id/filename
 ### 环境变量配置
 
 ```bash
-# S3配置（优先）
-S3_URL=https://s3.amazonaws.com
-S3_BUCKET=your-bucket-name
+# 公开对象存储域名（优先）
+PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com
 
 # PocketBase配置（备选）
 PB_URL=http://localhost:8090
+PB_PUBLIC_URL=https://data.ikanyue.com
 ```
 
 ## 使用示例
@@ -122,9 +122,9 @@ const audioRecord1 = {
 
 const processed1 = processAudioMaterialFiles(audioRecord1);
 console.log(processed1.audioSourceUrl);
-// https://s3.amazonaws.com/bucket/audio_materials/audio_123/lesson1.mp3
+// https://kyoss.abcmem.com/audio_materials/audio_123/lesson1.mp3
 console.log(processed1.coverImageUrl);
-// https://s3.amazonaws.com/bucket/audio_materials/audio_123/cover.jpg
+// https://kyoss.abcmem.com/audio_materials/audio_123/cover.jpg
 
 // PocketBase文件字段对象格式（新支持）
 const audioRecord2 = {
@@ -137,9 +137,9 @@ const audioRecord2 = {
 
 const processed2 = processAudioMaterialFiles(audioRecord2);
 console.log(processed2.audioSourceUrl);
-// https://s3.amazonaws.com/bucket/audio_materials/audio_456/dialog.mp3
+// https://kyoss.abcmem.com/audio_materials/audio_456/dialog.mp3
 console.log(processed2.coverImageUrl);
-// https://s3.amazonaws.com/bucket/audio_materials/audio_456/poster.jpg
+// https://kyoss.abcmem.com/audio_materials/audio_456/poster.jpg
 ```
 
 ### 批量处理
@@ -169,7 +169,7 @@ const activityRecord = {
 
 const processed = processActivityFiles(activityRecord);
 console.log(processed.coverImageUrl);
-// https://s3.amazonaws.com/bucket/activities/activity_456/cover.jpg
+// https://kyoss.abcmem.com/activities/activity_456/cover.jpg
 console.log(processed.imageUrls);
 // ['https://s3.amazonaws.com/bucket/activities/activity_456/img1.jpg', ...]
 ```
@@ -184,7 +184,7 @@ console.log(processed.imageUrls);
 
 ### 环境适配
 
-- 优先使用 S3 配置（生产环境）
+- 优先使用公开对象存储域名（生产环境）
 - 降级到 PocketBase 本地文件（开发环境）
 - 支持不同部署环境的自动切换
 

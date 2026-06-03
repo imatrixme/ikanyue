@@ -169,9 +169,9 @@ flowchart TD
 
 **processAudioMaterialFiles 函数**：
 
-- 检查环境变量 S3_URL 和 S3_BUCKET
-- 如果配置了 S3，使用 S3 URL 格式
-- 否则使用 PocketBase 本地文件 URL
+- 优先检查 `PUBLIC_ASSET_BASE_URL`
+- 如果配置了公开资源域名，使用对象存储公开 URL 格式
+- 否则使用 `PB_PUBLIC_URL` 或 `PB_URL` 生成 PocketBase 文件 URL
 - 支持 PocketBase 文件字段类型（文件对象和字符串）
 - 处理 audioSource 和 coverImage 字段
 - 生成 audioSourceUrl 和 coverImageUrl 字段
@@ -180,7 +180,7 @@ flowchart TD
 
 - **文件对象格式**: `{name: "filename.mp3", size: 1024000}` → 提取 `name` 属性
 - **字符串格式**: `"filename.mp3"` → 直接使用文件名
-- **S3 托管**: 自动生成 S3 存储 URL
+- **对象存储托管**: 自动生成公开对象存储 URL
 - **本地文件**: 降级到 PocketBase 文件服务 URL
 
 ### 查询条件支持

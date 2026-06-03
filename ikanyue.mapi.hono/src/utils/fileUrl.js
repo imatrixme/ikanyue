@@ -1,6 +1,6 @@
 /**
  * 文件URL处理工具
- * 统一处理PocketBase和S3文件URL的生成
+ * 统一处理公开对象存储域名和 PocketBase 文件 URL 的生成
  */
 
 /**
@@ -20,13 +20,27 @@ function getFileUrl(record, filename) {
         return normalizedFilename;
     }
 
-    // 优先使用S3配置
-    if (process.env.S3_URL && process.env.S3_BUCKET) {
-        return `${process.env.S3_URL}/${process.env.S3_BUCKET}/${record.collectionId}/${record.id}/${normalizedFilename}`;
+    const collectionId = record?.collectionId;
+    const recordId = record?.id;
+    if (!collectionId || !recordId) {
+        return '';
     }
 
-    // 使用PocketBase本地文件服务
-    return `${process.env.PB_URL}/api/files/${record.collectionId}/${record.id}/${normalizedFilename}`;
+    const publicAssetBaseUrl = trimTrailingSlash(process.env.PUBLIC_ASSET_BASE_URL || '');
+    if (publicAssetBaseUrl) {
+        return `${publicAssetBaseUrl}/${collectionId}/${recordId}/${normalizedFilename}`;
+    }
+
+    const pbPublicBaseUrl = trimTrailingSlash(process.env.PB_PUBLIC_URL || process.env.PB_URL || '');
+    if (!pbPublicBaseUrl) {
+        return '';
+    }
+
+    return `${pbPublicBaseUrl}/api/files/${collectionId}/${recordId}/${normalizedFilename}`;
+}
+
+function trimTrailingSlash(value) {
+    return `${value}`.trim().replace(/\/+$/, '');
 }
 
 /**
