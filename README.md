@@ -114,7 +114,7 @@ docker compose --env-file .env.deploy up -d --build
 | Hono API | `http://127.0.0.1:1337` |
 | PocketBase | `http://127.0.0.1:8090` |
 
-admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase；返回文件 URL 时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com` 拼接公开对象存储地址，业务代码不持有 S3/MinIO key。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`。
+admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase；返回文件 URL 时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接公开对象存储地址，业务代码不持有 S3/MinIO key。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`。
 
 旁路验证 Docker 版本时使用高位端口，并默认只绑定 `127.0.0.1`，不切换线上域名：
 
