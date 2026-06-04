@@ -2,32 +2,56 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react'
 
 import { createOpsApi, type OpsApi } from './app/api'
 import type { AssessmentAnswers } from './app/assessment'
+import { executeGuidedPlan, type GuidedPlan } from './app/guidedWorkflows'
 import { navItems } from './app/resourceConfig'
 import { defaultResourcePayload } from './app/resourceDefaults'
-import { nextPublishStatus } from './app/resourceForms'
+import { getResourceDependencies, nextPublishStatus } from './app/resourceForms'
 import { appReducer, canAccessView, initialState } from './app/state'
 import type { AppView, LoginResult, OpsResource, ResourceRecord } from './app/types'
 import { AssessmentWorkspace } from './components/ops/AssessmentWorkspace'
 import { DashboardView } from './components/ops/DashboardView'
 import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
+import { GuidedOpsWorkspace } from './components/ops/GuidedOpsWorkspace'
 import { LoginView } from './components/ops/LoginView'
 import { ReportsView } from './components/ops/ReportsView'
 import { ResourceView } from './components/ops/ResourceView'
 import { SharePreviewView } from './components/ops/SharePreviewView'
 import { Shell } from './components/ops/Shell'
+import { SystemSettingsView } from './components/ops/SystemSettingsView'
 import { TemplatesView } from './components/ops/TemplatesView'
 
 interface AppProps {
   api?: OpsApi
 }
 
+const SESSION_STORAGE_KEY = 'kanyue.ops.session'
+
 const resourceViews = navItems
   .map((item) => item.view)
-  .filter((view): view is OpsResource => !['dashboard', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview'].includes(view))
+  .filter((view): view is OpsResource => !['dashboard', 'guidedOps', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview', 'systemSettings'].includes(view))
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
   const api = useMemo(() => injectedApi || createOpsApi(), [injectedApi])
+
+  useEffect(() => {
+    const cached = readCachedSession()
+    if (cached) {
+      dispatch({ type: 'login:success', payload: cached })
+    }
+  }, [])
+
+  const loadResourceWithDependencies = useCallback(async (resource: OpsResource) => {
+    const dependencies = getResourceDependencies(resource)
+    const [result, ...dependencyResults] = await Promise.all([
+      api.listResource(resource, state.token),
+      ...dependencies.map((dependency) => api.listResource(dependency, state.token, { perPage: 100 })),
+    ])
+    dispatch({ type: 'resource:set', resource, payload: result })
+    dependencyResults.forEach((payload, index) => {
+      dispatch({ type: 'resource:set', resource: dependencies[index], payload })
+    })
+  }, [api, state.token])
 
   const loadActiveView = useCallback(async (view: AppView) => {
     if (!state.token || state.profile?.passwordChangeRequired) {
@@ -37,8 +61,10 @@ export default function App({ api: injectedApi }: AppProps) {
     try {
       if (view === 'dashboard') {
         dispatch({ type: 'dashboard:set', payload: await api.dashboard(state.token) })
+      } else if (view === 'guidedOps') {
+        await Promise.all(['students', 'teachers', 'activitySignups', 'learningPrograms', 'learningSessions', 'reportTemplates'].map((resource) => loadResourceWithDependencies(resource as OpsResource)))
       } else if (resourceViews.includes(view as OpsResource)) {
-        dispatch({ type: 'resource:set', resource: view as OpsResource, payload: await api.listResource(view as OpsResource, state.token) })
+        await loadResourceWithDependencies(view as OpsResource)
       } else if (view === 'assessmentTemplates') {
         dispatch({ type: 'templates:set', payload: await api.listTemplates(state.token) })
       } else if (view === 'assessmentWorkspace') {
@@ -50,7 +76,7 @@ export default function App({ api: injectedApi }: AppProps) {
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '加载失败' } })
     }
-  }, [api, state.profile?.passwordChangeRequired, state.token])
+  }, [api, loadResourceWithDependencies, state.profile?.passwordChangeRequired, state.token])
 
   useEffect(() => {
     if (!state.profile || !state.token || state.profile.passwordChangeRequired) {
@@ -60,7 +86,13 @@ export default function App({ api: injectedApi }: AppProps) {
   }, [loadActiveView, state.activeView, state.profile, state.token])
 
   function onLogin(result: LoginResult) {
+    writeCachedSession(result)
     dispatch({ type: 'login:success', payload: result })
+  }
+
+  function onLogout() {
+    clearCachedSession()
+    dispatch({ type: 'logout' })
   }
 
   function setView(view: AppView) {
@@ -94,12 +126,34 @@ export default function App({ api: injectedApi }: AppProps) {
       } else {
         await api.createResource(resource, state.token, { ...defaultResourcePayload(resource), ...payload })
       }
-      dispatch({ type: 'resource:set', resource, payload: await api.listResource(resource, state.token) })
+      await loadResourceWithDependencies(resource)
       dispatch({ type: 'toast:set', payload: { type: 'info', message: record?.id ? '已保存记录' : '已创建记录' } })
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '保存失败' } })
     }
   }
+
+  async function submitGuidedPlan(plan: GuidedPlan) {
+    if (!state.token) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      const results = await executeGuidedPlan(api, state.token, plan)
+      await Promise.all([...new Set(results.map((result) => result.operation.resource))].map((resource) => loadResourceWithDependencies(resource)))
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: `已创建 ${results.length} 个相关记录` } })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '流程创建失败' } })
+    }
+  }
+
+  const uploadRichTextImage = useCallback(async (file: File) => {
+    if (!state.token) {
+      throw new Error('登录状态已失效，请重新登录')
+    }
+    const result = await api.uploadRichTextImage(state.token, file)
+    return result.url
+  }, [api, state.token])
 
   async function publishResource(resource: OpsResource, record: ResourceRecord) {
     if (!state.token) {
@@ -112,7 +166,7 @@ export default function App({ api: injectedApi }: AppProps) {
     dispatch({ type: 'loading:set', payload: true })
     try {
       await api.updateResource(resource, record.id, state.token, { status })
-      dispatch({ type: 'resource:set', resource, payload: await api.listResource(resource, state.token) })
+      await loadResourceWithDependencies(resource)
       dispatch({ type: 'toast:set', payload: { type: 'info', message: status === 'draft' ? '已转为草稿' : '已发布' } })
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '发布失败' } })
@@ -269,9 +323,17 @@ export default function App({ api: injectedApi }: AppProps) {
       profile={state.profile}
       toast={state.toast}
       onViewChange={setView}
-      onLogout={() => dispatch({ type: 'logout' })}
+      onLogout={onLogout}
     >
       {state.activeView === 'dashboard' ? <DashboardView data={state.dashboard} /> : null}
+      {state.activeView === 'guidedOps' ? (
+        <GuidedOpsWorkspace
+          resources={state.resources}
+          submitting={state.loading}
+          onSubmitPlan={submitGuidedPlan}
+          onUploadRichTextImage={uploadRichTextImage}
+        />
+      ) : null}
       {resourceViews.includes(state.activeView as OpsResource) ? (
         <ResourceView
           resource={state.activeView as OpsResource}
@@ -280,6 +342,8 @@ export default function App({ api: injectedApi }: AppProps) {
           onSave={(record, payload) => saveResource(state.activeView as OpsResource, record, payload)}
           onPublish={(record) => publishResource(state.activeView as OpsResource, record)}
           loading={state.loading}
+          resources={state.resources}
+          onUploadRichTextImage={uploadRichTextImage}
         />
       ) : null}
       {state.activeView === 'assessmentTemplates' ? <TemplatesView data={state.templates} onCreate={createTemplate} onPublish={publishTemplate} /> : null}
@@ -303,6 +367,38 @@ export default function App({ api: injectedApi }: AppProps) {
         />
       ) : null}
       {state.activeView === 'sharePreview' ? <SharePreviewView preview={state.sharePreview} /> : null}
+      {state.activeView === 'systemSettings' ? <SystemSettingsView profile={state.profile} /> : null}
     </Shell>
   )
+}
+
+function readCachedSession(): LoginResult | null {
+  if (typeof localStorage === 'undefined') {
+    return null
+  }
+  try {
+    const text = localStorage.getItem(SESSION_STORAGE_KEY)
+    if (!text) {
+      return null
+    }
+    const parsed = JSON.parse(text) as LoginResult
+    return parsed?.token && parsed?.profile ? parsed : null
+  } catch {
+    localStorage.removeItem(SESSION_STORAGE_KEY)
+    return null
+  }
+}
+
+function writeCachedSession(result: LoginResult) {
+  if (typeof localStorage === 'undefined') {
+    return
+  }
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(result))
+}
+
+function clearCachedSession() {
+  if (typeof localStorage === 'undefined') {
+    return
+  }
+  localStorage.removeItem(SESSION_STORAGE_KEY)
 }

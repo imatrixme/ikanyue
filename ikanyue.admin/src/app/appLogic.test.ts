@@ -4,7 +4,7 @@ import { createMockOpsApi, createOpsApi } from './api'
 import { scoreLocalAssessment } from './assessment'
 import { filterList, mockProfiles, mockResources, mockTemplates } from './mockData'
 import { defaultResourcePayload } from './resourceDefaults'
-import { buildResourceFormState, buildResourcePayload, canEditResource, nextPublishStatus } from './resourceForms'
+import { buildResourceFormState, buildResourcePayload, canEditResource, displayResourceField, resourceFormValueText, nextPublishStatus } from './resourceForms'
 import { appReducer, canAccessView, initialState } from './state'
 
 describe('ops api clients', () => {
@@ -14,9 +14,9 @@ describe('ops api clients', () => {
     await expect(api.login('', '')).rejects.toThrow('账号和密码不能为空')
     await expect(api.login('13800138001', 'secret')).resolves.toMatchObject({ profile: { role: 'teacher' } })
     await expect(api.login('13800138002', 'secret')).resolves.toMatchObject({ profile: { role: 'admin' } })
-    await expect(api.login('admin', 'admin1234')).resolves.toMatchObject({ profile: { role: 'admin' } })
+    await expect(api.login('admin', '1loveU_shaoyi')).resolves.toMatchObject({ profile: { role: 'admin' } })
     await expect(api.changePassword('token', {
-      currentPassword: 'admin1234',
+      currentPassword: '1loveU_shaoyi',
       newPassword: 'newAdmin1234',
       confirmPassword: 'newAdmin1234',
     })).resolves.toMatchObject({ profile: { passwordChangeRequired: false } })
@@ -25,6 +25,11 @@ describe('ops api clients', () => {
       profile: { verified: false, blocked: true, isAdmin: false },
     })
     await expect(api.listResource('students', 'token', { q: '小张' })).resolves.toMatchObject({ pagination: { totalItems: 1 } })
+    await expect(api.uploadRichTextImage('token', new File(['image'], 'cover.png', { type: 'image/png' }))).resolves.toMatchObject({
+      collection: 'ops_rich_text_assets',
+      filename: 'cover.png',
+      url: expect.stringContaining('cover.png'),
+    })
   })
 
   it('http api unwraps Hono response payloads and reports failures', async () => {
@@ -36,20 +41,20 @@ describe('ops api clients', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const api = createOpsApi({ mock: false, baseUrl: '/ops' })
-    await expect(api.login('admin', 'admin1234')).resolves.toMatchObject({ token: 't' })
+    await expect(api.login('admin', '1loveU_shaoyi')).resolves.toMatchObject({ token: 't' })
     await expect(api.changePassword('t', {
-      currentPassword: 'admin1234',
+      currentPassword: '1loveU_shaoyi',
       newPassword: 'newAdmin1234',
       confirmPassword: 'newAdmin1234',
     })).resolves.toMatchObject({ token: 'changed' })
     await expect(api.register({ cellphone: '13800138009', password: 'secret123', realName: '待审老师' })).resolves.toMatchObject({ status: 'pending_activation' })
     await expect(api.dashboard('bad')).rejects.toThrow('denied')
     expect(fetchMock.mock.calls[0][0]).toBe('/ops/auth/login')
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ body: JSON.stringify({ account: 'admin', password: 'admin1234' }) })
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ body: JSON.stringify({ account: 'admin', password: '1loveU_shaoyi' }) })
     expect(fetchMock.mock.calls[1][0]).toBe('/ops/auth/change-password')
     expect(fetchMock.mock.calls[1][1]).toMatchObject({
       body: JSON.stringify({
-        currentPassword: 'admin1234',
+        currentPassword: '1loveU_shaoyi',
         newPassword: 'newAdmin1234',
         confirmPassword: 'newAdmin1234',
       }),
@@ -118,6 +123,31 @@ describe('ops api clients', () => {
     expect(fetchMock.mock.calls[14][0]).toBe('/ops/reports/report_1/share-links')
     expect(fetchMock.mock.calls[15][0]).toBe('/ops/share-links/share_1/revoke')
     expect(fetchMock.mock.calls[16][0]).toBe('/ops/share/share-token')
+
+    vi.unstubAllGlobals()
+  })
+
+  it('http api sends resource file payloads as multipart form data', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'audio_1', title: '音频' } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'asset_1', recordId: 'asset_1', collection: 'ops_rich_text_assets', filename: 'brief.png', mimeType: 'image/png', size: 5, url: 'https://kyoss.abcmem.com/brief.png' } }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const file = new File(['audio'], 'warmup.mp3', { type: 'audio/mpeg' })
+    const image = new File(['image'], 'brief.png', { type: 'image/png' })
+    const api = createOpsApi({ mock: false, baseUrl: '/ops' })
+    await api.createResource('audioMaterials', 'token', { title: '音频', audioSource: file, description: null })
+    await expect(api.uploadRichTextImage('token', image)).resolves.toMatchObject({ url: 'https://kyoss.abcmem.com/brief.png' })
+
+    const requestInit = fetchMock.mock.calls[0][1]
+    expect(fetchMock.mock.calls[0][0]).toBe('/ops/audioMaterials')
+    expect(requestInit.body).toBeInstanceOf(FormData)
+    expect(requestInit.headers).toMatchObject({ authorization: 'Bearer token' })
+    expect(requestInit.headers).not.toHaveProperty('content-type')
+    expect(fetchMock.mock.calls[1][0]).toBe('/ops/uploads/rich-text-image')
+    expect(fetchMock.mock.calls[1][1].body).toBeInstanceOf(FormData)
+    expect(fetchMock.mock.calls[1][1].headers).toMatchObject({ authorization: 'Bearer token' })
+    expect(fetchMock.mock.calls[1][1].headers).not.toHaveProperty('content-type')
 
     vi.unstubAllGlobals()
   })
@@ -228,6 +258,11 @@ describe('app reducer and permissions', () => {
       blocked: false,
       isAdmin: false,
     })
+    const file = new File(['cover'], 'cover.jpg', { type: 'image/jpeg' })
+    expect(resourceFormValueText(file)).toBe('cover.jpg')
+    expect(displayResourceField('activities', 'coverImage', file)).toBe('cover.jpg')
+    expect(displayResourceField('activities', 'coverImage', 'https://cdn.example.com/cover.jpg')).toBe('cover.jpg')
+    expect(displayResourceField('activitySignups', 'userId', 'student_1', mockResources)).toBe('张同学 · 小张')
     expect(nextPublishStatus('activities', 'draft')).toBe('active')
     expect(nextPublishStatus('audioMaterials', 'published')).toBe('draft')
     expect(nextPublishStatus('learningPrograms', 'draft')).toBe('active')

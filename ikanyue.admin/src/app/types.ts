@@ -24,11 +24,13 @@ export type OpsResource =
 
 export type AppView =
   | 'dashboard'
+  | 'guidedOps'
   | OpsResource
   | 'assessmentTemplates'
   | 'assessmentWorkspace'
   | 'reports'
   | 'sharePreview'
+  | 'systemSettings'
 
 export interface OpsProfile {
   id: string
@@ -80,6 +82,8 @@ export interface ResourceRecord {
   id: string
   [key: string]: unknown
 }
+
+export type ResourceLookup = Partial<Record<OpsResource, ListResult<ResourceRecord>>>
 
 export interface AssessmentOption {
   value: string
@@ -195,6 +199,13 @@ export interface NavItem {
   label: string
   icon: LucideIcon
   adminOnly?: boolean
+  section?: string
+}
+
+export interface NavGroup {
+  key: string
+  label: string
+  items: NavItem[]
 }
 
 export interface ToastState {

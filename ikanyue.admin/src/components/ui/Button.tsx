@@ -7,27 +7,36 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   icon?: ReactNode
+  asSpan?: boolean
 }
 
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'bg-[#174a5c] text-white hover:bg-[#103847] border-[#174a5c]',
-  secondary: 'bg-white text-[#17202a] hover:bg-[#f7faf9] border-[#d8dedb]',
-  ghost: 'bg-transparent text-[#39434d] hover:bg-[#e9eee9] border-transparent',
-  danger: 'bg-[#7c2d2d] text-white hover:bg-[#612323] border-[#7c2d2d]',
+  primary: 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm hover:bg-slate-800',
+  secondary: 'border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-sm hover:bg-[var(--secondary)]',
+  ghost: 'border-transparent bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]',
+  danger: 'border-[var(--destructive)] bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:bg-red-800',
 }
 
-export function Button({ variant = 'primary', icon, className, children, ...props }: ButtonProps) {
-  return (
-    <button
-      className={cn(
-        'inline-flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d29a2e] disabled:opacity-55',
-        variantClass[variant],
-        className,
-      )}
-      {...props}
-    >
+export function Button({ variant = 'primary', icon, className, children, asSpan = false, ...props }: ButtonProps) {
+  const classes = cn(
+    'inline-flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:pointer-events-none disabled:opacity-50',
+    variantClass[variant],
+    className,
+  )
+  const content = (
+    <>
       {icon ? <span className="inline-flex h-4 w-4 items-center justify-center">{icon}</span> : null}
       {children}
+    </>
+  )
+
+  if (asSpan) {
+    return <span className={classes}>{content}</span>
+  }
+
+  return (
+    <button className={classes} {...props}>
+      {content}
     </button>
   )
 }

@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { Field, Input } from '../ui/Input'
+import { Select } from '../ui/Select'
 
 interface AssessmentWorkspaceProps {
   template?: AssessmentTemplate | null
@@ -35,7 +36,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
   const score = useMemo(() => (activeTemplate ? scoreLocalAssessment(activeTemplate, answers) : null), [answers, activeTemplate])
 
   if (!activeTemplate) {
-    return <Panel className="p-6 text-sm text-[#6f7880]">暂无可用评估模板</Panel>
+    return <Panel className="p-6 text-sm text-[var(--muted-foreground)]">暂无可用评估模板</Panel>
   }
 
   return (
@@ -44,7 +45,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
         <SectionHeader>
           <div>
             <h2 className="text-xl font-semibold">评估工作台</h2>
-            <p className="text-sm text-[#6f7880]">{activeTemplate.name} · v{activeTemplate.version}</p>
+            <p className="text-sm text-[var(--muted-foreground)]">{activeTemplate.name} · v{activeTemplate.version}</p>
           </div>
           <Button
             disabled={submitting}
@@ -55,35 +56,33 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
           </Button>
         </SectionHeader>
         <div className="grid gap-4 p-4">
-          <div className="grid gap-4 rounded-md border border-[#e6ebe8] p-4 md:grid-cols-2">
+          <div className="grid gap-4 rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-4 md:grid-cols-2">
             <Field label="评估模板" htmlFor="assessment-template-select">
-              <select
+              <Select
                 id="assessment-template-select"
-                className="h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm"
+                aria-label="评估模板"
                 value={activeTemplate.id}
                 onChange={(event) => setSelectedTemplateId(event.target.value)}
-              >
-                {availableTemplates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
+                options={availableTemplates.map((item) => ({ value: item.id, label: item.name }))}
+                placeholder="选择模板"
+              />
             </Field>
             <Field label="评估学员" htmlFor="assessment-student-select">
-              <select
+              <Select
                 id="assessment-student-select"
-                className="h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm"
+                aria-label="评估学员"
                 value={effectiveStudentId}
                 onChange={(event) => setSelectedStudentId(event.target.value)}
-              >
-                <option value="">未选择学员</option>
-                {students.map((student) => (
-                  <option key={String(student.id)} value={String(student.id)}>
-                    {String(student.realName || student.nickName || student.id)}
-                  </option>
-                ))}
-              </select>
+                options={students.map((student) => ({
+                  value: String(student.id),
+                  label: String(student.realName || student.nickName || student.id),
+                }))}
+                placeholder="未选择学员"
+              />
             </Field>
           </div>
           {activeTemplate.schemaJson.sections.map((section) => (
-            <section key={section.key} className="rounded-md border border-[#e6ebe8] p-4">
+            <section key={section.key} className="rounded-md border border-[var(--border)] p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h3 className="font-semibold">{section.title}</h3>
                 <Badge tone="blue">权重 {Math.round(section.weight * 100)}%</Badge>
@@ -94,16 +93,13 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
                   if (item.type === 'single_choice') {
                     return (
                       <Field key={item.key} label={item.label} htmlFor={inputId}>
-                        <select
+                        <Select
                           id={inputId}
-                          className="h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm"
+                          aria-label={item.label}
                           value={String(answers[item.key] || '')}
                           onChange={(event) => setAnswers({ ...answers, [item.key]: event.target.value })}
-                        >
-                          {(item.options || []).map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
+                          options={(item.options || []).map((option) => ({ value: option.value, label: option.label }))}
+                        />
                       </Field>
                     )
                   }
@@ -112,7 +108,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
                       <Field key={item.key} label={item.label} htmlFor={inputId}>
                         <textarea
                           id={inputId}
-                          className="min-h-24 rounded-md border border-[#d8dedb] bg-white px-3 py-2 text-sm"
+                          className="min-h-24 rounded-md border border-[var(--input)] bg-[var(--card)] px-3 py-2 text-sm shadow-sm outline-none transition focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/15"
                           value={String(answers[item.key] || '')}
                           onChange={(event) => setAnswers({ ...answers, [item.key]: event.target.value })}
                         />
@@ -140,7 +136,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
       <Panel className="h-fit">
         <SectionHeader>
           <div className="flex items-center gap-2">
-            <Calculator className="h-4 w-4 text-[#174a5c]" aria-hidden="true" />
+            <Calculator className="h-4 w-4 text-[var(--foreground)]" aria-hidden="true" />
             <h3 className="font-semibold">实时评分</h3>
           </div>
         </SectionHeader>
@@ -149,7 +145,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
           <Badge className="mt-3" tone="green">等级 {score?.grade || '-'}</Badge>
           <div className="mt-5 grid gap-3">
             {(score?.lines || []).map((line) => (
-              <div key={line.sectionKey} className="flex items-center justify-between rounded-md bg-[#f7faf9] p-3 text-sm">
+              <div key={line.sectionKey} className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--muted)]/35 p-3 text-sm">
                 <span>{line.label}</span>
                 <span className="font-semibold tabular-nums">{line.weightedScore}</span>
               </div>

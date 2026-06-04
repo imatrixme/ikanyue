@@ -58,5 +58,5 @@ export function canAccessView(profile: OpsProfile | null, view: AppView): boolea
   if (!profile) {
     return false
   }
-  return !['teachers', 'assessmentTemplates', 'reportTemplates', 'auditLogs'].includes(view) || profile.isAdmin
+  return !['teachers', 'assessmentTemplates', 'reportTemplates', 'auditLogs', 'systemSettings'].includes(view) || profile.isAdmin
 }

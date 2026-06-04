@@ -8,6 +8,7 @@ import {
   mockTemplates,
 } from './mockData'
 import { scoreLocalAssessment, type AssessmentAnswers } from './assessment'
+import { isFileValue } from './resourceForms'
 import type {
   AssessmentRecord,
   AssessmentReport,
@@ -31,6 +32,7 @@ export interface OpsApi {
   listResource(resource: OpsResource, token: string, query?: ListQuery): Promise<ListResult<ResourceRecord>>
   createResource(resource: OpsResource, token: string, data: Record<string, unknown>): Promise<ResourceRecord>
   updateResource(resource: OpsResource, id: string, token: string, data: Record<string, unknown>): Promise<ResourceRecord>
+  uploadRichTextImage(token: string, file: File): Promise<RichTextImageUploadResult>
   listTemplates(token: string, query?: ListQuery): Promise<ListResult<AssessmentTemplate>>
   createTemplate(token: string, data: Partial<AssessmentTemplate>): Promise<AssessmentTemplate>
   publishTemplate(token: string, id: string): Promise<AssessmentTemplate>
@@ -47,6 +49,9 @@ export interface OpsApi {
 export interface ListQuery {
   q?: string
   status?: string
+  page?: number
+  perPage?: number
+  limit?: number
 }
 
 export interface CreateAssessmentPayload {
@@ -70,6 +75,16 @@ export interface ChangePasswordPayload {
   currentPassword: string
   newPassword: string
   confirmPassword: string
+}
+
+export interface RichTextImageUploadResult {
+  id: string
+  recordId: string
+  collection: string
+  filename: string
+  mimeType: string
+  size: number
+  url: string
 }
 
 export function createOpsApi(options: { baseUrl?: string; mock?: boolean } = {}): OpsApi {
@@ -141,6 +156,17 @@ export function createMockOpsApi(): OpsApi {
       }
       Object.assign(existing, data)
       return existing
+    },
+    async uploadRichTextImage(_token, file) {
+      return {
+        id: `rich_text_asset_${Date.now()}`,
+        recordId: `rich_text_asset_${Date.now()}`,
+        collection: 'ops_rich_text_assets',
+        filename: file.name,
+        mimeType: file.type || 'image/png',
+        size: file.size,
+        url: `https://kyoss.abcmem.com/mock-rich-text/${encodeURIComponent(file.name)}`,
+      }
     },
     async listTemplates() {
       return templates
@@ -290,6 +316,9 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     updateResource(resource, id, token, data) {
       return request<ResourceRecord>(`${baseUrl}/${routeResource(resource)}/${id}`, { method: 'POST', token, body: data })
     },
+    uploadRichTextImage(token, file) {
+      return request<RichTextImageUploadResult>(`${baseUrl}/uploads/rich-text-image`, { method: 'POST', token, body: { file, source: 'admin-rich-text' } })
+    },
     listTemplates(token, query = {}) {
       return request<ListResult<AssessmentTemplate>>(`${baseUrl}/assessment-templates${toQuery(query)}`, { token })
     },
@@ -337,14 +366,15 @@ function routeResource(resource: OpsResource): string {
 }
 
 async function request<T>(url: string, options: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {
-  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  const multipartBody = toMultipartBody(options.body)
+  const headers: Record<string, string> = multipartBody ? {} : { 'content-type': 'application/json' }
   if (options.token) {
     headers.authorization = `Bearer ${options.token}`
   }
   const response = await fetch(url, {
     method: options.method || 'GET',
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: options.body === undefined ? undefined : multipartBody || JSON.stringify(options.body),
   })
   const payload = await response.json()
   if (!response.ok || payload.code !== 10000) {
@@ -353,11 +383,25 @@ async function request<T>(url: string, options: { method?: string; body?: unknow
   return payload.data as T
 }
 
+function toMultipartBody(body: unknown): FormData | null {
+  if (!body || typeof body !== 'object' || !Object.values(body).some(isFileValue)) {
+    return null
+  }
+  const formData = new FormData()
+  Object.entries(body).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return
+    }
+    formData.append(key, isFileValue(value) ? value : String(value))
+  })
+  return formData
+}
+
 function toQuery(query: ListQuery): string {
   const params = new URLSearchParams()
   Object.entries(query).forEach(([key, value]) => {
-    if (value) {
-      params.set(key, value)
+    if (value !== undefined && value !== null && value !== '') {
+      params.set(key, String(value))
     }
   })
   const text = params.toString()

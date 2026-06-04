@@ -13,6 +13,7 @@ import { ReportsView } from './ReportsView'
 import { ResourceView } from './ResourceView'
 import { SharePreviewView } from './SharePreviewView'
 import { Shell } from './Shell'
+import { SystemSettingsView } from './SystemSettingsView'
 import { TemplatesView } from './TemplatesView'
 
 describe('standalone ops components', () => {
@@ -91,6 +92,10 @@ describe('standalone ops components', () => {
 
     const slotView = render(<ResourceView resource="operationSlots" result={mockResources.operationSlots} loading={false} onSearch={() => undefined} onSave={() => searches.push('save')} />)
     await user.click(screen.getByRole('button', { name: '新建运营位' }))
+    expect(screen.getByRole('dialog', { name: '新建运营位' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '取消' }))
+    expect(screen.queryByRole('dialog', { name: '新建运营位' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '新建运营位' }))
     await user.click(screen.getByRole('button', { name: '保存' }))
     expect(searches).toContain('save')
     slotView.unmount()
@@ -99,23 +104,37 @@ describe('standalone ops components', () => {
     expect(screen.getByText('共 0 条记录')).toBeInTheDocument()
     studentsView.unmount()
 
+    const updates: Array<Record<string, unknown>> = []
+    const studentEditor = render(<ResourceView resource="students" result={mockResources.students} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByRole('dialog', { name: '编辑学员管理' })).toHaveClass('left-1/2')
+    await user.clear(screen.getByLabelText('姓名'))
+    await user.type(screen.getByLabelText('姓名'), '更新学员')
+    await user.click(screen.getByRole('button', { name: '保存' }))
+    expect(updates).toContainEqual(expect.objectContaining({ realName: '更新学员', blocked: false }))
+    studentEditor.unmount()
+
     const teachersView = render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} />)
     expect(screen.getByText('待审核')).toBeInTheDocument()
     expect(screen.getByText('管理员')).toBeInTheDocument()
     teachersView.unmount()
 
-    const updates: Array<Record<string, unknown>> = []
     const teacherEditor = render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
-    await user.selectOptions(screen.getByLabelText('审核通过'), 'true')
-    await user.selectOptions(screen.getByLabelText('禁用账号'), 'false')
-    await user.selectOptions(screen.getByLabelText('管理员权限'), 'false')
+    expect(screen.getByRole('dialog', { name: '编辑教师管理' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '关闭' }))
+    expect(screen.queryByRole('dialog', { name: '编辑教师管理' })).not.toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByRole('switch', { name: '审核通过' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('switch', { name: '禁用账号' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: '管理员权限' })).toHaveAttribute('aria-checked', 'false')
     await user.click(screen.getByRole('button', { name: '保存' }))
     expect(updates).toContainEqual(expect.objectContaining({ verified: true, blocked: false, isAdmin: false }))
     teacherEditor.unmount()
 
     render(<ResourceView resource="activities" result={mockResources.activities} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} onPublish={(row) => updates.push({ publish: row.id })} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的活动')
     await user.click(screen.getByRole('button', { name: '保存' }))
@@ -141,6 +160,13 @@ describe('standalone ops components', () => {
     expect(screen.getByText('教师')).toBeInTheDocument()
     expect(screen.getByText('昵称老师')).toBeInTheDocument()
     expect(screen.getByText('已保存')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: '后台导航' }).closest('aside')).toHaveClass('lg:w-64')
+    await user.click(screen.getByRole('button', { name: '收起侧边栏' }))
+    expect(screen.getByRole('navigation', { name: '后台导航' }).closest('aside')).toHaveClass('lg:w-16')
+    await user.click(screen.getByRole('button', { name: '展开侧边栏' }))
+    expect(screen.getByRole('button', { name: '教务核心' })).toHaveAttribute('aria-expanded', 'true')
+    await user.click(screen.getByRole('button', { name: '教务核心' }))
+    expect(screen.getByRole('button', { name: '教务核心' })).toHaveAttribute('aria-expanded', 'false')
     await user.click(screen.getByRole('button', { name: '退出' }))
     expect(changes).toContain('logout')
 
@@ -156,6 +182,33 @@ describe('standalone ops components', () => {
       </Shell>,
     )
     expect(screen.getByText('失败')).toBeInTheDocument()
+  })
+
+  it('renders system settings categories and operable switches without raw secret values', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(<SystemSettingsView profile={mockProfiles.admin} />)
+
+    expect(screen.getByText('注册开关')).toBeInTheDocument()
+    expect(screen.getByText('账号策略')).toBeInTheDocument()
+    expect(screen.getByText('小程序配置')).toBeInTheDocument()
+    expect(screen.getByText('资源域名')).toBeInTheDocument()
+    expect(screen.getByText('权限角色')).toBeInTheDocument()
+    expect(screen.getByText('运维健康')).toBeInTheDocument()
+    expect(screen.getByText('审计可见性')).toBeInTheDocument()
+    expect(screen.getByText('不在前端展示')).toBeInTheDocument()
+    expect(screen.queryByText('SECRET')).not.toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: '允许教务注册' })).toHaveAttribute('aria-checked', 'false')
+    await user.click(screen.getByRole('switch', { name: '允许教务注册' }))
+    expect(screen.getByRole('switch', { name: '允许教务注册' })).toHaveAttribute('aria-checked', 'true')
+    await user.click(screen.getByRole('switch', { name: '注册后必须激活' }))
+    await user.click(screen.getByRole('switch', { name: '首次登录强制改密' }))
+    await user.click(screen.getByRole('switch', { name: '使用公开资源域名' }))
+    await user.click(screen.getByRole('switch', { name: '显示健康状态' }))
+    await user.click(screen.getByRole('switch', { name: '显示审计入口' }))
+    expect(screen.getByRole('switch', { name: '显示审计入口' })).toHaveAttribute('aria-checked', 'false')
+
+    rerender(<SystemSettingsView profile={{ ...mockProfiles.admin, passwordChangeRequired: true }} />)
+    expect(screen.getByText('需改密')).toBeInTheDocument()
   })
 
   it('covers assessment input variants and empty template state', async () => {
@@ -190,6 +243,35 @@ describe('standalone ops components', () => {
       scoringJson: { type: 'weighted_sum', maxScore: 100, gradeBands: [] },
     }} />)
     expect(screen.getByText('空选项')).toBeInTheDocument()
+  })
+
+  it('uses semantic relation selectors and file controls in resource forms', async () => {
+    const user = userEvent.setup()
+    const updates: Array<Record<string, unknown>> = []
+
+    const sessionView = render(<ResourceView resource="learningSessions" result={mockResources.learningSessions} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByText('当前选择：春季体验课')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('所属项目'), '暑期')
+    await user.click(screen.getByRole('button', { name: '暑期声乐包' }))
+    await user.click(screen.getByRole('button', { name: '保存' }))
+    expect(updates).toContainEqual(expect.objectContaining({ programId: 'program_2' }))
+    sessionView.unmount()
+
+    const emptyRelationView = render(<ResourceView resource="learningSessions" result={mockResources.learningSessions} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByText('当前 ID 未在已加载数据中匹配：program_1')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '暑期声乐包' })).not.toBeInTheDocument()
+    emptyRelationView.unmount()
+
+    const audioView = render(<ResourceView resource="audioMaterials" result={mockResources.audioMaterials} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    const file = new File(['audio'], 'lesson.mp3', { type: 'audio/mpeg' })
+    await user.upload(screen.getByLabelText('选择音频文件'), file)
+    expect(screen.getByText('浏览器端暂存，保存时随表单提交')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '保存' }))
+    expect(updates).toContainEqual(expect.objectContaining({ audioSource: file }))
+    audioView.unmount()
   })
 
   it('renders templates and reports components directly', () => {

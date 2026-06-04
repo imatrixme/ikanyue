@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  color: #17202a;
-  background: #f6f3ed;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0f172a;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #ecfeff;
+  --accent-foreground: #155e75;
+  --destructive: #b91c1c;
+  --destructive-foreground: #fef2f2;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #0f172a;
+  --sidebar: #ffffff;
+  --sidebar-accent: #f8fafc;
+  --brand: #0f766e;
+  --brand-foreground: #f0fdfa;
+  --warning: #b45309;
+  --warning-foreground: #fffbeb;
+  color: var(--foreground);
+  background: var(--background);
   font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   font-synthesis: none;
   letter-spacing: 0;
@@ -19,6 +44,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background:
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    var(--background);
+  background-size: 28px 28px;
 }
 
 button,
@@ -38,4 +68,8 @@ button:disabled {
 
 #root {
   min-height: 100vh;
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.18);
 }

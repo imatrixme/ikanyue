@@ -35,18 +35,18 @@ export function ForcePasswordChangeView({ api, token, profile, errorMessage, onS
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f6f3ed] px-5 py-10 text-[#17202a]">
+    <main className="flex min-h-screen items-center justify-center px-5 py-10 text-[var(--foreground)]">
       <Panel className="w-full max-w-[420px] p-6">
         <div className="mb-6">
-          <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md bg-[#e8f4f1] text-[#174a5c]">
+          <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--secondary)] text-[var(--foreground)]">
             <KeyRound className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-semibold">修改初始密码</h1>
-          <p className="mt-2 text-sm leading-6 text-[#6f7880]">
+          <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
             {profile.realName || profile.nickName || profile.cellphone} 首次登录后台前需要设置新的管理员密码。
           </p>
         </div>
-        {errorMessage ? <div className="mb-4 rounded-md border border-[#e6beb6] bg-[#f5e3df] px-3 py-2 text-sm text-[#843326]">{errorMessage}</div> : null}
+        {errorMessage ? <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
         <form className="grid gap-4" onSubmit={submit}>
           <Field label="当前密码" htmlFor="current-password">
             <Input id="current-password" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />

@@ -7,27 +7,28 @@ interface FieldProps {
   children: ReactNode
   htmlFor?: string
   hint?: string
+  className?: string
 }
 
-export function Field({ label, children, htmlFor, hint }: FieldProps) {
+export function Field({ label, children, htmlFor, hint, className }: FieldProps) {
   return (
-    <div className="grid gap-1.5">
+    <div className={cn('grid gap-1.5', className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint ? <p className="text-xs text-[#6f7880]">{hint}</p> : null}
+      {hint ? <p className="min-h-4 text-xs text-[var(--muted-foreground)]">{hint}</p> : <span aria-hidden="true" className="min-h-4" />}
     </div>
   )
 }
 
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn('text-xs font-semibold uppercase tracking-[0.08em] text-[#6f7880]', className)} {...props} />
+  return <label className={cn('text-xs font-medium leading-none text-[var(--foreground)]', className)} {...props} />
 }
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={cn(
-        'h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm text-[#17202a] outline-none transition focus:border-[#174a5c] focus:ring-2 focus:ring-[#bdd9df]',
+        'h-10 rounded-md border border-[var(--input)] bg-[var(--card)] px-3 text-sm text-[var(--foreground)] shadow-sm outline-none transition placeholder:text-[var(--muted-foreground)] focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/15 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}

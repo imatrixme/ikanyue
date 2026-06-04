@@ -21,8 +21,9 @@ describe('ops admin edge coverage', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '活动' }))
+    await user.click(await screen.findByRole('button', { name: '活动内容' }))
     await user.click((await screen.findAllByRole('button', { name: '编辑' }))[0])
+    expect(await screen.findByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的公开课')
     await user.click(screen.getByRole('button', { name: '保存' }))
@@ -47,7 +48,7 @@ describe('ops admin edge coverage', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '活动' }))
+    await user.click(await screen.findByRole('button', { name: '活动内容' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     await user.click(screen.getByRole('button', { name: '保存' }))
     expect(await screen.findByText('保存失败')).toBeInTheDocument()
@@ -112,7 +113,7 @@ describe('ops admin edge coverage', () => {
     await user.type(screen.getByLabelText('备注'), '已电话确认')
     await user.selectOptions(screen.getByLabelText('状态'), 'attended')
     await user.click(screen.getByRole('button', { name: '保存' }))
-    expect(submitted).toContainEqual({ realName: '新姓名', status: 'attended', remark: '已电话确认' })
+    expect(submitted).toContainEqual({ realName: '新姓名', status: 'attended', remark: '<p>已电话确认</p>' })
   })
 
   it('covers mock API assessment and share fallback branches', async () => {
