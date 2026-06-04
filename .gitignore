@@ -39,6 +39,7 @@ yarn-error.log*
 **/.tmp/
 **/database/
 **/pb_data/
+backups/
 dump.rdb
 
 # Flutter and Dart

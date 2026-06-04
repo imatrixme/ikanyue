@@ -39,6 +39,7 @@ services:
       PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
       PB_EMAIL: "${PB_EMAIL:-admin@example.com}"
       PB_PASSWORD: "${PB_PASSWORD:-change-me}"
+      OPS_REGISTRATION_ENABLED: "${OPS_REGISTRATION_ENABLED:-false}"
       PUBLIC_ASSET_BASE_URL: "${PUBLIC_ASSET_BASE_URL:-https://kyoss.abcmem.com/ikanyue-mp}"
       DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
       WECHAT_APPID: "${WECHAT_APPID:-}"

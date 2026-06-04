@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kanyue Deploy"
+  short_description: "Deploy and rollback Kanyue Docker services safely."
+  default_prompt: "Use the Kanyue deploy skill to prepare, validate, deploy, or roll back the Kanyue Docker stack with PocketBase backups."
