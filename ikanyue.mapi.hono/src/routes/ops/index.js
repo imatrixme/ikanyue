@@ -12,6 +12,7 @@ function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.get('/ops/auth/me').use(opsAuthMiddleware).handler(handlers.me);
     routes.post('/ops/auth/change-password').use(opsAuthMiddleware).handler(handlers.changePassword);
     routes.get('/ops/dashboard').use(...opsAuth).handler(handlers.dashboard);
+    routes.post('/ops/uploads/rich-text-image').use(...opsAuth).handler(handlers.uploadRichTextImage);
 
     routes.get('/ops/assessment-templates').use(...opsAuth).handler(handlers.listTemplates);
     routes.post('/ops/assessment-templates').use(...opsAuth).handler(handlers.createTemplate);

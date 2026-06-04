@@ -331,6 +331,31 @@ test('management service covers unsupported resources, teacher writes, and count
     assert.equal(dashboard.cards.find((card) => card.key === 'activities').value, 0);
 });
 
+test('rich text asset service stores image files and returns public urls', async () => {
+    const seed = createOpsSeed();
+    const repository = createOpsTestRepository(seed);
+    const services = createOpsServices(repository);
+    const teacher = { ...seed.teachers[0], role: 'teacher' };
+    const image = new File([Buffer.from('fake-image')], 'brief.png', { type: 'image/png' });
+
+    const uploaded = await services.richTextAssetService.uploadImage(teacher, {
+        file: image,
+        title: '图文简介',
+        source: 'ops-test',
+    });
+
+    assert.equal(uploaded.filename, 'brief.png');
+    assert.equal(uploaded.mimeType, 'image/png');
+    assert.match(uploaded.url, /brief\.png$/);
+    assert.equal(repository.data.ops_rich_text_assets.length, 1);
+    assert.equal(repository.data.ops_rich_text_assets[0].createdBy, teacher.id);
+    assert.equal(repository.data.ops_rich_text_assets[0].source, 'ops-test');
+    await assert.rejects(
+        () => services.richTextAssetService.uploadImage(teacher, { file: new File(['bad'], 'bad.txt', { type: 'text/plain' }) }),
+        /仅支持/,
+    );
+});
+
 test('ops services cover default construction, repository wrapper, and share detail branches', async () => {
     const { createShareToken, hashToken } = require('../src/services/ops/opsUtils');
     const { OpsRepository } = require('../src/services/ops/opsRepository');

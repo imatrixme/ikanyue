@@ -1,4 +1,4 @@
-const { buildPagination, mapRecord, normalizeString } = require('./opsUtils');
+const { buildPagination, mapRecord, normalizeBoolean, normalizeString } = require('./opsUtils');
 
 const MANAGEMENT_CONFIG = {
     students: {
@@ -6,7 +6,9 @@ const MANAGEMENT_CONFIG = {
         resourceType: 'student',
         teacherScoped: true,
         fields: ['id', 'cellphone', 'nickName', 'realName', 'avatar', 'gender', 'birthday', 'blocked', 'created', 'updated'],
-        searchable: ['cellphone', 'nickName', 'realName'],
+        searchable: ['cellphone', 'nickname', 'realname'],
+        normalize: normalizeStudentRecord,
+        normalizePayload: normalizeStudentPayload,
     },
     teachers: {
         collection: 'teachers',
@@ -233,7 +235,8 @@ class OpsManagementService {
     async create(resourceKey, user, data = {}) {
         const config = getConfig(resourceKey);
         await this.assertWrite(config, user);
-        const payload = sanitizeManagementPayload(config.normalizePayload ? config.normalizePayload(data) : data);
+        const sanitized = sanitizeManagementPayload(data);
+        const payload = config.normalizePayload ? config.normalizePayload(sanitized, { create: true }) : sanitized;
         const created = await this.repository.create(config.collection, payload);
         await this.auditService.record({
             actor: user,
@@ -379,7 +382,7 @@ function normalizeTeacherRecord(record = {}) {
     };
 }
 
-function normalizeTeacherPayload(data = {}) {
+function normalizeTeacherPayload(data = {}, options = {}) {
     const payload = { ...data };
     if (Object.prototype.hasOwnProperty.call(payload, 'realName')) {
         payload.realname = payload.realName;
@@ -393,6 +396,46 @@ function normalizeTeacherPayload(data = {}) {
         payload.idAdmin = payload.isAdmin;
         delete payload.isAdmin;
     }
+    if (options.create) {
+        const seed = createOpsRecordSeed('teacher');
+        payload.sn ||= seed;
+        payload.tokenKey ||= createOpsRecordSeed('teacher_token');
+        payload.password ||= 'ChangeMe2026';
+        payload.passwordConfirm ||= payload.password;
+        payload.username ||= normalizeString(payload.cellphone) || seed;
+        payload.verified = normalizeBoolean(payload.verified);
+        payload.blocked = Object.prototype.hasOwnProperty.call(payload, 'blocked') ? normalizeBoolean(payload.blocked) : true;
+        payload.opsPasswordChangeRequired = true;
+    }
+    return payload;
+}
+
+function normalizeStudentRecord(record = {}) {
+    return {
+        ...record,
+        nickName: record.nickName || record.nickname || '',
+        realName: record.realName || record.realname || '',
+    };
+}
+
+function normalizeStudentPayload(data = {}, options = {}) {
+    const payload = { ...data };
+    if (Object.prototype.hasOwnProperty.call(payload, 'realName')) {
+        payload.realname = payload.realName;
+        delete payload.realName;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'nickName')) {
+        payload.nickname = payload.nickName;
+        delete payload.nickName;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'gender')) {
+        payload.gender = String(payload.gender);
+    }
+    if (options.create) {
+        const seed = createOpsRecordSeed('student');
+        payload.sn ||= seed;
+        payload.username ||= normalizeString(payload.cellphone) || seed;
+    }
     return payload;
 }
 
@@ -404,6 +447,10 @@ function getConfig(resourceKey) {
         throw error;
     }
     return config;
+}
+
+function createOpsRecordSeed(prefix) {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 32);
 }
 
 function sanitizeManagementPayload(data = {}) {

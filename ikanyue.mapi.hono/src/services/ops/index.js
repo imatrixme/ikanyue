@@ -4,6 +4,7 @@ const { OpsAuthService } = require('./authService');
 const { OpsManagementService } = require('./managementService');
 const { OpsRbacService } = require('./rbacService');
 const { OpsReportingService } = require('./reportingService');
+const { OpsRichTextAssetService } = require('./richTextAssetService');
 
 function createOpsServices(repository = createDefaultRepository()) {
     const auditService = new AuditService(repository);
@@ -14,6 +15,7 @@ function createOpsServices(repository = createDefaultRepository()) {
         assessmentService: new OpsAssessmentService(repository, rbacService, auditService),
         managementService: new OpsManagementService(repository, rbacService, auditService),
         reportingService: new OpsReportingService(repository, rbacService, auditService),
+        richTextAssetService: new OpsRichTextAssetService(repository, rbacService, auditService),
         rbacService,
         repository,
     };

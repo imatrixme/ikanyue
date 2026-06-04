@@ -3,7 +3,7 @@ const { jwtAuth } = require('../../utils/jwtAuth');
 const { normalizeBoolean, normalizeString } = require('./opsUtils');
 
 const TEACHER_FIELDS = 'id,sn,username,email,cellphone,nickname,nickName,avatar,realname,realName,blocked,verified,isAdmin,idAdmin,opsPasswordChangeRequired,lastLoginAt,created,updated';
-const DEFAULT_ADMIN_PASSWORD = 'admin1234';
+const DEFAULT_ADMIN_PASSWORD = '1loveU_shaoyi';
 const MIN_PASSWORD_LENGTH = 8;
 
 class OpsAuthService {

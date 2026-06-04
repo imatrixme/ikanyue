@@ -30,6 +30,10 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return safe(c, () => services.managementService.publicOperationSlots(c.req.query()));
         },
 
+        async uploadRichTextImage(c) {
+            return safe(c, async () => services.richTextAssetService.uploadImage(c.get('user'), await c.req.parseBody()));
+        },
+
         async list(c) {
             return safe(c, () => services.managementService.list(c.req.param('resource'), c.get('user'), c.req.query()));
         },

@@ -7,7 +7,7 @@ dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' 
 
 const DEFAULT_ADMIN_USERNAME = 'admin';
 const DEFAULT_ADMIN_EMAIL = 'ops-admin@ikanyue.local';
-const DEFAULT_ADMIN_PASSWORD = 'admin1234';
+const DEFAULT_ADMIN_PASSWORD = '1loveU_shaoyi';
 const DEFAULT_ADMIN_CELLPHONE = '13900000000';
 const DEFAULT_ADMIN_ID = 'opsadmin0000000';
 const DEFAULT_ADMIN_TOKEN_KEY = 'ops_default_admin_token_key_000001';

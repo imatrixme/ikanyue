@@ -23,6 +23,12 @@ function createOpsTestRepository(seed = {}) {
 
 class InMemoryOpsRepository {
     constructor(seed = {}) {
+        this.client = {
+            ensureAuth: async () => true,
+            files: {
+                getURL: (record, filename) => `https://pb.test/api/files/${record.collectionId || record.collection || 'collection'}/${record.id}/${filename}`,
+            },
+        };
         this.data = {};
         Object.entries(seed).forEach(([name, records]) => {
             this.data[name] = records.map((record) => ({ ...record }));
@@ -55,6 +61,8 @@ class InMemoryOpsRepository {
     async create(name, data) {
         const record = {
             id: data.id || `${name}_${(this.counters[name] = (this.counters[name] || 0) + 1)}`,
+            collection: name,
+            collectionId: name,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
             ...clone(data),
@@ -97,7 +105,7 @@ function createOpsSeed() {
     return {
         teachers: [
             teacher('teacher_1', { cellphone: '13800138001', isAdmin: false }),
-            teacher('admin_1', { username: 'admin', cellphone: '13800138002', password: md5('admin1234'), isAdmin: true }),
+            teacher('admin_1', { username: 'admin', cellphone: '13800138002', password: md5('1loveU_shaoyi'), isAdmin: true }),
             teacher('blocked_1', { cellphone: '13800138003', blocked: true }),
             teacher('pending_1', { cellphone: '13800138004', verified: false }),
         ],

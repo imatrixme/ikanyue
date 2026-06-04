@@ -200,6 +200,22 @@ const OPS_COLLECTION_SCHEMAS = [
     ], [
         'CREATE INDEX idx_operation_slots_public ON operation_slots (channel, placement, status, sortOrder)',
     ]),
+    collection('ops_rich_text_assets', [
+        textField('title', { required: true }),
+        fileField('image', {
+            required: true,
+            maxSize: 10 * 1024 * 1024,
+            mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+            thumbs: ['320x240', '960x0'],
+        }),
+        textField('mimeType'),
+        numberField('size'),
+        textField('source'),
+        relationField('createdBy', 'teachers'),
+        jsonField('metadata'),
+    ], [
+        'CREATE INDEX idx_ops_rich_text_assets_created_by ON ops_rich_text_assets (createdBy, created)',
+    ]),
     collection('activity_signups', [
         relationField('userId', 'students', { required: true }),
         relationField('activityId', 'activities', { required: true }),
@@ -257,6 +273,18 @@ function numberField(name) {
 
 function dateField(name) {
     return { name, type: 'date', required: false };
+}
+
+function fileField(name, options = {}) {
+    return {
+        name,
+        type: 'file',
+        required: Boolean(options.required),
+        maxSelect: options.maxSelect || 1,
+        maxSize: options.maxSize || 0,
+        mimeTypes: options.mimeTypes || [],
+        thumbs: options.thumbs || [],
+    };
 }
 
 function jsonField(name, options = {}) {

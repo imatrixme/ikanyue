@@ -23,7 +23,7 @@ test('ops auth accepts only verified teacher/admin accounts and never creates st
 
     const adminLogin = await jsonRequest(app, '/ops/auth/login', {
         method: 'POST',
-        body: { account: 'admin', password: 'admin1234' },
+        body: { account: 'admin', password: '1loveU_shaoyi' },
     });
     assert.equal(adminLogin.code, 10000);
     assert.equal(adminLogin.data.profile.role, 'admin');
@@ -53,7 +53,7 @@ test('ops default admin login requires first password change before admin access
 
     const login = await jsonRequest(app, '/ops/auth/login', {
         method: 'POST',
-        body: { username: 'admin', password: 'admin1234' },
+        body: { username: 'admin', password: '1loveU_shaoyi' },
     });
     assert.equal(login.code, 10000);
     assert.equal(login.data.profile.passwordChangeRequired, true);
@@ -69,14 +69,14 @@ test('ops default admin login requires first password change before admin access
     const samePassword = await jsonRequest(app, '/ops/auth/change-password', {
         method: 'POST',
         token: login.data.token,
-        body: { currentPassword: 'admin1234', newPassword: 'admin1234', confirmPassword: 'admin1234' },
+        body: { currentPassword: '1loveU_shaoyi', newPassword: '1loveU_shaoyi', confirmPassword: '1loveU_shaoyi' },
     });
     assert.equal(samePassword.code, 400);
 
     const changed = await jsonRequest(app, '/ops/auth/change-password', {
         method: 'POST',
         token: login.data.token,
-        body: { currentPassword: 'admin1234', newPassword: 'newAdmin1234', confirmPassword: 'newAdmin1234' },
+        body: { currentPassword: '1loveU_shaoyi', newPassword: 'newAdmin1234', confirmPassword: 'newAdmin1234' },
     });
     assert.equal(changed.code, 10000);
     assert.equal(changed.data.profile.passwordChangeRequired, false);
@@ -164,6 +164,34 @@ test('ops management enforces teacher ownership and admin global access', async 
     const adminTeachers = await jsonRequest(app, '/ops/teachers', { token: adminToken });
     assert.equal(adminTeachers.code, 10000);
     assert.equal(adminTeachers.data.items.length, 4);
+
+    const createdStudent = await jsonRequest(app, '/ops/students', {
+        method: 'POST',
+        token: adminToken,
+        body: { realName: '运营录入学生', nickName: '录入学生', cellphone: '13900139999', gender: 0, blocked: false },
+    });
+    assert.equal(createdStudent.code, 10000);
+    assert.equal(createdStudent.data.realName, '运营录入学生');
+    assert.equal(createdStudent.data.nickName, '录入学生');
+    const storedStudent = repository.data.students.find((student) => student.id === createdStudent.data.id);
+    assert.equal(storedStudent.realname, '运营录入学生');
+    assert.equal(storedStudent.nickname, '录入学生');
+    assert.ok(storedStudent.sn);
+    assert.equal(storedStudent.password, undefined);
+
+    const createdTeacher = await jsonRequest(app, '/ops/teachers', {
+        method: 'POST',
+        token: adminToken,
+        body: { realName: '运营录入老师', nickName: '录入老师', cellphone: '13800139999', verified: false, blocked: true, isAdmin: false },
+    });
+    assert.equal(createdTeacher.code, 10000);
+    assert.equal(createdTeacher.data.realName, '运营录入老师');
+    const storedTeacher = repository.data.teachers.find((teacher) => teacher.id === createdTeacher.data.id);
+    assert.ok(storedTeacher.sn);
+    assert.ok(storedTeacher.password);
+    assert.ok(storedTeacher.tokenKey);
+    assert.equal(storedTeacher.opsPasswordChangeRequired, true);
+    assert.equal(storedTeacher.idAdmin, false);
 
     const activatedTeacher = await jsonRequest(app, '/ops/teachers/pending_1', {
         method: 'POST',
