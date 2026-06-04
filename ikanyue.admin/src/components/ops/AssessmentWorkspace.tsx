@@ -2,28 +2,39 @@ import { Calculator, Send } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { scoreLocalAssessment, type AssessmentAnswers } from '../../app/assessment'
-import type { AssessmentTemplate } from '../../app/types'
+import type { AssessmentTemplate, ResourceRecord } from '../../app/types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { Field, Input } from '../ui/Input'
 
 interface AssessmentWorkspaceProps {
-  template: AssessmentTemplate | null
-  onSubmit?: (answers: AssessmentAnswers) => void | Promise<void>
+  template?: AssessmentTemplate | null
+  templates?: AssessmentTemplate[]
+  students?: ResourceRecord[]
+  onSubmit?: (answers: AssessmentAnswers, options: { templateId?: string; studentId?: string }) => void | Promise<void>
   submitting?: boolean
 }
 
-export function AssessmentWorkspace({ template, onSubmit, submitting = false }: AssessmentWorkspaceProps) {
+export function AssessmentWorkspace({ template, templates = [], students = [], onSubmit, submitting = false }: AssessmentWorkspaceProps) {
   const [answers, setAnswers] = useState<AssessmentAnswers>({
     pitch_stability: 'good',
     breath_support: 82,
     expression_score: 76,
     pitch_comment: '音准稳定，尾音可继续控制气息。',
   })
-  const score = useMemo(() => (template ? scoreLocalAssessment(template, answers) : null), [answers, template])
+  const availableTemplates = useMemo(() => (template ? [template, ...templates.filter((item) => item.id !== template.id)] : templates), [template, templates])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>()
+  const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>()
+  const firstTemplateId = availableTemplates[0]?.id || ''
+  const effectiveTemplateId = selectedTemplateId && availableTemplates.some((item) => item.id === selectedTemplateId) ? selectedTemplateId : firstTemplateId
+  const firstStudentId = String(students[0]?.id || '')
+  const selectedStudentExists = Boolean(selectedStudentId && students.some((student) => String(student.id) === selectedStudentId))
+  const effectiveStudentId = selectedStudentId === undefined ? firstStudentId : selectedStudentId === '' || selectedStudentExists ? selectedStudentId : firstStudentId
+  const activeTemplate = availableTemplates.find((item) => item.id === effectiveTemplateId) || null
+  const score = useMemo(() => (activeTemplate ? scoreLocalAssessment(activeTemplate, answers) : null), [answers, activeTemplate])
 
-  if (!template) {
+  if (!activeTemplate) {
     return <Panel className="p-6 text-sm text-[#6f7880]">暂无可用评估模板</Panel>
   }
 
@@ -33,14 +44,45 @@ export function AssessmentWorkspace({ template, onSubmit, submitting = false }: 
         <SectionHeader>
           <div>
             <h2 className="text-xl font-semibold">评估工作台</h2>
-            <p className="text-sm text-[#6f7880]">{template.name} · v{template.version}</p>
+            <p className="text-sm text-[#6f7880]">{activeTemplate.name} · v{activeTemplate.version}</p>
           </div>
-          <Button disabled={submitting} onClick={() => onSubmit?.(answers)} icon={<Send className="h-4 w-4" aria-hidden="true" />}>
+          <Button
+            disabled={submitting}
+            onClick={() => onSubmit?.(answers, { templateId: activeTemplate.id, studentId: effectiveStudentId })}
+            icon={<Send className="h-4 w-4" aria-hidden="true" />}
+          >
             {submitting ? '提交中' : '提交并生成报告'}
           </Button>
         </SectionHeader>
         <div className="grid gap-4 p-4">
-          {template.schemaJson.sections.map((section) => (
+          <div className="grid gap-4 rounded-md border border-[#e6ebe8] p-4 md:grid-cols-2">
+            <Field label="评估模板" htmlFor="assessment-template-select">
+              <select
+                id="assessment-template-select"
+                className="h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm"
+                value={activeTemplate.id}
+                onChange={(event) => setSelectedTemplateId(event.target.value)}
+              >
+                {availableTemplates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </Field>
+            <Field label="评估学员" htmlFor="assessment-student-select">
+              <select
+                id="assessment-student-select"
+                className="h-10 rounded-md border border-[#d8dedb] bg-white px-3 text-sm"
+                value={effectiveStudentId}
+                onChange={(event) => setSelectedStudentId(event.target.value)}
+              >
+                <option value="">未选择学员</option>
+                {students.map((student) => (
+                  <option key={String(student.id)} value={String(student.id)}>
+                    {String(student.realName || student.nickName || student.id)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          {activeTemplate.schemaJson.sections.map((section) => (
             <section key={section.key} className="rounded-md border border-[#e6ebe8] p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h3 className="font-semibold">{section.title}</h3>

@@ -1,7 +1,7 @@
 import { Save } from 'lucide-react'
 import { useState } from 'react'
 
-import { buildResourceFormState, buildResourcePayload, resourceFormFields } from '../../app/resourceForms'
+import { booleanOptions, buildResourceFormState, buildResourcePayload, resourceFormFields } from '../../app/resourceForms'
 import type { OpsResource, ResourceRecord } from '../../app/types'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Input'
@@ -46,7 +46,7 @@ export function ResourceForm({ resource, record, onSubmit }: ResourceFormProps) 
                 value={form[field.key] || ''}
                 onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
               />
-            ) : field.type === 'select' ? (
+            ) : field.type === 'select' || field.type === 'boolean' ? (
               <select
                 id={`${resource}-${field.key}`}
                 aria-label={field.label}
@@ -55,7 +55,7 @@ export function ResourceForm({ resource, record, onSubmit }: ResourceFormProps) 
                 onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
               >
                 <option value="">未设置</option>
-                {field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                {(field.type === 'boolean' ? booleanOptions : field.options)?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             ) : (
               <Input

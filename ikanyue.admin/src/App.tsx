@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useReducer } from 'react'
 
 import { createOpsApi, type OpsApi } from './app/api'
 import type { AssessmentAnswers } from './app/assessment'
+import { navItems } from './app/resourceConfig'
 import { defaultResourcePayload } from './app/resourceDefaults'
 import { nextPublishStatus } from './app/resourceForms'
 import { appReducer, canAccessView, initialState } from './app/state'
 import type { AppView, LoginResult, OpsResource, ResourceRecord } from './app/types'
 import { AssessmentWorkspace } from './components/ops/AssessmentWorkspace'
 import { DashboardView } from './components/ops/DashboardView'
+import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
 import { LoginView } from './components/ops/LoginView'
 import { ReportsView } from './components/ops/ReportsView'
 import { ResourceView } from './components/ops/ResourceView'
@@ -19,14 +21,16 @@ interface AppProps {
   api?: OpsApi
 }
 
-const resourceViews: OpsResource[] = ['students', 'teachers', 'activities', 'audioMaterials', 'videoMaterials', 'operationSlots', 'activitySignups', 'auditLogs']
+const resourceViews = navItems
+  .map((item) => item.view)
+  .filter((view): view is OpsResource => !['dashboard', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview'].includes(view))
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
   const api = useMemo(() => injectedApi || createOpsApi(), [injectedApi])
 
   const loadActiveView = useCallback(async (view: AppView) => {
-    if (!state.token) {
+    if (!state.token || state.profile?.passwordChangeRequired) {
       return
     }
     dispatch({ type: 'loading:set', payload: true })
@@ -46,10 +50,10 @@ export default function App({ api: injectedApi }: AppProps) {
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '加载失败' } })
     }
-  }, [api, state.token])
+  }, [api, state.profile?.passwordChangeRequired, state.token])
 
   useEffect(() => {
-    if (!state.profile || !state.token) {
+    if (!state.profile || !state.token || state.profile.passwordChangeRequired) {
       return
     }
     loadActiveView(state.activeView)
@@ -155,19 +159,21 @@ export default function App({ api: injectedApi }: AppProps) {
     }
   }
 
-  async function submitAssessment(answers: AssessmentAnswers) {
+  async function submitAssessment(answers: AssessmentAnswers, options: { templateId?: string; studentId?: string } = {}) {
     if (!state.token) {
       return
     }
-    const template = state.templates?.items.find((item) => item.status === 'published') || state.templates?.items[0]
-    const student = state.resources.students?.items[0]
-    if (!template || !student?.id) {
+    const template = state.templates?.items.find((item) => item.id === options.templateId)
+      || state.templates?.items.find((item) => item.status === 'published')
+      || state.templates?.items[0]
+    const studentId = options.studentId || String(state.resources.students?.items[0]?.id || '')
+    if (!template || !studentId) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: '缺少可用模板或学员' } })
       return
     }
     dispatch({ type: 'loading:set', payload: true })
     try {
-      const draft = await api.createAssessment(state.token, { templateId: template.id, studentId: String(student.id), answersJson: answers })
+      const draft = await api.createAssessment(state.token, { templateId: template.id, studentId, answersJson: answers })
       await api.saveAssessment(state.token, draft.id, { answersJson: answers })
       await api.submitAssessment(state.token, draft.id, { answersJson: answers })
       dispatch({ type: 'reports:set', payload: await api.listReports(state.token) })
@@ -244,6 +250,19 @@ export default function App({ api: injectedApi }: AppProps) {
     )
   }
 
+  if (state.profile.passwordChangeRequired) {
+    return (
+      <ForcePasswordChangeView
+        api={api}
+        token={state.token}
+        profile={state.profile}
+        errorMessage={state.toast?.type === 'error' ? state.toast.message : undefined}
+        onSuccess={onLogin}
+        onError={(message) => dispatch({ type: 'toast:set', payload: { type: 'error', message } })}
+      />
+    )
+  }
+
   return (
     <Shell
       activeView={state.activeView}
@@ -265,7 +284,12 @@ export default function App({ api: injectedApi }: AppProps) {
       ) : null}
       {state.activeView === 'assessmentTemplates' ? <TemplatesView data={state.templates} onCreate={createTemplate} onPublish={publishTemplate} /> : null}
       {state.activeView === 'assessmentWorkspace' ? (
-        <AssessmentWorkspace template={state.templates?.items[0] || null} onSubmit={submitAssessment} submitting={state.loading} />
+        <AssessmentWorkspace
+          templates={state.templates?.items || []}
+          students={state.resources.students?.items || []}
+          onSubmit={submitAssessment}
+          submitting={state.loading}
+        />
       ) : null}
       {state.activeView === 'reports' ? (
         <ReportsView

@@ -1,4 +1,4 @@
-import { LockKeyhole, LogIn } from 'lucide-react'
+import { LockKeyhole, LogIn, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../ui/Button'
@@ -15,16 +15,31 @@ interface LoginViewProps {
 }
 
 export function LoginView({ api, loading, errorMessage, onSuccess, onError }: LoginViewProps) {
-  const [cellphone, setCellphone] = useState('13800138002')
-  const [password, setPassword] = useState('secret')
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [account, setAccount] = useState('')
+  const [password, setPassword] = useState('')
+  const [realName, setRealName] = useState('')
+  const [nickName, setNickName] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setSuccessMessage('')
     try {
-      onSuccess(await api.login(cellphone, password))
+      if (mode === 'register') {
+        const result = await api.register({ cellphone: account, password, realName, nickName })
+        setSuccessMessage(result.message || '注册成功，请等待管理员激活')
+        return
+      }
+      onSuccess(await api.login(account, password))
     } catch (error) {
-      onError(error instanceof Error ? error.message : '登录失败')
+      onError(error instanceof Error ? error.message : mode === 'register' ? '注册失败' : '登录失败')
     }
+  }
+
+  function switchMode(nextMode: 'login' | 'register') {
+    setMode(nextMode)
+    setSuccessMessage('')
   }
 
   return (
@@ -48,18 +63,52 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
         <form className="w-full max-w-[400px] rounded-lg border border-[#d8dedb] bg-white p-6 shadow-sm" onSubmit={submit}>
           <div className="mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#d29a2e]">Teacher / Admin</p>
-            <h2 className="mt-2 text-2xl font-semibold">登录后台</h2>
+            <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册教师账号' : '账号或手机号登录'}</h2>
+          </div>
+          <div className="mb-4 grid grid-cols-2 rounded-md border border-[#d8dedb] bg-[#f7faf9] p-1 text-sm font-medium">
+            <button
+              aria-label="切换到登录"
+              className={`rounded px-3 py-2 ${mode === 'login' ? 'bg-white text-[#174a5c] shadow-sm' : 'text-[#6f7880]'}`}
+              type="button"
+              onClick={() => switchMode('login')}
+            >
+              登录
+            </button>
+            <button
+              aria-label="切换到注册"
+              className={`rounded px-3 py-2 ${mode === 'register' ? 'bg-white text-[#174a5c] shadow-sm' : 'text-[#6f7880]'}`}
+              type="button"
+              onClick={() => switchMode('register')}
+            >
+              注册
+            </button>
           </div>
           {errorMessage ? <div className="mb-4 rounded-md border border-[#e6beb6] bg-[#f5e3df] px-3 py-2 text-sm text-[#843326]">{errorMessage}</div> : null}
+          {successMessage ? <div className="mb-4 rounded-md border border-[#bdd9df] bg-[#e8f4f1] px-3 py-2 text-sm text-[#174a5c]">{successMessage}</div> : null}
           <div className="grid gap-4">
-            <Field label="手机号" htmlFor="cellphone">
-              <Input id="cellphone" value={cellphone} onChange={(event) => setCellphone(event.target.value)} />
+            <Field label={mode === 'register' ? '手机号' : '账号或手机号'} htmlFor="ops-account">
+              <Input
+                id="ops-account"
+                placeholder={mode === 'register' ? '请输入手机号' : 'admin / 手机号'}
+                value={account}
+                onChange={(event) => setAccount(event.target.value)}
+              />
             </Field>
+            {mode === 'register' ? (
+              <>
+                <Field label="姓名" htmlFor="realName">
+                  <Input id="realName" value={realName} onChange={(event) => setRealName(event.target.value)} />
+                </Field>
+                <Field label="昵称" htmlFor="nickName">
+                  <Input id="nickName" value={nickName} onChange={(event) => setNickName(event.target.value)} />
+                </Field>
+              </>
+            ) : null}
             <Field label="密码" htmlFor="password">
               <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
             </Field>
-            <Button className="w-full" disabled={loading} icon={<LogIn className="h-4 w-4" aria-hidden="true" />}>
-              {loading ? '登录中' : '登录'}
+            <Button className="w-full" disabled={loading} icon={mode === 'register' ? <UserPlus className="h-4 w-4" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}>
+              {loading ? (mode === 'register' ? '注册中' : '登录中') : (mode === 'register' ? '提交注册' : '登录')}
             </Button>
           </div>
         </form>

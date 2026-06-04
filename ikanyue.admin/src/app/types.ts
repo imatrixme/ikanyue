@@ -11,6 +11,15 @@ export type OpsResource =
   | 'videoMaterials'
   | 'operationSlots'
   | 'activitySignups'
+  | 'learningPrograms'
+  | 'learningSessions'
+  | 'programStudents'
+  | 'programTeachers'
+  | 'sessionStudents'
+  | 'sessionTeachers'
+  | 'reportTemplates'
+  | 'reportEvents'
+  | 'reportInstances'
   | 'auditLogs'
 
 export type AppView =
@@ -30,10 +39,17 @@ export interface OpsProfile {
   cellphone: string
   verified: boolean
   blocked: boolean
+  passwordChangeRequired?: boolean
 }
 
 export interface LoginResult {
   token: string
+  profile: OpsProfile
+}
+
+export interface RegisterResult {
+  status: 'pending_activation'
+  message: string
   profile: OpsProfile
 }
 
@@ -111,9 +127,14 @@ export interface AssessmentReport {
   studentId: string
   teacherId: string
   templateId: string
+  reportType?: string
+  status?: string
+  recipientType?: string
+  recipientId?: string
   totalScore: number
   grade: string
   created?: string
+  publishedAt?: string
   reportJson?: unknown
 }
 
@@ -129,6 +150,10 @@ export interface AssessmentReportSection {
 export interface AssessmentReportDetail {
   id: string
   title: string
+  reportType?: string
+  scope?: { type?: string; id?: string; title?: string }
+  subject?: { type?: string; id?: string; name?: string }
+  recipient?: { type?: string; id?: string; name?: string }
   student: { name?: string; realName?: string; nickName?: string }
   teacher: { name?: string; realName?: string; nickName?: string }
   score: { totalScore: number; grade: string; sections?: AssessmentReportSection[] }

@@ -17,13 +17,16 @@ import type {
   ListResult,
   LoginResult,
   OpsResource,
+  RegisterResult,
   ResourceRecord,
   ShareLink,
   SharePreview,
 } from './types'
 
 export interface OpsApi {
-  login(cellphone: string, password: string): Promise<LoginResult>
+  login(account: string, password: string): Promise<LoginResult>
+  register(data: RegisterPayload): Promise<RegisterResult>
+  changePassword(token: string, data: ChangePasswordPayload): Promise<LoginResult>
   dashboard(token: string): Promise<DashboardData>
   listResource(resource: OpsResource, token: string, query?: ListQuery): Promise<ListResult<ResourceRecord>>
   createResource(resource: OpsResource, token: string, data: Record<string, unknown>): Promise<ResourceRecord>
@@ -56,6 +59,19 @@ export interface SaveAssessmentPayload {
   answersJson?: AssessmentAnswers
 }
 
+export interface RegisterPayload {
+  cellphone: string
+  password: string
+  realName: string
+  nickName?: string
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
 export function createOpsApi(options: { baseUrl?: string; mock?: boolean } = {}): OpsApi {
   const mock = options.mock ?? import.meta.env.VITE_OPS_API_MOCK === 'true'
   if (mock) {
@@ -71,12 +87,41 @@ export function createMockOpsApi(): OpsApi {
   const shares: ShareLink[] = []
   const assessments: AssessmentRecord[] = []
   return {
-    async login(cellphone, password) {
-      if (!cellphone || !password) {
-        throw new Error('手机号和密码不能为空')
+    async login(account, password) {
+      if (!account || !password) {
+        throw new Error('账号和密码不能为空')
       }
-      const profile = cellphone.endsWith('2') ? mockProfiles.admin : mockProfiles.teacher
+      const profile = account === 'admin' || account.endsWith('2') ? mockProfiles.admin : mockProfiles.teacher
       return { token: `mock-token-${profile.id}`, profile }
+    },
+    async register(data) {
+      if (!data.cellphone || !data.password || !data.realName) {
+        throw new Error('手机号、姓名和密码不能为空')
+      }
+      return {
+        status: 'pending_activation',
+        message: '注册成功，请等待管理员激活',
+        profile: {
+          ...mockProfiles.teacher,
+          id: `pending-${data.cellphone}`,
+          role: 'teacher',
+          isAdmin: false,
+          cellphone: data.cellphone,
+          realName: data.realName,
+          nickName: data.nickName || data.realName,
+          verified: false,
+          blocked: true,
+        },
+      }
+    },
+    async changePassword(_token, data) {
+      if (!data.currentPassword || !data.newPassword) {
+        throw new Error('当前密码和新密码不能为空')
+      }
+      if (data.newPassword !== data.confirmPassword) {
+        throw new Error('两次输入的新密码不一致')
+      }
+      return { token: 'mock-token-admin_1-changed', profile: { ...mockProfiles.admin, passwordChangeRequired: false } }
     },
     async dashboard() {
       return mockDashboard
@@ -218,23 +263,32 @@ export function createMockOpsApi(): OpsApi {
 
 function createHttpOpsApi(baseUrl: string): OpsApi {
   return {
-    login(cellphone, password) {
+    login(account, password) {
       return request<LoginResult>(`${baseUrl}/auth/login`, {
         method: 'POST',
-        body: { cellphone, password },
+        body: { account, password },
       })
+    },
+    register(data) {
+      return request<RegisterResult>(`${baseUrl}/auth/register`, {
+        method: 'POST',
+        body: data,
+      })
+    },
+    changePassword(token, data) {
+      return request<LoginResult>(`${baseUrl}/auth/change-password`, { method: 'POST', token, body: data })
     },
     dashboard(token) {
       return request<DashboardData>(`${baseUrl}/dashboard`, { token })
     },
     listResource(resource, token, query = {}) {
-      return request<ListResult<ResourceRecord>>(`${baseUrl}/${resource}${toQuery(query)}`, { token })
+      return request<ListResult<ResourceRecord>>(`${baseUrl}/${routeResource(resource)}${toQuery(query)}`, { token })
     },
     createResource(resource, token, data) {
-      return request<ResourceRecord>(`${baseUrl}/${resource}`, { method: 'POST', token, body: data })
+      return request<ResourceRecord>(`${baseUrl}/${routeResource(resource)}`, { method: 'POST', token, body: data })
     },
     updateResource(resource, id, token, data) {
-      return request<ResourceRecord>(`${baseUrl}/${resource}/${id}`, { method: 'POST', token, body: data })
+      return request<ResourceRecord>(`${baseUrl}/${routeResource(resource)}/${id}`, { method: 'POST', token, body: data })
     },
     listTemplates(token, query = {}) {
       return request<ListResult<AssessmentTemplate>>(`${baseUrl}/assessment-templates${toQuery(query)}`, { token })
@@ -270,6 +324,16 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
       return request<SharePreview>(`${baseUrl}/share/${token}`)
     },
   }
+}
+
+function routeResource(resource: OpsResource): string {
+  if (resource === 'reportEvents') {
+    return 'report-events'
+  }
+  if (resource === 'reportInstances') {
+    return 'report-instances'
+  }
+  return resource
 }
 
 async function request<T>(url: string, options: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {

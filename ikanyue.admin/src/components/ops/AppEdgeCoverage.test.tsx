@@ -9,12 +9,18 @@ import { buildResourceFormState, buildResourcePayload, nextPublishStatus } from 
 import { LoginView } from './LoginView'
 import { ResourceForm } from './ResourceForm'
 
+async function loginAsAdmin(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText('账号或手机号'), 'admin')
+  await user.type(screen.getByLabelText('密码'), 'secret')
+  await user.click(screen.getByRole('button', { name: '登录' }))
+}
+
 describe('ops admin edge coverage', () => {
   it('saves edited resources and publishes draft resources through the app shell', async () => {
     const user = userEvent.setup()
     render(<App api={createMockOpsApi()} />)
 
-    await user.click(screen.getByRole('button', { name: '登录' }))
+    await loginAsAdmin(user)
     await user.click(await screen.findByRole('button', { name: '活动' }))
     await user.click((await screen.findAllByRole('button', { name: '编辑' }))[0])
     await user.clear(screen.getByLabelText('标题'))
@@ -40,7 +46,7 @@ describe('ops admin edge coverage', () => {
     }
     render(<App api={api} />)
 
-    await user.click(screen.getByRole('button', { name: '登录' }))
+    await loginAsAdmin(user)
     await user.click(await screen.findByRole('button', { name: '活动' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     await user.click(screen.getByRole('button', { name: '保存' }))
@@ -67,8 +73,19 @@ describe('ops admin edge coverage', () => {
       />,
     )
 
+    await user.type(screen.getByLabelText('账号或手机号'), 'admin')
+    await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: '登录' }))
     expect(errors).toContain('bad login')
+
+    await user.click(screen.getByRole('button', { name: '切换到注册' }))
+    await user.clear(screen.getByLabelText('手机号'))
+    await user.type(screen.getByLabelText('手机号'), '13800138009')
+    await user.type(screen.getByLabelText('姓名'), '待审老师')
+    await user.clear(screen.getByLabelText('密码'))
+    await user.type(screen.getByLabelText('密码'), 'secret123')
+    await user.click(screen.getByRole('button', { name: '提交注册' }))
+    expect(await screen.findByText('注册成功，请等待管理员激活')).toBeInTheDocument()
 
     expect(buildResourceFormState('auditLogs')).toEqual({})
     expect(buildResourcePayload('auditLogs', { action: 'ignored' })).toEqual({})

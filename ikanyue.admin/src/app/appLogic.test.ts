@@ -11,22 +11,50 @@ describe('ops api clients', () => {
   it('mock api authenticates teacher/admin and rejects empty credentials', async () => {
     const api = createMockOpsApi()
 
-    await expect(api.login('', '')).rejects.toThrow('手机号和密码不能为空')
+    await expect(api.login('', '')).rejects.toThrow('账号和密码不能为空')
     await expect(api.login('13800138001', 'secret')).resolves.toMatchObject({ profile: { role: 'teacher' } })
     await expect(api.login('13800138002', 'secret')).resolves.toMatchObject({ profile: { role: 'admin' } })
+    await expect(api.login('admin', 'admin1234')).resolves.toMatchObject({ profile: { role: 'admin' } })
+    await expect(api.changePassword('token', {
+      currentPassword: 'admin1234',
+      newPassword: 'newAdmin1234',
+      confirmPassword: 'newAdmin1234',
+    })).resolves.toMatchObject({ profile: { passwordChangeRequired: false } })
+    await expect(api.register({ cellphone: '13800138009', password: 'secret123', realName: '待审老师' })).resolves.toMatchObject({
+      status: 'pending_activation',
+      profile: { verified: false, blocked: true, isAdmin: false },
+    })
     await expect(api.listResource('students', 'token', { q: '小张' })).resolves.toMatchObject({ pagination: { totalItems: 1 } })
   })
 
   it('http api unwraps Hono response payloads and reports failures', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { token: 't', profile: mockProfiles.admin } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { token: 'changed', profile: mockProfiles.admin } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { status: 'pending_activation', message: 'ok', profile: mockProfiles.teacher } }) })
       .mockResolvedValueOnce({ ok: false, json: async () => ({ code: 403, message: 'denied' }) })
     vi.stubGlobal('fetch', fetchMock)
 
     const api = createOpsApi({ mock: false, baseUrl: '/ops' })
-    await expect(api.login('13800138002', 'secret')).resolves.toMatchObject({ token: 't' })
+    await expect(api.login('admin', 'admin1234')).resolves.toMatchObject({ token: 't' })
+    await expect(api.changePassword('t', {
+      currentPassword: 'admin1234',
+      newPassword: 'newAdmin1234',
+      confirmPassword: 'newAdmin1234',
+    })).resolves.toMatchObject({ token: 'changed' })
+    await expect(api.register({ cellphone: '13800138009', password: 'secret123', realName: '待审老师' })).resolves.toMatchObject({ status: 'pending_activation' })
     await expect(api.dashboard('bad')).rejects.toThrow('denied')
     expect(fetchMock.mock.calls[0][0]).toBe('/ops/auth/login')
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ body: JSON.stringify({ account: 'admin', password: 'admin1234' }) })
+    expect(fetchMock.mock.calls[1][0]).toBe('/ops/auth/change-password')
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({
+      body: JSON.stringify({
+        currentPassword: 'admin1234',
+        newPassword: 'newAdmin1234',
+        confirmPassword: 'newAdmin1234',
+      }),
+    })
+    expect(fetchMock.mock.calls[2][0]).toBe('/ops/auth/register')
 
     vi.unstubAllGlobals()
   })
@@ -35,6 +63,9 @@ describe('ops api clients', () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { items: [], pagination: { totalItems: 0 } } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { items: [], pagination: { totalItems: 0 } } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { items: [], pagination: { totalItems: 0 } } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'report_event_1', title: '报告事件' } }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'report_event_1', title: '报告事件更新' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { items: [], pagination: { totalItems: 0 } } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'activity_1', title: '活动' } }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ code: 10000, data: { id: 'activity_1', title: '活动更新' } }) })
@@ -54,6 +85,9 @@ describe('ops api clients', () => {
     await api.listResource('students', 'token', { q: '小张', status: 'active' })
     await api.listTemplates('token', { status: 'published' })
     await api.listReports('token', { q: '' })
+    await api.createResource('reportEvents', 'token', { title: '报告事件' })
+    await api.updateResource('reportEvents', 'report_event_1', 'token', { status: 'closed' })
+    await api.listResource('reportInstances', 'token')
     await api.createResource('activities', 'token', { title: '活动' })
     await api.updateResource('activities', 'activity_1', 'token', { title: '活动更新' })
     await api.createTemplate('token', { name: '模板' })
@@ -70,17 +104,20 @@ describe('ops api clients', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/ops/students?q=%E5%B0%8F%E5%BC%A0&status=active')
     expect(fetchMock.mock.calls[1][0]).toBe('/ops/assessment-templates?status=published')
     expect(fetchMock.mock.calls[2][0]).toBe('/ops/reports')
-    expect(fetchMock.mock.calls[3][0]).toBe('/ops/activities')
-    expect(fetchMock.mock.calls[4][0]).toBe('/ops/activities/activity_1')
-    expect(fetchMock.mock.calls[5][0]).toBe('/ops/assessment-templates')
-    expect(fetchMock.mock.calls[6][0]).toBe('/ops/assessment-templates/template_1/publish')
-    expect(fetchMock.mock.calls[7][0]).toBe('/ops/assessments')
-    expect(fetchMock.mock.calls[8][0]).toBe('/ops/assessments/assessment_1/save')
-    expect(fetchMock.mock.calls[9][0]).toBe('/ops/assessments/assessment_1/submit')
-    expect(fetchMock.mock.calls[10][0]).toBe('/ops/reports/report_1')
-    expect(fetchMock.mock.calls[11][0]).toBe('/ops/reports/report_1/share-links')
-    expect(fetchMock.mock.calls[12][0]).toBe('/ops/share-links/share_1/revoke')
-    expect(fetchMock.mock.calls[13][0]).toBe('/ops/share/share-token')
+    expect(fetchMock.mock.calls[3][0]).toBe('/ops/report-events')
+    expect(fetchMock.mock.calls[4][0]).toBe('/ops/report-events/report_event_1')
+    expect(fetchMock.mock.calls[5][0]).toBe('/ops/report-instances')
+    expect(fetchMock.mock.calls[6][0]).toBe('/ops/activities')
+    expect(fetchMock.mock.calls[7][0]).toBe('/ops/activities/activity_1')
+    expect(fetchMock.mock.calls[8][0]).toBe('/ops/assessment-templates')
+    expect(fetchMock.mock.calls[9][0]).toBe('/ops/assessment-templates/template_1/publish')
+    expect(fetchMock.mock.calls[10][0]).toBe('/ops/assessments')
+    expect(fetchMock.mock.calls[11][0]).toBe('/ops/assessments/assessment_1/save')
+    expect(fetchMock.mock.calls[12][0]).toBe('/ops/assessments/assessment_1/submit')
+    expect(fetchMock.mock.calls[13][0]).toBe('/ops/reports/report_1')
+    expect(fetchMock.mock.calls[14][0]).toBe('/ops/reports/report_1/share-links')
+    expect(fetchMock.mock.calls[15][0]).toBe('/ops/share-links/share_1/revoke')
+    expect(fetchMock.mock.calls[16][0]).toBe('/ops/share/share-token')
 
     vi.unstubAllGlobals()
   })
@@ -145,22 +182,32 @@ describe('app reducer and permissions', () => {
   it('guards admin-only views', () => {
     expect(canAccessView(null, 'dashboard')).toBe(false)
     expect(canAccessView(mockProfiles.teacher, 'teachers')).toBe(false)
+    expect(canAccessView(mockProfiles.teacher, 'reportTemplates')).toBe(false)
     expect(canAccessView(mockProfiles.admin, 'teachers')).toBe(true)
     expect(canAccessView(mockProfiles.teacher, 'students')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'reportEvents')).toBe(true)
   })
 
   it('creates default payloads for all managed resource types', () => {
     expect(defaultResourcePayload('students')).toMatchObject({ nickName: '新学员', blocked: false })
-    expect(defaultResourcePayload('teachers')).toMatchObject({ verified: false, isAdmin: false })
+    expect(defaultResourcePayload('teachers')).toMatchObject({ verified: false, blocked: true, isAdmin: false })
     expect(defaultResourcePayload('activities')).toMatchObject({ type: 'open-class', status: 'draft' })
     expect(defaultResourcePayload('audioMaterials')).toMatchObject({ difficulty: 'L1', status: 'draft' })
     expect(defaultResourcePayload('videoMaterials')).toMatchObject({ resolution: '1080p', status: 'draft' })
     expect(defaultResourcePayload('operationSlots')).toMatchObject({ channel: 'wechat-mini', targetType: 'none' })
     expect(defaultResourcePayload('activitySignups')).toMatchObject({ status: 'registered' })
+    expect(defaultResourcePayload('learningPrograms')).toMatchObject({ type: 'trial', status: 'draft' })
+    expect(defaultResourcePayload('learningSessions')).toMatchObject({ theme: '待定', status: 'planned' })
+    expect(defaultResourcePayload('programTeachers')).toMatchObject({ role: 'lead', status: 'active' })
+    expect(defaultResourcePayload('sessionStudents')).toMatchObject({ status: 'scheduled' })
+    expect(defaultResourcePayload('reportTemplates')).toMatchObject({ reportType: 'student_assessment', status: 'draft' })
+    expect(defaultResourcePayload('reportEvents')).toMatchObject({ scopeType: 'program', status: 'open' })
   })
 
   it('builds editable resource form state, payloads, and publish status transitions', () => {
     expect(canEditResource('activities')).toBe(true)
+    expect(canEditResource('learningPrograms')).toBe(true)
+    expect(canEditResource('reportEvents')).toBe(true)
     expect(canEditResource('auditLogs')).toBe(false)
     expect(buildResourceFormState('activities', { id: 'activity_1', title: '公开课', price: 1000 })).toMatchObject({
       title: '公开课',
@@ -170,8 +217,23 @@ describe('app reducer and permissions', () => {
       title: '公开课',
       price: 1000,
     })
+    expect(buildResourcePayload('learningPrograms', { title: '体验课', plannedSessionCount: '0', status: 'active' })).toMatchObject({
+      title: '体验课',
+      plannedSessionCount: 0,
+      status: 'active',
+    })
+    expect(buildResourcePayload('teachers', { realName: '老师', verified: 'true', blocked: 'false', isAdmin: 'false' })).toMatchObject({
+      realName: '老师',
+      verified: true,
+      blocked: false,
+      isAdmin: false,
+    })
     expect(nextPublishStatus('activities', 'draft')).toBe('active')
     expect(nextPublishStatus('audioMaterials', 'published')).toBe('draft')
+    expect(nextPublishStatus('learningPrograms', 'draft')).toBe('active')
+    expect(nextPublishStatus('learningSessions', 'planned')).toBe('completed')
+    expect(nextPublishStatus('reportTemplates', 'draft')).toBe('published')
+    expect(nextPublishStatus('reportEvents', 'closed')).toBe('open')
     expect(nextPublishStatus('activitySignups', 'registered')).toBeNull()
   })
 })

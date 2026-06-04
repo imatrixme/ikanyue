@@ -73,6 +73,38 @@ export const mockResources: Record<OpsResource, ListResult<ResourceRecord>> = {
     { id: 'signup_1', userId: 'student_1', activityId: 'activity_1', realName: '张同学', age: 12, status: 'registered', created: '2026-05-20T09:00:00.000Z' },
     { id: 'signup_2', userId: 'student_2', activityId: 'activity_1', realName: '李同学', age: 10, status: 'attended', created: '2026-05-21T09:00:00.000Z' },
   ]),
+  learningPrograms: list([
+    { id: 'program_1', title: '春季体验课', type: 'trial', status: 'active', plannedSessionCount: 0 },
+    { id: 'program_2', title: '暑期声乐包', type: 'course_package', status: 'draft', plannedSessionCount: 8 },
+  ]),
+  learningSessions: list([
+    { id: 'session_1', programId: 'program_1', title: '体验课第一堂', theme: '音准', status: 'planned', sequence: 1 },
+    { id: 'session_2', programId: 'program_2', title: '暑期第一课', theme: '气息', status: 'planned', sequence: 1 },
+  ]),
+  programStudents: list([
+    { id: 'program_student_1', programId: 'program_1', studentId: 'student_1', status: 'active' },
+  ]),
+  programTeachers: list([
+    { id: 'program_teacher_1', programId: 'program_1', teacherId: 'teacher_1', role: 'lead', status: 'active' },
+  ]),
+  sessionStudents: list([
+    { id: 'session_student_1', sessionId: 'session_1', studentId: 'student_1', status: 'scheduled' },
+    { id: 'session_student_2', sessionId: 'session_1', studentId: 'student_2', status: 'absent' },
+  ]),
+  sessionTeachers: list([
+    { id: 'session_teacher_1', sessionId: 'session_1', teacherId: 'teacher_1', role: 'lead', status: 'active' },
+  ]),
+  reportTemplates: list([
+    { id: 'report_template_1', name: '期中学生反馈', reportType: 'midterm_student', version: 1, status: 'published' },
+    { id: 'report_template_2', name: '教师课后反馈', reportType: 'teacher_feedback', version: 1, status: 'published' },
+  ]),
+  reportEvents: list([
+    { id: 'report_event_1', title: '体验课课后反馈', reportType: 'student_assessment', templateId: 'report_template_1', scopeType: 'session', scopeId: 'session_1', status: 'open' },
+  ]),
+  reportInstances: list([
+    { id: 'report_instance_1', title: '张同学体验课反馈', reportType: 'student_assessment', recipientType: 'student', recipientId: 'student_1', status: 'published', totalScore: 90, grade: 'A' },
+    { id: 'report_instance_2', title: '教师课后反馈', reportType: 'teacher_feedback', recipientType: 'teacher', recipientId: 'teacher_1', status: 'draft' },
+  ]),
   auditLogs: list([
     { id: 'audit_1', actorId: 'admin_1', action: 'ops.assessment_record.submit', resourceType: 'assessment_record', outcome: 'success' },
     { id: 'audit_2', actorId: 'teacher_1', action: 'ops.student.detail', resourceType: 'student', outcome: 'denied' },
