@@ -4,11 +4,11 @@ const jwt = require('jsonwebtoken');
 
 const authKey = 'V_NY6*rF-j.P';
 
-var sign = (req, id, sn, role = 'user', isAdmin = false) => {
-    var data_ = { id: id, sn: sn, role: role, isAdmin: isAdmin };
-    if (req.headers['sec-fetch-mode'] && req.headers['sec-fetch-site']) {
+var sign = (req = { headers: {} }, id, sn, role = 'user', isAdmin = false, claims = {}) => {
+    var data_ = { id: id, sn: sn, role: role, isAdmin: isAdmin, ...claims };
+    if (req.headers?.['sec-fetch-mode'] && req.headers?.['sec-fetch-site']) {
         let secondoft = dayjs().second() + 24 * 3600 * 7;
-        data_ = { id: id, sn: sn, role: role, isAdmin: isAdmin, expiredAt: secondoft };
+        data_ = { ...data_, expiredAt: secondoft };
     }
     let rst = jwt.sign(data_, authKey);
     return rst;

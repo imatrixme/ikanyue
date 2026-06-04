@@ -23,10 +23,11 @@ test('ops auth accepts only verified teacher/admin accounts and never creates st
 
     const adminLogin = await jsonRequest(app, '/ops/auth/login', {
         method: 'POST',
-        body: { cellphone: '13800138002', password: 'secret' },
+        body: { account: 'admin', password: 'admin1234' },
     });
     assert.equal(adminLogin.code, 10000);
     assert.equal(adminLogin.data.profile.role, 'admin');
+    assert.equal(adminLogin.data.profile.passwordChangeRequired, false);
 
     assert.equal(
         (await jsonRequest(app, '/ops/auth/login', { method: 'POST', body: { cellphone: '13900139001', password: 'secret' } })).code,
@@ -42,6 +43,106 @@ test('ops auth accepts only verified teacher/admin accounts and never creates st
     );
     assert.equal(repository.data.students.length, 2);
     assert.ok(repository.data.ops_audit_logs.some((event) => event.action === 'ops.auth.login'));
+});
+
+test('ops default admin login requires first password change before admin access', async () => {
+    const seed = createOpsSeed();
+    seed.teachers[1].opsPasswordChangeRequired = true;
+    const repository = createOpsTestRepository(seed);
+    const app = createOpsApp(repository);
+
+    const login = await jsonRequest(app, '/ops/auth/login', {
+        method: 'POST',
+        body: { username: 'admin', password: 'admin1234' },
+    });
+    assert.equal(login.code, 10000);
+    assert.equal(login.data.profile.passwordChangeRequired, true);
+
+    const me = await jsonRequest(app, '/ops/auth/me', { token: login.data.token });
+    assert.equal(me.code, 10000);
+    assert.equal(me.data.profile.passwordChangeRequired, true);
+
+    const blocked = await jsonRequest(app, '/ops/dashboard', { token: login.data.token });
+    assert.equal(blocked.code, 403);
+    assert.equal(blocked.message, '首次登录必须先修改默认密码');
+
+    const samePassword = await jsonRequest(app, '/ops/auth/change-password', {
+        method: 'POST',
+        token: login.data.token,
+        body: { currentPassword: 'admin1234', newPassword: 'admin1234', confirmPassword: 'admin1234' },
+    });
+    assert.equal(samePassword.code, 400);
+
+    const changed = await jsonRequest(app, '/ops/auth/change-password', {
+        method: 'POST',
+        token: login.data.token,
+        body: { currentPassword: 'admin1234', newPassword: 'newAdmin1234', confirmPassword: 'newAdmin1234' },
+    });
+    assert.equal(changed.code, 10000);
+    assert.equal(changed.data.profile.passwordChangeRequired, false);
+    assert.equal(repository.data.teachers.find((teacher) => teacher.id === 'admin_1').opsPasswordChangeRequired, false);
+    assert.equal(repository.data.teachers.find((teacher) => teacher.id === 'admin_1').passwordConfirm, 'newAdmin1234');
+
+    const dashboard = await jsonRequest(app, '/ops/dashboard', { token: changed.data.token });
+    assert.equal(dashboard.code, 10000);
+    assert.ok(repository.data.ops_audit_logs.some((event) => event.action === 'ops.auth.change_password'));
+});
+
+test('ops teacher registration is gated and creates pending inactive accounts', async () => {
+    const originalFlag = process.env.OPS_REGISTRATION_ENABLED;
+    try {
+        delete process.env.OPS_REGISTRATION_ENABLED;
+        const repository = createOpsTestRepository(createOpsSeed());
+        const app = createOpsApp(repository);
+
+        const disabled = await jsonRequest(app, '/ops/auth/register', {
+            method: 'POST',
+            body: { cellphone: '13800138009', password: 'secret123', realName: '待审老师' },
+        });
+        assert.equal(disabled.code, 403);
+        assert.equal(repository.data.teachers.some((teacher) => teacher.cellphone === '13800138009'), false);
+
+        process.env.OPS_REGISTRATION_ENABLED = 'true';
+        const registered = await jsonRequest(app, '/ops/auth/register', {
+            method: 'POST',
+            body: { cellphone: '13800138009', password: 'secret123', realName: '待审老师' },
+        });
+        assert.equal(registered.code, 10000);
+        assert.equal(registered.data.status, 'pending_activation');
+        assert.equal(registered.data.profile.verified, false);
+        assert.equal(registered.data.profile.blocked, true);
+
+        const pendingTeacher = repository.data.teachers.find((teacher) => teacher.cellphone === '13800138009');
+        assert.equal(pendingTeacher.blocked, true);
+        assert.equal(pendingTeacher.verified, false);
+        assert.equal(pendingTeacher.idAdmin, false);
+        assert.equal(pendingTeacher.idcard, 'ops_13800138009');
+        assert.equal(pendingTeacher.passwordConfirm, 'secret123');
+        assert.equal((await jsonRequest(app, '/ops/auth/register', {
+            method: 'POST',
+            body: { cellphone: '13800138009', password: 'secret123', realName: '重复老师' },
+        })).code, 409);
+
+    assert.equal((await jsonRequest(app, '/ops/auth/login', {
+        method: 'POST',
+        body: { cellphone: '13800138009', password: 'secret123' },
+        })).code, 403);
+
+        await repository.update('teachers', pendingTeacher.id, { blocked: false, verified: true });
+        const activatedLogin = await jsonRequest(app, '/ops/auth/login', {
+            method: 'POST',
+            body: { cellphone: '13800138009', password: 'secret123' },
+        });
+        assert.equal(activatedLogin.code, 10000);
+        assert.equal(activatedLogin.data.profile.role, 'teacher');
+        assert.equal(activatedLogin.data.profile.isAdmin, false);
+    } finally {
+        if (originalFlag === undefined) {
+            delete process.env.OPS_REGISTRATION_ENABLED;
+        } else {
+            process.env.OPS_REGISTRATION_ENABLED = originalFlag;
+        }
+    }
 });
 
 test('ops management enforces teacher ownership and admin global access', async () => {
@@ -63,6 +164,18 @@ test('ops management enforces teacher ownership and admin global access', async 
     const adminTeachers = await jsonRequest(app, '/ops/teachers', { token: adminToken });
     assert.equal(adminTeachers.code, 10000);
     assert.equal(adminTeachers.data.items.length, 4);
+
+    const activatedTeacher = await jsonRequest(app, '/ops/teachers/pending_1', {
+        method: 'POST',
+        token: adminToken,
+        body: { realName: '已激活老师', verified: true, blocked: false, isAdmin: true, passwordConfirm: 'blocked' },
+    });
+    assert.equal(activatedTeacher.code, 10000);
+    assert.equal(activatedTeacher.data.realName, '已激活老师');
+    assert.equal(activatedTeacher.data.isAdmin, true);
+    assert.equal(repository.data.teachers.find((teacher) => teacher.id === 'pending_1').realname, '已激活老师');
+    assert.equal(repository.data.teachers.find((teacher) => teacher.id === 'pending_1').idAdmin, true);
+    assert.equal(repository.data.teachers.find((teacher) => teacher.id === 'pending_1').passwordConfirm, undefined);
 
     const updatedActivity = await jsonRequest(app, '/ops/activities/activity_1', {
         method: 'POST',
@@ -143,6 +256,24 @@ test('ops dashboard and operation slots provide first-phase management data', as
     assert.deepEqual(publicSlots.data.items.map((item) => item.id), ['slot_1']);
     assert.equal(publicSlots.data.items[0].imageUrl, 'https://example.com/banner.png');
     assert.equal(publicSlots.data.items[0].targetUrl, '/pages/assessmentReport/index?token=demo');
+});
+
+test('public operation slots degrade to an empty list when local ops schema is missing', async () => {
+    const seed = createOpsSeed();
+    const repository = createOpsTestRepository(seed);
+    repository.list = async (name, page, perPage, options) => {
+        if (name === 'operation_slots') {
+            throw new Error('Missing collection context.');
+        }
+        return Object.getPrototypeOf(repository).list.call(repository, name, page, perPage, options);
+    };
+    const app = createOpsApp(repository);
+
+    const publicSlots = await jsonRequest(app, '/ops/public/operation-slots?channel=wechat-mini&placement=home-banner');
+
+    assert.equal(publicSlots.code, 10000);
+    assert.deepEqual(publicSlots.data.items, []);
+    assert.deepEqual(publicSlots.data.pagination, { page: 1, perPage: 100, totalItems: 0, totalPages: 0 });
 });
 
 test('ops report detail returns privacy-safe report content with scoped authorization', async () => {

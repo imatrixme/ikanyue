@@ -97,7 +97,7 @@ function createOpsSeed() {
     return {
         teachers: [
             teacher('teacher_1', { cellphone: '13800138001', isAdmin: false }),
-            teacher('admin_1', { cellphone: '13800138002', isAdmin: true }),
+            teacher('admin_1', { username: 'admin', cellphone: '13800138002', password: md5('admin1234'), isAdmin: true }),
             teacher('blocked_1', { cellphone: '13800138003', blocked: true }),
             teacher('pending_1', { cellphone: '13800138004', verified: false }),
         ],

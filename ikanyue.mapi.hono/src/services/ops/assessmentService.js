@@ -267,7 +267,7 @@ class OpsAssessmentService {
             score,
             generatedAt: new Date().toISOString(),
         };
-        return this.repository.create('assessment_report_snapshots', {
+        const snapshot = await this.repository.create('assessment_report_snapshots', {
             assessmentRecordId: record.id,
             studentId: record.studentId,
             teacherId: record.teacherId,
@@ -281,6 +281,41 @@ class OpsAssessmentService {
             answersSnapshotJson: answers,
             scoreSnapshotJson: score,
         });
+        await this.createGenericReportInstance(snapshot, template, reportJson);
+        return snapshot;
+    }
+
+    async createGenericReportInstance(snapshot, template, reportJson) {
+        try {
+            await this.repository.create('report_instances', {
+                eventId: '',
+                templateId: '',
+                reportType: 'student_assessment',
+                scopeType: 'assessment',
+                scopeId: snapshot.assessmentRecordId,
+                subjectType: 'student',
+                subjectId: snapshot.studentId,
+                recipientType: 'student',
+                recipientId: snapshot.studentId,
+                status: 'published',
+                sourceType: 'assessment_snapshot',
+                sourceId: snapshot.id,
+                totalScore: snapshot.totalScore,
+                grade: snapshot.grade,
+                reportJson: {
+                    ...reportJson,
+                    reportType: 'student_assessment',
+                    templateSnapshot: template,
+                    publishedAt: snapshot.created || new Date().toISOString(),
+                },
+                inputIdsJson: [],
+                publishedAt: snapshot.created || new Date().toISOString(),
+            });
+        } catch (error) {
+            if (!isMissingCollectionContextError(error)) {
+                console.error('同步通用报告实例失败:', error.message);
+            }
+        }
     }
 }
 
@@ -318,6 +353,11 @@ function validationError(errors) {
 
 function isExpired(expiresAt) {
     return Boolean(expiresAt && new Date(expiresAt).getTime() <= Date.now());
+}
+
+function isMissingCollectionContextError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('collection context') || message.includes('report_instances missing');
 }
 
 module.exports = { OpsAssessmentService, normalizeTemplate };

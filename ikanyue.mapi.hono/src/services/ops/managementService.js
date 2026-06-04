@@ -12,8 +12,10 @@ const MANAGEMENT_CONFIG = {
         collection: 'teachers',
         resourceType: 'teacher',
         adminOnly: true,
-        fields: ['id', 'cellphone', 'nickName', 'realName', 'avatar', 'verified', 'blocked', 'isAdmin', 'created', 'updated'],
-        searchable: ['cellphone', 'nickName', 'realName'],
+        fields: ['id', 'cellphone', 'nickName', 'realName', 'avatar', 'verified', 'blocked', 'isAdmin', 'idAdmin', 'created', 'updated'],
+        searchable: ['cellphone', 'nickName', 'realname'],
+        normalize: normalizeTeacherRecord,
+        normalizePayload: normalizeTeacherPayload,
     },
     activities: {
         collection: 'activities',
@@ -113,6 +115,59 @@ const MANAGEMENT_CONFIG = {
         fields: ['id', 'userId', 'studentId', 'activityId', 'realName', 'age', 'status', 'remark', 'created', 'updated'],
         searchable: ['realName', 'status'],
     },
+    learningPrograms: {
+        collection: 'learning_programs',
+        resourceType: 'learning_program',
+        adminOnlyWrite: true,
+        fields: ['id', 'title', 'type', 'status', 'description', 'plannedSessionCount', 'plannedStartAt', 'plannedEndAt', 'metadata', 'created', 'updated'],
+        searchable: ['title', 'type', 'status'],
+    },
+    learningSessions: {
+        collection: 'learning_sessions',
+        resourceType: 'learning_session',
+        adminOnlyWrite: true,
+        fields: ['id', 'programId', 'title', 'theme', 'status', 'sequence', 'startTime', 'endTime', 'metadata', 'created', 'updated'],
+        searchable: ['title', 'theme', 'status'],
+    },
+    programStudents: {
+        collection: 'program_students',
+        resourceType: 'program_student',
+        adminOnlyWrite: true,
+        teacherStudentScoped: true,
+        studentOwnerFields: ['studentId'],
+        fields: ['id', 'programId', 'studentId', 'status', 'metadata', 'created', 'updated'],
+        searchable: ['status'],
+    },
+    programTeachers: {
+        collection: 'program_teachers',
+        resourceType: 'program_teacher',
+        adminOnlyWrite: true,
+        fields: ['id', 'programId', 'teacherId', 'role', 'status', 'metadata', 'created', 'updated'],
+        searchable: ['role', 'status'],
+    },
+    sessionStudents: {
+        collection: 'session_students',
+        resourceType: 'session_student',
+        adminOnlyWrite: true,
+        teacherStudentScoped: true,
+        studentOwnerFields: ['studentId'],
+        fields: ['id', 'sessionId', 'studentId', 'status', 'metadata', 'created', 'updated'],
+        searchable: ['status'],
+    },
+    sessionTeachers: {
+        collection: 'session_teachers',
+        resourceType: 'session_teacher',
+        adminOnlyWrite: true,
+        fields: ['id', 'sessionId', 'teacherId', 'role', 'status', 'metadata', 'created', 'updated'],
+        searchable: ['role', 'status'],
+    },
+    reportTemplates: {
+        collection: 'report_templates',
+        resourceType: 'report_template',
+        adminOnlyWrite: true,
+        fields: ['id', 'name', 'version', 'reportType', 'status', 'schemaJson', 'reportJson', 'createdBy', 'created', 'updated'],
+        searchable: ['name', 'reportType', 'status'],
+    },
 };
 
 class OpsManagementService {
@@ -157,7 +212,7 @@ class OpsManagementService {
         });
 
         return {
-            items: (result.items || []).map((record) => mapRecord(record, config.fields)),
+            items: (result.items || []).map((record) => projectRecord(config, record)),
             pagination: buildPagination(result, page, perPage),
         };
     }
@@ -172,13 +227,13 @@ class OpsManagementService {
         if (config.teacherStudentScoped) {
             await this.rbacService.assertStudentAccess(user, resolveStudentId(record), `ops.${config.resourceType}.detail`);
         }
-        return mapRecord(record, config.fields);
+        return projectRecord(config, record);
     }
 
     async create(resourceKey, user, data = {}) {
         const config = getConfig(resourceKey);
         await this.assertWrite(config, user);
-        const payload = sanitizeManagementPayload(data);
+        const payload = sanitizeManagementPayload(config.normalizePayload ? config.normalizePayload(data) : data);
         const created = await this.repository.create(config.collection, payload);
         await this.auditService.record({
             actor: user,
@@ -186,13 +241,13 @@ class OpsManagementService {
             resourceType: config.resourceType,
             resourceId: created.id,
         });
-        return mapRecord(created, config.fields);
+        return projectRecord(config, created);
     }
 
     async update(resourceKey, id, user, data = {}) {
         const config = getConfig(resourceKey);
         await this.assertWrite(config, user);
-        const payload = sanitizeManagementPayload(data);
+        const payload = sanitizeManagementPayload(config.normalizePayload ? config.normalizePayload(data) : data);
         const updated = await this.repository.update(config.collection, id, payload);
         await this.auditService.record({
             actor: user,
@@ -200,7 +255,7 @@ class OpsManagementService {
             resourceType: config.resourceType,
             resourceId: id,
         });
-        return mapRecord(updated, config.fields);
+        return projectRecord(config, updated);
     }
 
     async publicOperationSlots(query = {}) {
@@ -215,16 +270,27 @@ class OpsManagementService {
             filters.push(`placement = "${placement}"`);
         }
 
-        const result = await this.repository.list(config.collection, 1, 100, {
-            filter: filters.join(' && '),
-            sort: 'sortOrder,-created',
-        });
+        let result;
+        try {
+            result = await this.repository.list(config.collection, 1, 100, {
+                filter: filters.join(' && '),
+                sort: 'sortOrder,-created',
+            });
+        } catch (error) {
+            if (isMissingCollectionContextError(error)) {
+                return {
+                    items: [],
+                    pagination: buildPagination({}, 1, 100),
+                };
+            }
+            throw error;
+        }
         const now = parseDate(query.now) || new Date();
         return {
             items: (result.items || [])
                 .filter((record) => isVisibleSlot(record, now))
                 .sort(compareSlots)
-                .map((record) => mapRecord(record, config.fields)),
+                .map((record) => projectRecord(config, record)),
             pagination: buildPagination(result, 1, 100),
         };
     }
@@ -299,6 +365,37 @@ function resolveStudentId(record = {}) {
     return record.studentId || record.userId || '';
 }
 
+function projectRecord(config, record) {
+    const normalized = config.normalize ? config.normalize(record) : record;
+    return mapRecord(normalized, config.fields);
+}
+
+function normalizeTeacherRecord(record = {}) {
+    return {
+        ...record,
+        nickName: record.nickName || record.nickname || '',
+        realName: record.realname || record.realName || '',
+        isAdmin: record.idAdmin ?? record.isAdmin ?? false,
+    };
+}
+
+function normalizeTeacherPayload(data = {}) {
+    const payload = { ...data };
+    if (Object.prototype.hasOwnProperty.call(payload, 'realName')) {
+        payload.realname = payload.realName;
+        delete payload.realName;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'nickname')) {
+        payload.nickName = payload.nickname;
+        delete payload.nickname;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, 'isAdmin')) {
+        payload.idAdmin = payload.isAdmin;
+        delete payload.isAdmin;
+    }
+    return payload;
+}
+
 function getConfig(resourceKey) {
     const config = MANAGEMENT_CONFIG[resourceKey];
     if (!config) {
@@ -310,7 +407,7 @@ function getConfig(resourceKey) {
 }
 
 function sanitizeManagementPayload(data = {}) {
-    const blocked = new Set(['id', 'sn', 'password', 'token', 'tokenKey', 'created', 'updated']);
+    const blocked = new Set(['id', 'sn', 'password', 'passwordConfirm', 'token', 'tokenKey', 'created', 'updated']);
     return Object.entries(data).reduce((acc, [key, value]) => {
         if (!blocked.has(key)) {
             acc[key] = value;
@@ -340,6 +437,10 @@ function compareSlots(left, right) {
         return leftOrder - rightOrder;
     }
     return String(right.created || '').localeCompare(String(left.created || ''));
+}
+
+function isMissingCollectionContextError(error) {
+    return typeof error?.message === 'string' && error.message.toLowerCase().includes('collection context');
 }
 
 module.exports = { MANAGEMENT_CONFIG, OpsManagementService };

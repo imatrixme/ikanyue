@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { Hono } = require('hono');
 
-const { opsAuthMiddleware } = require('../src/middleware/opsAuth');
+const { opsAuthMiddleware, opsPasswordChangeGuard } = require('../src/middleware/opsAuth');
 const { responseMiddleware } = require('../src/middleware/response');
 const { createOpsServices } = require('../src/services/ops');
 const { scoreAssessment, validateAssessmentTemplate } = require('../src/services/ops/scoringService');
@@ -27,6 +27,9 @@ test('ops auth middleware rejects missing, invalid, non-teacher, and expired tok
     const app = new Hono();
     app.use('*', responseMiddleware());
     app.get('/protected', opsAuthMiddleware(), (c) => c.data({ user: c.get('user').id }));
+    app.get('/ops/auth/me', opsAuthMiddleware(), opsPasswordChangeGuard(), (c) => c.data({ allowed: true }));
+    app.post('/ops/auth/change-password', opsAuthMiddleware(), opsPasswordChangeGuard(), (c) => c.data({ allowed: true }));
+    app.get('/ops/dashboard', opsAuthMiddleware(), opsPasswordChangeGuard(), (c) => c.data({ allowed: true }));
 
     assert.equal((await jsonRequest(app, '/protected')).code, 403);
     assert.equal((await jsonRequest(app, '/protected', { token: 'bad-token' })).code, 403);
@@ -38,6 +41,13 @@ test('ops auth middleware rejects missing, invalid, non-teacher, and expired tok
     const decoded = require('jsonwebtoken').decode(expiredToken);
     const forgedExpired = require('jsonwebtoken').sign({ ...decoded, expiredAt: 1 }, 'V_NY6*rF-j.P');
     assert.equal((await jsonRequest(app, '/protected', { token: forgedExpired })).code, 403);
+
+    const tokenWithClaim = require('../src/utils/jwtAuth').jwtAuth.sign({ headers: {} }, 'teacher_1', 'sn', 'teacher', true, { passwordChangeRequired: true });
+    const decodedClaim = require('../src/utils/jwtAuth').jwtAuth.check(tokenWithClaim);
+    assert.equal(decodedClaim.passwordChangeRequired, true);
+    assert.equal((await jsonRequest(app, '/ops/auth/me', { token: tokenWithClaim })).code, 10000);
+    assert.equal((await jsonRequest(app, '/ops/auth/change-password', { method: 'POST', token: tokenWithClaim })).code, 10000);
+    assert.equal((await jsonRequest(app, '/ops/dashboard', { token: tokenWithClaim })).message, '首次登录必须先修改默认密码');
 });
 
 test('ops utility helpers cover json parsing, bearer variants, projections, and sanitizing', async () => {
@@ -117,6 +127,111 @@ test('scoring service validates template edge cases and scores all first-phase i
 
     const emptyScore = scoreAssessment({ schemaJson: { sections: [{ key: 'text', title: '文字', weight: 1, items: [{ key: 't', type: 'textarea' }] }] } }, {});
     assert.equal(emptyScore.totalScore, 0);
+
+    const validDefault = validateAssessmentTemplate({
+        name: '默认加权',
+        schemaJson: {
+            sections: [
+                { key: 'score', title: '评分', weight: 1, items: [{ key: 'number', type: 'number_score' }] },
+            ],
+        },
+    });
+    assert.equal(validDefault.valid, true);
+
+    const duplicateKeys = validateAssessmentTemplate({
+        name: '重复字段',
+        schemaJson: {
+            sections: [
+                { key: 'dup', title: '重复', weight: 1, items: [{ key: 'dup', type: 'number_score' }] },
+            ],
+        },
+    });
+    assert.ok(duplicateKeys.errors.some((message) => message.includes('字段 key 重复')));
+
+    const weightedScore = scoreAssessment({
+        schemaJson: {
+            sections: [
+                { key: 'choices', title: '选择', weight: 1, items: [{ key: 'single', type: 'single_choice' }] },
+            ],
+            scoring: { type: 'weighted_sum', gradeBands: [{ min: 0, label: '基础' }] },
+        },
+    }, { single: 'missing' });
+    assert.equal(weightedScore.grade, '基础');
+});
+
+test('ops auth registration and profile helpers cover validation and duplicate branches', async () => {
+    const originalFlag = process.env.OPS_REGISTRATION_ENABLED;
+    process.env.OPS_REGISTRATION_ENABLED = 'true';
+    try {
+        const seed = createOpsSeed();
+        const repository = createOpsTestRepository(seed);
+        const services = createOpsServices(repository);
+
+        assert.equal((await services.authService.register({ cellphone: '', password: 'secret123', realName: '王老师' })).message, '手机号不能为空');
+        assert.equal((await services.authService.register({ cellphone: '123', password: 'secret123', realName: '王老师' })).message, '手机号格式不正确');
+        assert.equal((await services.authService.register({ cellphone: '13800138009', password: '', realName: '王老师' })).message, '密码不能为空');
+        assert.equal((await services.authService.register({ cellphone: '13800138009', password: 'short', realName: '王老师' })).message, '密码至少需要 8 位');
+        assert.equal((await services.authService.register({ cellphone: '13800138009', password: 'secret123' })).message, '姓名不能为空');
+
+        const originalCreate = repository.create.bind(repository);
+        repository.create = async (collection, data) => {
+            if (collection === 'teachers') {
+                const error = new Error('cellphone already exists unique constraint');
+                error.status = 400;
+                throw error;
+            }
+            return originalCreate(collection, data);
+        };
+        assert.equal((await services.authService.register({ cellphone: '13800138009', password: 'secret123', realName: '王老师' })).code, 409);
+
+        assert.equal(await services.authService.matchesPassword({ id: 'teacher_without_identity' }, 'secret', ''), false);
+
+        const { projectOpsProfile } = require('../src/services/ops/authService');
+        const profile = projectOpsProfile({ id: 'admin_2', sn: 's2', nickname: '昵称', realname: '实名', verified: 'true', blocked: 'false', idAdmin: '1' });
+        assert.equal(profile.nickName, '昵称');
+        assert.equal(profile.realName, '实名');
+        assert.equal(profile.role, 'admin');
+    } finally {
+        if (originalFlag === undefined) {
+            delete process.env.OPS_REGISTRATION_ENABLED;
+        } else {
+            process.env.OPS_REGISTRATION_ENABLED = originalFlag;
+        }
+    }
+});
+
+test('ops auth password change covers validation and authentication failures', async () => {
+    const seed = createOpsSeed();
+    seed.teachers[0].blocked = true;
+    const blockedServices = createOpsServices(createOpsTestRepository(seed));
+    assert.equal((await blockedServices.authService.changePassword({ id: 'teacher_1', role: 'teacher' }, {
+        currentPassword: 'secret',
+        newPassword: 'newSecret123',
+        confirmPassword: 'newSecret123',
+    })).message, '教师账号不可用');
+
+    const repository = createOpsTestRepository(createOpsSeed());
+    const services = createOpsServices(repository);
+    const user = { id: 'teacher_1', role: 'teacher', sn: 't1' };
+
+    assert.equal((await services.authService.changePassword(null, {})).message, '后台仅允许教师或管理员访问');
+    assert.equal((await services.authService.changePassword(user, {})).message, '当前密码和新密码不能为空');
+    assert.equal((await services.authService.changePassword(user, {
+        currentPassword: 'secret',
+        newPassword: 'short',
+        confirmPassword: 'short',
+    })).message, '新密码至少需要 8 位');
+    assert.equal((await services.authService.changePassword(user, {
+        currentPassword: 'secret',
+        newPassword: 'newSecret123',
+        confirmPassword: 'different123',
+    })).message, '两次输入的新密码不一致');
+    assert.equal((await services.authService.changePassword(user, {
+        currentPassword: 'wrongSecret',
+        newPassword: 'newSecret123',
+        confirmPassword: 'newSecret123',
+    })).message, '当前密码不正确');
+    assert.ok(repository.data.ops_audit_logs.some((event) => event.action === 'ops.auth.change_password' && event.outcome === 'denied'));
 });
 
 test('assessment and auth services cover list, me, submitted, and share expiry branches', async () => {

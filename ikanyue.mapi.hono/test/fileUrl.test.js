@@ -12,8 +12,8 @@ const {
 function withFileEnv(env, fn) {
     const previous = {
         PB_URL: process.env.PB_URL,
-        S3_BUCKET: process.env.S3_BUCKET,
-        S3_URL: process.env.S3_URL,
+        PUBLIC_ASSET_BASE_URL: process.env.PUBLIC_ASSET_BASE_URL,
+        PB_PUBLIC_URL: process.env.PB_PUBLIC_URL,
     };
 
     Object.entries(env).forEach(([key, value]) => {
@@ -37,7 +37,7 @@ function withFileEnv(env, fn) {
     }
 }
 
-test('getFileUrl handles empty values, absolute URLs, S3, and PocketBase URLs', () => {
+test('getFileUrl handles empty values, absolute URLs, public asset, and PocketBase URLs', () => {
     const record = {
         collectionId: 'materials',
         id: 'material_1',
@@ -47,14 +47,14 @@ test('getFileUrl handles empty values, absolute URLs, S3, and PocketBase URLs', 
     assert.equal(getFileUrl(record, 'https://cdn.example.com/file.mp3'), 'https://cdn.example.com/file.mp3');
     assert.equal(getFileUrl(record, 'http://cdn.example.com/file.mp3'), 'http://cdn.example.com/file.mp3');
 
-    withFileEnv({ S3_URL: 'https://s3.example.com', S3_BUCKET: 'assets', PB_URL: 'https://pb.example.com' }, () => {
+    withFileEnv({ PUBLIC_ASSET_BASE_URL: 'https://oss.example.com/assets', PB_URL: 'https://pb.example.com' }, () => {
         assert.equal(
             getFileUrl(record, 'audio.mp3'),
-            'https://s3.example.com/assets/materials/material_1/audio.mp3'
+            'https://oss.example.com/assets/materials/material_1/audio.mp3'
         );
     });
 
-    withFileEnv({ S3_URL: undefined, S3_BUCKET: undefined, PB_URL: 'https://pb.example.com' }, () => {
+    withFileEnv({ PUBLIC_ASSET_BASE_URL: undefined, PB_PUBLIC_URL: undefined, PB_URL: 'https://pb.example.com' }, () => {
         assert.equal(getFileUrl(record, 'audio.mp3'), 'https://pb.example.com/api/files/materials/material_1/audio.mp3');
     });
 });

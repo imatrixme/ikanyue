@@ -22,4 +22,20 @@ function opsAuthMiddleware() {
     };
 }
 
-module.exports = { opsAuthMiddleware };
+function opsPasswordChangeGuard() {
+    return async (c, next) => {
+        const user = c.get('user');
+        if (!user?.passwordChangeRequired) {
+            await next();
+            return;
+        }
+        const path = c.req.path || '';
+        if (path === '/ops/auth/me' || path === '/ops/auth/change-password') {
+            await next();
+            return;
+        }
+        return c.error(403, '首次登录必须先修改默认密码');
+    };
+}
+
+module.exports = { opsAuthMiddleware, opsPasswordChangeGuard };

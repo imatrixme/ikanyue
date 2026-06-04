@@ -15,6 +15,16 @@ test('ops schema defines production PocketBase collections for admin workflows',
         'assessment_share_links',
         'activity_signups',
         'teacher_student_relations',
+        'learning_programs',
+        'learning_sessions',
+        'program_students',
+        'program_teachers',
+        'session_students',
+        'session_teachers',
+        'report_templates',
+        'report_events',
+        'evaluation_inputs',
+        'report_instances',
         'operation_slots',
         'ops_audit_logs',
     ]) {
@@ -39,6 +49,28 @@ test('ops schema defines production PocketBase collections for admin workflows',
     assert.ok(signups.has('activityId'));
     assert.ok(signups.has('status'));
     assert.ok(schemas.get('activity_signups').indexes.some((index) => index.includes('idx_activity_signups_user_activity')));
+
+    const programs = fieldNames(schemas.get('learning_programs'));
+    assert.ok(programs.has('plannedSessionCount'));
+    assert.ok(programs.has('plannedStartAt'));
+    assert.ok(programs.has('metadata'));
+
+    const sessions = fieldNames(schemas.get('learning_sessions'));
+    assert.ok(sessions.has('programId'));
+    assert.ok(sessions.has('theme'));
+    assert.ok(sessions.has('sequence'));
+
+    const reportEvents = fieldNames(schemas.get('report_events'));
+    assert.ok(reportEvents.has('scopeType'));
+    assert.ok(reportEvents.has('scopeId'));
+    assert.ok(reportEvents.has('subjectRulesJson'));
+    assert.ok(schemas.get('report_events').indexes.some((index) => index.includes('idx_report_events_scope_status')));
+
+    const reportInstances = fieldNames(schemas.get('report_instances'));
+    assert.ok(reportInstances.has('subjectType'));
+    assert.ok(reportInstances.has('recipientType'));
+    assert.ok(reportInstances.has('sourceType'));
+    assert.ok(schemas.get('report_instances').indexes.some((index) => index.includes('idx_report_instances_recipient_status')));
 });
 
 test('ops schema validator reports incomplete collections', () => {
