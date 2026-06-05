@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -100,6 +100,45 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('声乐阶段测评 副本')).toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: '发布' })[0])
     expect(await screen.findByText('模板已发布')).toBeInTheDocument()
+  })
+
+  it('opens scene workspaces and saves context-locked relations through the app', async () => {
+    const user = userEvent.setup()
+    render(<App api={createMockOpsApi()} />)
+
+    await loginAsAdmin(user)
+    await user.click(await screen.findByRole('button', { name: '项目工作台' }))
+    expect(await screen.findByText('围绕一个教学项目管理学员、教师、课次和下一步动作；关系表只作为结果和维护视图。')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '添加项目学员' }))
+    const projectDialog = await screen.findByRole('dialog', { name: '添加项目学员' })
+    expect(projectDialog).toHaveTextContent('春季体验课')
+    await user.type(within(projectDialog).getByLabelText('选择学员搜索'), '小李')
+    await user.click(within(projectDialog).getByRole('button', { name: '选择李同学' }))
+    await user.click(within(projectDialog).getByRole('button', { name: '保存关系' }))
+    expect(await screen.findByText('已保存 2 条场景关系')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '课次工作台' }))
+    expect(await screen.findByText('围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课次关系表。')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '确认课次教师' }))
+    const lessonDialog = await screen.findByRole('dialog', { name: '确认课次教师' })
+    expect(lessonDialog).toHaveTextContent('体验课第一堂')
+    await user.type(within(lessonDialog).getByLabelText('选择教师搜索'), '赵老师')
+    await user.click(within(lessonDialog).getByRole('button', { name: '选择赵老师' }))
+    await user.click(within(lessonDialog).getByRole('button', { name: '保存关系' }))
+    expect(await screen.findByText('已保存 2 条场景关系')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '记录出勤' }))
+    const attendanceDialog = await screen.findByRole('dialog', { name: '记录课次出勤' })
+    await user.selectOptions(within(attendanceDialog).getByLabelText('出勤结果'), 'present')
+    await user.click(within(attendanceDialog).getByRole('button', { name: '保存关系' }))
+    expect(await screen.findByText('已保存 2 条场景关系')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '项目工作台' }))
+    await user.click(screen.getByRole('button', { name: '分配项目教师' }))
+    const teacherDialog = await screen.findByRole('dialog', { name: '分配项目教师' })
+    await user.selectOptions(within(teacherDialog).getByLabelText('项目角色'), 'assistant')
+    await user.click(within(teacherDialog).getByRole('button', { name: '保存关系' }))
+    expect(await screen.findByText('已保存 1 条场景关系')).toBeInTheDocument()
   })
 
   it('surfaces create, update, publish, assessment, and share failures', async () => {

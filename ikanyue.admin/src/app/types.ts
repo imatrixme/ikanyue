@@ -25,6 +25,8 @@ export type OpsResource =
 export type AppView =
   | 'dashboard'
   | 'guidedOps'
+  | 'projectScenes'
+  | 'lessonScenes'
   | OpsResource
   | 'assessmentTemplates'
   | 'assessmentWorkspace'

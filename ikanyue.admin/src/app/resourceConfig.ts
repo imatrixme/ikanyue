@@ -38,6 +38,8 @@ export const navGroups: NavGroup[] = [
     items: [
       { view: 'students', label: '学员', icon: GraduationCap, section: '人员资料' },
       { view: 'teachers', label: '教师', icon: Users, adminOnly: true, section: '人员资料' },
+      { view: 'projectScenes', label: '项目工作台', icon: BookOpen, section: '场景工作台' },
+      { view: 'lessonScenes', label: '课次工作台', icon: CalendarRange, section: '场景工作台' },
       { view: 'learningPrograms', label: '教学项目', icon: SquareStack, section: '教学对象' },
       { view: 'learningSessions', label: '实际课次', icon: CalendarRange, section: '教学对象' },
       { view: 'programStudents', label: '项目学员', icon: GraduationCap, section: '参与关系' },

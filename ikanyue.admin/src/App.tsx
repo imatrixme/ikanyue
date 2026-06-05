@@ -6,13 +6,16 @@ import { executeGuidedPlan, type GuidedPlan } from './app/guidedWorkflows'
 import { navItems } from './app/resourceConfig'
 import { defaultResourcePayload } from './app/resourceDefaults'
 import { getResourceDependencies, nextPublishStatus } from './app/resourceForms'
+import type { RelationActionPayload } from './app/sceneWorkspaces'
 import { appReducer, canAccessView, initialState } from './app/state'
 import type { AppView, LoginResult, OpsResource, ResourceRecord } from './app/types'
 import { AssessmentWorkspace } from './components/ops/AssessmentWorkspace'
 import { DashboardView } from './components/ops/DashboardView'
 import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
 import { GuidedOpsWorkspace } from './components/ops/GuidedOpsWorkspace'
+import { LessonSceneWorkspace } from './components/ops/LessonSceneWorkspace'
 import { LoginView } from './components/ops/LoginView'
+import { ProjectSceneWorkspace } from './components/ops/ProjectSceneWorkspace'
 import { ReportsView } from './components/ops/ReportsView'
 import { ResourceView } from './components/ops/ResourceView'
 import { SharePreviewView } from './components/ops/SharePreviewView'
@@ -28,7 +31,9 @@ const SESSION_STORAGE_KEY = 'kanyue.ops.session'
 
 const resourceViews = navItems
   .map((item) => item.view)
-  .filter((view): view is OpsResource => !['dashboard', 'guidedOps', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview', 'systemSettings'].includes(view))
+  .filter((view): view is OpsResource => !['dashboard', 'guidedOps', 'projectScenes', 'lessonScenes', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview', 'systemSettings'].includes(view))
+
+const sceneResources: OpsResource[] = ['students', 'teachers', 'learningPrograms', 'learningSessions', 'programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers']
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
@@ -63,6 +68,8 @@ export default function App({ api: injectedApi }: AppProps) {
         dispatch({ type: 'dashboard:set', payload: await api.dashboard(state.token) })
       } else if (view === 'guidedOps') {
         await Promise.all(['students', 'teachers', 'activitySignups', 'learningPrograms', 'learningSessions', 'reportTemplates'].map((resource) => loadResourceWithDependencies(resource as OpsResource)))
+      } else if (view === 'projectScenes' || view === 'lessonScenes') {
+        await Promise.all(sceneResources.map((resource) => loadResourceWithDependencies(resource)))
       } else if (resourceViews.includes(view as OpsResource)) {
         await loadResourceWithDependencies(view as OpsResource)
       } else if (view === 'assessmentTemplates') {
@@ -130,6 +137,25 @@ export default function App({ api: injectedApi }: AppProps) {
       dispatch({ type: 'toast:set', payload: { type: 'info', message: record?.id ? '已保存记录' : '已创建记录' } })
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '保存失败' } })
+    }
+  }
+
+  async function createSceneRelations(action: RelationActionPayload) {
+    if (!state.token) {
+      return
+    }
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      await Promise.all(action.payloads.map((payload) => {
+        const existing = findExistingRelationRecord(action.resource, state.resources[action.resource]?.items || [], payload)
+        return existing?.id
+          ? api.updateResource(action.resource, existing.id, state.token, payload)
+          : api.createResource(action.resource, state.token, { ...defaultResourcePayload(action.resource), ...payload })
+      }))
+      await Promise.all(sceneResources.map((resource) => loadResourceWithDependencies(resource)))
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: `已保存 ${action.payloads.length} 条场景关系` } })
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: error instanceof Error ? error.message : '保存场景关系失败' } })
     }
   }
 
@@ -334,6 +360,20 @@ export default function App({ api: injectedApi }: AppProps) {
           onUploadRichTextImage={uploadRichTextImage}
         />
       ) : null}
+      {state.activeView === 'projectScenes' ? (
+        <ProjectSceneWorkspace
+          resources={state.resources}
+          loading={state.loading}
+          onCreateRelations={createSceneRelations}
+        />
+      ) : null}
+      {state.activeView === 'lessonScenes' ? (
+        <LessonSceneWorkspace
+          resources={state.resources}
+          loading={state.loading}
+          onCreateRelations={createSceneRelations}
+        />
+      ) : null}
       {resourceViews.includes(state.activeView as OpsResource) ? (
         <ResourceView
           resource={state.activeView as OpsResource}
@@ -401,4 +441,22 @@ function clearCachedSession() {
     return
   }
   localStorage.removeItem(SESSION_STORAGE_KEY)
+}
+
+function findExistingRelationRecord(resource: OpsResource, records: ResourceRecord[], payload: Record<string, unknown>) {
+  return records.find((record) => {
+    if (resource === 'programStudents') {
+      return record.programId === payload.programId && record.studentId === payload.studentId
+    }
+    if (resource === 'programTeachers') {
+      return record.programId === payload.programId && record.teacherId === payload.teacherId
+    }
+    if (resource === 'sessionStudents') {
+      return record.sessionId === payload.sessionId && record.studentId === payload.studentId
+    }
+    if (resource === 'sessionTeachers') {
+      return record.sessionId === payload.sessionId && record.teacherId === payload.teacherId
+    }
+    return false
+  })
 }

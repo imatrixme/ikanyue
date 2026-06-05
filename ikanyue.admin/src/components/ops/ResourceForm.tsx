@@ -1,4 +1,4 @@
-import { Save } from 'lucide-react'
+import { FileText, Save } from 'lucide-react'
 import { useState } from 'react'
 
 import { booleanOptions, buildResourceFormState, buildResourcePayload, resourceFormFields, resourceFormValueText } from '../../app/resourceForms'
@@ -8,10 +8,10 @@ import { EntityPicker } from '../ui/EntityPicker'
 import { FilePicker } from '../ui/FilePicker'
 import { Field, Input } from '../ui/Input'
 import { LocationPicker } from '../ui/LocationPicker'
-import { RichTextEditor } from '../ui/RichTextEditor'
 import { Select } from '../ui/Select'
 import { Switch } from '../ui/Switch'
 import { DateTimePicker } from '../ui/DateTimePicker'
+import { DocumentEditorModal } from './DocumentEditorModal'
 
 interface ResourceFormProps {
   resource: OpsResource
@@ -53,12 +53,12 @@ export function ResourceForm({ resource, record, onSubmit, actions, embedded = f
           return (
           <Field key={field.key} label={field.label} htmlFor={`${resource}-${field.key}`} className={wide ? 'md:col-span-2' : undefined}>
             {field.type === 'textarea' ? (
-              <RichTextEditor
+              <LongFormSummary
                 id={`${resource}-${field.key}`}
                 label={field.label}
                 value={resourceFormValueText(form[field.key])}
                 onChange={(value) => setForm((current) => ({ ...current, [field.key]: value }))}
-                onUploadImage={onUploadRichTextImage}
+                onUploadRichTextImage={onUploadRichTextImage}
               />
             ) : field.type === 'boolean' ? (
               <div className="flex h-10 items-center gap-3 rounded-md border border-[var(--input)] bg-[var(--card)] px-3 shadow-sm">
@@ -125,4 +125,49 @@ export function ResourceForm({ resource, record, onSubmit, actions, embedded = f
       </div>
     </form>
   )
+}
+
+function LongFormSummary({ id, label, value, onChange, onUploadRichTextImage }: {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  onUploadRichTextImage?: (file: File) => Promise<string>
+}) {
+  const [open, setOpen] = useState(false)
+  const summary = summarizeHtml(value)
+  return (
+    <div className="rounded-md border border-[var(--input)] bg-[var(--card)] p-3 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileText className="h-4 w-4 text-cyan-700" aria-hidden="true" />
+            <span>{label}</span>
+          </div>
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted-foreground)]">{summary || '暂无内容，打开编辑器补充。'}</p>
+        </div>
+        <Button aria-label={`编辑${label}`} id={id} type="button" variant="secondary" onClick={() => setOpen(true)}>
+          打开编辑器
+        </Button>
+      </div>
+      <DocumentEditorModal
+        open={open}
+        title={`编辑${label}`}
+        label={label}
+        value={value}
+        onClose={() => setOpen(false)}
+        onSave={onChange}
+        onUploadImage={onUploadRichTextImage}
+      />
+    </div>
+  )
+}
+
+function summarizeHtml(value: string) {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }

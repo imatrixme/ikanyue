@@ -185,25 +185,39 @@ describe('guided ops workflows', () => {
   })
 
   it('builds content, promotion, signup, and conversion workflow plans', () => {
+    const cover = new File(['cover'], 'cover.png', { type: 'image/png' })
+    const audio = new File(['audio'], 'voice.mp3', { type: 'audio/mpeg' })
     const audioPlan = buildGuidedPlan(workflowById('publishAudioMaterial'), {
       ...workflowById('publishAudioMaterial').defaultAnswers,
-      title: '气息练习',
-      author: '王老师',
+      title: '',
+      ownerName: '王老师',
+      coverImage: cover,
+      materialFile: audio,
       createSlot: true,
-      publishStatus: 'published',
+      publishStatus: '',
     })
     expect(audioPlan.operations.map((operation) => operation.resource)).toEqual(['audioMaterials', 'operationSlots'])
+    expect(audioPlan.operations[0].payload).toMatchObject({
+      title: '新音频素材',
+      author: '王老师',
+      coverImage: cover,
+      audioSource: audio,
+      status: 'draft',
+    })
     expect(audioPlan.operations[1].payload).toMatchObject({ targetType: 'audio', targetId: '{{audioMaterial.id}}' })
 
     const videoPlan = buildGuidedPlan(workflowById('publishVideoMaterial'), {
       ...workflowById('publishVideoMaterial').defaultAnswers,
-      title: '舞台表现示范',
-      materialType: 'demo',
+      title: '',
+      materialType: '',
+      publishStatus: '',
+      difficulty: '',
+      materialFile: '/video/demo.mp4',
     })
     expect(videoPlan.operations).toEqual([
       expect.objectContaining({
         resource: 'videoMaterials',
-        payload: expect.objectContaining({ title: '舞台表现示范', type: 'demo', resolution: '1080p' }),
+        payload: expect.objectContaining({ title: '新视频素材', type: 'lesson', difficulty: 'L1', resolution: '1080p', videoSource: '/video/demo.mp4' }),
       }),
     ])
 
@@ -221,25 +235,34 @@ describe('guided ops workflows', () => {
 
     const signupPlan = buildGuidedPlan(workflowById('reviewSignup'), {
       ...workflowById('reviewSignup').defaultAnswers,
-      realName: '钱同学',
-      studentIds: ['student_1'],
-      age: 11,
-      signupStatus: 'attended',
+      title: '页面报名',
+      realName: '',
+      studentIds: [''],
+      userId: 'manual_user',
+      age: '-1',
+      signupStatus: '',
     })
     expect(signupPlan.operations[0]).toMatchObject({
       resource: 'activitySignups',
-      payload: { realName: '钱同学', userId: 'student_1', age: 11, status: 'attended' },
+      payload: { realName: '页面报名', userId: 'manual_user', age: 0, status: 'registered' },
     })
 
     const conversionPlan = buildGuidedPlan(workflowById('convertSignupToClass'), {
       ...workflowById('convertSignupToClass').defaultAnswers,
-      programType: 'course_package',
+      programType: 'activity',
       studentIds: ['student_1'],
       teacherIds: ['teacher_1'],
       sessionRule: 'pending',
     })
     expect(conversionPlan.operations.map((operation) => operation.resource)).toEqual(['learningPrograms', 'programStudents', 'programTeachers'])
-    expect(conversionPlan.operations[0].payload).toMatchObject({ type: 'course_package' })
+    expect(conversionPlan.operations[0].payload).toMatchObject({ type: 'activity' })
+
+    const trialConversion = buildGuidedPlan(workflowById('convertSignupToClass'), {
+      ...workflowById('convertSignupToClass').defaultAnswers,
+      programType: 'unexpected',
+      sessionRule: 'pending',
+    })
+    expect(trialConversion.operations[0].payload).toMatchObject({ type: 'trial' })
   })
 
   it('resolves generated-record references and executes plan operations in order', async () => {

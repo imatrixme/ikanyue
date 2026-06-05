@@ -5,6 +5,7 @@ import { canEditResource, nextPublishStatus } from '../../app/resourceForms'
 import { resourceConfig } from '../../app/resourceConfig'
 import type { ListResult, OpsResource, ResourceLookup, ResourceRecord } from '../../app/types'
 import { Button } from '../ui/Button'
+import { Badge } from '../ui/Badge'
 import { Panel } from '../ui/Card'
 import { DataTable } from '../ui/DataTable'
 import { Input } from '../ui/Input'
@@ -74,6 +75,15 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
           </>
         )}
       />
+      {relationResourceSceneHint(resource) ? (
+        <div className="mx-4 mb-4 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="blue">高级维护</Badge>
+            <span className="font-medium">{relationResourceSceneHint(resource)}</span>
+          </div>
+          <p className="mt-1 text-xs text-cyan-900/70">日常操作请优先从场景工作台进入，那里会锁定父级上下文，避免误选项目或课次。</p>
+        </div>
+      ) : null}
       <DataTable
         columns={config.columns}
         rows={result?.items || []}
@@ -147,4 +157,14 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
       </Sheet>
     </Panel>
   )
+}
+
+function relationResourceSceneHint(resource: OpsResource) {
+  const hints: Partial<Record<OpsResource, string>> = {
+    programStudents: '添加项目学员请优先使用“项目工作台”。',
+    programTeachers: '分配项目教师请优先使用“项目工作台”。',
+    sessionStudents: '记录课次出勤请优先使用“课次工作台”。',
+    sessionTeachers: '确认课次教师请优先使用“课次工作台”。',
+  }
+  return hints[resource] || ''
 }

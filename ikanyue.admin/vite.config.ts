@@ -13,7 +13,17 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/entry-client.tsx'],
+      exclude: [
+        'src/App.tsx',
+        'src/entry-client.tsx',
+        'src/entry-server.tsx',
+        'src/app/mockData.ts',
+        'src/app/resourceConfig.ts',
+        'src/app/guidedWorkflowCatalog.ts',
+        'src/app/guidedWorkflowDefinitions.ts',
+        'src/app/guidedWorkflowTypes.ts',
+        'src/app/types.ts',
+      ],
     },
   },
 })

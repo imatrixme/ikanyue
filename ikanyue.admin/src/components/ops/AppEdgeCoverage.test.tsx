@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -110,10 +110,14 @@ describe('ops admin edge coverage', () => {
 
     await user.clear(screen.getByLabelText('姓名'))
     await user.type(screen.getByLabelText('姓名'), '新姓名')
-    await user.type(screen.getByLabelText('备注'), '已电话确认')
+    await user.click(screen.getByRole('button', { name: '编辑备注' }))
+    const editor = await screen.findByRole('dialog', { name: '编辑备注' })
+    await user.click(within(editor).getByRole('tab', { name: '主 Markdown 模式' }))
+    await user.type(within(editor).getByLabelText('备注 Markdown编辑'), '已电话确认')
+    await user.click(within(editor).getByRole('button', { name: '保存内容' }))
     await user.selectOptions(screen.getByLabelText('状态'), 'attended')
     await user.click(screen.getByRole('button', { name: '保存' }))
-    expect(submitted).toContainEqual({ realName: '新姓名', status: 'attended', remark: '<p>已电话确认</p>' })
+    expect(submitted).toContainEqual({ realName: '新姓名', status: 'attended', remark: '<p>已电话确认</p>\n' })
   })
 
   it('covers mock API assessment and share fallback branches', async () => {
