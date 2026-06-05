@@ -1,0 +1,4 @@
+interface:
+  display_name: "Human-Centered Interaction Design"
+  short_description: "Design admin workflows from operator intent and clarity."
+  default_prompt: "Use $human-centered-interaction-design to rethink this admin workflow from the operator's intent, understanding cost, and ambiguity risk before proposing components."
