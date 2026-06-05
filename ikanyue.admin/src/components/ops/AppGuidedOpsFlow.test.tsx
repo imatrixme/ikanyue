@@ -36,7 +36,7 @@ describe('guided ops app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    expect(await screen.findByText('运营总览')).toBeInTheDocument()
+    expect(await screen.findByText('教务运营驾驶舱')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '运营流程' }))
     expect(await screen.findByText('运营流程工作台')).toBeInTheDocument()

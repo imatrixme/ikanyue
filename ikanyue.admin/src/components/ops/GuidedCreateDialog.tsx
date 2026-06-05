@@ -12,12 +12,12 @@ import { FilePicker } from '../ui/FilePicker'
 import { FloatingTooltip } from '../ui/FloatingTooltip'
 import { Field, Input } from '../ui/Input'
 import { LocationPicker } from '../ui/LocationPicker'
-import { RichTextEditor } from '../ui/RichTextEditor'
 import { Select } from '../ui/Select'
 import { Sheet } from '../ui/Sheet'
 import { Switch } from '../ui/Switch'
 import { DateTimePicker } from '../ui/DateTimePicker'
 import { cn } from '../ui/utils'
+import { DocumentEditorModal } from './DocumentEditorModal'
 
 interface GuidedCreateDialogProps {
   open: boolean
@@ -34,6 +34,7 @@ interface GuidedCreateDialogProps {
 export function GuidedCreateDialog({ open, workflow, resources = {}, draft = null, submitting = false, onClose, onConfirm, onSaveDraft, onUploadRichTextImage }: GuidedCreateDialogProps) {
   const [stepIndex, setStepIndex] = useState(() => draft?.stepIndex || 0)
   const [answers, setAnswers] = useState<GuidedAnswers>(() => draft?.answers || (workflow ? initialGuidedAnswers(workflow) : {}))
+  const [documentEditor, setDocumentEditor] = useState<{ title: string; label: string; key: string; value: string } | null>(null)
   const activeStep = workflow?.steps[stepIndex]
   const plan = useMemo(() => workflow ? buildGuidedPlan(workflow, answers, resources) : null, [answers, resources, workflow])
 
@@ -57,12 +58,15 @@ export function GuidedCreateDialog({ open, workflow, resources = {}, draft = nul
   const lastStep = stepIndex === workflow.steps.length - 1
 
   return (
+    <>
     <Sheet
       open={open}
       title={workflow.title}
       description={workflow.intent}
       onClose={close}
       className="w-[min(1040px,calc(100vw-2rem))]"
+      side="right"
+      suspended={Boolean(documentEditor)}
       footer={(
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs text-[var(--muted-foreground)]">第 {stepIndex + 1} 步 / 共 {workflow.steps.length} 步</div>
@@ -117,7 +121,14 @@ export function GuidedCreateDialog({ open, workflow, resources = {}, draft = nul
           {activeStep.fields.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {activeStep.fields.map((field) => (
-                <GuidedFieldControl key={field.key} field={field} value={answers[field.key]} resources={resources} onChange={(value) => updateAnswer(field.key, value)} onUploadRichTextImage={onUploadRichTextImage} />
+                <GuidedFieldControl
+                  key={field.key}
+                  field={field}
+                  value={answers[field.key]}
+                  resources={resources}
+                  onChange={(value) => updateAnswer(field.key, value)}
+                  onOpenDocumentEditor={(request) => setDocumentEditor(request)}
+                />
               ))}
             </div>
           ) : (
@@ -127,21 +138,35 @@ export function GuidedCreateDialog({ open, workflow, resources = {}, draft = nul
         </div>
       </div>
     </Sheet>
+    <DocumentEditorModal
+      open={Boolean(documentEditor)}
+      title={documentEditor?.title || ''}
+      label={documentEditor?.label || ''}
+      value={documentEditor?.value || ''}
+      onClose={() => setDocumentEditor(null)}
+      onSave={(value) => {
+        if (documentEditor) {
+          updateAnswer(documentEditor.key, value)
+        }
+        setDocumentEditor(null)
+      }}
+      onUploadImage={onUploadRichTextImage}
+    />
+    </>
   )
 }
 
-function GuidedFieldControl({ field, value, resources, onChange, onUploadRichTextImage }: { field: GuidedField; value: GuidedAnswerValue | undefined; resources: ResourceLookup; onChange: (value: GuidedAnswerValue) => void; onUploadRichTextImage?: (file: File) => Promise<string> }) {
+function GuidedFieldControl({ field, value, resources, onChange, onOpenDocumentEditor }: { field: GuidedField; value: GuidedAnswerValue | undefined; resources: ResourceLookup; onChange: (value: GuidedAnswerValue) => void; onOpenDocumentEditor: (request: { title: string; label: string; key: string; value: string }) => void }) {
   const textValue = typeof value === 'string' || typeof value === 'number' ? String(value) : ''
   const wide = field.type === 'textarea' || field.type === 'multiselect' || field.type === 'relation' || field.type === 'file'
   return (
     <Field label={field.label} htmlFor={`guided-${field.key}`} hint={field.required ? '必填' : undefined} className={wide ? 'md:col-span-2' : undefined}>
       {field.type === 'textarea' ? (
-        <RichTextEditor
+        <GuidedLongFormSummary
           id={`guided-${field.key}`}
           label={field.label}
           value={textValue}
-          onChange={onChange}
-          onUploadImage={onUploadRichTextImage}
+          onOpen={() => onOpenDocumentEditor({ title: `编辑${field.label}`, label: field.label, key: field.key, value: textValue })}
         />
       ) : field.type === 'choice' ? (
         <Select id={`guided-${field.key}`} aria-label={field.label} value={textValue} options={field.options || []} onChange={(event) => onChange(event.target.value)} />
@@ -189,6 +214,23 @@ function GuidedFieldControl({ field, value, resources, onChange, onUploadRichTex
         />
       )}
     </Field>
+  )
+}
+
+function GuidedLongFormSummary({ id, label, value, onOpen }: { id: string; label: string; value: string; onOpen: () => void }) {
+  const summary = summarizeHtml(value)
+  return (
+    <div className="rounded-md border border-[var(--input)] bg-[var(--card)] p-3 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold">{label}</div>
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted-foreground)]">{summary || '暂无内容，打开编辑器补充。'}</p>
+        </div>
+        <Button aria-label={`编辑${label}`} id={id} type="button" variant="secondary" onClick={onOpen}>
+          打开编辑器
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -250,4 +292,13 @@ function OperationTag({ operation }: { operation: GuidedPlan['operations'][numbe
       </FloatingTooltip>
     </div>
   )
+}
+
+function summarizeHtml(value: string) {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }

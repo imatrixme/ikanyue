@@ -17,6 +17,9 @@ interface ShellProps {
 }
 
 export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
+  const roleTitle = profile.isAdmin ? '教务运营后台' : '教师工作台'
+  const roleEyebrow = profile.isAdmin ? 'Operations' : 'Teaching'
+
   return (
     <div className="min-h-screen text-[var(--foreground)]">
       <div className="lg:grid lg:min-h-screen lg:grid-cols-[auto_1fr]">
@@ -25,8 +28,8 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
           <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--background)]/85 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/70">
             <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-5 py-3">
               <div>
-                <p className="text-xs font-medium text-[var(--muted-foreground)]">Operations</p>
-                <h1 className="text-lg font-semibold tracking-tight">后台管理</h1>
+                <p className="text-xs font-medium text-[var(--muted-foreground)]">{roleEyebrow}</p>
+                <h1 className="text-lg font-semibold tracking-tight">{roleTitle}</h1>
               </div>
               <div className="flex flex-1 items-center justify-end gap-3">
                 <div className="hidden w-full max-w-[360px] items-center gap-2 rounded-md border border-[var(--input)] bg-[var(--card)] px-3 shadow-sm md:flex">

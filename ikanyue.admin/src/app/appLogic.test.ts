@@ -215,7 +215,7 @@ describe('app reducer and permissions', () => {
     expect(canAccessView(mockProfiles.teacher, 'reportTemplates')).toBe(false)
     expect(canAccessView(mockProfiles.admin, 'teachers')).toBe(true)
     expect(canAccessView(mockProfiles.teacher, 'students')).toBe(true)
-    expect(canAccessView(mockProfiles.teacher, 'reportEvents')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'reportEvents')).toBe(false)
   })
 
   it('creates default payloads for all managed resource types', () => {

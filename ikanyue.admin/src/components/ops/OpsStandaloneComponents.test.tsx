@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -17,14 +17,39 @@ import { SystemSettingsView } from './SystemSettingsView'
 import { TemplatesView } from './TemplatesView'
 
 describe('standalone ops components', () => {
-  it('renders dashboard and share preview states', () => {
-    const { rerender } = render(<DashboardView data={{ cards: [{ key: 'students', label: '学员', value: 2 }, { key: 'custom', label: '自定义', value: 1 }], pending: [] }} />)
-    expect(screen.getByText('运营总览')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('自定义')).toBeInTheDocument()
+  async function saveOpenResourceForm(user: ReturnType<typeof userEvent.setup>) {
+    const dialog = screen.getByRole('dialog')
+    let next = within(dialog).queryByRole('button', { name: '下一步' })
+    while (next) {
+      await user.click(next)
+      next = within(dialog).queryByRole('button', { name: '下一步' })
+    }
+    expect(within(dialog).getByText('变更一览')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: '保存' }))
+  }
 
-    rerender(<DashboardView data={null} />)
-    expect(screen.getByText('待处理')).toBeInTheDocument()
+  it('renders role-specific dashboard states', async () => {
+    const user = userEvent.setup()
+    const views: string[] = []
+    const { rerender } = render(
+      <DashboardView
+        data={{ cards: [{ key: 'students', label: '学员', value: 2 }, { key: 'custom', label: '自定义', value: 1 }], pending: [] }}
+        profile={mockProfiles.admin}
+        resources={mockResources}
+        onViewChange={(view) => views.push(view)}
+      />,
+    )
+    expect(screen.getByText('教务运营驾驶舱')).toBeInTheDocument()
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
+    expect(screen.getByText('自定义')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /发起运营流程/ }))
+    expect(views).toContain('guidedOps')
+
+    rerender(<DashboardView data={null} profile={mockProfiles.teacher} resources={mockResources} reports={mockReports} onViewChange={(view) => views.push(view)} />)
+    expect(screen.getByText('王老师，先处理今天的课')).toBeInTheDocument()
+
+    rerender(<DashboardView data={null} profile={mockProfiles.teacher} resources={{}} reports={null} onViewChange={(view) => views.push(view)} />)
+    expect(screen.getByText('今天还没有同步课次')).toBeInTheDocument()
   })
 
   it('renders empty share state and report preview', () => {
@@ -96,7 +121,7 @@ describe('standalone ops components', () => {
     await user.click(screen.getByRole('button', { name: '取消' }))
     expect(screen.queryByRole('dialog', { name: '新建运营位' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '新建运营位' }))
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     expect(searches).toContain('save')
     slotView.unmount()
 
@@ -107,10 +132,10 @@ describe('standalone ops components', () => {
     const updates: Array<Record<string, unknown>> = []
     const studentEditor = render(<ResourceView resource="students" result={mockResources.students} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
-    expect(screen.getByRole('dialog', { name: '编辑学员管理' })).toHaveClass('left-1/2')
+    expect(screen.getByRole('dialog', { name: '编辑学员管理' })).toHaveClass('right-0')
     await user.clear(screen.getByLabelText('姓名'))
     await user.type(screen.getByLabelText('姓名'), '更新学员')
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ realName: '更新学员', blocked: false }))
     studentEditor.unmount()
 
@@ -128,7 +153,7 @@ describe('standalone ops components', () => {
     expect(screen.getByRole('switch', { name: '审核通过' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('switch', { name: '禁用账号' })).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByRole('switch', { name: '管理员权限' })).toHaveAttribute('aria-checked', 'false')
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ verified: true, blocked: false, isAdmin: false }))
     teacherEditor.unmount()
 
@@ -137,7 +162,7 @@ describe('standalone ops components', () => {
     expect(screen.getByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的活动')
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     await user.click(screen.getAllByRole('button', { name: '发布' })[0])
     expect(updates).toContainEqual(expect.objectContaining({ title: '编辑后的活动' }))
     expect(updates).toContainEqual({ publish: 'activity_2' })
@@ -254,7 +279,7 @@ describe('standalone ops components', () => {
     expect(screen.getByText('当前选择：春季体验课')).toBeInTheDocument()
     await user.type(screen.getByLabelText('所属项目'), '暑期')
     await user.click(screen.getByRole('button', { name: '暑期声乐包' }))
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ programId: 'program_2' }))
     sessionView.unmount()
 
@@ -267,9 +292,10 @@ describe('standalone ops components', () => {
     const audioView = render(<ResourceView resource="audioMaterials" result={mockResources.audioMaterials} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     const file = new File(['audio'], 'lesson.mp3', { type: 'audio/mpeg' })
+    await user.click(screen.getByRole('button', { name: '下一步' }))
     await user.upload(screen.getByLabelText('选择音频文件'), file)
     expect(screen.getByText('浏览器端暂存，保存时随表单提交')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ audioSource: file }))
     audioView.unmount()
   })

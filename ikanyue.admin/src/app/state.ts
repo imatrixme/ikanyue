@@ -58,5 +58,16 @@ export function canAccessView(profile: OpsProfile | null, view: AppView): boolea
   if (!profile) {
     return false
   }
-  return !['teachers', 'assessmentTemplates', 'reportTemplates', 'auditLogs', 'systemSettings'].includes(view) || profile.isAdmin
+  if (profile.isAdmin) {
+    return true
+  }
+  return teacherViews.has(view)
 }
+
+const teacherViews = new Set<AppView>([
+  'dashboard',
+  'lessonScenes',
+  'students',
+  'assessmentWorkspace',
+  'reports',
+])

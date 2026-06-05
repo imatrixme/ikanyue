@@ -154,6 +154,7 @@ function PeopleActionDialogSession({
   const [query, setQuery] = useState('')
   const orderedPeople = useMemo(() => filterPeople(selectedPeopleFirst(people, selectedIds), query), [people, query, selectedIds])
   const selectedPeople = people.filter((person) => selectedIds.includes(person.id))
+  const selectedModeLabel = modeOptions.find((option) => option.value === mode)?.label || mode
 
   function togglePerson(id: string) {
     setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
@@ -164,10 +165,13 @@ function PeopleActionDialogSession({
       open={open}
       title={title}
       description={description}
+      side="right"
       onClose={onClose}
       footer={(
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-[var(--muted-foreground)]">将提交 {selectedIds.length} 条关系记录，父级上下文固定不变。</div>
+          <div className="text-xs text-[var(--muted-foreground)]">
+            {context ? `将在“${context.title}”下保存 ${selectedIds.length} 条关系记录。` : '缺少锁定上下文，无法提交。'}
+          </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>取消</Button>
             <Button disabled={!context || selectedIds.length === 0 || submitting} type="button" onClick={() => onSubmit(selectedIds, mode)} icon={<Check className="h-4 w-4" aria-hidden="true" />}>
@@ -177,69 +181,140 @@ function PeopleActionDialogSession({
         </div>
       )}
     >
-      <div className="grid gap-4">
-        <LockedContextCard context={context} label={contextLabel} />
-        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
-          <Field label={optionLabel}>
-            <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-2">
-              <div className="mb-2 flex items-center gap-2 rounded-md border border-[var(--input)] bg-[var(--card)] px-2 shadow-sm">
-                <Search className="h-4 w-4 text-[var(--muted-foreground)]" aria-hidden="true" />
-                <Input aria-label={`${optionLabel}搜索`} className="h-8 border-0 px-0 focus:ring-0" placeholder="搜索姓名、手机号、状态" value={query} onChange={(event) => setQuery(event.target.value)} />
-              </div>
-              <div className="max-h-[360px] overflow-y-auto rounded-md bg-[var(--card)]">
-                {orderedPeople.map((person) => (
-                  <button
-                    key={person.id}
-                    aria-label={`选择${person.name}`}
-                    className={cn(
-                      'flex w-full items-center gap-3 border-b border-[var(--border)] px-3 py-2 text-left transition last:border-0 hover:bg-[var(--muted)]/45',
-                      selectedIds.includes(person.id) && 'bg-cyan-50/70',
-                    )}
-                    onClick={() => togglePerson(person.id)}
-                    type="button"
-                  >
-                    <PersonAvatar person={person} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-semibold">{person.name}</span>
-                        {person.selected ? <Badge tone="green">已在关系中</Badge> : null}
-                      </div>
-                      <p className="truncate text-xs text-[var(--muted-foreground)]">{person.secondary}</p>
-                    </div>
-                    <PersonDetailTooltip person={person} />
-                    <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded border text-xs', selectedIds.includes(person.id) ? 'border-cyan-600 bg-cyan-600 text-white' : 'border-[var(--border)] text-transparent')}>
-                      <Check className="h-3 w-3" aria-hidden="true" />
-                    </span>
-                  </button>
-                ))}
-                {orderedPeople.length === 0 ? <div className="px-3 py-8 text-center text-sm text-[var(--muted-foreground)]">没有匹配的人物</div> : null}
-              </div>
-            </div>
-          </Field>
-          <div className="grid gap-3">
+      <div className="grid min-h-[560px] gap-5 xl:grid-cols-[300px_1fr]">
+        <aside className="grid content-start gap-4">
+          <LockedContextCard context={context} label={contextLabel} />
+          <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
             <Field label={modeLabel}>
               <Select aria-label={modeLabel} value={mode} options={modeOptions} onChange={(event) => setMode(event.target.value)} />
             </Field>
-            <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                <Users className="h-4 w-4 text-cyan-700" aria-hidden="true" />
-                已选人物
+            <p className="mt-3 text-xs leading-5 text-[var(--muted-foreground)]">
+              本次选择的人都会使用“{selectedModeLabel}”。不同角色或不同出勤状态请分次保存，避免混入不同语义。
+            </p>
+          </div>
+          <PeopleActionReview
+            context={context}
+            contextLabel={contextLabel}
+            modeLabel={modeLabel}
+            selectedModeLabel={selectedModeLabel}
+            selectedPeople={selectedPeople}
+            compact
+          />
+        </aside>
+
+        <div className="min-w-0">
+          <div className="grid gap-4">
+            <Field label={optionLabel}>
+              <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-2">
+                <div className="mb-2 flex items-center gap-2 rounded-md border border-[var(--input)] bg-[var(--card)] px-2 shadow-sm">
+                  <Search className="h-4 w-4 text-[var(--muted-foreground)]" aria-hidden="true" />
+                  <Input aria-label={`${optionLabel}搜索`} className="h-8 border-0 px-0 focus:ring-0" placeholder="搜索姓名、手机号、状态" value={query} onChange={(event) => setQuery(event.target.value)} />
+                </div>
+                <div className="max-h-[460px] overflow-y-auto rounded-md bg-[var(--card)]">
+                  {orderedPeople.map((person) => (
+                    <button
+                      key={person.id}
+                      aria-label={`选择${person.name}`}
+                      className={cn(
+                        'flex w-full items-center gap-3 border-b border-[var(--border)] px-3 py-2 text-left transition last:border-0 hover:bg-[var(--muted)]/45',
+                        selectedIds.includes(person.id) && 'bg-cyan-50/70',
+                      )}
+                      onClick={() => togglePerson(person.id)}
+                      type="button"
+                    >
+                      <PersonAvatar person={person} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold">{person.name}</span>
+                          {person.selected ? <Badge tone="green">已在关系中</Badge> : null}
+                        </div>
+                        <p className="truncate text-xs text-[var(--muted-foreground)]">{person.secondary}</p>
+                      </div>
+                      <PersonDetailTooltip person={person} />
+                      <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded border text-xs', selectedIds.includes(person.id) ? 'border-cyan-600 bg-cyan-600 text-white' : 'border-[var(--border)] text-transparent')}>
+                        <Check className="h-3 w-3" aria-hidden="true" />
+                      </span>
+                    </button>
+                  ))}
+                  {orderedPeople.length === 0 ? <div className="px-3 py-8 text-center text-sm text-[var(--muted-foreground)]">没有匹配的人物</div> : null}
+                </div>
               </div>
-              <SelectedAvatarGroup people={selectedPeople} />
-              <div className="mt-3 grid gap-1">
-                {selectedPeople.map((person) => (
-                  <button key={person.id} className="flex items-center justify-between gap-2 rounded px-2 py-1 text-left text-xs hover:bg-[var(--muted)]" onClick={() => togglePerson(person.id)} type="button">
-                    <span className="truncate">{person.name}</span>
-                    <UserMinus className="h-3.5 w-3.5 text-[var(--muted-foreground)]" aria-hidden="true" />
-                  </button>
-                ))}
-                {selectedPeople.length === 0 ? <p className="text-xs text-[var(--muted-foreground)]">还没有选择人物</p> : null}
-              </div>
-            </div>
+            </Field>
+            <SelectedPeopleSummary selectedPeople={selectedPeople} onRemove={togglePerson} />
           </div>
         </div>
       </div>
     </Sheet>
+  )
+}
+
+function SelectedPeopleSummary({ selectedPeople, onRemove }: { selectedPeople: PersonOption[]; onRemove: (id: string) => void }) {
+  return (
+    <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+        <Users className="h-4 w-4 text-cyan-700" aria-hidden="true" />
+        已选人物
+      </div>
+      <SelectedAvatarGroup people={selectedPeople} />
+      <div className="mt-3 grid gap-1">
+        {selectedPeople.map((person) => (
+          <button key={person.id} className="flex items-center justify-between gap-2 rounded px-2 py-1 text-left text-xs hover:bg-[var(--muted)]" onClick={() => onRemove(person.id)} type="button">
+            <span className="truncate">{person.name}</span>
+            <UserMinus className="h-3.5 w-3.5 text-[var(--muted-foreground)]" aria-hidden="true" />
+          </button>
+        ))}
+        {selectedPeople.length === 0 ? <p className="text-xs text-[var(--muted-foreground)]">还没有选择人物</p> : null}
+      </div>
+    </div>
+  )
+}
+
+function PeopleActionReview({
+  context,
+  contextLabel,
+  modeLabel,
+  selectedModeLabel,
+  selectedPeople,
+  compact = false,
+}: {
+  context: LockedContext | null
+  contextLabel: string
+  modeLabel: string
+  selectedModeLabel: string
+  selectedPeople: PersonOption[]
+  compact?: boolean
+}) {
+  return (
+    <div className="grid gap-4">
+      {!compact ? <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-4">
+        <div className="text-xs font-semibold text-[var(--muted-foreground)]">{contextLabel}</div>
+        <div className="mt-1 text-base font-semibold">{context?.title || '尚未选择上下文'}</div>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">{context?.subtitle || '缺少上下文，无法提交'}</p>
+      </div> : null}
+      <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold">{compact ? '本次保存' : '将保存的人物关系'}</h3>
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">{modeLabel}：{selectedModeLabel}</p>
+          </div>
+          <Badge tone={selectedPeople.length > 0 ? 'blue' : 'amber'}>{selectedPeople.length} 人</Badge>
+        </div>
+        <div className="mt-3 grid gap-2">
+          {selectedPeople.slice(0, compact ? 6 : selectedPeople.length).map((person) => (
+            <div className="flex items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--muted)]/20 px-3 py-2" key={person.id}>
+              <PersonAvatar person={person} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold">{person.name}</div>
+                <p className="truncate text-xs text-[var(--muted-foreground)]">{person.secondary}</p>
+              </div>
+              <Badge>{selectedModeLabel}</Badge>
+            </div>
+          ))}
+          {compact && selectedPeople.length > 6 ? <div className="text-xs text-[var(--muted-foreground)]">还有 {selectedPeople.length - 6} 人，保存前可在右侧已选列表查看。</div> : null}
+          {selectedPeople.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-sm text-[var(--muted-foreground)]">还没有选择人物</div> : null}
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -18,6 +18,7 @@ interface DocumentEditorModalProps {
   onClose: () => void
   onSave: (value: string) => void
   onUploadImage?: (file: File) => Promise<string>
+  side?: 'center' | 'right'
 }
 
 const turndown = new TurndownService({
@@ -26,7 +27,7 @@ const turndown = new TurndownService({
   headingStyle: 'atx',
 })
 
-export function DocumentEditorModal({ open, title, label, value, onClose, onSave, onUploadImage }: DocumentEditorModalProps) {
+export function DocumentEditorModal({ open, title, label, value, onClose, onSave, onUploadImage, side = 'right' }: DocumentEditorModalProps) {
   if (!open) {
     return null
   }
@@ -40,17 +41,19 @@ export function DocumentEditorModal({ open, title, label, value, onClose, onSave
       onClose={onClose}
       onSave={onSave}
       onUploadImage={onUploadImage}
+      side={side}
     />
   )
 }
 
-function DocumentEditorSession({ title, label, initialValue, onClose, onSave, onUploadImage }: {
+function DocumentEditorSession({ title, label, initialValue, onClose, onSave, onUploadImage, side }: {
   title: string
   label: string
   initialValue: string
   onClose: () => void
   onSave: (value: string) => void
   onUploadImage?: (file: File) => Promise<string>
+  side: 'center' | 'right'
 }) {
   const [mode, setMode] = useState<DocumentMode>('edit')
   const [draft, setDraft] = useState(initialValue || '')
@@ -131,6 +134,7 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
       title={title}
       description="长内容在这里完成编辑和预览，父表单只保留摘要。"
       onClose={closeWithProtection}
+      side={side}
       className="w-[min(1180px,calc(100vw-2rem))]"
       footer={(
         <div className="flex flex-wrap items-center justify-between gap-3">

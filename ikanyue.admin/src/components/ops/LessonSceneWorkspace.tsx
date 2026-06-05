@@ -15,8 +15,12 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { PageHeader } from '../ui/PageHeader'
-import { Select } from '../ui/Select'
 import { LockedContextCard, PeopleActionDialog, PeopleRoster, PersonRow } from './SceneComponents'
+import { SceneSetupDialog } from './SceneSetupDialog'
+import {
+  SceneWorkspaceFocus,
+  type SceneLocatorTask,
+} from './SceneLocator'
 
 interface LessonSceneWorkspaceProps {
   resources?: ResourceLookup
@@ -25,13 +29,36 @@ interface LessonSceneWorkspaceProps {
 }
 
 type LessonAction = 'attendance' | 'teachers' | null
+const lessonTasks: SceneLocatorTask[] = [
+  { key: 'attendance', title: '记录本堂出勤', description: '确认这堂课哪些学员到课、缺席、请假或迟到。' },
+  { key: 'teachers', title: '确认实际老师', description: '检查项目老师继承关系，并覆盖本堂课实际参与老师。' },
+  { key: 'report', title: '准备课后反馈', description: '从课次视角理解学员、老师和后续报告动作。' },
+]
 
 export function LessonSceneWorkspace({ resources = {}, loading = false, onCreateRelations }: LessonSceneWorkspaceProps) {
   const scenes = useMemo(() => buildLessonScenes(resources), [resources])
+  const lessons = useMemo(() => scenes.map((item) => item.lesson).filter((item): item is NonNullable<typeof item> => Boolean(item)), [scenes])
   const [selectedId, setSelectedId] = useState(() => scenes[0]?.lesson?.id ? String(scenes[0].lesson.id) : '')
+  const [pendingId, setPendingId] = useState(() => scenes[0]?.lesson?.id ? String(scenes[0].lesson.id) : '')
+  const [selectedTask, setSelectedTask] = useState(lessonTasks[0].key)
+  const [setupOpen, setSetupOpen] = useState(false)
   const [action, setAction] = useState<LessonAction>(null)
-  const scene = scenes.find((candidate) => String(candidate.lesson?.id || '') === selectedId) || scenes[0] || emptyLessonScene
+  const selectedLessonExists = lessons.some((lesson) => String(lesson.id) === selectedId)
+  const selectedLessonId = selectedLessonExists ? selectedId : String(lessons[0]?.id || '')
+  const pendingLessonExists = lessons.some((lesson) => String(lesson.id) === pendingId)
+  const effectivePendingId = pendingLessonExists ? pendingId : selectedLessonId
+  const workspaceReady = Boolean(selectedLessonId)
+  const scene = scenes.find((candidate) => String(candidate.lesson?.id || '') === selectedLessonId) || scenes[0] || emptyLessonScene
   const context = lessonLockedContext(scene.lesson, scene.project)
+  const selectedTaskConfig = lessonTasks.find((task) => task.key === selectedTask) || lessonTasks[0]
+
+  function confirmSetup() {
+    if (!lessons.some((lesson) => String(lesson.id) === effectivePendingId)) {
+      return
+    }
+    setSelectedId(effectivePendingId)
+    setSetupOpen(false)
+  }
 
   function submitAttendance(selectedIds: string[], status: string) {
     if (!context) {
@@ -57,36 +84,71 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
           title="课次工作台"
           description="围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课次关系表。"
           icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
-          actions={(
-            <Select
-              aria-label="选择课次"
-              className="min-w-[240px]"
-              value={String(scene.lesson?.id || '')}
-              options={scenes.map((item) => ({ value: String(item.lesson?.id || ''), label: String(item.lesson?.title || item.lesson?.id || '未命名课次') }))}
-              onChange={(event) => setSelectedId(event.target.value)}
-            />
-          )}
         />
-        <div className="grid gap-4 p-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <LessonSummary scene={scene} />
-          <div className="grid gap-3">
-            <LockedContextCard context={context} label="当前课次" />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Button disabled={!context} onClick={() => setAction('attendance')} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />}>记录出勤</Button>
-              <Button disabled={!context} onClick={() => setAction('teachers')} icon={<Users className="h-4 w-4" aria-hidden="true" />}>确认课次教师</Button>
-            </div>
-          </div>
+        <div className="grid gap-4 px-4 pb-4">
+          {!workspaceReady ? (
+            <WorkspaceSetupEntry
+              objectLabel="课次"
+              title="还没有可处理的课次"
+              description="先创建或同步课次。日常进入课次工作台会直接展示本堂课状态、学员出勤、教师继承和课后动作。"
+              onOpen={() => {
+                setPendingId(selectedLessonId || String(lessons[0]?.id || ''))
+                setSetupOpen(true)
+              }}
+            />
+          ) : (
+            <>
+              <SceneWorkspaceFocus task={selectedTaskConfig} objectLabel="课次" onChangeContext={() => {
+                setPendingId(selectedId)
+                setSetupOpen(true)
+              }} />
+              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                <LessonSummary scene={scene} />
+                <div className="grid gap-3">
+                  <LockedContextCard context={context} label="当前课次" />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button disabled={!context} variant={selectedTask === 'attendance' ? 'primary' : 'secondary'} onClick={() => setAction('attendance')} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />}>记录出勤</Button>
+                    <Button disabled={!context} variant={selectedTask === 'teachers' ? 'primary' : 'secondary'} onClick={() => setAction('teachers')} icon={<Users className="h-4 w-4" aria-hidden="true" />}>确认课次教师</Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </Panel>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <PeopleRoster title="课次学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" />
-        <TeacherInheritancePanel scene={scene} />
-        <PeopleRoster title="课次实际教师" people={scene.teachers} emptyLabel="这堂课还没有单独确认教师，默认参考项目教师。" />
-      </div>
+      {workspaceReady ? (
+        <div className="grid gap-4 xl:grid-cols-3">
+          {selectedTask === 'teachers' ? null : <PeopleRoster title="课次学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" />}
+          <TeacherInheritancePanel scene={scene} />
+          {selectedTask === 'attendance' ? null : <PeopleRoster title="课次实际教师" people={scene.teachers} emptyLabel="这堂课还没有单独确认教师，默认参考项目教师。" />}
+          {selectedTask === 'teachers' ? <PeopleRoster title="课次学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" /> : null}
+          {selectedTask === 'attendance' ? <PeopleRoster title="课次实际教师" people={scene.teachers} emptyLabel="这堂课还没有单独确认教师，默认参考项目教师。" /> : null}
+        </div>
+      ) : null}
+
+      <SceneSetupDialog
+        open={setupOpen}
+        title="配置课次工作台"
+        description="左侧确认步骤，右侧只填写当前步骤需要的信息。"
+        intentTitle="你现在要处理哪类课次任务？"
+        intentDescription="先确认真实课堂动作，不提前展示出勤、继承和教师关系，避免误以为已经选中某一堂课。"
+        targetTitle="搜索并确认课次"
+        targetDescription="确认要处理的课次后，后续出勤、教师覆盖和反馈准备都会锁定在这一堂课上。"
+        objectLabel="课次"
+        tasks={lessonTasks}
+        selectedTask={selectedTask}
+        objects={lessons}
+        pendingId={effectivePendingId}
+        kind="lesson"
+        onTaskChange={setSelectedTask}
+        onPendingChange={setPendingId}
+        onConfirm={confirmSetup}
+        onClose={() => setSetupOpen(false)}
+      />
 
       <PeopleActionDialog
-        open={action === 'attendance'}
+        open={workspaceReady && action === 'attendance'}
         title="记录课次出勤"
         description="课次已经锁定，只需要选择本堂课的学员和出勤结果。"
         context={context}
@@ -107,7 +169,7 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
         onSubmit={submitAttendance}
       />
       <PeopleActionDialog
-        open={action === 'teachers'}
+        open={workspaceReady && action === 'teachers'}
         title="确认课次教师"
         description="课次已经锁定，只需要确认本堂课实际参与的教师和角色。"
         context={context}
@@ -192,6 +254,21 @@ function Metric({ label, value }: { label: string; value: number }) {
     <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
       <div className="text-xs text-[var(--muted-foreground)]">{label}</div>
       <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
+    </div>
+  )
+}
+
+function WorkspaceSetupEntry({ objectLabel, title, description, onOpen }: { objectLabel: string; title: string; description: string; onOpen: () => void }) {
+  return (
+    <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--muted)]/20 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <Badge tone="amber">待确认{objectLabel}</Badge>
+          <h3 className="mt-3 text-lg font-semibold">{title}</h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">{description}</p>
+        </div>
+        <Button type="button" onClick={onOpen}>打开配置弹窗</Button>
+      </div>
     </div>
   )
 }

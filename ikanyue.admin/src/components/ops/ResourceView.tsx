@@ -11,7 +11,8 @@ import { DataTable } from '../ui/DataTable'
 import { Input } from '../ui/Input'
 import { PageHeader } from '../ui/PageHeader'
 import { Sheet } from '../ui/Sheet'
-import { ResourceForm } from './ResourceForm'
+import { DocumentEditorModal } from './DocumentEditorModal'
+import { ResourceForm, type DocumentEditorRequest } from './ResourceForm'
 
 interface ResourceViewProps {
   resource: OpsResource
@@ -28,6 +29,7 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
   const [keyword, setKeyword] = useState('')
   const [editing, setEditing] = useState<ResourceRecord | null>(null)
   const [creating, setCreating] = useState(false)
+  const [documentEditor, setDocumentEditor] = useState<DocumentEditorRequest | null>(null)
   const config = resourceConfig[resource]
   const Icon = config.icon
   const editable = canEditResource(resource)
@@ -84,6 +86,10 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
           <p className="mt-1 text-xs text-cyan-900/70">日常操作请优先从场景工作台进入，那里会锁定父级上下文，避免误选项目或课次。</p>
         </div>
       ) : null}
+      <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--muted)]/25 px-3 py-2 text-xs text-[var(--muted-foreground)]">
+        <span><strong className="text-[var(--foreground)]">数据维护视图</strong>：支持排序、页内筛选、选择记录和批量前置检查；日常教学动作优先从工作台进入。</span>
+        <Badge>TanStack Table</Badge>
+      </div>
       <DataTable
         columns={config.columns}
         rows={result?.items || []}
@@ -116,27 +122,13 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
         open={formOpen}
         title={formTitle}
         description="保存后会刷新当前资源列表，列表布局保持不变。"
+        side="right"
+        suspended={Boolean(documentEditor)}
         onClose={() => {
           setCreating(false)
           setEditing(null)
+          setDocumentEditor(null)
         }}
-        footer={(
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setCreating(false)
-                setEditing(null)
-              }}
-            >
-              取消
-            </Button>
-            <Button type="submit" form={`resource-form-${resource}`} icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
-              保存
-            </Button>
-          </div>
-        )}
       >
         {formOpen ? (
           <ResourceForm
@@ -144,17 +136,34 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
             resource={resource}
             record={formRecord}
             embedded
-            actions={null}
             resources={resources}
-            onUploadRichTextImage={onUploadRichTextImage}
+            onOpenDocumentEditor={setDocumentEditor}
+            onCancel={() => {
+              setCreating(false)
+              setEditing(null)
+              setDocumentEditor(null)
+            }}
             onSubmit={(payload) => {
               onSave?.(formRecord, payload)
               setCreating(false)
               setEditing(null)
+              setDocumentEditor(null)
             }}
           />
         ) : null}
       </Sheet>
+      <DocumentEditorModal
+        open={Boolean(documentEditor)}
+        title={documentEditor?.title || ''}
+        label={documentEditor?.label || ''}
+        value={documentEditor?.value || ''}
+        onClose={() => setDocumentEditor(null)}
+        onSave={(value) => {
+          documentEditor?.onSave(value)
+          setDocumentEditor(null)
+        }}
+        onUploadImage={onUploadRichTextImage}
+      />
     </Panel>
   )
 }

@@ -7,12 +7,24 @@ import { createMockOpsApi, type OpsApi } from '../../app/api'
 import { mockSharePreview } from '../../app/mockData'
 import { buildResourceFormState, buildResourcePayload, nextPublishStatus } from '../../app/resourceForms'
 import { LoginView } from './LoginView'
-import { ResourceForm } from './ResourceForm'
+import { ResourceForm, type DocumentEditorRequest } from './ResourceForm'
 
 async function loginAsAdmin(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('账号或手机号'), 'admin')
   await user.type(screen.getByLabelText('密码'), 'secret')
   await user.click(screen.getByRole('button', { name: '登录' }))
+}
+
+async function saveVisibleResourceForm(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = screen.queryByRole('dialog')
+  const container = dialog || document.body
+  let next = within(container).queryByRole('button', { name: '下一步' })
+  while (next) {
+    await user.click(next)
+    next = within(container).queryByRole('button', { name: '下一步' })
+  }
+  expect(within(container).getByText('变更一览')).toBeInTheDocument()
+  await user.click(within(container).getByRole('button', { name: '保存' }))
 }
 
 describe('ops admin edge coverage', () => {
@@ -26,7 +38,7 @@ describe('ops admin edge coverage', () => {
     expect(await screen.findByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的公开课')
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveVisibleResourceForm(user)
     expect(await screen.findByText('已保存记录')).toBeInTheDocument()
     expect(await screen.findByText('编辑后的公开课')).toBeInTheDocument()
 
@@ -50,7 +62,7 @@ describe('ops admin edge coverage', () => {
     await loginAsAdmin(user)
     await user.click(await screen.findByRole('button', { name: '活动内容' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await saveVisibleResourceForm(user)
     expect(await screen.findByText('保存失败')).toBeInTheDocument()
 
     await user.click((await screen.findAllByRole('button', { name: '发布' }))[0])
@@ -96,6 +108,7 @@ describe('ops admin edge coverage', () => {
   it('renders resource forms for empty and textarea-backed resources', async () => {
     const user = userEvent.setup()
     const submitted: Array<Record<string, unknown>> = []
+    let activeEditor: DocumentEditorRequest | null = null
     const emptyForm = render(<ResourceForm resource="auditLogs" onSubmit={(payload) => submitted.push(payload)} />)
     expect(emptyForm.container).toBeEmptyDOMElement()
     emptyForm.unmount()
@@ -105,18 +118,21 @@ describe('ops admin edge coverage', () => {
         resource="activitySignups"
         record={{ id: 'signup_1', realName: '旧姓名', status: 'registered', remark: null }}
         onSubmit={(payload) => submitted.push(payload)}
+        onOpenDocumentEditor={(request) => {
+          activeEditor = request
+        }}
       />,
     )
 
     await user.clear(screen.getByLabelText('姓名'))
     await user.type(screen.getByLabelText('姓名'), '新姓名')
-    await user.click(screen.getByRole('button', { name: '编辑备注' }))
-    const editor = await screen.findByRole('dialog', { name: '编辑备注' })
-    await user.click(within(editor).getByRole('tab', { name: '主 Markdown 模式' }))
-    await user.type(within(editor).getByLabelText('备注 Markdown编辑'), '已电话确认')
-    await user.click(within(editor).getByRole('button', { name: '保存内容' }))
     await user.selectOptions(screen.getByLabelText('状态'), 'attended')
-    await user.click(screen.getByRole('button', { name: '保存' }))
+    await user.click(screen.getByRole('button', { name: '下一步' }))
+    await user.click(screen.getByRole('button', { name: '编辑备注' }))
+    expect(activeEditor).toMatchObject({ title: '编辑备注', label: '备注', value: '' })
+    const editor = requireDocumentEditor(activeEditor)
+    editor.onSave('<p>已电话确认</p>\n')
+    await saveVisibleResourceForm(user)
     expect(submitted).toContainEqual({ realName: '新姓名', status: 'attended', remark: '<p>已电话确认</p>\n' })
   })
 
@@ -135,3 +151,10 @@ describe('ops admin edge coverage', () => {
     await expect(api.viewShare(share.token)).resolves.toMatchObject({ title: mockSharePreview.title })
   })
 })
+
+function requireDocumentEditor(request: DocumentEditorRequest | null): DocumentEditorRequest {
+  if (!request) {
+    throw new Error('Expected document editor request')
+  }
+  return request
+}

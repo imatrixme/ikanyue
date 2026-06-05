@@ -61,6 +61,34 @@ describe('ui primitives', () => {
     expect(screen.getAllByText('-')).toHaveLength(2)
   })
 
+  it('supports TanStack table filtering, sorting affordances, selection, and density', async () => {
+    const user = userEvent.setup()
+    render(
+      <DataTable
+        columns={resourceConfig.activities.columns}
+        rows={[
+          { id: 'a1', title: '周末公开课', type: 'open-class', location: '上海', status: 'active' },
+          { id: 'a2', title: '暑期体验营', type: 'trial', location: '杭州', status: 'draft' },
+        ]}
+      />,
+    )
+
+    await user.type(screen.getByLabelText('当前页快速筛选'), '暑期')
+    expect(screen.getByText('暑期体验营')).toBeInTheDocument()
+    expect(screen.queryByText('周末公开课')).not.toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('选择当前页全部记录'))
+    expect(screen.getByText('已选 1')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '紧凑' }))
+    expect(screen.getByRole('button', { name: '舒展' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /活动/ }))
+    await user.click(screen.getByRole('button', { name: /活动/ }))
+    expect(screen.getByText('显示 1 / 2')).toBeInTheDocument()
+
+    render(<DataTable columns={[{ key: 'avatar', label: '头像' }]} rows={[{ id: 'avatar_1', avatar: 'avatars/raw-key' }]} />)
+    expect(screen.getByText('raw-key')).toBeInTheDocument()
+  })
+
   it('renders semantic cells across resource tables', () => {
     Object.entries(resourceConfig).forEach(([resource, config]) => {
       const rows = mockResources[resource as OpsResource]?.items || []

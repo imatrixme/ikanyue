@@ -12,11 +12,22 @@ interface SheetProps {
   children: ReactNode
   footer?: ReactNode
   className?: string
+  side?: 'center' | 'right'
+  suspended?: boolean
 }
 
-export function Sheet({ open, title, description, onClose, children, footer, className }: SheetProps) {
+export function Sheet({ open, title, description, onClose, children, footer, className, side = 'center', suspended = false }: SheetProps) {
   if (!open) {
     return null
+  }
+
+  if (suspended) {
+    return (
+      <div aria-hidden="true" className="hidden">
+        {children}
+        {footer}
+      </div>
+    )
   }
 
   return (
@@ -26,7 +37,9 @@ export function Sheet({ open, title, description, onClose, children, footer, cla
         aria-label={title}
         aria-modal="true"
         className={cn(
-          'absolute left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-2xl',
+          side === 'right'
+            ? 'absolute inset-y-0 right-0 flex h-full w-[min(920px,calc(100vw-1rem))] flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-2xl'
+            : 'absolute left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[min(920px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-2xl',
           className,
         )}
         role="dialog"

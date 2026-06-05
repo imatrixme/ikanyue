@@ -34,6 +34,7 @@ const resourceViews = navItems
   .filter((view): view is OpsResource => !['dashboard', 'guidedOps', 'projectScenes', 'lessonScenes', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview', 'systemSettings'].includes(view))
 
 const sceneResources: OpsResource[] = ['students', 'teachers', 'learningPrograms', 'learningSessions', 'programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers']
+const dashboardResources: OpsResource[] = ['students', 'teachers', 'activitySignups', 'learningPrograms', 'learningSessions', 'programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers']
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
@@ -65,7 +66,12 @@ export default function App({ api: injectedApi }: AppProps) {
     dispatch({ type: 'loading:set', payload: true })
     try {
       if (view === 'dashboard') {
-        dispatch({ type: 'dashboard:set', payload: await api.dashboard(state.token) })
+        const [dashboard] = await Promise.all([
+          api.dashboard(state.token),
+          ...dashboardResources.map((resource) => loadResourceWithDependencies(resource)),
+          api.listReports(state.token).then((payload) => dispatch({ type: 'reports:set', payload })),
+        ])
+        dispatch({ type: 'dashboard:set', payload: dashboard })
       } else if (view === 'guidedOps') {
         await Promise.all(['students', 'teachers', 'activitySignups', 'learningPrograms', 'learningSessions', 'reportTemplates'].map((resource) => loadResourceWithDependencies(resource as OpsResource)))
       } else if (view === 'projectScenes' || view === 'lessonScenes') {
@@ -351,7 +357,15 @@ export default function App({ api: injectedApi }: AppProps) {
       onViewChange={setView}
       onLogout={onLogout}
     >
-      {state.activeView === 'dashboard' ? <DashboardView data={state.dashboard} /> : null}
+      {state.activeView === 'dashboard' ? (
+        <DashboardView
+          data={state.dashboard}
+          profile={state.profile}
+          resources={state.resources}
+          reports={state.reports}
+          onViewChange={setView}
+        />
+      ) : null}
       {state.activeView === 'guidedOps' ? (
         <GuidedOpsWorkspace
           resources={state.resources}
