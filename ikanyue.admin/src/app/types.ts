@@ -207,6 +207,7 @@ export interface NavItem {
 export interface NavGroup {
   key: string
   label: string
+  icon?: LucideIcon
   items: NavItem[]
 }
 

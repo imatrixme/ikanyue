@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -32,20 +32,24 @@ describe('guided ops workspace', () => {
     await user.clear(within(dialog).getByLabelText('活动标题'))
     await user.type(within(dialog).getByLabelText('活动标题'), '夏季公开体验课')
     await user.click(within(dialog).getByRole('button', { name: '下一步' }))
+    await waitFor(() => expect(within(dialog).getByLabelText('名额')).toBeInTheDocument())
     await user.clear(within(dialog).getByLabelText('名额'))
     await user.type(within(dialog).getByLabelText('名额'), '18')
 
     await user.click(within(dialog).getByRole('button', { name: '下一步' }))
+    await waitFor(() => expect(within(dialog).getByLabelText('开始时间时间')).toBeInTheDocument())
     await user.clear(within(dialog).getByLabelText('开始时间时间'))
     await user.type(within(dialog).getByLabelText('开始时间时间'), '09:00')
     await user.clear(within(dialog).getByLabelText('结束时间时间'))
     await user.type(within(dialog).getByLabelText('结束时间时间'), '10:30')
 
     await user.click(within(dialog).getByRole('button', { name: '下一步' }))
+    await waitFor(() => expect(within(dialog).getByLabelText('地点')).toBeInTheDocument())
     await user.clear(within(dialog).getByLabelText('地点'))
     await user.type(within(dialog).getByLabelText('地点'), '静安校区 A 教室')
 
     await user.click(within(dialog).getByRole('button', { name: '下一步' }))
+    await waitFor(() => expect(within(dialog).getByLabelText(/王老师/)).toBeInTheDocument())
     await user.click(within(dialog).getByLabelText(/王老师/))
     await user.type(within(dialog).getByLabelText('运营负责人'), '林老师')
 
@@ -80,7 +84,7 @@ describe('guided ops workspace', () => {
     await user.click(within(dialog).getByRole('button', { name: '保存草稿' }))
     await user.click(within(dialog).getByRole('button', { name: '关闭' }))
 
-    expect(screen.getByText('草稿体验课')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('草稿体验课')).toBeInTheDocument())
     await user.click(screen.getByRole('button', { name: '继续编辑' }))
     const resumed = await screen.findByRole('dialog', { name: '安排体验课' })
     expect(within(resumed).getByRole('button', { name: /体验学员/ })).toHaveAttribute('aria-current', 'step')

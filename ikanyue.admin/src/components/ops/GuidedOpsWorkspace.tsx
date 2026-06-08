@@ -150,8 +150,8 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
       <Panel>
         <SectionHeader>
           <div>
-            <h3 className="font-semibold">场景化冗余展示</h3>
-            <p className="text-sm text-[var(--muted-foreground)]">同一份数据会自然出现在多个场景视角，原始数据表只在数据中心做高级维护。</p>
+            <h3 className="font-semibold">当前数据概况</h3>
+            <p className="text-sm text-[var(--muted-foreground)]">只用来判断大致体量；实际操作从上面的工作动机进入。</p>
           </div>
         </SectionHeader>
         <div className="grid gap-3 p-4 md:grid-cols-3">

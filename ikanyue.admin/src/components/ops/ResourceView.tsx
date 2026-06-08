@@ -1,4 +1,4 @@
-import { CheckCircle2, Edit3, Plus, RotateCw, Search } from 'lucide-react'
+import { CheckCircle2, Edit3, LockKeyhole, Plus, RotateCw, Search, UnlockKeyhole } from 'lucide-react'
 import { useState } from 'react'
 
 import { canEditResource, nextPublishStatus } from '../../app/resourceForms'
@@ -30,12 +30,14 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
   const [editing, setEditing] = useState<ResourceRecord | null>(null)
   const [creating, setCreating] = useState(false)
   const [documentEditor, setDocumentEditor] = useState<DocumentEditorRequest | null>(null)
+  const [advancedEditing, setAdvancedEditing] = useState(false)
   const config = resourceConfig[resource]
   const Icon = config.icon
   const editable = canEditResource(resource)
   const advanced = isAdvancedMaintenanceResource(resource)
+  const maintenanceEnabled = editable && (!advanced || advancedEditing)
   const formRecord = creating ? null : editing
-  const formOpen = editable && (creating || Boolean(editing))
+  const formOpen = maintenanceEnabled && (creating || Boolean(editing))
   const formTitle = formRecord?.id ? `编辑${config.title}` : config.createLabel || `新建${config.title}`
 
   return (
@@ -64,7 +66,26 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
           <Button variant="secondary" onClick={() => onSearch(keyword)} icon={<RotateCw className="h-4 w-4" aria-hidden="true" />}>
             {loading ? '加载中' : '刷新'}
           </Button>
-          {config.createLabel ? (
+          {advanced && editable ? (
+            <Button
+              onClick={() => {
+                setAdvancedEditing((current) => {
+                  const next = !current
+                  if (!next) {
+                    setCreating(false)
+                    setEditing(null)
+                    setDocumentEditor(null)
+                  }
+                  return next
+                })
+              }}
+              icon={advancedEditing ? <LockKeyhole className="h-4 w-4" aria-hidden="true" /> : <UnlockKeyhole className="h-4 w-4" aria-hidden="true" />}
+              variant={advancedEditing ? 'secondary' : 'ghost'}
+            >
+              {advancedEditing ? '退出维护' : '进入高级维护'}
+            </Button>
+          ) : null}
+          {config.createLabel && maintenanceEnabled ? (
             <Button
               onClick={() => {
                 setCreating(true)
@@ -81,11 +102,13 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
       {advanced ? (
         <div className="mx-4 mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="amber">数据中心</Badge>
-            <span className="font-medium">这里用于检查、修复和追踪底层记录。普通教务动作请从生命周期工作台进入。</span>
+            <Badge tone={advancedEditing ? 'red' : 'amber'}>{advancedEditing ? '高级维护已开启' : '检查模式'}</Badge>
+            <span className="font-medium">
+              {advancedEditing ? '现在可以直接修改底层记录，请先确认父级上下文和影响范围。' : '这里默认只用于检查、修复线索和追踪底层记录。普通教务动作请从生命周期工作台进入。'}
+            </span>
           </div>
           <p className="mt-1 text-xs text-amber-950/70">
-            只有在需要排查关系、修正状态、核对审计或补救异常数据时，才建议直接维护这些记录。
+            {advancedEditing ? '完成补救后建议退出维护模式，避免把关系表当成日常入口。' : '只有在需要排查关系、修正状态、核对审计或补救异常数据时，才建议进入高级维护。'}
           </p>
         </div>
       ) : null}
@@ -110,7 +133,7 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
         rows={result?.items || []}
         resource={resource}
         resources={resources}
-        renderActions={editable ? (row) => (
+        renderActions={maintenanceEnabled ? (row) => (
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"

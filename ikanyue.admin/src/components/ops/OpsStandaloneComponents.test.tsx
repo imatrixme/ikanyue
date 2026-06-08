@@ -144,6 +144,18 @@ describe('standalone ops components', () => {
     expect(screen.getByText('管理员')).toBeInTheDocument()
     teachersView.unmount()
 
+    const relationView = render(<ResourceView resource="programStudents" result={mockResources.programStudents} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
+    expect(screen.getByText('检查模式')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '编辑' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '进入高级维护' }))
+    expect(screen.getByText('高级维护已开启')).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    expect(screen.getByRole('dialog', { name: '编辑班级学员关系' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '退出维护' }))
+    expect(screen.queryByRole('dialog', { name: '编辑班级学员关系' })).not.toBeInTheDocument()
+    expect(screen.getByText('检查模式')).toBeInTheDocument()
+    relationView.unmount()
+
     const teacherEditor = render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     expect(screen.getByRole('dialog', { name: '编辑教师管理' })).toBeInTheDocument()
@@ -189,9 +201,9 @@ describe('standalone ops components', () => {
     await user.click(screen.getByRole('button', { name: '收起侧边栏' }))
     expect(screen.getByRole('navigation', { name: '后台导航' }).closest('aside')).toHaveClass('lg:w-16')
     await user.click(screen.getByRole('button', { name: '展开侧边栏' }))
-    expect(screen.getByRole('button', { name: '班级与课包' })).toHaveAttribute('aria-expanded', 'true')
-    await user.click(screen.getByRole('button', { name: '班级与课包' }))
     expect(screen.getByRole('button', { name: '班级与课包' })).toHaveAttribute('aria-expanded', 'false')
+    await user.click(screen.getByRole('button', { name: '班级与课包' }))
+    expect(screen.getByRole('button', { name: '班级与课包' })).toHaveAttribute('aria-expanded', 'true')
     await user.click(screen.getByRole('button', { name: '退出' }))
     expect(changes).toContain('logout')
 
@@ -207,6 +219,33 @@ describe('standalone ops components', () => {
       </Shell>,
     )
     expect(screen.getByText('失败')).toBeInTheDocument()
+  })
+
+  it('opens mobile navigation as a focused drawer and closes it after navigation', async () => {
+    const user = userEvent.setup()
+    const changes: string[] = []
+    render(
+      <Shell
+        activeView="dashboard"
+        profile={mockProfiles.admin}
+        toast={null}
+        onViewChange={(view) => changes.push(view)}
+        onLogout={() => undefined}
+      >
+        <div>移动正文</div>
+      </Shell>,
+    )
+
+    await user.click(screen.getByRole('button', { name: '打开导航' }))
+    expect(screen.getByRole('button', { name: '关闭导航' })).toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '测评与报告' }).at(-1) as HTMLElement)
+    await user.click(screen.getAllByRole('button', { name: '已生成报告' }).at(-1) as HTMLElement)
+    expect(changes).toContain('reports')
+    expect(screen.queryByRole('button', { name: '关闭导航' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '打开导航' }))
+    await user.click(screen.getByRole('button', { name: '关闭导航遮罩' }))
+    expect(screen.queryByRole('button', { name: '关闭导航' })).not.toBeInTheDocument()
   })
 
   it('renders system settings categories and operable switches without raw secret values', async () => {

@@ -13,6 +13,15 @@ async function loginAsAdmin(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: '登录' }))
 }
 
+async function navigateTo(user: ReturnType<typeof userEvent.setup>, itemName: string | RegExp, groupName?: string) {
+  const visibleItems = screen.queryAllByRole('button', { name: itemName })
+  if (groupName && (visibleItems.length === 0 || itemName === groupName)) {
+    await user.click(await screen.findByRole('button', { name: groupName }))
+  }
+  const matches = await screen.findAllByRole('button', { name: itemName })
+  await user.click(matches[matches.length - 1])
+}
+
 async function enterProjectWorkspace(user: ReturnType<typeof userEvent.setup>, taskName?: RegExp) {
   expect(await screen.findByText('当前班级')).toBeInTheDocument()
   if (!taskName) {
@@ -108,19 +117,19 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('今天先把教务闭环推进')).toBeInTheDocument()
     expect(await screen.findByText('186')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '学员档案' }))
+    await navigateTo(user, '学员档案', '班级与课包')
     expect(await screen.findByText('学员管理')).toBeInTheDocument()
-    expect(await screen.findByText('小张')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('小张').length).toBeGreaterThan(0))
 
-    await user.click(screen.getByRole('button', { name: '审计日志' }))
+    await navigateTo(user, '审计日志', '数据中心')
     expect(await screen.findByRole('heading', { name: '审计日志' })).toBeInTheDocument()
-    expect(await screen.findByText('提交评估')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('提交评估').length).toBeGreaterThan(0))
 
-    await user.click(screen.getByRole('button', { name: '评估表模板' }))
+    await navigateTo(user, '评估表模板', '测评与报告')
     expect(await screen.findByRole('heading', { name: '评估表模板' })).toBeInTheDocument()
     expect(await screen.findByText('声乐阶段测评')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '填写测评' }))
+    await navigateTo(user, '填写测评', '测评与报告')
     expect(await screen.findByText('实时评分')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '提交并生成报告' }))
     expect(await screen.findByText('评估报告')).toBeInTheDocument()
@@ -136,11 +145,11 @@ describe('ops admin app flow', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '学员档案' }))
+    await navigateTo(user, '学员档案', '班级与课包')
     await user.type(screen.getByLabelText('学员管理搜索'), '小李')
     await user.click(screen.getByRole('button', { name: '刷新' }))
 
-    expect(await screen.findByText('小李')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('小李').length).toBeGreaterThan(0))
     await waitFor(() => expect(screen.queryByText('小张')).not.toBeInTheDocument())
   })
 
@@ -149,19 +158,19 @@ describe('ops admin app flow', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '招生活动' }))
+    await navigateTo(user, '招生活动', '招生转化')
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     expect(await screen.findByRole('dialog', { name: '新建活动' })).toBeInTheDocument()
     await user.type(await screen.findByLabelText('标题'), '端到端公开课')
     await user.selectOptions(screen.getByLabelText('状态'), 'active')
     await saveVisibleResourceForm(user)
     expect(await screen.findByText('已创建记录')).toBeInTheDocument()
-    expect(await screen.findByText('端到端公开课')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('端到端公开课').length).toBeGreaterThan(0))
 
     await user.click((await screen.findAllByRole('button', { name: '转草稿' }))[0])
     expect(await screen.findByText('已转为草稿')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '评估表模板' }))
+    await navigateTo(user, '评估表模板', '测评与报告')
     await user.click(await screen.findByRole('button', { name: '新建模板' }))
     expect(await screen.findByText('已创建模板草稿')).toBeInTheDocument()
     expect(await screen.findByText('声乐阶段测评 副本')).toBeInTheDocument()
@@ -174,7 +183,7 @@ describe('ops admin app flow', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '班级工作台' }))
+    await navigateTo(user, '班级工作台', '班级与课包')
     expect(await screen.findByText('围绕一个班级/学习单元管理学员、教师、课堂和下一步动作；关系表只作为结果和维护视图。')).toBeInTheDocument()
     await enterProjectWorkspace(user)
     await user.click(screen.getByRole('button', { name: '添加班级学员' }))
@@ -187,7 +196,7 @@ describe('ops admin app flow', () => {
     })
     expect(await screen.findByText('已保存 2 条场景关系')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '课堂工作台' }))
+    await navigateTo(user, '课堂工作台', '排课与上课')
     expect(await screen.findByText('围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课堂关系表。')).toBeInTheDocument()
     await enterLessonWorkspace(user, /确认实际老师/)
     await user.click(screen.getByRole('button', { name: '确认课堂老师' }))
@@ -208,7 +217,7 @@ describe('ops admin app flow', () => {
     })
     expect(await screen.findByText('已保存 2 条场景关系')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '班级工作台' }))
+    await navigateTo(user, '班级工作台', '班级与课包')
     await enterProjectWorkspace(user, /安排班级老师/)
     await user.click(screen.getByRole('button', { name: '分配班级老师' }))
     const teacherDialog = await screen.findByRole('dialog', { name: '分配班级老师' })
@@ -242,7 +251,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '招生活动' }))
+    await navigateTo(user, '招生活动', '招生转化')
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     await saveVisibleResourceForm(user)
     expect(await screen.findByText('create down')).toBeInTheDocument()
@@ -252,15 +261,15 @@ describe('ops admin app flow', () => {
     await user.click((await screen.findAllByRole('button', { name: '发布' }))[0])
     expect(await screen.findByText('update down')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '评估表模板' }))
+    await navigateTo(user, '评估表模板', '测评与报告')
     await user.click(await screen.findAllByRole('button', { name: '发布' }).then((buttons) => buttons[0]))
     expect(await screen.findByText('publish down')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '填写测评' }))
+    await navigateTo(user, '填写测评', '测评与报告')
     await user.click(await screen.findByRole('button', { name: '提交并生成报告' }))
     expect(await screen.findByText('assessment down')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '已生成报告' }))
+    await navigateTo(user, '已生成报告', '测评与报告')
     await user.click((await screen.findAllByRole('button', { name: '创建分享' }))[0])
     expect(await screen.findByText('share down')).toBeInTheDocument()
   })
@@ -279,7 +288,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '已生成报告' }))
+    await navigateTo(user, '已生成报告', '测评与报告')
     await user.click((await screen.findAllByRole('button', { name: '查看' }))[0])
     expect(await screen.findByText('detail down')).toBeInTheDocument()
     await user.click((await screen.findAllByRole('button', { name: '创建分享' }))[0])
@@ -302,7 +311,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '已生成报告' }))
+    await navigateTo(user, '已生成报告', '测评与报告')
     await user.click((await screen.findAllByRole('button', { name: '创建分享' }))[0])
     expect(await screen.findByText('创建分享失败')).toBeInTheDocument()
 
@@ -324,7 +333,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '填写测评' }))
+    await navigateTo(user, '填写测评', '测评与报告')
     await user.click(await screen.findByRole('button', { name: '提交并生成报告' }))
     expect(await screen.findByText('缺少可用模板或学员')).toBeInTheDocument()
   })
@@ -338,7 +347,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '评估表模板' }))
+    await navigateTo(user, '评估表模板', '测评与报告')
     await user.click(await screen.findByRole('button', { name: '新建模板' }))
     expect(await screen.findByText('没有可复制的模板')).toBeInTheDocument()
   })
@@ -426,7 +435,7 @@ describe('ops admin app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '评估表模板' }))
+    await navigateTo(user, '评估表模板', '测评与报告')
     await user.click(await screen.findByRole('button', { name: '新建模板' }))
     expect(await screen.findByText('创建模板失败')).toBeInTheDocument()
   })
@@ -456,7 +465,7 @@ describe('ops admin app flow', () => {
     expect(await screen.findByText('班级与课包')).toBeInTheDocument()
     expect(screen.getByText('内容与小程序')).toBeInTheDocument()
     expect(screen.getByText('测评与报告')).toBeInTheDocument()
-    await user.click(screen.getAllByRole('button', { name: '系统设置' })[1])
+    await navigateTo(user, '系统设置', '系统设置')
 
     expect(await screen.findByText('注册开关')).toBeInTheDocument()
     expect(screen.getByText('账号策略')).toBeInTheDocument()
@@ -489,7 +498,7 @@ describe('ops admin app flow', () => {
     await user.type(screen.getByLabelText('账号或手机号'), '13800138001')
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: '登录' }))
-    await user.click(await screen.findByRole('button', { name: '学员档案' }))
+    await navigateTo(user, '学员档案', '班级与课包')
     expect(await screen.findByText('加载失败')).toBeInTheDocument()
   })
 })

@@ -28,6 +28,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'workspace',
     label: '工作台',
+    icon: LayoutDashboard,
     items: [
       { view: 'dashboard', label: '今日待办', icon: LayoutDashboard },
       { view: 'guidedOps', label: '发起流程', icon: CheckCircle2, adminOnly: true },
@@ -36,6 +37,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'conversion',
     label: '招生转化',
+    icon: HeartHandshake,
     items: [
       { view: 'activities', label: '招生活动', icon: CalendarRange, section: '活动发布', adminOnly: true },
       { view: 'activitySignups', label: '报名处理', icon: ClipboardCheck, section: '报名转化', adminOnly: true },
@@ -45,6 +47,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'classes',
     label: '班级与课包',
+    icon: BookOpen,
     items: [
       { view: 'projectScenes', label: '班级工作台', icon: BookOpen, section: '日常管理', adminOnly: true },
       { view: 'learningPrograms', label: '班级/学习单元', icon: SquareStack, section: '学习单元', adminOnly: true },
@@ -55,6 +58,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'lessons',
     label: '排课与上课',
+    icon: CalendarRange,
     items: [
       { view: 'lessonScenes', label: '课堂工作台', icon: CalendarRange, section: '今日上课' },
       { view: 'learningSessions', label: '课堂/场次', icon: CalendarRange, section: '课表维护', adminOnly: true },
@@ -63,6 +67,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'content',
     label: '内容与小程序',
+    icon: Megaphone,
     items: [
       { view: 'operationSlots', label: '小程序投放位', icon: Megaphone, section: '小程序展示', adminOnly: true },
       { view: 'audioMaterials', label: '音频素材', icon: Radio, section: '素材库' },
@@ -72,6 +77,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'reports',
     label: '测评与报告',
+    icon: ClipboardList,
     items: [
       { view: 'assessmentWorkspace', label: '填写测评', icon: MicVocal, section: '填写与查看' },
       { view: 'reports', label: '已生成报告', icon: FileText, section: '填写与查看' },
@@ -85,6 +91,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'dataCenter',
     label: '数据中心',
+    icon: Archive,
     items: [
       { view: 'programStudents', label: '班级学员关系', icon: GraduationCap, adminOnly: true, section: '关系维护' },
       { view: 'programTeachers', label: '班级老师关系', icon: Users, adminOnly: true, section: '关系维护' },
@@ -96,6 +103,7 @@ export const navGroups: NavGroup[] = [
   {
     key: 'settings',
     label: '系统设置',
+    icon: Settings,
     items: [
       { view: 'systemSettings', label: '系统设置', icon: Settings, adminOnly: true },
     ],

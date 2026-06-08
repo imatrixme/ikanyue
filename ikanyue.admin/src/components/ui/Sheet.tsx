@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 import { Button } from './Button'
 import { cn } from './utils'
@@ -17,6 +17,52 @@ interface SheetProps {
 }
 
 export function Sheet({ open, title, description, onClose, children, footer, className, side = 'center', suspended = false }: SheetProps) {
+  const dialogRef = useRef<HTMLElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  useEffect(() => {
+    if (!open || suspended) {
+      return undefined
+    }
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const dialog = dialogRef.current
+    const focusable = getFocusableElements(dialog)
+    const firstFocusable = focusable[0] || dialog
+    firstFocusable?.focus()
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab' || focusable.length === 0) {
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previousFocusRef.current?.focus()
+    }
+  }, [open, suspended])
+
   if (!open) {
     return null
   }
@@ -43,6 +89,8 @@ export function Sheet({ open, title, description, onClose, children, footer, cla
           className,
         )}
         role="dialog"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <header className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4">
           <div>
@@ -63,4 +111,15 @@ export function Sheet({ open, title, description, onClose, children, footer, cla
       </section>
     </div>
   )
+}
+
+function getFocusableElements(root: HTMLElement | null) {
+  if (!root) {
+    return []
+  }
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true')
 }

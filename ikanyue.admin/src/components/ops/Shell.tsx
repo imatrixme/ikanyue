@@ -1,4 +1,5 @@
-import { LogOut, Search } from 'lucide-react'
+import { LogOut, Menu, Search } from 'lucide-react'
+import { useState } from 'react'
 
 import type { AppView, OpsProfile, ToastState } from '../../app/types'
 import { Button } from '../ui/Button'
@@ -17,6 +18,7 @@ interface ShellProps {
 }
 
 export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const roleTitle = profile.isAdmin ? '教务运营工作系统' : '教师今日工作台'
   const roleEyebrow = profile.isAdmin ? 'Teaching operations lifecycle' : 'Teaching tasks'
 
@@ -24,12 +26,42 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
     <div className="min-h-screen text-[var(--foreground)]">
       <div className="lg:grid lg:min-h-screen lg:grid-cols-[auto_1fr]">
         <AdminSidebar activeView={activeView} profile={profile} onViewChange={onViewChange} />
+        {mobileNavOpen ? (
+          <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
+            <button
+              aria-label="关闭导航遮罩"
+              className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+              onClick={() => setMobileNavOpen(false)}
+              type="button"
+            />
+            <div className="relative h-full w-[min(360px,calc(100vw-2rem))]">
+              <AdminSidebar
+                activeView={activeView}
+                mode="drawer"
+                onClose={() => setMobileNavOpen(false)}
+                onNavigate={() => setMobileNavOpen(false)}
+                onViewChange={onViewChange}
+                profile={profile}
+              />
+            </div>
+          </div>
+        ) : null}
         <div className="min-w-0">
           <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--background)]/85 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/70">
             <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-5 py-3">
-              <div>
-                <p className="text-xs font-medium text-[var(--muted-foreground)]">{roleEyebrow}</p>
-                <h1 className="text-lg font-semibold tracking-tight">{roleTitle}</h1>
+              <div className="flex min-w-0 items-center gap-3">
+                <Button
+                  aria-label="打开导航"
+                  className="inline-flex h-11 w-11 px-0 lg:hidden"
+                  icon={<Menu className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() => setMobileNavOpen(true)}
+                  type="button"
+                  variant="secondary"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[var(--muted-foreground)]">{roleEyebrow}</p>
+                  <h1 className="truncate text-lg font-semibold tracking-tight">{roleTitle}</h1>
+                </div>
               </div>
               <div className="flex flex-1 items-center justify-end gap-3">
                 <div className="hidden w-full max-w-[360px] items-center gap-2 rounded-md border border-[var(--input)] bg-[var(--card)] px-3 shadow-sm md:flex">

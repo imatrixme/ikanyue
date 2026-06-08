@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -13,6 +13,14 @@ async function loginAsAdmin(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('账号或手机号'), 'admin')
   await user.type(screen.getByLabelText('密码'), 'secret')
   await user.click(screen.getByRole('button', { name: '登录' }))
+}
+
+async function navigateTo(user: ReturnType<typeof userEvent.setup>, itemName: string | RegExp, groupName: string) {
+  if (screen.queryAllByRole('button', { name: itemName }).length === 0 || itemName === groupName) {
+    await user.click(await screen.findByRole('button', { name: groupName }))
+  }
+  const matches = await screen.findAllByRole('button', { name: itemName })
+  await user.click(matches[matches.length - 1])
 }
 
 async function saveVisibleResourceForm(user: ReturnType<typeof userEvent.setup>) {
@@ -33,14 +41,14 @@ describe('ops admin edge coverage', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '招生活动' }))
+    await navigateTo(user, '招生活动', '招生转化')
     await user.click((await screen.findAllByRole('button', { name: '编辑' }))[0])
     expect(await screen.findByRole('dialog', { name: '编辑招生活动' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的公开课')
     await saveVisibleResourceForm(user)
     expect(await screen.findByText('已保存记录')).toBeInTheDocument()
-    expect(await screen.findByText('编辑后的公开课')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText('编辑后的公开课').length).toBeGreaterThan(0))
 
     await user.click((await screen.findAllByRole('button', { name: '发布' }))[0])
     expect(await screen.findByText('已发布')).toBeInTheDocument()
@@ -60,7 +68,7 @@ describe('ops admin edge coverage', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '招生活动' }))
+    await navigateTo(user, '招生活动', '招生转化')
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     await saveVisibleResourceForm(user)
     expect(await screen.findByText('保存失败')).toBeInTheDocument()

@@ -61,33 +61,47 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
   const [htmlDraft, setHtmlDraft] = useState(initialValue || '')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const draftRef = useRef(draft)
+  const markdownDraftRef = useRef(markdownDraft)
+  const htmlDraftRef = useRef(htmlDraft)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function closeWithProtection() {
-    if (draft !== (initialValue || '') && typeof window !== 'undefined' && !window.confirm('当前内容还没有保存，确定要关闭吗？')) {
+    if (draftRef.current !== (initialValue || '') && typeof window !== 'undefined' && !window.confirm('当前内容还没有保存，确定要关闭吗？')) {
       return
     }
     onClose()
   }
 
+  function setDraftValue(next: string) {
+    draftRef.current = next
+    setDraft(next)
+  }
+
+  function setMarkdownDraftValue(next: string) {
+    markdownDraftRef.current = next
+    setMarkdownDraft(next)
+  }
+
+  function setHtmlDraftValue(next: string) {
+    htmlDraftRef.current = next
+    setHtmlDraft(next)
+  }
+
   function changeMode(nextMode: DocumentMode) {
+    const current = currentHtml()
     if (nextMode === 'markdown') {
-      setMarkdownDraft(markdownFromHtml(draft))
+      setMarkdownDraftValue(markdownFromHtml(current))
     }
     if (nextMode === 'html') {
-      setHtmlDraft(draft)
+      setHtmlDraftValue(current)
     }
-    if (mode === 'markdown') {
-      setDraft(htmlFromMarkdown(markdownDraft))
-    }
-    if (mode === 'html') {
-      setDraft(htmlDraft)
-    }
+    setDraftValue(current)
     setMode(nextMode)
   }
 
   function saveAndClose() {
-    const next = mode === 'markdown' ? htmlFromMarkdown(markdownDraft) : mode === 'html' ? htmlDraft : draft
+    const next = currentHtml()
     onSave(next)
     onClose()
   }
@@ -108,9 +122,9 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
       const url = await onUploadImage(file)
       const imageHtml = `<p><img src="${escapeHtmlAttribute(url)}" alt="${escapeHtmlAttribute(file.name)}"></p>`
       const next = `${currentHtml()}${imageHtml}`
-      setDraft(next)
-      setHtmlDraft(next)
-      setMarkdownDraft(markdownFromHtml(next))
+      setDraftValue(next)
+      setHtmlDraftValue(next)
+      setMarkdownDraftValue(markdownFromHtml(next))
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : '图片上传失败')
     } finally {
@@ -120,12 +134,12 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
 
   function currentHtml() {
     if (mode === 'markdown') {
-      return htmlFromMarkdown(markdownDraft)
+      return htmlFromMarkdown(markdownDraftRef.current)
     }
     if (mode === 'html') {
-      return htmlDraft
+      return htmlDraftRef.current
     }
-    return draft
+    return draftRef.current
   }
 
   return (
@@ -161,14 +175,14 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
           <TabsTrigger aria-label="主 HTML 模式" value="html" className="gap-1.5"><FileCode2 className="h-3.5 w-3.5" aria-hidden="true" />HTML</TabsTrigger>
         </TabsList>
         <TabsContent value="edit" className="mt-0">
-          <RichTextEditor label={label} value={draft} onChange={setDraft} onUploadImage={onUploadImage} className="[&_.rich-text-editor]:min-h-[440px]" />
+          <RichTextEditor label={label} value={draft} onChange={setDraftValue} onUploadImage={onUploadImage} className="[&_.rich-text-editor]:min-h-[440px]" />
         </TabsContent>
         <TabsContent value="preview" className="mt-0">
           <DocumentPreview html={currentHtml()} />
         </TabsContent>
         <TabsContent value="split" className="mt-0">
           <div className="grid gap-4 lg:grid-cols-2">
-            <RichTextEditor label={label} value={draft} onChange={setDraft} onUploadImage={onUploadImage} className="[&_.rich-text-editor]:min-h-[440px]" />
+            <RichTextEditor label={label} value={draft} onChange={setDraftValue} onUploadImage={onUploadImage} className="[&_.rich-text-editor]:min-h-[440px]" />
             <DocumentPreview html={draft} />
           </div>
         </TabsContent>
@@ -178,8 +192,8 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
             className="min-h-[520px] w-full resize-y rounded-md border border-[var(--input)] bg-[var(--card)] p-3 font-mono text-xs leading-6 shadow-sm outline-none focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/15"
             value={markdownDraft}
             onChange={(event) => {
-              setMarkdownDraft(event.target.value)
-              setDraft(htmlFromMarkdown(event.target.value))
+              setMarkdownDraftValue(event.target.value)
+              setDraftValue(htmlFromMarkdown(event.target.value))
             }}
           />
         </TabsContent>
@@ -189,8 +203,8 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
             className="min-h-[520px] w-full resize-y rounded-md border border-[var(--input)] bg-[var(--card)] p-3 font-mono text-xs leading-6 shadow-sm outline-none focus-visible:border-[var(--ring)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]/15"
             value={htmlDraft}
             onChange={(event) => {
-              setHtmlDraft(event.target.value)
-              setDraft(event.target.value)
+              setHtmlDraftValue(event.target.value)
+              setDraftValue(event.target.value)
             }}
           />
         </TabsContent>

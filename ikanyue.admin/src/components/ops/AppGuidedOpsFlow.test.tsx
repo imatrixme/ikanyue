@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
@@ -11,6 +11,14 @@ async function loginAsAdmin(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('账号或手机号'), 'admin')
   await user.type(screen.getByLabelText('密码'), 'secret')
   await user.click(screen.getByRole('button', { name: '登录' }))
+}
+
+async function navigateTo(user: ReturnType<typeof userEvent.setup>, itemName: string | RegExp, groupName: string) {
+  if (screen.queryAllByRole('button', { name: itemName }).length === 0 || itemName === groupName) {
+    await user.click(await screen.findByRole('button', { name: groupName }))
+  }
+  const matches = await screen.findAllByRole('button', { name: itemName })
+  await user.click(matches[matches.length - 1])
 }
 
 describe('guided ops app flow', () => {
@@ -38,14 +46,13 @@ describe('guided ops app flow', () => {
     await loginAsAdmin(user)
     expect(await screen.findByText('今天先把教务闭环推进')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '发起流程' }))
+    await navigateTo(user, '发起流程', '工作台')
     expect(await screen.findByRole('heading', { name: '发起流程' })).toBeInTheDocument()
     expect(await screen.findByRole('tab', { name: '发布招生活动' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /发布可报名活动/ }))
     const dialog = await screen.findByRole('dialog', { name: '发布可报名活动' })
-    await user.clear(within(dialog).getByLabelText('活动标题'))
-    await user.type(within(dialog).getByLabelText('活动标题'), '端到端体验营')
+    fireEvent.change(within(dialog).getByLabelText('活动标题'), { target: { value: '端到端体验营' } })
     await user.click(within(dialog).getByRole('button', { name: /人物.*谁负责和授课/ }))
     await user.click(within(dialog).getByLabelText(/王老师/))
     await user.click(within(dialog).getByRole('button', { name: /确认生成.*系统会自动创建什么/ }))
@@ -72,7 +79,7 @@ describe('guided ops app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '发起流程' }))
+    await navigateTo(user, '发起流程', '工作台')
     await user.click(await screen.findByRole('tab', { name: '发起测评/报告' }))
     await user.click(await screen.findByRole('button', { name: /发起测评报告/ }))
     const dialog = await screen.findByRole('dialog', { name: '发起测评报告' })

@@ -77,7 +77,45 @@ export function DataTable({ columns, rows, resource, resources = {}, emptyLabel 
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 px-4 md:hidden">
+        {table.getRowModel().rows.map((row) => (
+          <article
+            key={row.id}
+            className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm data-[selected=true]:border-cyan-200 data-[selected=true]:bg-cyan-50/60"
+            data-selected={row.getIsSelected()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <label className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                <input
+                  aria-label={`选择记录 ${row.original.id}`}
+                  checked={row.getIsSelected()}
+                  className="h-5 w-5 rounded border-[var(--border)]"
+                  onChange={row.getToggleSelectedHandler()}
+                  type="checkbox"
+                />
+                <span className="max-w-[180px] truncate">{rowTitle(row.original, columns, resource, resources)}</span>
+              </label>
+              <Badge>{shortId(row.original.id)}</Badge>
+            </div>
+            <dl className="grid gap-2">
+              {columns.slice(0, 5).map((column) => (
+                <div key={column.key} className="grid gap-1 rounded-md bg-[var(--muted)]/35 px-3 py-2">
+                  <dt className="text-[11px] font-medium text-[var(--muted-foreground)]">{column.label}</dt>
+                  <dd className="min-w-0 text-sm text-[var(--foreground)]">{renderCell(column.key, cellValue(column, row.original, resource, resources))}</dd>
+                </div>
+              ))}
+            </dl>
+            {renderActions ? <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">{renderActions(row.original)}</div> : null}
+          </article>
+        ))}
+        {table.getRowModel().rows.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--muted-foreground)]">
+            {emptyLabel}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -186,6 +224,15 @@ function cellText(column: ResourceColumn, row: ResourceRecord, resource?: OpsRes
 
 function rowSearchText(row: ResourceRecord, columns: ResourceColumn[], resource?: OpsResource, resources?: ResourceLookup) {
   return columns.map((column) => cellText(column, row, resource, resources)).join(' ')
+}
+
+function rowTitle(row: ResourceRecord, columns: ResourceColumn[], resource?: OpsResource, resources?: ResourceLookup) {
+  const titleColumn = columns.find((column) => ['title', 'name', 'realName', 'nickName'].includes(column.key)) || columns[0]
+  return titleColumn ? String(cellValue(titleColumn, row, resource, resources) ?? row.id) : row.id
+}
+
+function shortId(id: string) {
+  return id.length > 8 ? id.slice(0, 8) : id
 }
 
 function isStatusColumn(key: string) {
