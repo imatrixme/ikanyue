@@ -28,12 +28,12 @@ async function enterProjectWorkspace(user: ReturnType<typeof userEvent.setup>, t
     return
   }
   await user.click(screen.getByRole('button', { name: '更换班级' }))
-  let setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+  let setupDialog = await screen.findByRole('dialog', { name: '进入班级工作台' })
   if (taskName) {
     await user.click(within(setupDialog).getByRole('button', { name: taskName }))
   }
   await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认班级' }))
-  setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+  setupDialog = await screen.findByRole('dialog', { name: '进入班级工作台' })
   await user.click(within(setupDialog).getByRole('button', { name: '进入班级工作台' }))
   expect(await screen.findByText('当前班级')).toBeInTheDocument()
 }
@@ -44,12 +44,12 @@ async function enterLessonWorkspace(user: ReturnType<typeof userEvent.setup>, ta
     return
   }
   await user.click(screen.getByRole('button', { name: '更换课堂' }))
-  let setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+  let setupDialog = await screen.findByRole('dialog', { name: '进入课堂工作台' })
   if (taskName) {
     await user.click(within(setupDialog).getByRole('button', { name: taskName }))
   }
   await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认课堂' }))
-  setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+  setupDialog = await screen.findByRole('dialog', { name: '进入课堂工作台' })
   await user.click(within(setupDialog).getByRole('button', { name: '进入课堂工作台' }))
   expect(await screen.findByText('当前课堂')).toBeInTheDocument()
 }
@@ -86,7 +86,20 @@ async function savePeopleAction(
     await user.selectOptions(within(dialog).getByLabelText(options.modeLabel), options.mode)
   }
   expect(within(dialog).getByText('本次保存')).toBeInTheDocument()
-  await user.click(within(dialog).getByRole('button', { name: '保存关系' }))
+  await user.click(within(dialog).getByRole('button', { name: saveButtonName(options.modeLabel) }))
+}
+
+function saveButtonName(modeLabel?: string) {
+  if (modeLabel?.includes('出勤')) {
+    return '保存出勤'
+  }
+  if (modeLabel?.includes('角色')) {
+    return '保存分工'
+  }
+  if (modeLabel?.includes('状态')) {
+    return '保存学员'
+  }
+  return /^保存/
 }
 
 describe('ops admin app flow', () => {
@@ -184,7 +197,7 @@ describe('ops admin app flow', () => {
 
     await loginAsAdmin(user)
     await navigateTo(user, '班级工作台', '班级与课包')
-    expect(await screen.findByText('围绕一个班级/学习单元管理学员、教师、课堂和下一步动作；关系表只作为结果和维护视图。')).toBeInTheDocument()
+    expect(await screen.findByText('围绕一个班级或课包管理学员、教师、课堂和下一步动作。底层关系只作为结果查看和异常修正。')).toBeInTheDocument()
     await enterProjectWorkspace(user)
     await user.click(screen.getByRole('button', { name: '添加班级学员' }))
     const projectDialog = await screen.findByRole('dialog', { name: '添加班级学员' })
@@ -450,7 +463,7 @@ describe('ops admin app flow', () => {
 
     expect(await screen.findByText('王老师，先处理今天的课')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '教师' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '发起流程' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '新建事务' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '报告任务' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '评估表模板' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '审计日志' })).not.toBeInTheDocument()

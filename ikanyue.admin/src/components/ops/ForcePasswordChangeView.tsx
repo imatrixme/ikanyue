@@ -46,7 +46,7 @@ export function ForcePasswordChangeView({ api, token, profile, errorMessage, onS
             {profile.realName || profile.nickName || profile.cellphone} 首次登录后台前需要设置新的管理员密码。
           </p>
         </div>
-        {errorMessage ? <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
+        {errorMessage ? <div className="mb-4 rounded-md border border-[var(--destructive)]/25 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
         <form className="grid gap-4" onSubmit={submit}>
           <Field label="当前密码" htmlFor="current-password">
             <Input id="current-password" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />

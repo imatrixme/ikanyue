@@ -61,11 +61,11 @@ export function DataTable({ columns, rows, resource, resources = {}, emptyLabel 
         <div className="flex h-9 min-w-[240px] max-w-sm flex-1 items-center rounded-md border border-[var(--input)] bg-[var(--card)] px-2 shadow-sm">
           <Search className="h-4 w-4 text-[var(--muted-foreground)]" aria-hidden="true" />
           <Input
-            aria-label="当前页快速筛选"
+            aria-label="搜索当前列表"
             className="h-8 border-0 px-2 focus:ring-0"
             value={globalFilter}
             onChange={(event) => setGlobalFilter(event.target.value)}
-            placeholder="当前页快速筛选"
+            placeholder="搜索当前列表"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
@@ -81,13 +81,13 @@ export function DataTable({ columns, rows, resource, resources = {}, emptyLabel 
         {table.getRowModel().rows.map((row) => (
           <article
             key={row.id}
-            className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm data-[selected=true]:border-cyan-200 data-[selected=true]:bg-cyan-50/60"
+            className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm data-[selected=true]:border-[var(--brand-border)] data-[selected=true]:bg-[var(--brand-soft)]/60"
             data-selected={row.getIsSelected()}
           >
             <div className="mb-3 flex items-center justify-between gap-3">
               <label className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[var(--foreground)]">
                 <input
-                  aria-label={`选择记录 ${row.original.id}`}
+                  aria-label={`选择${rowTitle(row.original, columns, resource, resources)}`}
                   checked={row.getIsSelected()}
                   className="h-5 w-5 rounded border-[var(--border)]"
                   onChange={row.getToggleSelectedHandler()}
@@ -130,7 +130,7 @@ export function DataTable({ columns, rows, resource, resources = {}, emptyLabel 
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--muted)]/45 last:border-0 data-[selected=true]:bg-cyan-50/60" data-selected={row.getIsSelected()}>
+              <tr key={row.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--muted)]/45 last:border-0 data-[selected=true]:bg-[var(--brand-soft)]/60" data-selected={row.getIsSelected()}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className={cn(rowClass, 'text-[var(--foreground)]')}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -163,7 +163,7 @@ function buildColumns(
     enableSorting: false,
     header: ({ table }) => (
       <input
-        aria-label="选择当前页全部记录"
+        aria-label="选择当前页全部内容"
         checked={table.getIsAllPageRowsSelected()}
         className="h-4 w-4 rounded border-[var(--border)]"
         onChange={table.getToggleAllPageRowsSelectedHandler()}
@@ -172,7 +172,7 @@ function buildColumns(
     ),
     cell: ({ row }) => (
       <input
-        aria-label={`选择记录 ${row.original.id}`}
+        aria-label={`选择${rowTitle(row.original, columns, resource, resources)}`}
         checked={row.getIsSelected()}
         className="h-4 w-4 rounded border-[var(--border)]"
         onChange={row.getToggleSelectedHandler()}

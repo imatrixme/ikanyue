@@ -56,8 +56,8 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
       mode === 'desktop' && (expanded ? 'lg:w-64' : 'lg:w-16'),
     )}>
       <div className="flex h-full flex-col">
-        <div className={cn('flex h-16 items-center border-b border-[var(--border)] px-3', labelsVisible ? 'gap-3' : 'lg:justify-center lg:px-2')}>
-          <span className={cn('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--primary)] text-sm font-bold text-[var(--primary-foreground)] shadow-sm', !labelsVisible && 'lg:hidden')}>KY</span>
+        <div className={cn('flex h-16 items-center border-b border-[var(--border)] bg-gradient-to-r from-[var(--brand-soft)]/65 to-transparent px-3', labelsVisible ? 'gap-3' : 'lg:justify-center lg:px-2')}>
+          <span className={cn('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--primary)] text-sm font-bold text-[var(--primary-foreground)] shadow-sm shadow-[var(--brand)]/20', !labelsVisible && 'lg:hidden')}>KY</span>
           <div className={cn('min-w-0 flex-1 whitespace-nowrap transition-opacity', labelsVisible ? 'opacity-100' : 'lg:hidden')}>
             <p className="text-xs font-medium text-[var(--muted-foreground)]">KanYue Ops</p>
             <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">声乐教务生命周期</p>
@@ -93,8 +93,8 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                 <button
                   aria-expanded={!collapsed}
                   className={cn(
-                    'flex min-h-10 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--secondary)] hover:text-[var(--foreground)]',
-                    activeGroup?.key === group.key && 'bg-[var(--secondary)]/70 text-[var(--foreground)]',
+                    'flex min-h-10 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]',
+                    activeGroup?.key === group.key && 'bg-[var(--brand-soft)] text-[var(--accent-foreground)] shadow-sm',
                     !labelsVisible && 'lg:justify-center lg:px-0',
                   )}
                   onClick={() => toggleGroup(group.key)}
@@ -121,7 +121,7 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                       {section.label && labelsVisible ? (
                         <button
                           aria-expanded={!isSectionCollapsed}
-                          className="flex min-h-9 w-full items-center gap-1.5 rounded-md px-1 text-left text-[12px] font-medium text-[var(--muted-foreground)] transition-colors hover:bg-[var(--secondary)] hover:text-[var(--foreground)]"
+                          className="flex min-h-9 w-full items-center gap-1.5 rounded-md px-1 text-left text-[12px] font-medium text-[var(--muted-foreground)] transition-colors hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]"
                           onClick={() => toggleSection(group.key, section.label)}
                           type="button"
                         >
@@ -140,7 +140,7 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                               'relative ml-3 flex min-h-9 w-[calc(100%-0.75rem)] items-center gap-2 rounded-md px-2 text-left text-[12px] font-medium transition-colors',
                               mode === 'drawer' && 'min-h-11 text-[13px]',
                               !labelsVisible && 'lg:mx-auto lg:w-10 lg:justify-center lg:px-0',
-                              active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm before:absolute before:-left-[25px] before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--primary)]' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]',
+                              active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--brand)]/20 before:absolute before:-left-[25px] before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[var(--warning)]' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]',
                             )}
                             onClick={() => {
                               onViewChange(item.view)

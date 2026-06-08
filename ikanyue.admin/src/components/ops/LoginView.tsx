@@ -50,17 +50,17 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
             <LockKeyhole className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-3xl font-semibold leading-tight">看乐声乐运营后台</h1>
-          <p className="mt-4 max-w-[28rem] text-sm leading-6 text-slate-300">
+          <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--primary-foreground)]/75">
             教师和管理员统一处理学员、内容、运营位、评估表和评估报告。
           </p>
         </div>
-        <div className="mt-10 grid gap-2 text-sm text-slate-400">
+        <div className="mt-10 grid gap-2 text-sm text-[var(--primary-foreground)]/55">
           <span>Hono Ops API</span>
           <span>PocketBase internal data center</span>
         </div>
       </aside>
       <section className="flex items-center justify-center px-5 py-10">
-        <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm shadow-slate-200/60" onSubmit={submit}>
+        <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm shadow-[var(--brand)]/8" onSubmit={submit}>
           <div className="mb-6">
             <p className="text-xs font-medium text-[var(--muted-foreground)]">Teacher / Admin</p>
             <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册教师账号' : '账号或手机号登录'}</h2>
@@ -83,8 +83,8 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
               注册
             </button>
           </div>
-          {errorMessage ? <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{errorMessage}</div> : null}
-          {successMessage ? <div className="mb-4 rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-700">{successMessage}</div> : null}
+          {errorMessage ? <div className="mb-4 rounded-md border border-[var(--destructive)]/25 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
+          {successMessage ? <div className="mb-4 rounded-md border border-[var(--info)]/25 bg-[var(--info-soft)] px-3 py-2 text-sm text-[var(--info)]">{successMessage}</div> : null}
           <div className="grid gap-4">
             <Field label={mode === 'register' ? '手机号' : '账号或手机号'} htmlFor="ops-account">
               <Input

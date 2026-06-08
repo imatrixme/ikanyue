@@ -98,7 +98,7 @@ function signupActivityOperations(answers: GuidedAnswers): GuidedOperation[] {
 function teachingOperations(answers: GuidedAnswers, programType: 'trial' | 'course_package' | 'activity'): GuidedOperation[] {
   const title = text(answers.title) || (programType === 'course_package' ? '长期课程' : '体验课')
   const operations: GuidedOperation[] = [
-    operation('program', 'learningPrograms', '创建班级/学习单元', {
+    operation('program', 'learningPrograms', '创建班级/课包', {
       title,
       type: programType,
       status: 'active',

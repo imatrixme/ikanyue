@@ -11,10 +11,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm hover:bg-slate-800',
-  secondary: 'border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-sm hover:bg-[var(--secondary)]',
-  ghost: 'border-transparent bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--foreground)]',
-  danger: 'border-[var(--destructive)] bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:bg-red-800',
+  primary: 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--brand)]/15 hover:bg-[var(--primary-hover)]',
+  secondary: 'border-[var(--brand-border)] bg-[var(--card)] text-[var(--accent-foreground)] shadow-sm hover:bg-[var(--brand-soft)]',
+  ghost: 'border-transparent bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]',
+  danger: 'border-[var(--destructive)] bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:bg-[var(--destructive-hover)]',
 }
 
 export function Button({ variant = 'primary', icon, className, children, asSpan = false, ...props }: ButtonProps) {

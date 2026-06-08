@@ -15,7 +15,7 @@ interface ComboboxProps {
   onValueChange: (value: string) => void
 }
 
-export function Combobox({ id, value, options, placeholder = '搜索并选择', emptyLabel = '暂无可选数据', onValueChange, 'aria-label': ariaLabel }: ComboboxProps) {
+export function Combobox({ id, value, options, placeholder = '搜索并选择', emptyLabel = '暂无可选项', onValueChange, 'aria-label': ariaLabel }: ComboboxProps) {
   const [query, setQuery] = useState('')
   const selected = options.find((option) => option.value === value)
   const filtered = useMemo(() => {
@@ -55,10 +55,10 @@ export function Combobox({ id, value, options, placeholder = '搜索并选择', 
             {option.label}
           </button>
         ))}
-        {filtered.length === 0 ? <div className="px-2 py-2 text-sm text-[var(--muted-foreground)]">{options.length > 0 ? '没有匹配项' : emptyLabel}</div> : null}
+        {filtered.length === 0 ? <div className="px-2 py-2 text-sm text-[var(--muted-foreground)]">{options.length > 0 ? '没有找到匹配结果' : emptyLabel}</div> : null}
       </div>
       {selected ? <div className="mt-2 text-xs text-[var(--muted-foreground)]">当前选择：{selected.label}</div> : null}
-      {!selected && value ? <div className="mt-2 text-xs text-amber-700">当前 ID 未在已加载数据中匹配：{value}</div> : null}
+      {!selected && value ? <div className="mt-2 text-xs text-[var(--warning-foreground)]">当前值没有在已加载选项中找到：{value}</div> : null}
     </div>
   )
 }

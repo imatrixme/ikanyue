@@ -40,7 +40,7 @@ const resourceLabels: Partial<Record<OpsResource, string>> = {
   videoMaterials: '视频',
 }
 
-export function EntityPicker({ id, label, value, resources, lookup = {}, multiple = false, emptyLabel = '暂无可选数据', onValueChange }: EntityPickerProps) {
+export function EntityPicker({ id, label, value, resources, lookup = {}, multiple = false, emptyLabel = '暂无可选项', onValueChange }: EntityPickerProps) {
   const [query, setQuery] = useState('')
   const selectedValues = Array.isArray(value) ? value : value ? [value] : []
   const options = useMemo(() => collectOptions(resources, lookup), [lookup, resources])
@@ -68,7 +68,7 @@ export function EntityPicker({ id, label, value, resources, lookup = {}, multipl
           className="h-8 w-full border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
           id={id}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={options.length > 0 ? '搜索姓名、标题、手机号或 ID' : emptyLabel}
+          placeholder={options.length > 0 ? '搜索姓名、标题、手机号或编号' : emptyLabel}
           value={query}
         />
       </div>
@@ -112,14 +112,14 @@ export function EntityPicker({ id, label, value, resources, lookup = {}, multipl
             {filtered.length === 0 ? (
               <tr>
                 <td className="px-3 py-8 text-center text-sm text-[var(--muted-foreground)]" colSpan={4}>
-                  {options.length > 0 ? '没有匹配项' : emptyLabel}
+                  {options.length > 0 ? '没有找到匹配结果' : emptyLabel}
                 </td>
               </tr>
             ) : null}
           </tbody>
         </table>
       </div>
-      {selected.length === 0 && selectedValues.length > 0 ? <div className="text-xs text-amber-700">当前 ID 未在已加载数据中匹配：{selectedValues.join('、')}</div> : null}
+      {selected.length === 0 && selectedValues.length > 0 ? <div className="text-xs text-[var(--warning-foreground)]">当前值没有在已加载选项中找到：{selectedValues.join('、')}</div> : null}
       {selected.length === 1 && !multiple ? <div className="text-xs text-[var(--muted-foreground)]">当前选择：{selected[0].label}</div> : null}
     </div>
   )
@@ -191,7 +191,7 @@ function EntityDetails({ option }: { option: EntityOption }) {
     ['手机号', option.record.cellphone],
     ['地点', option.record.location],
     ['状态', entityStatus(option)],
-    ['ID', option.record.id],
+    ['记录编号', option.record.id],
   ].filter((line): line is [string, string] => Boolean(line[1]))
   return (
     <div className="grid gap-2">

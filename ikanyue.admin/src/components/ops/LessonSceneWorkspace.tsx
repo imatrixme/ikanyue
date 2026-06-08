@@ -15,6 +15,7 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { PageHeader } from '../ui/PageHeader'
+import { MetricTile, SemanticSurface } from '../ui/SemanticSurface'
 import { LockedContextCard, PeopleActionDialog, PeopleRoster, PersonRow } from './SceneComponents'
 import { SceneSetupDialog } from './SceneSetupDialog'
 import {
@@ -80,7 +81,7 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
     <div className="grid gap-4">
       <Panel>
         <PageHeader
-          eyebrow="Scene workspace"
+          eyebrow="场景工作台"
           title="课堂工作台"
           description="围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课堂关系表。"
           icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
@@ -129,11 +130,11 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
 
       <SceneSetupDialog
         open={setupOpen}
-        title="配置课堂工作台"
-        description="左侧确认步骤，右侧只填写当前步骤需要的信息。"
+        title="进入课堂工作台"
+        description="先确认要做的事，再选择课堂。进入后出勤、老师和反馈都会锁定这一堂课。"
         intentTitle="你现在要处理哪类课堂任务？"
         intentDescription="先确认真实课堂动作，不提前展示出勤、继承和教师关系，避免误以为已经选中某一堂课。"
-        targetTitle="搜索并确认课堂"
+        targetTitle="选择要处理的课堂"
         targetDescription="确认要处理的课堂后，后续出勤、教师覆盖和反馈准备都会锁定在这一堂课上。"
         objectLabel="课堂"
         tasks={lessonTasks}
@@ -195,10 +196,10 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
 function LessonSummary({ scene }: { scene: LessonScene }) {
   const lesson = scene.lesson
   return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-4">
+    <SemanticSurface tone="brand">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{String(lesson?.title || '暂无课堂')}</h2>
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-semibold text-[var(--foreground)]">{String(lesson?.title || '暂无课堂')}</h2>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             {scene.project ? String(scene.project.title || scene.project.id) : '未关联班级'} · {lesson?.theme ? `主题 ${String(lesson.theme)}` : '主题待定'}
           </p>
@@ -206,11 +207,11 @@ function LessonSummary({ scene }: { scene: LessonScene }) {
         <Badge tone={lesson?.status === 'completed' ? 'green' : 'neutral'}>{displayResourceField('learningSessions', 'status', lesson?.status)}</Badge>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Metric label="出勤记录" value={scene.relationRecords.students.length} />
-        <Metric label="课堂老师" value={scene.relationRecords.teachers.length} />
-        <Metric label="继承教师" value={scene.inheritedTeachers.filter((person) => person.selected).length} />
+        <MetricTile label="出勤记录" value={scene.relationRecords.students.length} tone="success" />
+        <MetricTile label="课堂老师" value={scene.relationRecords.teachers.length} tone="brand" />
+        <MetricTile label="继承教师" value={scene.inheritedTeachers.filter((person) => person.selected).length} tone="info" />
       </div>
-    </div>
+    </SemanticSurface>
   )
 }
 
@@ -221,7 +222,7 @@ function TeacherInheritancePanel({ scene }: { scene: LessonScene }) {
     <Panel>
       <SectionHeader>
         <div className="flex items-center gap-2">
-          <GitCompareArrows className="h-5 w-5 text-cyan-700" aria-hidden="true" />
+          <GitCompareArrows className="h-5 w-5 text-[var(--accent-foreground)]" aria-hidden="true" />
           <div>
             <h3 className="font-semibold">教师继承与覆盖</h3>
             <p className="text-sm text-[var(--muted-foreground)]">先参考班级老师，本堂课可单独确认实际老师。</p>
@@ -246,15 +247,6 @@ function TeacherInheritancePanel({ scene }: { scene: LessonScene }) {
         </div>
       </div>
     </Panel>
-  )
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
-      <div className="text-xs text-[var(--muted-foreground)]">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-    </div>
   )
 }
 

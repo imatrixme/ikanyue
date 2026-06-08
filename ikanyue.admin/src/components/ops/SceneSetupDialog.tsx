@@ -5,6 +5,7 @@ import type { ResourceRecord } from '../../app/types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { ActionTile, SemanticSurface } from '../ui/SemanticSurface'
 import { Sheet } from '../ui/Sheet'
 import { cn } from '../ui/utils'
 import type { SceneLocatorTask, SceneWorkspaceStep } from './SceneLocator'
@@ -75,8 +76,8 @@ export function SceneSetupDialog({
       className="w-[min(1080px,calc(100vw-2rem))]"
       footer={(
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-[var(--muted-foreground)]">
-            {activeStep === 'intent' ? '先确认工作动机，下一步再选择具体对象。' : selectedObject ? `将锁定 ${objectLabel}：${objectTitle(selectedObject)}` : `请选择一个${objectLabel}`}
+          <div className="min-w-0 text-xs text-[var(--muted-foreground)] [overflow-wrap:anywhere]">
+            {activeStep === 'intent' ? '先确认要做的事，下一步再选择具体班级或课堂。' : selectedObject ? `将锁定 ${objectLabel}：${objectTitle(selectedObject)}` : `请选择一个${objectLabel}`}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>取消</Button>
@@ -123,7 +124,7 @@ export function SceneSetupDialog({
 function SceneWizardRail({ current, objectLabel }: { current: SetupStep; objectLabel: string }) {
   const steps: Array<{ key: SetupStep; title: string; description: string }> = [
     { key: 'intent', title: '确认任务', description: '这次要完成什么事' },
-    { key: 'target', title: `确认${objectLabel}`, description: '搜索并锁定对象' },
+    { key: 'target', title: `选择${objectLabel}`, description: '搜索并锁定' },
   ]
   const currentIndex = steps.findIndex((step) => step.key === current)
 
@@ -137,8 +138,8 @@ function SceneWizardRail({ current, objectLabel }: { current: SetupStep; objectL
             <div
               className={cn(
                 'grid grid-cols-[28px_1fr] gap-2 rounded-md border px-2 py-3',
-                active && 'border-cyan-300 bg-cyan-50 text-cyan-950',
-                done && 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                active && 'border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--accent-foreground)]',
+                done && 'border-[var(--success)]/25 bg-[var(--success-soft)] text-[var(--success)]',
                 !active && !done && 'border-transparent text-[var(--muted-foreground)]',
               )}
               key={step.key}
@@ -146,8 +147,8 @@ function SceneWizardRail({ current, objectLabel }: { current: SetupStep; objectL
               <span
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-md border text-xs font-semibold',
-                  active && 'border-cyan-300 bg-white text-cyan-800',
-                  done && 'border-emerald-200 bg-white text-emerald-700',
+                  active && 'border-[var(--brand-border)] bg-[var(--card)] text-[var(--accent-foreground)]',
+                  done && 'border-[var(--success)]/25 bg-[var(--card)] text-[var(--success)]',
                   !active && !done && 'border-[var(--border)] bg-[var(--card)]',
                 )}
               >
@@ -183,29 +184,25 @@ function SceneIntentFields({ title, description, tasks, selectedTask, objectLabe
           <h3 className="mt-1 text-lg font-semibold">{title}</h3>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted-foreground)]">{description}</p>
         </div>
-        <Badge tone="amber">尚未选择{objectLabel}</Badge>
+          <Badge tone="amber">下一步选择{objectLabel}</Badge>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
         {tasks.map((task) => {
           const active = task.key === selectedTask
           return (
-            <button
+            <ActionTile
               aria-pressed={active}
-              className={cn(
-                'grid min-h-32 gap-2 rounded-md border p-4 text-left transition',
-                active ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-[var(--border)] bg-[var(--card)] hover:border-cyan-200 hover:bg-cyan-50/40',
-              )}
+              actionLabel={active ? '已选择' : '选择此任务'}
+              actionIcon={active ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : undefined}
+              className={active ? 'ring-2 ring-[var(--ring)]/18' : undefined}
+              description={task.description}
               key={task.key}
               onClick={() => onSelectTask(task.key)}
+              title={task.title}
+              tone={active ? 'brand' : 'neutral'}
               type="button"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-base font-semibold">{task.title}</div>
-                {active ? <Check className="mt-0.5 h-4 w-4 text-cyan-700" aria-hidden="true" /> : null}
-              </div>
-              <p className="text-sm leading-6 text-[var(--muted-foreground)]">{task.description}</p>
-            </button>
+            />
           )
         })}
       </div>
@@ -267,11 +264,11 @@ function SceneObjectFields({ title, description, objectLabel, selectedTask, obje
           <div>
             <p className="text-xs font-semibold text-[var(--muted-foreground)]">已选{objectLabel}</p>
             {pendingObject ? (
-              <div className="mt-2 rounded-md border border-cyan-200 bg-cyan-50 p-3">
-                <div className="font-semibold text-cyan-950">{objectTitle(pendingObject)}</div>
-                <p className="mt-1 text-xs text-cyan-900/75">{objectSubtitle(pendingObject, kind)}</p>
-                <p className="mt-1 text-xs text-cyan-900/75">{objectContext(pendingObject, kind)}</p>
-              </div>
+              <SemanticSurface className="mt-2 p-3" tone="brand">
+                <div className="font-semibold text-[var(--accent-foreground)]">{objectTitle(pendingObject)}</div>
+                <p className="mt-1 text-xs text-[var(--accent-foreground)]/75">{objectSubtitle(pendingObject, kind)}</p>
+                <p className="mt-1 text-xs text-[var(--accent-foreground)]/75">{objectContext(pendingObject, kind)}</p>
+              </SemanticSurface>
             ) : (
               <div className="mt-2 rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-sm text-[var(--muted-foreground)]">
                 请先从左侧选择一个{objectLabel}
@@ -312,7 +309,7 @@ function SceneObjectTable({
           const active = String(object.id) === pendingId
           return (
             <tr
-              className={cn('border-t border-[var(--border)] hover:bg-[var(--muted)]/35', active && 'bg-cyan-50/70')}
+              className={cn('border-t border-[var(--border)] hover:bg-[var(--muted)]/35', active && 'bg-[var(--brand-soft)]/70')}
               key={String(object.id)}
             >
               <td className="px-3 py-2">
@@ -334,7 +331,7 @@ function SceneObjectTable({
         {filtered.length === 0 ? (
           <tr>
             <td className="px-3 py-8 text-center text-sm text-[var(--muted-foreground)]" colSpan={4}>
-              没有匹配的{objectLabel}
+              没有找到匹配的{objectLabel}
             </td>
           </tr>
         ) : null}

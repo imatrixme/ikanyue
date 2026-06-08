@@ -298,7 +298,7 @@ function LongFormSummary({ id, label, value, onChange, onOpenDocumentEditor }: {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-sm font-semibold">
-            <FileText className="h-4 w-4 text-cyan-700" aria-hidden="true" />
+            <FileText className="h-4 w-4 text-[var(--accent-foreground)]" aria-hidden="true" />
             <span>{label}</span>
           </div>
           <p className="mt-2 line-clamp-3 text-sm leading-6 text-[var(--muted-foreground)]">{summary || '暂无内容，打开编辑器补充。'}</p>

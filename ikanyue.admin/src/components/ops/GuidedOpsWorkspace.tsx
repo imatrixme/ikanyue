@@ -9,7 +9,10 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { PageHeader } from '../ui/PageHeader'
+import { ActionTile, MetricTile, SemanticSurface } from '../ui/SemanticSurface'
+import { semanticTone, type SemanticTone } from '../ui/semanticTone'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
+import { cn } from '../ui/utils'
 import { GuidedCreateDialog } from './GuidedCreateDialog'
 
 interface GuidedOpsWorkspaceProps {
@@ -28,13 +31,17 @@ const toneLabels: Record<GuidedWorkflow['tone'], string> = {
   conversion: '转化',
 }
 
-const workflowGroups: Array<{ key: string; title: string; description: string; focus: string; ids: GuidedWorkflow['id'][]; secondary?: boolean }> = [
+type WorkflowGroupTone = SemanticTone
+
+const workflowGroups: Array<{ key: string; title: string; description: string; focus: string; ids: GuidedWorkflow['id'][]; tone: WorkflowGroupTone; badge: string }> = [
   {
     key: 'publish-signup',
     title: '发布招生活动',
     description: '创建公开课、体验课、训练营等可报名入口。',
     focus: '先说清楚活动为什么发生、谁能报名、时间地点和负责人，再生成活动和报名入口。',
     ids: ['signupActivity'],
+    tone: 'warning',
+    badge: '招生入口',
   },
   {
     key: 'convert-signup',
@@ -42,13 +49,17 @@ const workflowGroups: Array<{ key: string; title: string; description: string; f
     description: '处理线下报名、审核、到场和转班。',
     focus: '把报名从线索推进到体验课、长期班或待跟进池，不让操作员手动拼关系表。',
     ids: ['reviewSignup', 'convertSignupToClass'],
+    tone: 'warning',
+    badge: '转化跟进',
   },
   {
     key: 'create-class',
-    title: '创建班级/学习单元',
+    title: '创建班级/课包',
     description: '创建一对一、多人体验、长期班或活动营。',
-    focus: '一对一也是一个班；先确定学习单元，再自然承载学员、老师和后续课堂。',
+    focus: '一对一也是一个班；先确定班级或课包，再自然承载学员、老师和后续课堂。',
     ids: ['trialLesson', 'longTermClass'],
+    tone: 'brand',
+    badge: '教务主线',
   },
   {
     key: 'schedule-lesson',
@@ -56,6 +67,8 @@ const workflowGroups: Array<{ key: string; title: string; description: string; f
     description: '给已有班级加课、补课或安排活动场次。',
     focus: '围绕时间、地点、人物和主题确认一堂真实会发生的课堂。',
     ids: ['addLesson', 'scheduleMakeupLesson'],
+    tone: 'brand',
+    badge: '排课动作',
   },
   {
     key: 'record-lesson',
@@ -63,6 +76,8 @@ const workflowGroups: Array<{ key: string; title: string; description: string; f
     description: '记录出勤和课堂实际发生事实。',
     focus: '出勤是实际发生记录，不改变长期班成员关系；课后动作会回流到报告和学生档案。',
     ids: ['attendance'],
+    tone: 'success',
+    badge: '课堂事实',
   },
   {
     key: 'launch-report',
@@ -70,6 +85,8 @@ const workflowGroups: Array<{ key: string; title: string; description: string; f
     description: '发起课后、阶段和班级级反馈报告。',
     focus: '从评价目的出发，明确对象、范围、模板、评估人和最终可见结果。',
     ids: ['reportLaunch', 'closeCoursePeriod'],
+    tone: 'info',
+    badge: '评估反馈',
   },
   {
     key: 'content-miniapp',
@@ -77,7 +94,8 @@ const workflowGroups: Array<{ key: string; title: string; description: string; f
     description: '发布素材，并把内容或活动配置到小程序入口。',
     focus: '这是内容运营入口，不混入教务主线；先创建内容对象，再决定展示位置。',
     ids: ['publishAudioMaterial', 'publishVideoMaterial', 'promoteContent'],
-    secondary: true,
+    tone: 'neutral',
+    badge: '内容运营',
   },
 ]
 
@@ -92,33 +110,33 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
     <div className="grid gap-4">
       <Panel>
         <PageHeader
-          eyebrow="Guided operations"
-          title="发起流程"
-          description="先选择一个真实工作动机，再进入对应的少量字段流程；详细模板只是动机下的二级选择。"
+          eyebrow="运营动作"
+          title="新建事务"
+          description="先选择真实工作目的，再填写少量必要信息。系统会在最后展示保存清单，方便提交前核对。"
           icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
         />
         <Tabs value={activeGroup} onValueChange={setActiveGroup} className="p-4">
           <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-[var(--muted)]/60">
             {workflowGroups.map((group) => (
-              <TabsTrigger key={group.key} value={group.key} className="min-h-10 flex-1 basis-[180px] justify-start gap-2 px-3">
+              <TabsTrigger key={group.key} value={group.key} className={cn('min-h-10 flex-1 basis-[180px] justify-start gap-2 border border-transparent px-3 data-[state=active]:border-current', groupColorClass(group.tone).tab)}>
                 <span>{group.title}</span>
-                <Badge aria-hidden="true">{group.ids.length}</Badge>
+                <Badge aria-hidden="true">{new Intl.NumberFormat('zh-CN').format(group.ids.length)}</Badge>
               </TabsTrigger>
             ))}
           </TabsList>
           {workflowGroups.map((group) => (
             <TabsContent key={group.key} value={group.key} className="mt-4">
               <section className="grid gap-4">
-                <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/20 p-4">
+                <SemanticSurface tone={group.tone}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-base font-semibold text-[var(--foreground)]">{group.title}</h3>
                       <p className="mt-1 text-sm text-[var(--muted-foreground)]">{group.description}</p>
                     </div>
-                    <Badge tone={group.secondary ? 'neutral' : 'blue'}>{group.secondary ? '内容运营' : `${group.ids.length} 个模板`}</Badge>
+                    <Badge tone={semanticTone(group.tone).badge}>{group.badge} · {new Intl.NumberFormat('zh-CN').format(group.ids.length)} 个模板</Badge>
                   </div>
                   <p className="mt-3 max-w-3xl text-xs leading-5 text-[var(--muted-foreground)]">{group.focus}</p>
-                </div>
+                </SemanticSurface>
                 <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                   {group.ids.map((id) => {
                     const workflow = workflowsById.get(id)
@@ -155,9 +173,9 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
           </div>
         </SectionHeader>
         <div className="grid gap-3 p-4 md:grid-cols-3">
-          <SceneStat title="报名中心" value={resources.activitySignups?.pagination.totalItems || 0} label="报名/待分班" />
-          <SceneStat title="班级与课包" value={resources.learningPrograms?.pagination.totalItems || 0} label="班级/学习单元" />
-          <SceneStat title="课堂中心" value={resources.learningSessions?.pagination.totalItems || 0} label="课堂/场次" />
+          <MetricTile title="报名中心" label="报名中心" value={resources.activitySignups?.pagination.totalItems || 0} hint="报名/待分班" tone="warning" />
+          <MetricTile title="班级与课包" label="班级与课包" value={resources.learningPrograms?.pagination.totalItems || 0} hint="班级/课包" tone="brand" />
+          <MetricTile title="课堂中心" label="课堂中心" value={resources.learningSessions?.pagination.totalItems || 0} hint="课堂/场次" tone="info" />
         </div>
       </Panel>
       <GuidedCreateDialog
@@ -192,10 +210,10 @@ function DraftCenter({ drafts, onDelete, onResume }: { drafts: GuidedWorkflowDra
     <Panel>
       <SectionHeader>
         <div className="flex items-center gap-2">
-          <FileClock className="h-5 w-5 text-cyan-700" aria-hidden="true" />
+          <FileClock className="h-5 w-5 text-[var(--accent-foreground)]" aria-hidden="true" />
           <div>
             <h3 className="font-semibold">草稿中心</h3>
-            <p className="text-sm text-[var(--muted-foreground)]">未完成的流程可以从这里捡起继续编辑。</p>
+            <p className="text-sm text-[var(--muted-foreground)]">未完成的事务可以从这里继续填写。</p>
           </div>
         </div>
         <Badge>{drafts.length} 个草稿</Badge>
@@ -206,7 +224,7 @@ function DraftCenter({ drafts, onDelete, onResume }: { drafts: GuidedWorkflowDra
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 shadow-sm" key={draft.id}>
             <div>
               <div className="text-sm font-semibold">{draft.title}</div>
-              <div className="text-xs text-[var(--muted-foreground)]">{draft.workflowTitle} · 第 {draft.stepIndex + 1} 步 · {formatDraftTime(draft.updatedAt)}</div>
+              <div className="text-xs text-[var(--muted-foreground)]">{draft.workflowTitle} · 停在第 {draft.stepIndex + 1} 步 · {formatDraftTime(draft.updatedAt)}</div>
             </div>
             <div className="flex gap-2">
               <Button icon={<FileClock className="h-4 w-4" aria-hidden="true" />} onClick={() => onResume(draft)} type="button" variant="secondary">
@@ -230,25 +248,22 @@ function formatDraftTime(value: string) {
 
 function WorkflowCard({ workflow, onOpen }: { workflow: GuidedWorkflow; onOpen: (workflow: GuidedWorkflow) => void }) {
   const [expanded, setExpanded] = useState(false)
+  const tone = workflowTone(workflow.tone)
   return (
-    <article className="group rounded-md border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm transition hover:border-cyan-200 hover:shadow-md">
-      <button
-        className="flex w-full items-start justify-between gap-3 text-left"
+    <article>
+      <ActionTile
+        title={workflow.title}
+        description={workflow.intent}
+        actionLabel="开始填写"
+        actionIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+        badge={toneLabels[workflow.tone]}
+        icon={<Plus className="h-4 w-4" aria-hidden="true" />}
+        tone={tone}
         onClick={() => onOpen(workflow)}
-        type="button"
-      >
-        <div className="min-w-0">
-          <Badge tone={workflow.tone === 'report' || workflow.tone === 'content' ? 'blue' : workflow.tone === 'attendance' || workflow.tone === 'conversion' ? 'amber' : 'green'}>{toneLabels[workflow.tone]}</Badge>
-          <h4 className="mt-2 text-[13px] font-semibold">{workflow.title}</h4>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted-foreground)]">{workflow.intent}</p>
-        </div>
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm transition group-hover:bg-slate-800">
-          <Plus className="h-4 w-4" aria-hidden="true" />
-        </span>
-      </button>
-      {expanded ? <p className="mt-3 text-xs leading-5 text-[var(--muted-foreground)]">{workflow.description}</p> : null}
+      />
+      {expanded ? <p className="mt-3 rounded-md border border-[var(--border)] bg-[var(--muted)]/20 px-3 py-2 text-xs leading-5 text-[var(--muted-foreground)] [overflow-wrap:anywhere]">{workflow.description}</p> : null}
       <button
-        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
+        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] transition hover:text-[var(--accent-foreground)]"
         onClick={() => setExpanded((current) => !current)}
         type="button"
       >
@@ -259,12 +274,39 @@ function WorkflowCard({ workflow, onOpen }: { workflow: GuidedWorkflow; onOpen: 
   )
 }
 
-function SceneStat({ title, value, label }: { title: string; value: number; label: string }) {
-  return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/30 p-4">
-      <div className="text-sm text-[var(--muted-foreground)]">{title}</div>
-      <div className="mt-2 text-2xl font-semibold tabular-nums">{value}</div>
-      <div className="mt-1 text-xs text-[var(--muted-foreground)]">{label}</div>
-    </div>
-  )
+function groupColorClass(tone: WorkflowGroupTone) {
+  const classes: Record<WorkflowGroupTone, { tab: string }> = {
+    warning: {
+      tab: 'data-[state=active]:text-[var(--warning-foreground)]',
+    },
+    brand: {
+      tab: 'data-[state=active]:text-[var(--accent-foreground)]',
+    },
+    success: {
+      tab: 'data-[state=active]:text-[var(--success)]',
+    },
+    info: {
+      tab: 'data-[state=active]:text-[var(--info)]',
+    },
+    danger: {
+      tab: 'data-[state=active]:text-[var(--destructive)]',
+    },
+    neutral: {
+      tab: 'data-[state=active]:text-[var(--secondary-foreground)]',
+    },
+  }
+  return classes[tone]
+}
+
+function workflowTone(tone: GuidedWorkflow['tone']): SemanticTone {
+  if (tone === 'activity' || tone === 'conversion') {
+    return 'warning'
+  }
+  if (tone === 'report' || tone === 'content') {
+    return 'info'
+  }
+  if (tone === 'attendance') {
+    return 'success'
+  }
+  return 'brand'
 }

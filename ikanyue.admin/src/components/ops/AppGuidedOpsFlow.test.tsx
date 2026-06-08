@@ -46,8 +46,8 @@ describe('guided ops app flow', () => {
     await loginAsAdmin(user)
     expect(await screen.findByText('今天先把教务闭环推进')).toBeInTheDocument()
 
-    await navigateTo(user, '发起流程', '工作台')
-    expect(await screen.findByRole('heading', { name: '发起流程' })).toBeInTheDocument()
+    await navigateTo(user, '新建事务', '工作台')
+    expect(await screen.findByRole('heading', { name: '新建事务' })).toBeInTheDocument()
     expect(await screen.findByRole('tab', { name: '发布招生活动' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /发布可报名活动/ }))
@@ -55,8 +55,8 @@ describe('guided ops app flow', () => {
     fireEvent.change(within(dialog).getByLabelText('活动标题'), { target: { value: '端到端体验营' } })
     await user.click(within(dialog).getByRole('button', { name: /人物.*谁负责和授课/ }))
     await user.click(within(dialog).getByLabelText(/王老师/))
-    await user.click(within(dialog).getByRole('button', { name: /确认生成.*系统会自动创建什么/ }))
-    await user.click(within(dialog).getByRole('button', { name: '确认创建' }))
+    await user.click(within(dialog).getByRole('button', { name: /保存前检查.*这次会保存哪些内容/ }))
+    await user.click(within(dialog).getByRole('button', { name: '确认保存' }))
 
     await waitFor(() => expect(created.map((item) => item.resource)).toEqual(expect.arrayContaining(['activities', 'operationSlots', 'learningPrograms', 'learningSessions'])))
     expect(created[0]).toMatchObject({
@@ -79,14 +79,14 @@ describe('guided ops app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await navigateTo(user, '发起流程', '工作台')
+    await navigateTo(user, '新建事务', '工作台')
     await user.click(await screen.findByRole('tab', { name: '发起测评/报告' }))
     await user.click(await screen.findByRole('button', { name: /发起测评报告/ }))
     const dialog = await screen.findByRole('dialog', { name: '发起测评报告' })
-    await user.click(within(dialog).getByRole('button', { name: /确认生成.*系统会自动创建什么/ }))
-    await user.click(within(dialog).getByRole('button', { name: '确认创建' }))
+    await user.click(within(dialog).getByRole('button', { name: /保存前检查.*这次会保存哪些内容/ }))
+    await user.click(within(dialog).getByRole('button', { name: '确认保存' }))
 
     expect(await screen.findByText('guided create down')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: '发起流程' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '新建事务' })).toBeInTheDocument()
   })
 })

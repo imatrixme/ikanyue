@@ -157,7 +157,7 @@ function DocumentEditorSession({ title, label, initialValue, onClose, onSave, on
             <Button type="button" variant="secondary" disabled={uploading} onClick={() => fileRef.current?.click()} icon={<ImagePlus className="h-4 w-4" aria-hidden="true" />}>
               {uploading ? '上传中' : '插入图片'}
             </Button>
-            {error ? <span className="text-red-700">{error}</span> : <span>图片会先进入编辑草稿，提交父表单时一并保存。</span>}
+            {error ? <span className="text-[var(--destructive)]">{error}</span> : <span>图片会先进入编辑草稿，提交父表单时一并保存。</span>}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={closeWithProtection}>取消</Button>

@@ -28,8 +28,8 @@ export function StepRail({ steps, currentKey, onStepClick }: StepRailProps) {
               <span
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-md border text-xs font-semibold',
-                  active && 'border-cyan-300 bg-white text-cyan-800',
-                  done && 'border-emerald-200 bg-white text-emerald-700',
+                  active && 'border-[var(--brand-border)] bg-[var(--card)] text-[var(--accent-foreground)]',
+                  done && 'border-[var(--success)]/25 bg-[var(--card)] text-[var(--success)]',
                   !active && !done && 'border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)]',
                 )}
               >
@@ -65,8 +65,8 @@ export function StepRail({ steps, currentKey, onStepClick }: StepRailProps) {
 function stepClass(active: boolean, done: boolean) {
   return cn(
     'grid grid-cols-[28px_1fr] gap-2 rounded-md border px-2 py-3 text-left',
-    active && 'border-cyan-300 bg-cyan-50 text-cyan-950',
-    done && 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    active && 'border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--accent-foreground)]',
+    done && 'border-[var(--success)]/25 bg-[var(--success-soft)] text-[var(--success)]',
     !active && !done && 'border-transparent text-[var(--muted-foreground)]',
   )
 }

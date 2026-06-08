@@ -44,7 +44,7 @@ export function SharePreviewView({ preview }: SharePreviewViewProps) {
               </div>
             </div>
             <div className="rounded-lg bg-[var(--primary)] p-6 text-[var(--primary-foreground)] shadow-sm">
-              <div className="text-sm text-slate-300">总分</div>
+              <div className="text-sm text-[var(--primary-foreground)]/75">总分</div>
               <div className="mt-1 text-5xl font-semibold tabular-nums">{preview.score.totalScore}</div>
             </div>
           </div>

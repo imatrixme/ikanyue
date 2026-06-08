@@ -31,7 +31,7 @@ const signupActivitySteps: GuidedStep[] = [
     choiceField('sessionRule', '活动场次', [['single', '一次性活动'], ['series', '多场次活动'], ['pending', '先不排场次']]),
     pendingField('reportAfterActivity', '活动后发起测评报告'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成活动、报名入口和必要的教学关系。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存活动、报名入口和必要的教学关系。', []),
 ]
 
 const trialLessonSteps: GuidedStep[] = [
@@ -62,7 +62,7 @@ const trialLessonSteps: GuidedStep[] = [
     pendingField('reportAfterActivity', '课后生成体验报告'),
     choiceField('classRule', '体验后处理', [['pending_pool', '进入跟进池'], ['manual_review', '人工决定是否转班'], ['auto_by_capacity', '直接形成体验班']]),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成体验班级、课堂和参与关系。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存体验班级、课堂和参与关系。', []),
 ]
 
 const longTermClassSteps: GuidedStep[] = [
@@ -93,7 +93,7 @@ const longTermClassSteps: GuidedStep[] = [
     choiceField('sessionRule', '排课方式', [['pending', '先不排课'], ['single', '先生成第一堂课'], ['series', '后续批量排课']]),
     pendingField('reportAfterActivity', '阶段后发起测评报告'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成长期班级、学员/老师关系和可选课堂。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存长期班级、学员/老师关系和可选课堂。', []),
 ]
 
 const addLessonSteps = lessonLikeSteps('加课目的', '要给哪个班级加一堂课？', '临时加课、补课、活动课都可以走这里。', '课堂标题', '课后动作')
@@ -132,7 +132,7 @@ const materialSteps: GuidedStep[] = [
     choiceField('publishStatus', '发布状态', [['draft', '草稿'], ['published', '发布']]),
     pendingField('createSlot', '同步创建运营位'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成素材记录和可选运营位。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存素材记录和可选运营位。', []),
 ]
 
 const promoteContentSteps: GuidedStep[] = [
@@ -161,7 +161,7 @@ const promoteContentSteps: GuidedStep[] = [
     numberField('sortOrder', '排序'),
     choiceField('publishStatus', '状态', [['draft', '草稿'], ['active', '启用'], ['inactive', '停用']]),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成一个小程序运营位。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存一个小程序运营位。', []),
 ]
 
 const reviewSignupSteps: GuidedStep[] = [
@@ -189,13 +189,13 @@ const reviewSignupSteps: GuidedStep[] = [
     choiceField('signupStatus', '报名状态', [['registered', '已报名'], ['attended', '已到场'], ['cancelled', '已取消'], ['no_show', '未到场']]),
     textareaField('remark', '备注'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成一条活动报名记录。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存一条活动报名记录。', []),
 ]
 
 const convertSignupSteps: GuidedStep[] = [
   step('purpose', '转化目的', '要把报名转成什么学习安排？', '报名后可直接形成体验班或长期班。', [
     textField('title', '转化班级名称', '如：张同学体验后长期课', true),
-    choiceField('programType', '学习单元类型', [['trial', '体验课'], ['course_package', '课程包'], ['activity', '活动课']]),
+    choiceField('programType', '安排类型', [['trial', '体验课'], ['course_package', '课程包'], ['activity', '活动课']]),
     textField('theme', '学习主题'),
   ]),
   step('participants', '转化学员', '哪些报名人进入安排？', '选择已有学员；新报名人可后续补齐档案。', [
@@ -220,7 +220,7 @@ const convertSignupSteps: GuidedStep[] = [
     choiceField('sessionRule', '排课方式', [['pending', '先不排课'], ['single', '生成第一堂课']]),
     pendingField('reportAfterActivity', '转化后发起测评'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成班级/学习单元、参与关系和可选课堂。', []),
+  step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存班级/课包、参与关系和可选课堂。', []),
 ]
 
 export const guidedWorkflows: GuidedWorkflow[] = [
@@ -259,7 +259,7 @@ export const guidedWorkflows: GuidedWorkflow[] = [
     reportAfterActivity: false,
     location: '待定',
   }, '体验课会出现在班级中心、课堂中心、学员画像和报告中心。'),
-  workflow('longTermClass', '开长期班', '我要开一个长期班', '一对一和多人班都统一为一个学习单元，再承载课堂和报告。', 'teaching', longTermClassSteps, {
+  workflow('longTermClass', '开长期班', '我要开一个长期班', '一对一和多人班都会先形成一个班级，再承载课堂和报告。', 'teaching', longTermClassSteps, {
     title: '长期声乐课',
     classSize: 'one_on_one',
     theme: '阶段提升',
@@ -332,7 +332,7 @@ function lessonLikeSteps(purposeTitle: string, purposeQuestion: string, purposeD
   return [
     step('purpose', purposeTitle, purposeQuestion, purposeDescription, [
       textField('title', titleLabel, '如：暑期第一课', true),
-      relationField('programId', '所属班级/学习单元', 'learningPrograms'),
+      relationField('programId', '所属班级/课包', 'learningPrograms'),
       textField('theme', '本堂主题'),
       choiceField('lessonType', '课堂类型', [['regular', '常规课'], ['makeup', '补课'], ['activity', '活动课']]),
     ]),
@@ -358,7 +358,7 @@ function lessonLikeSteps(purposeTitle: string, purposeQuestion: string, purposeD
       pendingField('attendanceRequired', '需要记录出勤'),
       pendingField('reportAfterActivity', '课后发起报告'),
     ]),
-    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成课堂、课堂学员和课堂老师关系。', []),
+    step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存课堂、课堂学员和课堂老师关系。', []),
   ]
 }
 
@@ -369,7 +369,7 @@ function reportSteps(purposeTitle: string, purposeQuestion: string, purposeDescr
       choiceField('reportType', '报告类型', [['student_assessment', '学生测评'], ['midterm_student', '期中反馈'], ['final_student', '期末反馈'], ['teacher_feedback', '教师反馈'], ['session_summary', '课堂总结'], ['program_summary', '班级总评']]),
     ]),
     step('participants', '报告对象', '报告描述谁？', '可以是学生、老师、班级或课堂。', [
-      choiceField('scopeType', '报告范围', [['program', '班级/学习单元'], ['session', '课堂/场次'], ['activity', '活动'], ['custom', '自定义']]),
+      choiceField('scopeType', '报告范围', [['program', '班级/课包'], ['session', '课堂'], ['activity', '活动'], ['custom', '自定义']]),
       multiselectField('templateIds', '报告模板', 'reportTemplates'),
       multiselectField('studentIds', '学生接收人', 'students'),
     ]),
@@ -390,6 +390,6 @@ function reportSteps(purposeTitle: string, purposeQuestion: string, purposeDescr
       choiceField('reportStatus', '报告状态', [['draft', '草稿'], ['open', '收集中'], ['published', '发布']]),
       pendingField('autoPublish', '完成后自动发布'),
     ]),
-    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成报告任务和后续报告结果。', []),
+    step('confirmation', '保存前检查', '这次会保存哪些内容？', '确认后会保存报告任务和后续报告结果。', []),
   ]
 }

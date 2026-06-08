@@ -73,11 +73,11 @@ describe('ui primitives', () => {
       />,
     )
 
-    await user.type(screen.getByLabelText('当前页快速筛选'), '暑期')
+    await user.type(screen.getByLabelText('搜索当前列表'), '暑期')
     expect(screen.getAllByText('暑期体验营').length).toBeGreaterThan(0)
     expect(screen.queryByText('周末公开课')).not.toBeInTheDocument()
 
-    await user.click(screen.getByLabelText('选择当前页全部记录'))
+    await user.click(screen.getByLabelText('选择当前页全部内容'))
     expect(screen.getByText('已选 1')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '紧凑' }))
     expect(screen.getByRole('button', { name: '舒展' })).toBeInTheDocument()
@@ -316,8 +316,8 @@ describe('ui primitives', () => {
     expect(values).toEqual(['program_2'])
 
     rerender(<Combobox aria-label="选择项目" value="missing" options={[]} onValueChange={(value) => values.push(value)} />)
-    expect(screen.getByText('当前 ID 未在已加载数据中匹配：missing')).toBeInTheDocument()
-    expect(screen.getByText('暂无可选数据')).toBeInTheDocument()
+    expect(screen.getByText('当前值没有在已加载选项中找到：missing')).toBeInTheDocument()
+    expect(screen.getByText('暂无可选项')).toBeInTheDocument()
   })
 
   it('updates date-time picker time and opens the calendar', async () => {
@@ -391,7 +391,7 @@ describe('ui primitives', () => {
 
     await user.clear(screen.getByLabelText('学员'))
     await user.type(screen.getByLabelText('学员'), '不存在')
-    expect(screen.getByText('没有匹配项')).toBeInTheDocument()
+    expect(screen.getByText('没有找到匹配结果')).toBeInTheDocument()
 
     rerender(
       <EntityPicker
@@ -402,7 +402,7 @@ describe('ui primitives', () => {
         onValueChange={(value) => values.push(value)}
       />,
     )
-    expect(screen.getByText('当前 ID 未在已加载数据中匹配：missing')).toBeInTheDocument()
+    expect(screen.getByText('当前值没有在已加载选项中找到：missing')).toBeInTheDocument()
   })
 
   it('supports searchable location suggestions and free-text locations', async () => {

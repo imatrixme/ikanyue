@@ -239,7 +239,7 @@ export function RichTextEditor({ id, label, value, onChange, onUploadImage, clas
           onChange={(event) => updateHtml(event.target.value)}
         />
       ) : null}
-      {error ? <div className="border-t border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+      {error ? <div className="border-t border-[var(--destructive)]/20 bg-[var(--danger-soft)] px-3 py-2 text-xs text-[var(--destructive)]">{error}</div> : null}
     </div>
   )
 }

@@ -14,6 +14,7 @@ import { displayResourceField } from '../../app/resourceForms'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
+import { MetricTile, SemanticSurface } from '../ui/SemanticSurface'
 import { PageHeader } from '../ui/PageHeader'
 import { LockedContextCard, PeopleActionDialog, PeopleRoster } from './SceneComponents'
 import { SceneSetupDialog } from './SceneSetupDialog'
@@ -30,7 +31,7 @@ interface ProjectSceneWorkspaceProps {
 
 type ProjectAction = 'students' | 'teachers' | null
 const projectTasks: SceneLocatorTask[] = [
-  { key: 'students', title: '管理班级学员', description: '把报名、体验或长期学习的学员加入这个班级/学习单元。' },
+  { key: 'students', title: '管理班级学员', description: '把报名、体验或长期学习的学员加入这个班级或课包。' },
   { key: 'teachers', title: '安排班级老师', description: '为班级确定主讲、助教、评估人或观察员。' },
   { key: 'timeline', title: '查看课堂推进', description: '从班级视角理解已经计划或发生的课堂。' },
 ]
@@ -80,17 +81,17 @@ export function ProjectSceneWorkspace({ resources = {}, loading = false, onCreat
     <div className="grid gap-4">
       <Panel>
         <PageHeader
-          eyebrow="Scene workspace"
+          eyebrow="场景工作台"
           title="班级工作台"
-          description="围绕一个班级/学习单元管理学员、教师、课堂和下一步动作；关系表只作为结果和维护视图。"
+          description="围绕一个班级或课包管理学员、教师、课堂和下一步动作。底层关系只作为结果查看和异常修正。"
           icon={<SquareStack className="h-5 w-5" aria-hidden="true" />}
         />
         <div className="grid gap-4 px-4 pb-4">
           {!workspaceReady ? (
             <WorkspaceSetupEntry
               objectLabel="班级"
-              title="还没有可管理的班级/学习单元"
-              description="先创建班级/学习单元，或在数据同步后从这里确认已有对象。日常进入班级工作台会直接展示班级状态、学员、老师和课堂。"
+              title="还没有可管理的班级/课包"
+              description="先创建班级或课包，或在数据同步后从这里确认已有对象。日常进入班级工作台会直接展示班级状态、学员、老师和课堂。"
               onOpen={() => {
                 setPendingId(selectedSceneId || String(projects[0]?.id || ''))
                 setSetupOpen(true)
@@ -129,11 +130,11 @@ export function ProjectSceneWorkspace({ resources = {}, loading = false, onCreat
 
       <SceneSetupDialog
         open={setupOpen}
-        title="配置班级工作台"
-        description="左侧确认步骤，右侧只填写当前步骤需要的信息。"
+        title="进入班级工作台"
+        description="先确认要做的事，再选择班级。进入后所有操作都会锁定这个班级。"
         intentTitle="你现在要处理哪类班级任务？"
         intentDescription="先确认工作动机，不展示班级列表和关系数据，避免一进来就被信息淹没。"
-        targetTitle="搜索并确认班级"
+        targetTitle="选择要处理的班级"
         targetDescription="确认要处理的班级后，后续添加学员、安排老师和查看课堂都会锁定在这个班级上。"
         objectLabel="班级"
         tasks={projectTasks}
@@ -194,20 +195,20 @@ export function ProjectSceneWorkspace({ resources = {}, loading = false, onCreat
 function ProjectSummary({ scene }: { scene: ProjectScene }) {
   const project = scene.project
   return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-4">
+    <SemanticSurface tone="brand">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{String(project?.title || '暂无班级')}</h2>
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-semibold text-[var(--foreground)]">{String(project?.title || '暂无班级')}</h2>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">{summaryText(scene)}</p>
         </div>
         <Badge tone={project?.status === 'active' ? 'green' : 'neutral'}>{displayResourceField('learningPrograms', 'status', project?.status)}</Badge>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Metric label="班级学员" value={scene.relationRecords.students.length} />
-        <Metric label="班级老师" value={scene.relationRecords.teachers.length} />
-        <Metric label="课堂/场次" value={scene.sessions.length} />
+        <MetricTile label="班级学员" value={scene.relationRecords.students.length} tone="success" />
+        <MetricTile label="班级老师" value={scene.relationRecords.teachers.length} tone="brand" />
+        <MetricTile label="课堂/场次" value={scene.sessions.length} tone="info" />
       </div>
-    </div>
+    </SemanticSurface>
   )
 }
 
@@ -216,13 +217,13 @@ function LessonTimeline({ scene }: { scene: ProjectScene }) {
     <Panel>
       <SectionHeader>
         <div className="flex items-center gap-2">
-          <CalendarRange className="h-5 w-5 text-cyan-700" aria-hidden="true" />
+          <CalendarRange className="h-5 w-5 text-[var(--accent-foreground)]" aria-hidden="true" />
           <div>
             <h3 className="font-semibold">课堂时间线</h3>
             <p className="text-sm text-[var(--muted-foreground)]">从班级自然查看已经发生或计划中的课堂。</p>
           </div>
         </div>
-        <Badge>{scene.sessions.length} 节</Badge>
+        <Badge>{new Intl.NumberFormat('zh-CN').format(scene.sessions.length)} 节</Badge>
       </SectionHeader>
       <div className="grid gap-2 p-3">
         {scene.sessions.map((session) => (
@@ -237,15 +238,6 @@ function LessonTimeline({ scene }: { scene: ProjectScene }) {
         {scene.sessions.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-sm text-[var(--muted-foreground)]">这个班级还没有课堂</div> : null}
       </div>
     </Panel>
-  )
-}
-
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--card)] p-3">
-      <div className="text-xs text-[var(--muted-foreground)]">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
-    </div>
   )
 }
 

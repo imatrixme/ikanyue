@@ -79,7 +79,7 @@ export function GuidedCreateDialog({ open, workflow, resources = {}, draft = nul
             </Button>
             {lastStep ? (
               <Button disabled={submitting} icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />} onClick={() => onConfirm(plan, answers)} type="button">
-                {submitting ? '创建中' : '确认创建'}
+                {submitting ? '保存中' : '确认保存'}
               </Button>
             ) : (
               <Button disabled={submitting} icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />} onClick={() => setStepIndex((current) => Math.min(current + 1, workflow.steps.length - 1))} type="button">
@@ -244,7 +244,7 @@ function PlanPreview({ plan }: { plan: GuidedPlan }) {
       <div className="mb-3 flex flex-wrap gap-2">
         {plan.facts.map((fact) => <Badge key={fact.key} tone={fact.pending ? 'amber' : 'blue'}>{fact.label}: {fact.value}</Badge>)}
       </div>
-      <div className="text-sm font-semibold">将生成 {plan.operations.length} 个数据动作</div>
+      <div className="text-sm font-semibold">将保存 {plan.operations.length} 项内容</div>
       <p className="mt-1 text-xs text-[var(--muted-foreground)]">{plan.scenePlacements.join(' / ')}</p>
     </div>
   )
@@ -260,7 +260,7 @@ function PlanSummary({ plan }: { plan: GuidedPlan }) {
         ))}
       </div>
       {plan.warnings.length > 0 ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-md border border-[var(--warning)]/25 bg-[var(--warning-soft)] p-3 text-sm text-[var(--warning-foreground)]">
           {plan.warnings.map((warning) => <div key={warning}>{warning}</div>)}
         </div>
       ) : null}
@@ -284,7 +284,7 @@ function OperationTag({ operation }: { operation: GuidedPlan['operations'][numbe
       <span className="font-semibold">{operation.label}</span>
       <Badge>{operation.resource}</Badge>
       <button className="text-xs text-[var(--muted-foreground)] outline-none" type="button">
-        数据对象
+        查看详情
       </button>
       <FloatingTooltip anchorRef={anchorRef} open={showPayload}>
         <div className="mb-2 text-xs font-semibold text-[var(--foreground)]">{operation.label} · {operation.resource}</div>

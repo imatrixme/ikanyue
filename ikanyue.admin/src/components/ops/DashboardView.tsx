@@ -16,6 +16,8 @@ import type { AppView, AssessmentReport, DashboardData, ListResult, OpsProfile, 
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
+import { ActionTile, MetricTile, SemanticSurface } from '../ui/SemanticSurface'
+import type { SemanticTone } from '../ui/semanticTone'
 
 interface DashboardViewProps {
   data: DashboardData | null
@@ -62,6 +64,7 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
           description={nextLesson ? recordTitle(nextLesson, '未命名课堂') : '暂无同步课堂'}
           actionLabel="进入课堂"
           icon={<CalendarCheck2 className="h-4 w-4" aria-hidden="true" />}
+          tone="brand"
           onClick={() => onViewChange('lessonScenes')}
         />
         <WorkQueueCard
@@ -70,6 +73,7 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
           description={pendingReports.length ? '有报告或反馈仍在草稿/收集中' : '当前没有待写反馈'}
           actionLabel="填写测评"
           icon={<FileText className="h-4 w-4" aria-hidden="true" />}
+          tone="info"
           onClick={() => onViewChange('assessmentWorkspace')}
         />
         <WorkQueueCard
@@ -78,6 +82,7 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
           description={students.length ? '查看课堂相关学生资料和学习记录' : '暂无可见学员'}
           actionLabel="查看档案"
           icon={<GraduationCap className="h-4 w-4" aria-hidden="true" />}
+          tone="success"
           onClick={() => onViewChange('students')}
         />
       </div>
@@ -85,7 +90,7 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
         <Panel>
           <SectionHeader>
             <div className="flex items-center gap-2">
-              <CalendarCheck2 className="h-5 w-5 text-cyan-700" aria-hidden="true" />
+              <CalendarCheck2 className="h-5 w-5 text-[var(--accent-foreground)]" aria-hidden="true" />
               <div>
                 <h2 className="font-semibold">下一堂课堂</h2>
                 <p className="text-sm text-[var(--muted-foreground)]">从课堂进入点名、查看学生和课后反馈。</p>
@@ -97,11 +102,11 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
           </SectionHeader>
           <div className="grid gap-3 p-4">
             {nextLesson ? (
-              <div className="rounded-md border border-cyan-200 bg-cyan-50/70 p-4">
+              <SemanticSurface tone="brand">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-cyan-950">{recordTitle(nextLesson, '未命名课堂')}</h3>
-                    <p className="mt-1 text-sm text-cyan-900/75">{String(nextLesson.theme || '主题待定')} · {String(nextLesson.status || '状态待定')}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-semibold text-[var(--accent-foreground)]">{recordTitle(nextLesson, '未命名课堂')}</h3>
+                    <p className="mt-1 text-sm text-[var(--accent-foreground)]/75">{String(nextLesson.theme || '主题待定')} · {String(nextLesson.status || '状态待定')}</p>
                   </div>
                   <Badge tone="blue">下一堂课堂</Badge>
                 </div>
@@ -109,7 +114,7 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
                   <Button onClick={() => onViewChange('lessonScenes')} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />}>处理出勤</Button>
                   <Button variant="secondary" onClick={() => onViewChange('assessmentWorkspace')} icon={<FileText className="h-4 w-4" aria-hidden="true" />}>写反馈</Button>
                 </div>
-              </div>
+              </SemanticSurface>
             ) : (
               <EmptyState title="今天还没有同步课堂" description="有课堂后，这里会优先显示老师下一步要处理的上课事项。" />
             )}
@@ -117,9 +122,9 @@ function TeacherDashboard({ resources, reports, onViewChange, profile }: Teacher
         </Panel>
 
         <div className="grid gap-4">
-          <QuickMetric label="待写反馈" value={pendingReports.length} icon={<FileText className="h-4 w-4" aria-hidden="true" />} onClick={() => onViewChange('assessmentWorkspace')} />
-          <QuickMetric label="我的学生" value={students.length} icon={<GraduationCap className="h-4 w-4" aria-hidden="true" />} onClick={() => onViewChange('students')} />
-          <QuickMetric label="已生成报告" value={reportItems.length} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />} onClick={() => onViewChange('reports')} />
+          <QuickMetric label="待写反馈" value={pendingReports.length} icon={<FileText className="h-4 w-4" aria-hidden="true" />} tone="info" onClick={() => onViewChange('assessmentWorkspace')} />
+          <QuickMetric label="我的学生" value={students.length} icon={<GraduationCap className="h-4 w-4" aria-hidden="true" />} tone="success" onClick={() => onViewChange('students')} />
+          <QuickMetric label="已生成报告" value={reportItems.length} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />} tone="brand" onClick={() => onViewChange('reports')} />
         </div>
       </div>
     </div>
@@ -189,9 +194,9 @@ function AdminDashboard({ data, resources, onViewChange }: AdminDashboardProps) 
             </div>
           </SectionHeader>
           <div className="grid gap-3 p-4">
-            {pending.map((item) => <QuickMetric key={item.key} label={item.label} value={item.value} />)}
-            <QuickMetric label="关系缺口" value={relationIssues} />
-            <QuickMetric label="待审核报名" value={signups.filter((item) => item.status === 'registered').length} />
+            {pending.map((item) => <QuickMetric key={item.key} label={item.label} value={item.value} tone={item.value > 0 ? 'warning' : 'neutral'} />)}
+            <QuickMetric label="关系缺口" value={relationIssues} tone={relationIssues > 0 ? 'warning' : 'success'} />
+            <QuickMetric label="待审核报名" value={signups.filter((item) => item.status === 'registered').length} tone="warning" />
           </div>
         </Panel>
       </div>
@@ -207,15 +212,7 @@ function AdminDashboard({ data, resources, onViewChange }: AdminDashboardProps) 
           {cards.map((card) => {
             const Icon = metricIconByKey[card.key as keyof typeof metricIconByKey] || LayoutDashboard
             return (
-              <div key={card.key} className="rounded-md border border-[var(--border)] bg-[var(--muted)]/20 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[var(--muted-foreground)]">{card.label}</span>
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--secondary)] text-[var(--foreground)]">
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                </div>
-                <div className="mt-5 text-3xl font-semibold tabular-nums">{card.value}</div>
-              </div>
+              <MetricTile key={card.key} label={card.label} value={card.value} icon={<Icon className="h-4 w-4" aria-hidden="true" />} />
             )
           })}
         </div>
@@ -237,24 +234,8 @@ function DashboardHero({ eyebrow, title, description, badge }: { eyebrow: string
   )
 }
 
-function QuickMetric({ label, value, icon, onClick }: { label: string; value: number; icon?: ReactNode; onClick?: () => void }) {
-  const content = (
-    <>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-[var(--muted-foreground)]">{label}</span>
-        {icon ? <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--secondary)]">{icon}</span> : null}
-      </div>
-      <div className="mt-3 text-2xl font-semibold tabular-nums">{value}</div>
-    </>
-  )
-  if (onClick) {
-    return (
-      <button className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-left shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50/30" onClick={onClick} type="button">
-        {content}
-      </button>
-    )
-  }
-  return <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">{content}</div>
+function QuickMetric({ label, value, icon, tone = 'neutral', onClick }: { label: string; value: number; icon?: ReactNode; tone?: SemanticTone; onClick?: () => void }) {
+  return <MetricTile label={label} value={value} icon={icon} onClick={onClick} tone={tone} />
 }
 
 function WorkQueueCard({
@@ -263,6 +244,7 @@ function WorkQueueCard({
   description,
   actionLabel,
   icon,
+  tone = 'brand',
   onClick,
 }: {
   title: string
@@ -270,23 +252,11 @@ function WorkQueueCard({
   description: string
   actionLabel: string
   icon: ReactNode
+  tone?: SemanticTone
   onClick: () => void
 }) {
   return (
-    <button className="group rounded-md border border-[var(--border)] bg-[var(--card)] p-4 text-left shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50/35" onClick={onClick} type="button">
-      <span className="flex items-start justify-between gap-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--secondary)] text-[var(--foreground)] group-hover:bg-white">
-          {icon}
-        </span>
-        <Badge tone={value > 0 ? 'amber' : 'green'}>{value > 0 ? `${value} 项` : '清空'}</Badge>
-      </span>
-      <span className="mt-3 block font-semibold">{title}</span>
-      <span className="mt-1 block min-h-10 text-sm leading-5 text-[var(--muted-foreground)]">{description}</span>
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-cyan-800">
-        {actionLabel}
-        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-      </span>
-    </button>
+    <ActionTile title={title} description={description} actionLabel={actionLabel} actionIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />} badge={value > 0 ? `${new Intl.NumberFormat('zh-CN').format(value)} 项` : '清空'} icon={icon} tone={value > 0 ? tone : 'success'} onClick={onClick} />
   )
 }
 
@@ -352,6 +322,7 @@ function buildAdminQueues({
       description: draftActivities.length ? `${recordTitle(draftActivities[0], '未命名活动')} 等活动还在草稿。` : '当前没有待发布的招生活动。',
       actionLabel: '进入招生活动',
       icon: <Megaphone className="h-4 w-4" aria-hidden="true" />,
+      tone: 'warning' as const,
       onClick: () => onViewChange('activities'),
     },
     {
@@ -360,6 +331,7 @@ function buildAdminQueues({
       description: pendingSignups.length ? `${pendingSignups.length} 条报名待审核。` : conversionReady.length ? `${conversionReady.length} 条到场报名可转班。` : '当前没有待处理报名。',
       actionLabel: '进入报名处理',
       icon: <ClipboardCheck className="h-4 w-4" aria-hidden="true" />,
+      tone: 'warning' as const,
       onClick: () => onViewChange('activitySignups'),
     },
     {
@@ -368,6 +340,7 @@ function buildAdminQueues({
       description: relationIssues ? `${relationIssues} 个班级或课堂缺少学员/老师关系。` : '班级和课堂关系暂未发现缺口。',
       actionLabel: '进入班级工作台',
       icon: <Users className="h-4 w-4" aria-hidden="true" />,
+      tone: 'brand' as const,
       onClick: () => onViewChange('projectScenes'),
     },
     {
@@ -376,6 +349,7 @@ function buildAdminQueues({
       description: scheduledLessons.length ? `${recordTitle(scheduledLessons[0], '未命名课堂')} 等课堂等待确认。` : '没有计划中的课堂需要处理。',
       actionLabel: '进入课堂工作台',
       icon: <CalendarCheck2 className="h-4 w-4" aria-hidden="true" />,
+      tone: 'brand' as const,
       onClick: () => onViewChange('lessonScenes'),
     },
     {
@@ -384,6 +358,7 @@ function buildAdminQueues({
       description: openReportTasks.length ? `${openReportTasks.length} 个报告任务仍在推进。` : draftReports.length ? `${draftReports.length} 份报告结果仍是草稿。` : '当前没有待处理报告任务。',
       actionLabel: '进入测评报告',
       icon: <FileText className="h-4 w-4" aria-hidden="true" />,
+      tone: 'info' as const,
       onClick: () => onViewChange('reports'),
     },
     {
@@ -392,6 +367,7 @@ function buildAdminQueues({
       description: inactiveSlots.length ? `${inactiveSlots.length} 个投放位未启用。` : draftMaterials.length ? `${draftMaterials.length} 个素材仍是草稿。` : '内容和投放位没有待上架项。',
       actionLabel: '进入内容与小程序',
       icon: <BookOpenCheck className="h-4 w-4" aria-hidden="true" />,
+      tone: 'neutral' as const,
       onClick: () => onViewChange('operationSlots'),
     },
   ]

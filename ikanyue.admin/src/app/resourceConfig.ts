@@ -31,7 +31,7 @@ export const navGroups: NavGroup[] = [
     icon: LayoutDashboard,
     items: [
       { view: 'dashboard', label: '今日待办', icon: LayoutDashboard },
-      { view: 'guidedOps', label: '发起流程', icon: CheckCircle2, adminOnly: true },
+      { view: 'guidedOps', label: '新建事务', icon: CheckCircle2, adminOnly: true },
     ],
   },
   {
@@ -50,7 +50,7 @@ export const navGroups: NavGroup[] = [
     icon: BookOpen,
     items: [
       { view: 'projectScenes', label: '班级工作台', icon: BookOpen, section: '日常管理', adminOnly: true },
-      { view: 'learningPrograms', label: '班级/学习单元', icon: SquareStack, section: '学习单元', adminOnly: true },
+      { view: 'learningPrograms', label: '班级与课包', icon: SquareStack, section: '班级资料', adminOnly: true },
       { view: 'students', label: '学员档案', icon: GraduationCap, section: '人员资料' },
       { view: 'teachers', label: '教师档案', icon: Users, adminOnly: true, section: '人员资料' },
     ],
@@ -219,10 +219,10 @@ export const resourceConfig: Record<OpsResource, ResourceConfig> = {
     ],
   },
   learningPrograms: {
-    title: '班级/学习单元',
-    description: '承载一对一、体验课、小组课、长期课包和活动营，是后续排课、出勤和报告的业务容器。',
+    title: '班级与课包',
+    description: '管理一对一、体验课、小组课、长期课包和活动营。后续排课、出勤、报告都会从这里关联。',
     icon: SquareStack,
-    createLabel: '新建学习单元',
+    createLabel: '新建班级/课包',
     columns: [
       { key: 'title', label: '名称' },
       { key: 'type', label: '类型', render: (record, resources) => displayResourceField('learningPrograms', 'type', record.type, resources) },
@@ -244,22 +244,22 @@ export const resourceConfig: Record<OpsResource, ResourceConfig> = {
   },
   programStudents: {
     title: '班级学员关系',
-    description: '高级维护：检查和修正班级/学习单元里的学员关系，日常添加学员请从班级工作台进入。',
+    description: '排查班级里的学员记录。日常添加学员请从班级工作台进入，这里只用于修正异常关系。',
     icon: GraduationCap,
     createLabel: '添加学员',
     columns: [
-      { key: 'programId', label: '班级/学习单元', render: (record, resources) => displayResourceField('programStudents', 'programId', record.programId, resources) },
+      { key: 'programId', label: '班级/课包', render: (record, resources) => displayResourceField('programStudents', 'programId', record.programId, resources) },
       { key: 'studentId', label: '学员', render: (record, resources) => displayResourceField('programStudents', 'studentId', record.studentId, resources) },
       { key: 'status', label: '状态', render: (record, resources) => displayResourceField('programStudents', 'status', record.status, resources) },
     ],
   },
   programTeachers: {
     title: '班级老师关系',
-    description: '高级维护：检查和修正班级/学习单元里的主讲、助教和评估人关系。',
+    description: '排查班级里的教师分工。日常分配老师请从班级工作台进入，这里只用于修正异常关系。',
     icon: Users,
     createLabel: '添加教师',
     columns: [
-      { key: 'programId', label: '班级/学习单元', render: (record, resources) => displayResourceField('programTeachers', 'programId', record.programId, resources) },
+      { key: 'programId', label: '班级/课包', render: (record, resources) => displayResourceField('programTeachers', 'programId', record.programId, resources) },
       { key: 'teacherId', label: '教师', render: (record, resources) => displayResourceField('programTeachers', 'teacherId', record.teacherId, resources) },
       { key: 'role', label: '角色', render: (record, resources) => displayResourceField('programTeachers', 'role', record.role, resources) },
       { key: 'status', label: '状态', render: (record, resources) => displayResourceField('programTeachers', 'status', record.status, resources) },
@@ -267,22 +267,22 @@ export const resourceConfig: Record<OpsResource, ResourceConfig> = {
   },
   sessionStudents: {
     title: '课堂学员出勤',
-    description: '高级维护：检查和修正每堂课的学员参与和到课状态，日常点名请从课堂工作台进入。',
+    description: '排查每堂课的学员出勤。日常点名请从课堂工作台进入，这里只用于补救或核对。',
     icon: ClipboardCheck,
     createLabel: '添加课堂学员',
     columns: [
-      { key: 'sessionId', label: '课堂/场次', render: (record, resources) => displayResourceField('sessionStudents', 'sessionId', record.sessionId, resources) },
+      { key: 'sessionId', label: '课堂', render: (record, resources) => displayResourceField('sessionStudents', 'sessionId', record.sessionId, resources) },
       { key: 'studentId', label: '学员', render: (record, resources) => displayResourceField('sessionStudents', 'studentId', record.studentId, resources) },
       { key: 'status', label: '出勤', render: (record, resources) => displayResourceField('sessionStudents', 'status', record.status, resources) },
     ],
   },
   sessionTeachers: {
     title: '课堂老师关系',
-    description: '高级维护：检查和修正每堂课实际参与的主讲、助教和评估人。',
+    description: '排查每堂课实际参与的老师。日常确认老师请从课堂工作台进入，这里只用于补救或核对。',
     icon: Users,
     createLabel: '添加课堂教师',
     columns: [
-      { key: 'sessionId', label: '课堂/场次', render: (record, resources) => displayResourceField('sessionTeachers', 'sessionId', record.sessionId, resources) },
+      { key: 'sessionId', label: '课堂', render: (record, resources) => displayResourceField('sessionTeachers', 'sessionId', record.sessionId, resources) },
       { key: 'teacherId', label: '教师', render: (record, resources) => displayResourceField('sessionTeachers', 'teacherId', record.teacherId, resources) },
       { key: 'role', label: '角色', render: (record, resources) => displayResourceField('sessionTeachers', 'role', record.role, resources) },
       { key: 'status', label: '状态', render: (record, resources) => displayResourceField('sessionTeachers', 'status', record.status, resources) },

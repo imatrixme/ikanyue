@@ -14,7 +14,7 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ title, description, icon, status, tone = 'neutral', children }: SettingsPanelProps) {
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-[var(--card-foreground)] shadow-sm shadow-slate-200/60">
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-[var(--card-foreground)] shadow-sm shadow-[var(--brand)]/8">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--secondary)] text-[var(--foreground)] shadow-sm">{icon}</span>

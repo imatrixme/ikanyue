@@ -145,15 +145,15 @@ describe('standalone ops components', () => {
     teachersView.unmount()
 
     const relationView = render(<ResourceView resource="programStudents" result={mockResources.programStudents} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
-    expect(screen.getByText('检查模式')).toBeInTheDocument()
+    expect(screen.getByText('只读检查')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '编辑' })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '进入高级维护' }))
-    expect(screen.getByText('高级维护已开启')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '修正底层记录' }))
+    expect(screen.getByText('可直接修正')).toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     expect(screen.getByRole('dialog', { name: '编辑班级学员关系' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '退出维护' }))
+    await user.click(screen.getByRole('button', { name: '退出修正模式' }))
     expect(screen.queryByRole('dialog', { name: '编辑班级学员关系' })).not.toBeInTheDocument()
-    expect(screen.getByText('检查模式')).toBeInTheDocument()
+    expect(screen.getByText('只读检查')).toBeInTheDocument()
     relationView.unmount()
 
     const teacherEditor = render(<ResourceView resource="teachers" result={mockResources.teachers} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
@@ -316,7 +316,7 @@ describe('standalone ops components', () => {
     const sessionView = render(<ResourceView resource="learningSessions" result={mockResources.learningSessions} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     expect(screen.getByText('当前选择：春季体验课')).toBeInTheDocument()
-    await user.type(screen.getByLabelText('所属班级/学习单元'), '暑期')
+    await user.type(screen.getByLabelText('所属班级/课包'), '暑期')
     await user.click(screen.getByRole('button', { name: '暑期声乐包' }))
     await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ programId: 'program_2' }))
@@ -324,7 +324,7 @@ describe('standalone ops components', () => {
 
     const emptyRelationView = render(<ResourceView resource="learningSessions" result={mockResources.learningSessions} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
-    expect(screen.getByText('当前 ID 未在已加载数据中匹配：program_1')).toBeInTheDocument()
+    expect(screen.getByText('当前值没有在已加载选项中找到：program_1')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '暑期声乐包' })).not.toBeInTheDocument()
     emptyRelationView.unmount()
 
