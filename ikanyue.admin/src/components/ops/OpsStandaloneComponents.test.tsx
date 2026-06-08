@@ -39,17 +39,17 @@ describe('standalone ops components', () => {
         onViewChange={(view) => views.push(view)}
       />,
     )
-    expect(screen.getByText('教务运营驾驶舱')).toBeInTheDocument()
+    expect(screen.getByText('今天先把教务闭环推进')).toBeInTheDocument()
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     expect(screen.getByText('自定义')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /发起运营流程/ }))
-    expect(views).toContain('guidedOps')
+    await user.click(screen.getByRole('button', { name: /处理报名转化/ }))
+    expect(views).toContain('activitySignups')
 
     rerender(<DashboardView data={null} profile={mockProfiles.teacher} resources={mockResources} reports={mockReports} onViewChange={(view) => views.push(view)} />)
     expect(screen.getByText('王老师，先处理今天的课')).toBeInTheDocument()
 
     rerender(<DashboardView data={null} profile={mockProfiles.teacher} resources={{}} reports={null} onViewChange={(view) => views.push(view)} />)
-    expect(screen.getByText('今天还没有同步课次')).toBeInTheDocument()
+    expect(screen.getByText('今天还没有同步课堂')).toBeInTheDocument()
   })
 
   it('renders empty share state and report preview', () => {
@@ -109,7 +109,7 @@ describe('standalone ops components', () => {
     const searches: string[] = []
     const searchView = render(<ResourceView resource="activities" result={mockResources.activities} loading={true} onSearch={(keyword) => searches.push(keyword)} />)
 
-    await user.type(screen.getByLabelText('活动内容搜索'), '公开课{Enter}')
+    await user.type(screen.getByLabelText('招生活动搜索'), '公开课{Enter}')
     expect(searches).toContain('公开课')
     expect(screen.getByRole('button', { name: '加载中' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '新建活动' })).toBeInTheDocument()
@@ -159,7 +159,7 @@ describe('standalone ops components', () => {
 
     render(<ResourceView resource="activities" result={mockResources.activities} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} onPublish={(row) => updates.push({ publish: row.id })} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
-    expect(screen.getByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '编辑招生活动' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的活动')
     await saveOpenResourceForm(user)
@@ -189,9 +189,9 @@ describe('standalone ops components', () => {
     await user.click(screen.getByRole('button', { name: '收起侧边栏' }))
     expect(screen.getByRole('navigation', { name: '后台导航' }).closest('aside')).toHaveClass('lg:w-16')
     await user.click(screen.getByRole('button', { name: '展开侧边栏' }))
-    expect(screen.getByRole('button', { name: '教务核心' })).toHaveAttribute('aria-expanded', 'true')
-    await user.click(screen.getByRole('button', { name: '教务核心' }))
-    expect(screen.getByRole('button', { name: '教务核心' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: '班级与课包' })).toHaveAttribute('aria-expanded', 'true')
+    await user.click(screen.getByRole('button', { name: '班级与课包' }))
+    expect(screen.getByRole('button', { name: '班级与课包' })).toHaveAttribute('aria-expanded', 'false')
     await user.click(screen.getByRole('button', { name: '退出' }))
     expect(changes).toContain('logout')
 
@@ -277,7 +277,7 @@ describe('standalone ops components', () => {
     const sessionView = render(<ResourceView resource="learningSessions" result={mockResources.learningSessions} loading={false} onSearch={() => undefined} onSave={(_, payload) => updates.push(payload)} resources={mockResources} />)
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     expect(screen.getByText('当前选择：春季体验课')).toBeInTheDocument()
-    await user.type(screen.getByLabelText('所属项目'), '暑期')
+    await user.type(screen.getByLabelText('所属班级/学习单元'), '暑期')
     await user.click(screen.getByRole('button', { name: '暑期声乐包' }))
     await saveOpenResourceForm(user)
     expect(updates).toContainEqual(expect.objectContaining({ programId: 'program_2' }))

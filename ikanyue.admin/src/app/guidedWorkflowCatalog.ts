@@ -26,7 +26,7 @@ const signupActivitySteps: GuidedStep[] = [
     textField('ownerName', '运营负责人', '如：林老师'),
     pendingField('peoplePending', '负责人/老师待分配'),
   ]),
-  step('rules', '报名与分班', '报名后怎么处理？', '决定报名池、分班和后续课次的生成方式。', [
+  step('rules', '报名与分班', '报名后怎么处理？', '决定报名池、分班和后续课堂的生成方式。', [
     choiceField('classRule', '分班规则', [['pending_pool', '进入待分班池'], ['auto_by_capacity', '按人数自动分班'], ['manual_review', '审核后人工分班']]),
     choiceField('sessionRule', '活动场次', [['single', '一次性活动'], ['series', '多场次活动'], ['pending', '先不排场次']]),
     pendingField('reportAfterActivity', '活动后发起测评报告'),
@@ -62,7 +62,7 @@ const trialLessonSteps: GuidedStep[] = [
     pendingField('reportAfterActivity', '课后生成体验报告'),
     choiceField('classRule', '体验后处理', [['pending_pool', '进入跟进池'], ['manual_review', '人工决定是否转班'], ['auto_by_capacity', '直接形成体验班']]),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成体验项目、课次和参与关系。', []),
+  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成体验班级、课堂和参与关系。', []),
 ]
 
 const longTermClassSteps: GuidedStep[] = [
@@ -75,12 +75,12 @@ const longTermClassSteps: GuidedStep[] = [
     multiselectField('studentIds', '学员', 'students'),
     pendingField('studentsPending', '学员待补齐'),
   ]),
-  step('time', '周期', '这期课怎么安排时间？', '长期班可以先只填计划开始和课次数。', [
+  step('time', '周期', '这期课怎么安排时间？', '长期班可以先只填计划开始和课堂数。', [
     datetimeField('startTime', '计划开始'),
-    numberField('sessionCount', '计划课次'),
+    numberField('sessionCount', '计划课堂'),
     pendingField('timePending', '具体课表待排'),
   ]),
-  step('place', '默认地点', '这个班通常在哪里上课？', '课次可以覆盖默认地点。', [
+  step('place', '默认地点', '这个班通常在哪里上课？', '课堂可以覆盖默认地点。', [
     textField('location', '默认地点'),
     pendingField('placePending', '地点待定'),
   ]),
@@ -89,19 +89,19 @@ const longTermClassSteps: GuidedStep[] = [
     textField('ownerName', '班级负责人'),
     pendingField('peoplePending', '老师待分配'),
   ]),
-  step('rules', '排课规则', '要不要现在生成课次？', '可以只创建班和项目，也可以先生成第一堂课。', [
+  step('rules', '排课规则', '要不要现在生成课堂？', '可以只创建班级，也可以先生成第一堂课。', [
     choiceField('sessionRule', '排课方式', [['pending', '先不排课'], ['single', '先生成第一堂课'], ['series', '后续批量排课']]),
     pendingField('reportAfterActivity', '阶段后发起测评报告'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成长期项目、学员/老师关系和可选课次。', []),
+  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成长期班级、学员/老师关系和可选课堂。', []),
 ]
 
-const addLessonSteps = lessonLikeSteps('加课目的', '要给哪个项目加一堂课？', '临时加课、补课、活动课都可以走这里。', '课次标题', '课后动作')
+const addLessonSteps = lessonLikeSteps('加课目的', '要给哪个班级加一堂课？', '临时加课、补课、活动课都可以走这里。', '课堂标题', '课后动作')
 const attendanceSteps = lessonLikeSteps('记录目的', '要记录哪堂课的出勤？', '出勤是实际发生事实，不改变长期班成员关系。', '出勤记录标题', '后续处理')
 const makeupLessonSteps = lessonLikeSteps('补课目的', '为什么要安排补课？', '补课可以来自缺席、老师调整或教学节奏变化。', '补课标题', '补课规则')
 
-const reportLaunchSteps = reportSteps('报告目的', '要发起哪类报告？', '报告可以基于活动、项目、班级或单堂课。', '报告事件标题')
-const closePeriodSteps = reportSteps('阶段目的', '要结束哪一期或哪阶段？', '阶段收口会生成总评或复盘报告事件。', '阶段总结标题')
+const reportLaunchSteps = reportSteps('报告目的', '要发起哪类报告？', '报告可以基于活动、班级或单堂课。', '报告任务标题')
+const closePeriodSteps = reportSteps('阶段目的', '要结束哪一期或哪阶段？', '阶段收口会生成总评或复盘报告任务。', '阶段总结标题')
 
 const materialSteps: GuidedStep[] = [
   step('purpose', '素材目的', '这份素材解决什么问题？', '先确认素材标题、类型和使用场景。', [
@@ -194,20 +194,20 @@ const reviewSignupSteps: GuidedStep[] = [
 
 const convertSignupSteps: GuidedStep[] = [
   step('purpose', '转化目的', '要把报名转成什么学习安排？', '报名后可直接形成体验班或长期班。', [
-    textField('title', '转化项目名称', '如：张同学体验后长期课', true),
-    choiceField('programType', '项目类型', [['trial', '体验课'], ['course_package', '课程包'], ['activity', '活动课']]),
+    textField('title', '转化班级名称', '如：张同学体验后长期课', true),
+    choiceField('programType', '学习单元类型', [['trial', '体验课'], ['course_package', '课程包'], ['activity', '活动课']]),
     textField('theme', '学习主题'),
   ]),
   step('participants', '转化学员', '哪些报名人进入安排？', '选择已有学员；新报名人可后续补齐档案。', [
     multiselectField('studentIds', '学员', 'students'),
     pendingField('studentsPending', '学员档案待补齐'),
   ]),
-  step('time', '开始时间', '什么时候开始？', '可以先创建项目，课表后排。', [
+  step('time', '开始时间', '什么时候开始？', '可以先创建班级，课表后排。', [
     datetimeField('startTime', '计划开始'),
-    numberField('sessionCount', '计划课次'),
+    numberField('sessionCount', '计划课堂'),
     pendingField('timePending', '课表待排'),
   ]),
-  step('place', '默认地点', '默认在哪里上课？', '后续课次可覆盖。', [
+  step('place', '默认地点', '默认在哪里上课？', '后续课堂可覆盖。', [
     textField('location', '默认地点'),
     pendingField('placePending', '地点待定'),
   ]),
@@ -216,11 +216,11 @@ const convertSignupSteps: GuidedStep[] = [
     textField('ownerName', '跟进负责人'),
     pendingField('peoplePending', '老师待分配'),
   ]),
-  step('rules', '生成规则', '是否立即生成第一堂课？', '可只形成项目，也可直接进入课次中心。', [
+  step('rules', '生成规则', '是否立即生成第一堂课？', '可只形成班级，也可直接进入课堂中心。', [
     choiceField('sessionRule', '排课方式', [['pending', '先不排课'], ['single', '生成第一堂课']]),
     pendingField('reportAfterActivity', '转化后发起测评'),
   ]),
-  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成教学项目、参与关系和可选课次。', []),
+  step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成班级/学习单元、参与关系和可选课堂。', []),
 ]
 
 export const guidedWorkflows: GuidedWorkflow[] = [
@@ -234,7 +234,7 @@ export const guidedWorkflows: GuidedWorkflow[] = [
     sessionRule: 'single',
     reportAfterActivity: false,
     location: '待定',
-  }, '活动中心、报名中心、课次中心和报告中心都会看到这次活动的不同侧面。'),
+  }, '活动中心、报名中心、课堂中心和报告中心都会看到这次活动的不同侧面。'),
   workflow('reviewSignup', '补录/审核报名', '我要处理一条报名', '线下报名、人工补录、到场确认都从这里进入报名中心。', 'conversion', reviewSignupSteps, {
     title: '报名处理',
     realName: '新报名',
@@ -243,23 +243,23 @@ export const guidedWorkflows: GuidedWorkflow[] = [
     location: '待确认',
   }, '报名会出现在报名中心、活动详情和后续转化队列。'),
   workflow('convertSignupToClass', '报名转班', '我要把报名转成学习安排', '把报名池中的学员转成体验班、课程包或活动课。', 'conversion', convertSignupSteps, {
-    title: '报名转化项目',
+    title: '报名转化班级',
     programType: 'trial',
     theme: '体验后跟进',
     sessionCount: 1,
     sessionRule: 'single',
     reportAfterActivity: false,
     location: '待定',
-  }, '转化结果会出现在项目中心、课次中心、学员中心和老师中心。'),
-  workflow('trialLesson', '安排体验课', '我要安排一次体验课', '从学员、时间、地点和老师出发，自动形成体验项目和课次。', 'teaching', trialLessonSteps, {
+  }, '转化结果会出现在班级中心、课堂中心、学员中心和老师中心。'),
+  workflow('trialLesson', '安排体验课', '我要安排一次体验课', '从学员、时间、地点和老师出发，自动形成体验班级和课堂。', 'teaching', trialLessonSteps, {
     title: '一对一体验课',
     classSize: 'one_on_one',
     theme: '声乐基础诊断',
     classRule: 'manual_review',
     reportAfterActivity: false,
     location: '待定',
-  }, '体验课会出现在班级中心、课次中心、学员画像和报告中心。'),
-  workflow('longTermClass', '开长期班', '我要开一个长期班', '一对一和多人班都统一为一个学习单元，再承载项目和课次。', 'teaching', longTermClassSteps, {
+  }, '体验课会出现在班级中心、课堂中心、学员画像和报告中心。'),
+  workflow('longTermClass', '开长期班', '我要开一个长期班', '一对一和多人班都统一为一个学习单元，再承载课堂和报告。', 'teaching', longTermClassSteps, {
     title: '长期声乐课',
     classSize: 'one_on_one',
     theme: '阶段提升',
@@ -267,39 +267,39 @@ export const guidedWorkflows: GuidedWorkflow[] = [
     sessionRule: 'pending',
     reportAfterActivity: false,
     location: '待定',
-  }, '长期班会出现在班级中心、课程项目、课表、学员和老师视角。'),
+  }, '长期班会出现在班级中心、课表、学员和老师视角。'),
   workflow('addLesson', '给班级加课', '我要给已有安排加一堂课', '把一堂实际发生的课连同学生、老师、时间和地点一起确认。', 'teaching', addLessonSteps, {
-    title: '新课次',
+    title: '新课堂',
     lessonType: 'regular',
     attendanceRequired: true,
     location: '待定',
-  }, '课次会出现在课次中心、班级详情、老师日程和学员学习记录。'),
+  }, '课堂会出现在课堂中心、班级详情、老师日程和学员学习记录。'),
   workflow('scheduleMakeupLesson', '安排补课', '我要安排一次补课', '补课从缺席或调整出发，生成独立课次和参与关系。', 'teaching', makeupLessonSteps, {
     title: '补课安排',
     lessonType: 'makeup',
     attendanceRequired: true,
     location: '待定',
-  }, '补课会出现在补课队列、课次中心、学员学习记录和老师日程。'),
+  }, '补课会出现在补课队列、课堂中心、学员学习记录和老师日程。'),
   workflow('attendance', '记录出勤', '我要记录一堂课的实际出勤', '把实际到课、老师、时间、地点和后续动作作为事实记录。', 'attendance', attendanceSteps, {
-    title: '课次出勤',
+    title: '课堂出勤',
     attendanceRequired: true,
     location: '待核对',
-  }, '出勤会出现在课次中心、班级中心、学员画像和后续补课/报告队列。'),
-  workflow('reportLaunch', '发起测评报告', '我要发起一次测评或反馈报告', '从范围、对象、评估人和发布规则出发生成报告事件。', 'report', reportLaunchSteps, {
+  }, '出勤会出现在课堂中心、班级中心、学员画像和后续补课/报告队列。'),
+  workflow('reportLaunch', '发起测评报告', '我要发起一次测评或反馈报告', '从范围、对象、评估人和发布规则出发生成报告任务。', 'report', reportLaunchSteps, {
     title: '课后反馈报告',
     reportType: 'student_assessment',
     scopeType: 'session',
     reportStatus: 'open',
     location: '线上',
   }, '报告会出现在测评报告中心，并回流到学员、老师、班级和活动视角。'),
-  workflow('closeCoursePeriod', '阶段总结', '我要结束一期并发起总评', '期中、期末和自定义阶段总结都从报告事件进入。', 'report', closePeriodSteps, {
+  workflow('closeCoursePeriod', '阶段总结', '我要结束一期并发起总评', '期中、期末和自定义阶段总结都从报告任务进入。', 'report', closePeriodSteps, {
     title: '阶段总结',
     reportType: 'program_summary',
     scopeType: 'program',
     reportStatus: 'open',
     autoPublish: false,
     location: '线上',
-  }, '阶段总结会回流到项目、学员、老师和报告中心。'),
+  }, '阶段总结会回流到班级、学员、老师和报告中心。'),
   workflow('publishAudioMaterial', '发布音频素材', '我要发布一条音频练习', '音频素材和可选投放位从一个流程中创建。', 'content', materialSteps, {
     title: '新音频练习',
     materialKind: 'audio',
@@ -332,11 +332,11 @@ function lessonLikeSteps(purposeTitle: string, purposeQuestion: string, purposeD
   return [
     step('purpose', purposeTitle, purposeQuestion, purposeDescription, [
       textField('title', titleLabel, '如：暑期第一课', true),
-      relationField('programId', '所属项目', 'learningPrograms'),
+      relationField('programId', '所属班级/学习单元', 'learningPrograms'),
       textField('theme', '本堂主题'),
-      choiceField('lessonType', '课次类型', [['regular', '常规课'], ['makeup', '补课'], ['activity', '活动课']]),
+      choiceField('lessonType', '课堂类型', [['regular', '常规课'], ['makeup', '补课'], ['activity', '活动课']]),
     ]),
-    step('participants', '上课学员', '这堂课谁参加？', '默认可以从项目学员中选择，本次也可以不同。', [
+    step('participants', '上课学员', '这堂课谁参加？', '默认可以从班级学员中选择，本次也可以不同。', [
       multiselectField('studentIds', '本次学员', 'students'),
       pendingField('studentsPending', '学员待确认'),
     ]),
@@ -345,20 +345,20 @@ function lessonLikeSteps(purposeTitle: string, purposeQuestion: string, purposeD
       datetimeField('endTime', '结束时间'),
       pendingField('timePending', '时间待排'),
     ]),
-    step('place', '上课地点', '这堂课在哪里上？', '可沿用项目默认地点或单独设置。', [
+    step('place', '上课地点', '这堂课在哪里上？', '可沿用班级默认地点或单独设置。', [
       textField('location', '地点'),
       pendingField('placePending', '地点待定'),
     ]),
     step('people', '上课老师', '谁来上这堂课？', '可以临时换老师或添加助教。', [
       multiselectField('teacherIds', '老师', 'teachers'),
-      textField('ownerName', '课次负责人'),
+      textField('ownerName', '课堂负责人'),
       pendingField('peoplePending', '老师待分配'),
     ]),
     step('rules', rulesTitle, '课后要记录什么？', '出勤和报告任务可以一并准备。', [
       pendingField('attendanceRequired', '需要记录出勤'),
       pendingField('reportAfterActivity', '课后发起报告'),
     ]),
-    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成课次、课次学员和课次老师关系。', []),
+    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成课堂、课堂学员和课堂老师关系。', []),
   ]
 }
 
@@ -366,10 +366,10 @@ function reportSteps(purposeTitle: string, purposeQuestion: string, purposeDescr
   return [
     step('purpose', purposeTitle, purposeQuestion, purposeDescription, [
       textField('title', titleLabel, '如：体验课课后反馈', true),
-      choiceField('reportType', '报告类型', [['student_assessment', '学生测评'], ['midterm_student', '期中反馈'], ['final_student', '期末反馈'], ['teacher_feedback', '教师反馈'], ['session_summary', '课次总结'], ['program_summary', '项目总评']]),
+      choiceField('reportType', '报告类型', [['student_assessment', '学生测评'], ['midterm_student', '期中反馈'], ['final_student', '期末反馈'], ['teacher_feedback', '教师反馈'], ['session_summary', '课堂总结'], ['program_summary', '班级总评']]),
     ]),
-    step('participants', '报告对象', '报告描述谁？', '可以是学生、老师、项目或课次。', [
-      choiceField('scopeType', '报告范围', [['program', '教学项目'], ['session', '实际课次'], ['activity', '活动'], ['custom', '自定义']]),
+    step('participants', '报告对象', '报告描述谁？', '可以是学生、老师、班级或课堂。', [
+      choiceField('scopeType', '报告范围', [['program', '班级/学习单元'], ['session', '课堂/场次'], ['activity', '活动'], ['custom', '自定义']]),
       multiselectField('templateIds', '报告模板', 'reportTemplates'),
       multiselectField('studentIds', '学生接收人', 'students'),
     ]),
@@ -390,6 +390,6 @@ function reportSteps(purposeTitle: string, purposeQuestion: string, purposeDescr
       choiceField('reportStatus', '报告状态', [['draft', '草稿'], ['open', '收集中'], ['published', '发布']]),
       pendingField('autoPublish', '完成后自动发布'),
     ]),
-    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成报告事件和后续报告任务。', []),
+    step('confirmation', '确认生成', '系统会自动创建什么？', '确认后生成报告任务和后续报告结果。', []),
   ]
 }

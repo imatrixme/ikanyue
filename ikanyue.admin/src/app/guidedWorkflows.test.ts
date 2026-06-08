@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi } from './api'
+import { createGuidedWorkflowDraft, loadGuidedWorkflowDrafts, persistGuidedWorkflowDraft, removeGuidedWorkflowDraft } from './guidedWorkflowDrafts'
 import { mockResources } from './mockData'
 import {
   buildGuidedPlan,
@@ -174,7 +175,7 @@ describe('guided ops workflows', () => {
       placePending: true,
     }, mockResources)
     expect(reportFallback.operations[0].payload).toMatchObject({
-      title: '创建报告事件',
+      title: '创建报告任务',
       reportType: 'student_assessment',
       templateId: 'legacy_template',
       scopeType: 'custom',
@@ -331,5 +332,31 @@ describe('guided ops workflows', () => {
         .filter((result) => result.operation.resource === 'operationSlots' && records.activity)
         .forEach((result) => expect(result.record.targetId).toBe(records.activity.id))
     }
+  })
+
+  it('keeps guided workflow drafts recoverable when local cache is stale or invalid', () => {
+    const storageKey = 'kanyue.guidedWorkflowDrafts.v1'
+    localStorage.setItem(storageKey, '{"broken":true}')
+    expect(loadGuidedWorkflowDrafts()).toEqual([])
+
+    localStorage.setItem(storageKey, '{broken-json')
+    expect(loadGuidedWorkflowDrafts()).toEqual([])
+
+    vi.stubGlobal('localStorage', undefined)
+    expect(loadGuidedWorkflowDrafts()).toEqual([])
+    vi.unstubAllGlobals()
+
+    const draft = createGuidedWorkflowDraft(workflowById('signupActivity'), {
+      title: '  草稿活动  ',
+      coverImage: new File(['cover'], 'cover.png', { type: 'image/png' }),
+    }, 2, 'draft_fixed')
+    expect(draft.title).toBe('草稿活动')
+    expect(draft.answers.coverImage).toBe('cover.png')
+    expect(persistGuidedWorkflowDraft(draft).map((item) => item.id)).toEqual(['draft_fixed'])
+    expect(removeGuidedWorkflowDraft('draft_fixed')).toEqual([])
+
+    vi.stubGlobal('crypto', {})
+    expect(createGuidedWorkflowDraft(workflowById('signupActivity'), {}, 0).id).toMatch(/^draft_/)
+    vi.unstubAllGlobals()
   })
 })

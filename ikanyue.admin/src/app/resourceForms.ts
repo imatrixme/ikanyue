@@ -53,8 +53,8 @@ const reportTypeOptions = labeledOptions({
   midterm_student: '期中学生反馈',
   final_student: '期末学生反馈',
   teacher_feedback: '教师反馈',
-  session_summary: '课次总结',
-  program_summary: '项目总评',
+  session_summary: '课堂总结',
+  program_summary: '班级总评',
 })
 const commonFieldLabels: Record<string, Record<string, string>> = {
   action: {
@@ -192,17 +192,17 @@ export const resourceFormFields: Partial<Record<OpsResource, ResourceFormField[]
     { key: 'remark', label: '备注', type: 'textarea' },
   ],
   learningPrograms: [
-    { key: 'title', label: '项目标题' },
+    { key: 'title', label: '学习单元名称' },
     { key: 'type', label: '类型', type: 'select', options: labeledOptions({ course_package: '课程包', trial: '体验课', activity: '活动', custom: '自定义' }) },
     { key: 'status', label: '状态', type: 'select', options: lifecycleOptions },
-    { key: 'plannedSessionCount', label: '计划课次', type: 'number' },
+    { key: 'plannedSessionCount', label: '计划课堂', type: 'number' },
     { key: 'plannedStartAt', label: '计划开始', type: 'datetime' },
     { key: 'plannedEndAt', label: '计划结束', type: 'datetime' },
     { key: 'description', label: '说明', type: 'textarea' },
   ],
   learningSessions: [
-    { key: 'programId', label: '所属项目', type: 'relation', relation: 'learningPrograms' },
-    { key: 'title', label: '课次标题' },
+    { key: 'programId', label: '所属班级/学习单元', type: 'relation', relation: 'learningPrograms' },
+    { key: 'title', label: '课堂标题' },
     { key: 'theme', label: '主题' },
     { key: 'status', label: '状态', type: 'select', options: labeledOptions({ planned: '计划中', completed: '已完成', cancelled: '已取消' }) },
     { key: 'sequence', label: '序号', type: 'number' },
@@ -210,23 +210,23 @@ export const resourceFormFields: Partial<Record<OpsResource, ResourceFormField[]
     { key: 'endTime', label: '结束时间', type: 'datetime' },
   ],
   programStudents: [
-    { key: 'programId', label: '项目', type: 'relation', relation: 'learningPrograms' },
+    { key: 'programId', label: '班级/学习单元', type: 'relation', relation: 'learningPrograms' },
     { key: 'studentId', label: '学员', type: 'relation', relation: 'students' },
     { key: 'status', label: '状态', type: 'select', options: labeledOptions({ invited: '已邀请', registered: '已报名', active: '学习中', paused: '暂停', completed: '已完成', cancelled: '已取消' }) },
   ],
   programTeachers: [
-    { key: 'programId', label: '项目', type: 'relation', relation: 'learningPrograms' },
+    { key: 'programId', label: '班级/学习单元', type: 'relation', relation: 'learningPrograms' },
     { key: 'teacherId', label: '教师', type: 'relation', relation: 'teachers' },
     { key: 'role', label: '角色', type: 'select', options: teacherRoleOptions },
     { key: 'status', label: '状态', type: 'select', options: activeOptions },
   ],
   sessionStudents: [
-    { key: 'sessionId', label: '课次', type: 'relation', relation: 'learningSessions' },
+    { key: 'sessionId', label: '课堂/场次', type: 'relation', relation: 'learningSessions' },
     { key: 'studentId', label: '学员', type: 'relation', relation: 'students' },
     { key: 'status', label: '出勤', type: 'select', options: labeledOptions({ scheduled: '已排课', present: '到课', absent: '缺席', late: '迟到', leave: '请假' }) },
   ],
   sessionTeachers: [
-    { key: 'sessionId', label: '课次', type: 'relation', relation: 'learningSessions' },
+    { key: 'sessionId', label: '课堂/场次', type: 'relation', relation: 'learningSessions' },
     { key: 'teacherId', label: '教师', type: 'relation', relation: 'teachers' },
     { key: 'role', label: '角色', type: 'select', options: teacherRoleOptions },
     { key: 'status', label: '状态', type: 'select', options: activeOptions },
@@ -238,13 +238,13 @@ export const resourceFormFields: Partial<Record<OpsResource, ResourceFormField[]
     { key: 'status', label: '状态', type: 'select', options: publishOptions },
   ],
   reportEvents: [
-    { key: 'title', label: '事件标题' },
+    { key: 'title', label: '任务标题' },
     { key: 'reportType', label: '报告类型', type: 'select', options: reportTypeOptions },
     { key: 'templateId', label: '模板', type: 'relation', relation: 'reportTemplates' },
-    { key: 'scopeType', label: '范围类型', type: 'select', options: labeledOptions({ program: '教学项目', session: '实际课次', activity: '活动', custom: '自定义' }) },
+    { key: 'scopeType', label: '范围类型', type: 'select', options: labeledOptions({ program: '班级/学习单元', session: '课堂/场次', activity: '活动', custom: '自定义' }) },
     { key: 'scopeId', label: '范围对象', type: 'relation', relations: ['learningPrograms', 'learningSessions', 'activities'] },
-    { key: 'programId', label: '项目', type: 'relation', relation: 'learningPrograms' },
-    { key: 'sessionId', label: '课次', type: 'relation', relation: 'learningSessions' },
+    { key: 'programId', label: '班级/学习单元', type: 'relation', relation: 'learningPrograms' },
+    { key: 'sessionId', label: '课堂/场次', type: 'relation', relation: 'learningSessions' },
     { key: 'status', label: '状态', type: 'select', options: labeledOptions({ draft: '草稿', open: '进行中', closed: '已关闭', published: '已发布', cancelled: '已取消' }) },
   ],
 }

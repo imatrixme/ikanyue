@@ -12,39 +12,39 @@ import { SceneWorkspaceFocus } from './SceneLocator'
 
 describe('scene workspaces', () => {
   async function enterProjectWorkspace(user: ReturnType<typeof userEvent.setup>, query?: string) {
-    expect(screen.getByText('当前项目')).toBeInTheDocument()
+    expect(screen.getByText('当前班级')).toBeInTheDocument()
     if (!query) {
       return
     }
-    await user.click(screen.getByRole('button', { name: '更换项目' }))
-    let setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认项目' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    expect(within(setupDialog).getByText('搜索并确认项目')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '更换班级' }))
+    let setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认班级' }))
+    setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    expect(within(setupDialog).getByText('搜索并确认班级')).toBeInTheDocument()
     if (query) {
-      await user.type(within(setupDialog).getByLabelText('项目搜索'), query)
+      await user.type(within(setupDialog).getByLabelText('班级搜索'), query)
       await user.click(within(setupDialog).getByRole('button', { name: '选择' }))
     }
-    await user.click(within(setupDialog).getByRole('button', { name: '进入项目工作台' }))
-    expect(screen.getByText('当前项目')).toBeInTheDocument()
+    await user.click(within(setupDialog).getByRole('button', { name: '进入班级工作台' }))
+    expect(screen.getByText('当前班级')).toBeInTheDocument()
   }
 
   async function enterLessonWorkspace(user: ReturnType<typeof userEvent.setup>, query?: string) {
-    expect(screen.getByText('当前课次')).toBeInTheDocument()
+    expect(screen.getByText('当前课堂')).toBeInTheDocument()
     if (!query) {
       return
     }
-    await user.click(screen.getByRole('button', { name: '更换课次' }))
-    let setupDialog = await screen.findByRole('dialog', { name: '配置课次工作台' })
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认课次' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置课次工作台' })
-    expect(within(setupDialog).getByText('搜索并确认课次')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '更换课堂' }))
+    let setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认课堂' }))
+    setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+    expect(within(setupDialog).getByText('搜索并确认课堂')).toBeInTheDocument()
     if (query) {
-      await user.type(within(setupDialog).getByLabelText('课次搜索'), query)
+      await user.type(within(setupDialog).getByLabelText('课堂搜索'), query)
       await user.click(within(setupDialog).getByRole('button', { name: '选择' }))
     }
-    await user.click(within(setupDialog).getByRole('button', { name: '进入课次工作台' }))
-    expect(screen.getByText('当前课次')).toBeInTheDocument()
+    await user.click(within(setupDialog).getByRole('button', { name: '进入课堂工作台' }))
+    expect(screen.getByText('当前课堂')).toBeInTheDocument()
   }
 
   async function completePeopleAction(
@@ -78,23 +78,23 @@ describe('scene workspaces', () => {
     const actions: RelationActionPayload[] = []
     render(<ProjectSceneWorkspace resources={mockResources} onCreateRelations={(action) => actions.push(action)} />)
 
-    expect(screen.getByText('项目工作台')).toBeInTheDocument()
-    expect(screen.getByText('当前项目')).toBeInTheDocument()
-    expect(screen.getAllByText('项目学员').length).toBeGreaterThan(0)
-    expect(screen.queryByRole('dialog', { name: '配置项目工作台' })).not.toBeInTheDocument()
+    expect(screen.getByText('班级工作台')).toBeInTheDocument()
+    expect(screen.getByText('当前班级')).toBeInTheDocument()
+    expect(screen.getAllByText('班级学员').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('dialog', { name: '配置班级工作台' })).not.toBeInTheDocument()
     await enterProjectWorkspace(user)
-    await user.click(screen.getByRole('button', { name: '添加项目学员' }))
+    await user.click(screen.getByRole('button', { name: '添加班级学员' }))
 
-    const dialog = await screen.findByRole('dialog', { name: '添加项目学员' })
-    expect(within(dialog).getByText('锁定项目')).toBeInTheDocument()
+    const dialog = await screen.findByRole('dialog', { name: '添加班级学员' })
+    expect(within(dialog).getByText('锁定班级')).toBeInTheDocument()
     expect(within(dialog).getByText('春季体验课')).toBeInTheDocument()
-    expect(within(dialog).queryByLabelText('项目')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('班级')).not.toBeInTheDocument()
 
     await completePeopleAction(user, dialog, {
       searchLabel: '选择学员搜索',
       search: 'Echo',
       chooseName: '选择陈同学',
-      modeLabel: '项目关系状态',
+      modeLabel: '班级关系状态',
       mode: 'registered',
     })
 
@@ -114,19 +114,19 @@ describe('scene workspaces', () => {
     const actions: RelationActionPayload[] = []
     render(<LessonSceneWorkspace resources={mockResources} onCreateRelations={(action) => actions.push(action)} />)
 
-    expect(screen.getByText('课次工作台')).toBeInTheDocument()
-    expect(screen.getByText('当前课次')).toBeInTheDocument()
-    expect(screen.queryByRole('dialog', { name: '配置课次工作台' })).not.toBeInTheDocument()
+    expect(screen.getByText('课堂工作台')).toBeInTheDocument()
+    expect(screen.getByText('当前课堂')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: '配置课堂工作台' })).not.toBeInTheDocument()
     await enterLessonWorkspace(user)
     expect(screen.getByText('教师继承与覆盖')).toBeInTheDocument()
-    expect(screen.getByText('项目继承')).toBeInTheDocument()
-    expect(screen.getByText('课次实际')).toBeInTheDocument()
+    expect(screen.getByText('班级继承')).toBeInTheDocument()
+    expect(screen.getByText('课堂实际')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '记录出勤' }))
-    const dialog = await screen.findByRole('dialog', { name: '记录课次出勤' })
-    expect(within(dialog).getByText('锁定课次')).toBeInTheDocument()
+    const dialog = await screen.findByRole('dialog', { name: '记录课堂出勤' })
+    expect(within(dialog).getByText('锁定课堂')).toBeInTheDocument()
     expect(within(dialog).getByText('体验课第一堂')).toBeInTheDocument()
-    expect(within(dialog).queryByLabelText('课次')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('课堂')).not.toBeInTheDocument()
 
     await completePeopleAction(user, dialog, {
       searchLabel: '选择学员搜索',
@@ -154,22 +154,22 @@ describe('scene workspaces', () => {
     const { rerender } = render(<ProjectSceneWorkspace resources={mockResources} onCreateRelations={(action) => actions.push(action)} />)
 
     await enterProjectWorkspace(user, '暑期')
-    expect(screen.getByText('这个项目还没有关联学员，从上方添加项目学员开始。')).toBeInTheDocument()
-    expect(screen.getByText('这个项目还没有教师分工，从上方分配项目教师开始。')).toBeInTheDocument()
+    expect(screen.getByText('这个班级还没有关联学员，从上方添加班级学员开始。')).toBeInTheDocument()
+    expect(screen.getByText('这个班级还没有教师分工，从上方分配班级老师开始。')).toBeInTheDocument()
     expect(screen.getByText('暑期第一课')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '更换项目' }))
-    let setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    expect(within(setupDialog).getByText('搜索并确认项目')).toBeInTheDocument()
-    expect(within(setupDialog).queryByRole('button', { name: '分配项目教师' })).not.toBeInTheDocument()
-    await user.click(within(setupDialog).getByRole('button', { name: '进入项目工作台' }))
+    await user.click(screen.getByRole('button', { name: '更换班级' }))
+    let setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    expect(within(setupDialog).getByText('搜索并确认班级')).toBeInTheDocument()
+    expect(within(setupDialog).queryByRole('button', { name: '分配班级老师' })).not.toBeInTheDocument()
+    await user.click(within(setupDialog).getByRole('button', { name: '进入班级工作台' }))
 
-    await user.click(screen.getByRole('button', { name: '分配项目教师' }))
-    const dialog = await screen.findByRole('dialog', { name: '分配项目教师' })
+    await user.click(screen.getByRole('button', { name: '分配班级老师' }))
+    const dialog = await screen.findByRole('dialog', { name: '分配班级老师' })
     await completePeopleAction(user, dialog, {
       searchLabel: '选择教师搜索',
       search: '赵老师',
       chooseName: '选择赵老师',
-      modeLabel: '项目角色',
+      modeLabel: '班级角色',
       mode: 'assistant',
     })
     expect(actions.at(-1)).toEqual({
@@ -178,35 +178,35 @@ describe('scene workspaces', () => {
     })
 
     rerender(<ProjectSceneWorkspace resources={{}} onCreateRelations={(action) => actions.push(action)} />)
-    expect(screen.getByText('还没有可管理的教学项目')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '添加项目学员' })).not.toBeInTheDocument()
+    expect(screen.getByText('还没有可管理的班级/学习单元')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '添加班级学员' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '打开配置弹窗' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    expect(within(setupDialog).getByText('没有匹配的项目')).toBeInTheDocument()
-    expect(within(setupDialog).getByRole('button', { name: '进入项目工作台' })).toBeDisabled()
+    setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    expect(within(setupDialog).getByText('没有匹配的班级')).toBeInTheDocument()
+    expect(within(setupDialog).getByRole('button', { name: '进入班级工作台' })).toBeDisabled()
   })
 
   it('lets operators back out of project target search and select by object row', async () => {
     const user = userEvent.setup()
     render(<ProjectSceneWorkspace resources={mockResources} onCreateRelations={() => undefined} />)
 
-    await user.click(screen.getByRole('button', { name: '更换项目' }))
-    let setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    await user.click(within(setupDialog).getByRole('button', { name: /安排项目老师/ }))
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认项目' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    expect(within(setupDialog).getByText('搜索并确认项目')).toBeInTheDocument()
-    expect(within(setupDialog).getByText('安排项目老师')).toBeInTheDocument()
-    await user.type(within(setupDialog).getByLabelText('项目搜索'), '没有这个项目')
-    expect(within(setupDialog).getByText('没有匹配的项目')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '更换班级' }))
+    let setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    await user.click(within(setupDialog).getByRole('button', { name: /安排班级老师/ }))
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认班级' }))
+    setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    expect(within(setupDialog).getByText('搜索并确认班级')).toBeInTheDocument()
+    expect(within(setupDialog).getByText('安排班级老师')).toBeInTheDocument()
+    await user.type(within(setupDialog).getByLabelText('班级搜索'), '没有这个班级')
+    expect(within(setupDialog).getByText('没有匹配的班级')).toBeInTheDocument()
     await user.click(within(setupDialog).getByRole('button', { name: '上一步' }))
-    expect(within(setupDialog).getByText('你现在要处理哪类项目任务？')).toBeInTheDocument()
+    expect(within(setupDialog).getByText('你现在要处理哪类班级任务？')).toBeInTheDocument()
 
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认项目' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置项目工作台' })
-    await user.type(within(setupDialog).getByLabelText('项目搜索'), '暑期')
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认班级' }))
+    setupDialog = await screen.findByRole('dialog', { name: '配置班级工作台' })
+    await user.type(within(setupDialog).getByLabelText('班级搜索'), '暑期')
     await user.click(within(setupDialog).getByRole('button', { name: /暑期声乐包/ }))
-    await user.click(within(setupDialog).getByRole('button', { name: '进入项目工作台' }))
+    await user.click(within(setupDialog).getByRole('button', { name: '进入班级工作台' }))
     expect(screen.getByText('当前任务')).toBeInTheDocument()
     expect(screen.getAllByText('暑期声乐包').length).toBeGreaterThan(0)
   })
@@ -218,18 +218,18 @@ describe('scene workspaces', () => {
     const projectPicker = render(
       <SceneSetupDialog
         open
-        title="配置项目工作台"
-        description="确认项目上下文"
+        title="配置班级工作台"
+        description="确认班级上下文"
         intentTitle="选择任务"
-        intentDescription="选择项目任务"
-        targetTitle="搜索并确认项目"
-        targetDescription="确认项目上下文"
-        objectLabel="项目"
-        tasks={[{ key: 'students', title: '管理项目学员', description: '加入项目学员' }]}
+        intentDescription="选择班级任务"
+        targetTitle="搜索并确认班级"
+        targetDescription="确认班级上下文"
+        objectLabel="班级"
+        tasks={[{ key: 'students', title: '管理班级学员', description: '加入班级学员' }]}
         selectedTask="students"
         objects={[
           { id: 'project_custom_1', type: 'trial', status: 'active', plannedStartAt: '2026-07-01' },
-          { id: 'project_custom_2', title: '未定项目', type: 'course_package', status: 'draft' },
+          { id: 'project_custom_2', title: '未定班级', type: 'course_package', status: 'draft' },
         ]}
         pendingId="project_custom_1"
         kind="project"
@@ -240,26 +240,26 @@ describe('scene workspaces', () => {
       />,
     )
 
-    let setupDialog = screen.getByRole('dialog', { name: '配置项目工作台' })
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认项目' }))
-    setupDialog = screen.getByRole('dialog', { name: '配置项目工作台' })
+    let setupDialog = screen.getByRole('dialog', { name: '配置班级工作台' })
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认班级' }))
+    setupDialog = screen.getByRole('dialog', { name: '配置班级工作台' })
     expect(screen.getAllByText('project_custom_1').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('体验课 · 课次数待定').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('体验课 · 课堂数待定').length).toBeGreaterThan(0)
     expect(screen.getAllByText('2026-07-01').length).toBeGreaterThan(0)
-    await user.click(within(setupDialog).getByRole('button', { name: /未定项目/ }))
+    await user.click(within(setupDialog).getByRole('button', { name: /未定班级/ }))
     expect(onProjectPendingChange).toHaveBeenCalledWith('project_custom_2')
     projectPicker.unmount()
 
     render(
       <SceneSetupDialog
         open
-        title="配置课次工作台"
-        description="确认课次上下文"
+        title="配置课堂工作台"
+        description="确认课堂上下文"
         intentTitle="选择任务"
-        intentDescription="选择课次任务"
-        targetTitle="搜索并确认课次"
-        targetDescription="确认课次上下文"
-        objectLabel="课次"
+        intentDescription="选择课堂任务"
+        targetTitle="搜索并确认课堂"
+        targetDescription="确认课堂上下文"
+        objectLabel="课堂"
         tasks={[{ key: 'attendance', title: '记录本堂出勤', description: '确认出勤' }]}
         selectedTask="attendance"
         objects={[{ id: 'lesson_custom_1', title: '周末课', status: 'planned', location: '一号教室', startTime: '09:00', endTime: '10:00' }]}
@@ -272,11 +272,11 @@ describe('scene workspaces', () => {
       />,
     )
 
-    setupDialog = screen.getByRole('dialog', { name: '配置课次工作台' })
-    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认课次' }))
+    setupDialog = screen.getByRole('dialog', { name: '配置课堂工作台' })
+    await user.click(within(setupDialog).getByRole('button', { name: '下一步：确认课堂' }))
     expect(screen.getAllByText('主题待定 · 一号教室').length).toBeGreaterThan(0)
     expect(screen.getAllByText('09:00 - 10:00').length).toBeGreaterThan(0)
-    render(<SceneWorkspaceFocus objectLabel="课次" onChangeContext={() => undefined} />)
+    render(<SceneWorkspaceFocus objectLabel="课堂" onChangeContext={() => undefined} />)
     expect(screen.getByText('处理场景任务')).toBeInTheDocument()
   })
 
@@ -285,26 +285,26 @@ describe('scene workspaces', () => {
     const actions: RelationActionPayload[] = []
     const { rerender } = render(<LessonSceneWorkspace resources={mockResources} onCreateRelations={(action) => actions.push(action)} />)
 
-    await user.click(screen.getByRole('button', { name: '更换课次' }))
-    let setupDialog = await screen.findByRole('dialog', { name: '配置课次工作台' })
+    await user.click(screen.getByRole('button', { name: '更换课堂' }))
+    let setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
     await user.click(within(setupDialog).getByRole('button', { name: /确认实际老师/ }))
     await enterLessonWorkspace(user, '暑期')
     expect(screen.getByText('继承中')).toBeInTheDocument()
     expect(screen.getByText('这堂课还没有学员出勤记录，从上方记录出勤开始。')).toBeInTheDocument()
-    expect(screen.getByText('尚未覆盖，默认参考项目教师')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '更换课次' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置课次工作台' })
-    expect(within(setupDialog).getByText('搜索并确认课次')).toBeInTheDocument()
-    expect(within(setupDialog).queryByRole('button', { name: '确认课次教师' })).not.toBeInTheDocument()
-    await user.click(within(setupDialog).getByRole('button', { name: '进入课次工作台' }))
+    expect(screen.getByText('尚未覆盖，默认参考班级老师')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '更换课堂' }))
+    setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+    expect(within(setupDialog).getByText('搜索并确认课堂')).toBeInTheDocument()
+    expect(within(setupDialog).queryByRole('button', { name: '确认课堂老师' })).not.toBeInTheDocument()
+    await user.click(within(setupDialog).getByRole('button', { name: '进入课堂工作台' }))
 
-    await user.click(screen.getByRole('button', { name: '确认课次教师' }))
-    const dialog = await screen.findByRole('dialog', { name: '确认课次教师' })
+    await user.click(screen.getByRole('button', { name: '确认课堂老师' }))
+    const dialog = await screen.findByRole('dialog', { name: '确认课堂老师' })
     await completePeopleAction(user, dialog, {
       searchLabel: '选择教师搜索',
       search: '林老师',
       chooseName: '选择林老师',
-      modeLabel: '课次角色',
+      modeLabel: '课堂角色',
       mode: 'evaluator',
     })
     expect(actions.at(-1)).toEqual({
@@ -313,12 +313,12 @@ describe('scene workspaces', () => {
     })
 
     rerender(<LessonSceneWorkspace resources={{}} onCreateRelations={(action) => actions.push(action)} />)
-    expect(screen.getByText('还没有可处理的课次')).toBeInTheDocument()
+    expect(screen.getByText('还没有可处理的课堂')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '记录出勤' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '打开配置弹窗' }))
-    setupDialog = await screen.findByRole('dialog', { name: '配置课次工作台' })
-    expect(within(setupDialog).getByText('没有匹配的课次')).toBeInTheDocument()
-    expect(within(setupDialog).getByRole('button', { name: '进入课次工作台' })).toBeDisabled()
+    setupDialog = await screen.findByRole('dialog', { name: '配置课堂工作台' })
+    expect(within(setupDialog).getByText('没有匹配的课堂')).toBeInTheDocument()
+    expect(within(setupDialog).getByRole('button', { name: '进入课堂工作台' })).toBeDisabled()
   })
 
   it('handles direct people dialog edge states and selected avatar overflow', async () => {
@@ -342,7 +342,7 @@ describe('scene workspaces', () => {
         title="隐藏人物"
         description="不可见"
         context={null}
-        contextLabel="锁定项目"
+        contextLabel="锁定班级"
         people={people}
         optionLabel="选择学员"
         modeLabel="状态"
@@ -368,7 +368,7 @@ describe('scene workspaces', () => {
         title="选择人物"
         description="测试人物选择"
         context={null}
-        contextLabel="锁定项目"
+        contextLabel="锁定班级"
         people={people}
         optionLabel="选择学员"
         modeLabel="状态"

@@ -23,7 +23,7 @@ export function LockedContextCard({ context, label }: LockedContextCardProps) {
         <div>
           <p className="text-xs font-medium text-cyan-700">{label}</p>
           <h3 className="mt-1 text-sm font-semibold text-slate-950">{context?.title || '尚未选择上下文'}</h3>
-          <p className="mt-1 text-xs text-cyan-900/70">{context?.subtitle || '请先选择一个项目或课次'}</p>
+          <p className="mt-1 text-xs text-cyan-900/70">{context?.subtitle || '请先选择一个班级或课堂'}</p>
         </div>
         <Badge tone="blue">已锁定</Badge>
       </div>

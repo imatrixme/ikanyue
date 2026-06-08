@@ -28,34 +28,56 @@ const toneLabels: Record<GuidedWorkflow['tone'], string> = {
   conversion: '转化',
 }
 
-const workflowGroups: Array<{ key: string; title: string; description: string; focus: string; ids: GuidedWorkflow['id'][] }> = [
+const workflowGroups: Array<{ key: string; title: string; description: string; focus: string; ids: GuidedWorkflow['id'][]; secondary?: boolean }> = [
   {
-    key: 'conversion',
-    title: '报名与转化',
-    description: '面向公开报名、人工补录、审核和转班。',
-    focus: '先处理招生动机，再把报名自然沉淀到学生、班级和课次。',
-    ids: ['signupActivity', 'reviewSignup', 'convertSignupToClass'],
+    key: 'publish-signup',
+    title: '发布招生活动',
+    description: '创建公开课、体验课、训练营等可报名入口。',
+    focus: '先说清楚活动为什么发生、谁能报名、时间地点和负责人，再生成活动和报名入口。',
+    ids: ['signupActivity'],
   },
   {
-    key: 'teaching',
-    title: '教务排课',
-    description: '围绕班级、课次、补课和出勤形成真实教学记录。',
-    focus: '把时间、地点、人物一次说清楚，系统同步生成项目、课次和参与关系。',
-    ids: ['trialLesson', 'longTermClass', 'addLesson', 'scheduleMakeupLesson', 'attendance'],
+    key: 'convert-signup',
+    title: '处理报名转化',
+    description: '处理线下报名、审核、到场和转班。',
+    focus: '把报名从线索推进到体验课、长期班或待跟进池，不让操作员手动拼关系表。',
+    ids: ['reviewSignup', 'convertSignupToClass'],
   },
   {
-    key: 'content',
-    title: '内容与投放',
-    description: '发布素材，并把内容或活动配置到小程序入口。',
-    focus: '先创建内容对象，再决定出现在哪个运营位和入口。',
-    ids: ['publishAudioMaterial', 'publishVideoMaterial', 'promoteContent'],
+    key: 'create-class',
+    title: '创建班级/学习单元',
+    description: '创建一对一、多人体验、长期班或活动营。',
+    focus: '一对一也是一个班；先确定学习单元，再自然承载学员、老师和后续课堂。',
+    ids: ['trialLesson', 'longTermClass'],
   },
   {
-    key: 'reports',
-    title: '测评与报告',
-    description: '发起课后、阶段和项目级反馈报告。',
-    focus: '从评价目的出发，明确对象、范围、模板和可见结果。',
+    key: 'schedule-lesson',
+    title: '安排一堂课',
+    description: '给已有班级加课、补课或安排活动场次。',
+    focus: '围绕时间、地点、人物和主题确认一堂真实会发生的课堂。',
+    ids: ['addLesson', 'scheduleMakeupLesson'],
+  },
+  {
+    key: 'record-lesson',
+    title: '记录上课结果',
+    description: '记录出勤和课堂实际发生事实。',
+    focus: '出勤是实际发生记录，不改变长期班成员关系；课后动作会回流到报告和学生档案。',
+    ids: ['attendance'],
+  },
+  {
+    key: 'launch-report',
+    title: '发起测评/报告',
+    description: '发起课后、阶段和班级级反馈报告。',
+    focus: '从评价目的出发，明确对象、范围、模板、评估人和最终可见结果。',
     ids: ['reportLaunch', 'closeCoursePeriod'],
+  },
+  {
+    key: 'content-miniapp',
+    title: '内容与小程序',
+    description: '发布素材，并把内容或活动配置到小程序入口。',
+    focus: '这是内容运营入口，不混入教务主线；先创建内容对象，再决定展示位置。',
+    ids: ['publishAudioMaterial', 'publishVideoMaterial', 'promoteContent'],
+    secondary: true,
   },
 ]
 
@@ -71,8 +93,8 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
       <Panel>
         <PageHeader
           eyebrow="Guided operations"
-          title="运营流程工作台"
-          description="从人的动机开始创建活动、体验课、班级、课次、出勤和报告；数据关系由流程自动生成。"
+          title="发起流程"
+          description="先选择一个真实工作动机，再进入对应的少量字段流程；详细模板只是动机下的二级选择。"
           icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
         />
         <Tabs value={activeGroup} onValueChange={setActiveGroup} className="p-4">
@@ -93,7 +115,7 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
                       <h3 className="text-base font-semibold text-[var(--foreground)]">{group.title}</h3>
                       <p className="mt-1 text-sm text-[var(--muted-foreground)]">{group.description}</p>
                     </div>
-                    <Badge tone="blue">{group.ids.length} 个流程</Badge>
+                    <Badge tone={group.secondary ? 'neutral' : 'blue'}>{group.secondary ? '内容运营' : `${group.ids.length} 个模板`}</Badge>
                   </div>
                   <p className="mt-3 max-w-3xl text-xs leading-5 text-[var(--muted-foreground)]">{group.focus}</p>
                 </div>
@@ -129,13 +151,13 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
         <SectionHeader>
           <div>
             <h3 className="font-semibold">场景化冗余展示</h3>
-            <p className="text-sm text-[var(--muted-foreground)]">同一份数据会自然出现在多个场景视角，原始数据表只作为高级维护。</p>
+            <p className="text-sm text-[var(--muted-foreground)]">同一份数据会自然出现在多个场景视角，原始数据表只在数据中心做高级维护。</p>
           </div>
         </SectionHeader>
         <div className="grid gap-3 p-4 md:grid-cols-3">
           <SceneStat title="报名中心" value={resources.activitySignups?.pagination.totalItems || 0} label="报名/待分班" />
-          <SceneStat title="班级与项目" value={resources.learningPrograms?.pagination.totalItems || 0} label="项目/班级单元" />
-          <SceneStat title="课次中心" value={resources.learningSessions?.pagination.totalItems || 0} label="实际课次" />
+          <SceneStat title="班级与课包" value={resources.learningPrograms?.pagination.totalItems || 0} label="班级/学习单元" />
+          <SceneStat title="课堂中心" value={resources.learningSessions?.pagination.totalItems || 0} label="课堂/场次" />
         </div>
       </Panel>
       <GuidedCreateDialog

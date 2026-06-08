@@ -110,7 +110,7 @@ export function projectLockedContext(project: ResourceRecord | null): LockedCont
     subtitle: [
       displayResourceField('learningPrograms', 'type', project.type),
       displayResourceField('learningPrograms', 'status', project.status),
-      formatCount(project.plannedSessionCount, '计划课次'),
+      formatCount(project.plannedSessionCount, '计划课堂'),
     ].filter(Boolean).join(' · '),
   }
 }

@@ -36,11 +36,11 @@ describe('guided ops app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    expect(await screen.findByText('教务运营驾驶舱')).toBeInTheDocument()
+    expect(await screen.findByText('今天先把教务闭环推进')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '运营流程' }))
-    expect(await screen.findByText('运营流程工作台')).toBeInTheDocument()
-    expect(await screen.findByText('班级与项目')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '发起流程' }))
+    expect(await screen.findByRole('heading', { name: '发起流程' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: '发布招生活动' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /发布可报名活动/ }))
     const dialog = await screen.findByRole('dialog', { name: '发布可报名活动' })
@@ -72,14 +72,14 @@ describe('guided ops app flow', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '运营流程' }))
-    await user.click(await screen.findByRole('tab', { name: '测评与报告' }))
+    await user.click(await screen.findByRole('button', { name: '发起流程' }))
+    await user.click(await screen.findByRole('tab', { name: '发起测评/报告' }))
     await user.click(await screen.findByRole('button', { name: /发起测评报告/ }))
     const dialog = await screen.findByRole('dialog', { name: '发起测评报告' })
     await user.click(within(dialog).getByRole('button', { name: /确认生成.*系统会自动创建什么/ }))
     await user.click(within(dialog).getByRole('button', { name: '确认创建' }))
 
     expect(await screen.findByText('guided create down')).toBeInTheDocument()
-    expect(screen.getByText('运营流程工作台')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '发起流程' })).toBeInTheDocument()
   })
 })

@@ -44,7 +44,7 @@ export function AssessmentWorkspace({ template, templates = [], students = [], o
       <Panel>
         <SectionHeader>
           <div>
-            <h2 className="text-xl font-semibold">评估工作台</h2>
+            <h2 className="text-xl font-semibold">填写测评</h2>
             <p className="text-sm text-[var(--muted-foreground)]">{activeTemplate.name} · v{activeTemplate.version}</p>
           </div>
           <Button

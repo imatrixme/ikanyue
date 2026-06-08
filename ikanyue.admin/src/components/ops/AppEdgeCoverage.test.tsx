@@ -33,9 +33,9 @@ describe('ops admin edge coverage', () => {
     render(<App api={createMockOpsApi()} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '活动内容' }))
+    await user.click(await screen.findByRole('button', { name: '招生活动' }))
     await user.click((await screen.findAllByRole('button', { name: '编辑' }))[0])
-    expect(await screen.findByRole('dialog', { name: '编辑活动内容' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: '编辑招生活动' })).toBeInTheDocument()
     await user.clear(screen.getByLabelText('标题'))
     await user.type(screen.getByLabelText('标题'), '编辑后的公开课')
     await saveVisibleResourceForm(user)
@@ -60,7 +60,7 @@ describe('ops admin edge coverage', () => {
     render(<App api={api} />)
 
     await loginAsAdmin(user)
-    await user.click(await screen.findByRole('button', { name: '活动内容' }))
+    await user.click(await screen.findByRole('button', { name: '招生活动' }))
     await user.click(await screen.findByRole('button', { name: '新建活动' }))
     await saveVisibleResourceForm(user)
     expect(await screen.findByText('保存失败')).toBeInTheDocument()

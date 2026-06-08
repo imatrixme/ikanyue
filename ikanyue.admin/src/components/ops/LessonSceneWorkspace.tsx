@@ -31,8 +31,8 @@ interface LessonSceneWorkspaceProps {
 type LessonAction = 'attendance' | 'teachers' | null
 const lessonTasks: SceneLocatorTask[] = [
   { key: 'attendance', title: '记录本堂出勤', description: '确认这堂课哪些学员到课、缺席、请假或迟到。' },
-  { key: 'teachers', title: '确认实际老师', description: '检查项目老师继承关系，并覆盖本堂课实际参与老师。' },
-  { key: 'report', title: '准备课后反馈', description: '从课次视角理解学员、老师和后续报告动作。' },
+  { key: 'teachers', title: '确认实际老师', description: '检查班级老师继承关系，并覆盖本堂课实际参与老师。' },
+  { key: 'report', title: '准备课后反馈', description: '从课堂视角理解学员、老师和后续报告动作。' },
 ]
 
 export function LessonSceneWorkspace({ resources = {}, loading = false, onCreateRelations }: LessonSceneWorkspaceProps) {
@@ -81,16 +81,16 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
       <Panel>
         <PageHeader
           eyebrow="Scene workspace"
-          title="课次工作台"
-          description="围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课次关系表。"
+          title="课堂工作台"
+          description="围绕一堂真实课程确认时间、地点、出勤、教师和课后动作；无需理解课堂关系表。"
           icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
         />
         <div className="grid gap-4 px-4 pb-4">
           {!workspaceReady ? (
             <WorkspaceSetupEntry
-              objectLabel="课次"
-              title="还没有可处理的课次"
-              description="先创建或同步课次。日常进入课次工作台会直接展示本堂课状态、学员出勤、教师继承和课后动作。"
+              objectLabel="课堂"
+              title="还没有可处理的课堂"
+              description="先创建或同步课堂。日常进入课堂工作台会直接展示本堂课状态、学员出勤、教师继承和课后动作。"
               onOpen={() => {
                 setPendingId(selectedLessonId || String(lessons[0]?.id || ''))
                 setSetupOpen(true)
@@ -98,17 +98,17 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
             />
           ) : (
             <>
-              <SceneWorkspaceFocus task={selectedTaskConfig} objectLabel="课次" onChangeContext={() => {
+              <SceneWorkspaceFocus task={selectedTaskConfig} objectLabel="课堂" onChangeContext={() => {
                 setPendingId(selectedId)
                 setSetupOpen(true)
               }} />
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <LessonSummary scene={scene} />
                 <div className="grid gap-3">
-                  <LockedContextCard context={context} label="当前课次" />
+                  <LockedContextCard context={context} label="当前课堂" />
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Button disabled={!context} variant={selectedTask === 'attendance' ? 'primary' : 'secondary'} onClick={() => setAction('attendance')} icon={<ClipboardCheck className="h-4 w-4" aria-hidden="true" />}>记录出勤</Button>
-                    <Button disabled={!context} variant={selectedTask === 'teachers' ? 'primary' : 'secondary'} onClick={() => setAction('teachers')} icon={<Users className="h-4 w-4" aria-hidden="true" />}>确认课次教师</Button>
+                    <Button disabled={!context} variant={selectedTask === 'teachers' ? 'primary' : 'secondary'} onClick={() => setAction('teachers')} icon={<Users className="h-4 w-4" aria-hidden="true" />}>确认课堂老师</Button>
                   </div>
                 </div>
               </div>
@@ -119,23 +119,23 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
 
       {workspaceReady ? (
         <div className="grid gap-4 xl:grid-cols-3">
-          {selectedTask === 'teachers' ? null : <PeopleRoster title="课次学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" />}
+          {selectedTask === 'teachers' ? null : <PeopleRoster title="课堂学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" />}
           <TeacherInheritancePanel scene={scene} />
-          {selectedTask === 'attendance' ? null : <PeopleRoster title="课次实际教师" people={scene.teachers} emptyLabel="这堂课还没有单独确认教师，默认参考项目教师。" />}
-          {selectedTask === 'teachers' ? <PeopleRoster title="课次学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" /> : null}
-          {selectedTask === 'attendance' ? <PeopleRoster title="课次实际教师" people={scene.teachers} emptyLabel="这堂课还没有单独确认教师，默认参考项目教师。" /> : null}
+          {selectedTask === 'attendance' ? null : <PeopleRoster title="课堂实际老师" people={scene.teachers} emptyLabel="这堂课还没有单独确认老师，默认参考班级老师。" />}
+          {selectedTask === 'teachers' ? <PeopleRoster title="课堂学员与出勤" people={scene.students} emptyLabel="这堂课还没有学员出勤记录，从上方记录出勤开始。" /> : null}
+          {selectedTask === 'attendance' ? <PeopleRoster title="课堂实际老师" people={scene.teachers} emptyLabel="这堂课还没有单独确认老师，默认参考班级老师。" /> : null}
         </div>
       ) : null}
 
       <SceneSetupDialog
         open={setupOpen}
-        title="配置课次工作台"
+        title="配置课堂工作台"
         description="左侧确认步骤，右侧只填写当前步骤需要的信息。"
-        intentTitle="你现在要处理哪类课次任务？"
+        intentTitle="你现在要处理哪类课堂任务？"
         intentDescription="先确认真实课堂动作，不提前展示出勤、继承和教师关系，避免误以为已经选中某一堂课。"
-        targetTitle="搜索并确认课次"
-        targetDescription="确认要处理的课次后，后续出勤、教师覆盖和反馈准备都会锁定在这一堂课上。"
-        objectLabel="课次"
+        targetTitle="搜索并确认课堂"
+        targetDescription="确认要处理的课堂后，后续出勤、教师覆盖和反馈准备都会锁定在这一堂课上。"
+        objectLabel="课堂"
         tasks={lessonTasks}
         selectedTask={selectedTask}
         objects={lessons}
@@ -149,10 +149,10 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
 
       <PeopleActionDialog
         open={workspaceReady && action === 'attendance'}
-        title="记录课次出勤"
-        description="课次已经锁定，只需要选择本堂课的学员和出勤结果。"
+        title="记录课堂出勤"
+        description="课堂已经锁定，只需要选择本堂课的学员和出勤结果。"
         context={context}
-        contextLabel="锁定课次"
+        contextLabel="锁定课堂"
         people={scene.students}
         optionLabel="选择学员"
         modeLabel="出勤结果"
@@ -170,13 +170,13 @@ export function LessonSceneWorkspace({ resources = {}, loading = false, onCreate
       />
       <PeopleActionDialog
         open={workspaceReady && action === 'teachers'}
-        title="确认课次教师"
-        description="课次已经锁定，只需要确认本堂课实际参与的教师和角色。"
+        title="确认课堂老师"
+        description="课堂已经锁定，只需要确认本堂课实际参与的老师和角色。"
         context={context}
-        contextLabel="锁定课次"
+        contextLabel="锁定课堂"
         people={scene.teachers}
         optionLabel="选择教师"
-        modeLabel="课次角色"
+        modeLabel="课堂角色"
         modeOptions={[
           { value: 'lead', label: '主讲' },
           { value: 'assistant', label: '助教' },
@@ -198,16 +198,16 @@ function LessonSummary({ scene }: { scene: LessonScene }) {
     <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/25 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">{String(lesson?.title || '暂无课次')}</h2>
+          <h2 className="text-lg font-semibold">{String(lesson?.title || '暂无课堂')}</h2>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            {scene.project ? String(scene.project.title || scene.project.id) : '未关联项目'} · {lesson?.theme ? `主题 ${String(lesson.theme)}` : '主题待定'}
+            {scene.project ? String(scene.project.title || scene.project.id) : '未关联班级'} · {lesson?.theme ? `主题 ${String(lesson.theme)}` : '主题待定'}
           </p>
         </div>
         <Badge tone={lesson?.status === 'completed' ? 'green' : 'neutral'}>{displayResourceField('learningSessions', 'status', lesson?.status)}</Badge>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Metric label="出勤记录" value={scene.relationRecords.students.length} />
-        <Metric label="课次教师" value={scene.relationRecords.teachers.length} />
+        <Metric label="课堂老师" value={scene.relationRecords.teachers.length} />
         <Metric label="继承教师" value={scene.inheritedTeachers.filter((person) => person.selected).length} />
       </div>
     </div>
@@ -224,24 +224,24 @@ function TeacherInheritancePanel({ scene }: { scene: LessonScene }) {
           <GitCompareArrows className="h-5 w-5 text-cyan-700" aria-hidden="true" />
           <div>
             <h3 className="font-semibold">教师继承与覆盖</h3>
-            <p className="text-sm text-[var(--muted-foreground)]">先参考项目教师，本堂课可单独确认实际教师。</p>
+            <p className="text-sm text-[var(--muted-foreground)]">先参考班级老师，本堂课可单独确认实际老师。</p>
           </div>
         </div>
         <Badge tone={explicit.length > 0 ? 'blue' : 'neutral'}>{explicit.length > 0 ? '已覆盖' : '继承中'}</Badge>
       </SectionHeader>
       <div className="grid gap-3 p-3">
         <div>
-          <div className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">项目继承</div>
+          <div className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">班级继承</div>
           <div className="grid gap-2">
             {inherited.map((person) => <PersonRow key={person.id} person={person} selected />)}
-            {inherited.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-5 text-center text-sm text-[var(--muted-foreground)]">项目还没有教师分工</div> : null}
+            {inherited.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-5 text-center text-sm text-[var(--muted-foreground)]">班级还没有老师分工</div> : null}
           </div>
         </div>
         <div>
-          <div className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">课次实际</div>
+          <div className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">课堂实际</div>
           <div className="grid gap-2">
             {explicit.map((person) => <PersonRow key={person.id} person={person} selected />)}
-            {explicit.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-5 text-center text-sm text-[var(--muted-foreground)]">尚未覆盖，默认参考项目教师</div> : null}
+            {explicit.length === 0 ? <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-5 text-center text-sm text-[var(--muted-foreground)]">尚未覆盖，默认参考班级老师</div> : null}
           </div>
         </div>
       </div>

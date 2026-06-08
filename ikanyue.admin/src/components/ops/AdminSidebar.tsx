@@ -42,7 +42,7 @@ export function AdminSidebar({ activeView, profile, onViewChange }: AdminSidebar
           <span className={cn('inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--primary)] text-sm font-bold text-[var(--primary-foreground)] shadow-sm', !expanded && 'lg:hidden')}>KY</span>
           <div className={cn('min-w-0 flex-1 whitespace-nowrap transition-opacity', expanded ? 'opacity-100' : 'lg:hidden')}>
             <p className="text-xs font-medium text-[var(--muted-foreground)]">KanYue Ops</p>
-            <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">声乐教务运营系统</p>
+            <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">声乐教务生命周期</p>
           </div>
           <button
             aria-label={expanded ? '收起侧边栏' : '展开侧边栏'}
@@ -54,7 +54,7 @@ export function AdminSidebar({ activeView, profile, onViewChange }: AdminSidebar
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-2" aria-label="后台导航">
-          <div className="grid gap-2">
+          <div className="grid gap-2.5">
             {visibleGroups.map((group) => {
               const collapsed = collapsedGroups[group.key] === true
               const sectionGroups = groupItemsBySection(group.items)

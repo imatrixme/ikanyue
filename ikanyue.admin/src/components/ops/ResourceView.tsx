@@ -33,6 +33,7 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
   const config = resourceConfig[resource]
   const Icon = config.icon
   const editable = canEditResource(resource)
+  const advanced = isAdvancedMaintenanceResource(resource)
   const formRecord = creating ? null : editing
   const formOpen = editable && (creating || Boolean(editing))
   const formTitle = formRecord?.id ? `编辑${config.title}` : config.createLabel || `新建${config.title}`
@@ -77,17 +78,31 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
           </>
         )}
       />
+      {advanced ? (
+        <div className="mx-4 mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="amber">数据中心</Badge>
+            <span className="font-medium">这里用于检查、修复和追踪底层记录。普通教务动作请从生命周期工作台进入。</span>
+          </div>
+          <p className="mt-1 text-xs text-amber-950/70">
+            只有在需要排查关系、修正状态、核对审计或补救异常数据时，才建议直接维护这些记录。
+          </p>
+        </div>
+      ) : null}
       {relationResourceSceneHint(resource) ? (
         <div className="mx-4 mb-4 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="blue">高级维护</Badge>
             <span className="font-medium">{relationResourceSceneHint(resource)}</span>
           </div>
-          <p className="mt-1 text-xs text-cyan-900/70">日常操作请优先从场景工作台进入，那里会锁定父级上下文，避免误选项目或课次。</p>
+          <p className="mt-1 text-xs text-cyan-900/70">日常操作请优先从班级或课堂工作台进入，那里会锁定父级上下文，避免误选班级或课堂。</p>
         </div>
       ) : null}
       <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--muted)]/25 px-3 py-2 text-xs text-[var(--muted-foreground)]">
-        <span><strong className="text-[var(--foreground)]">数据维护视图</strong>：支持排序、页内筛选、选择记录和批量前置检查；日常教学动作优先从工作台进入。</span>
+        <span>
+          <strong className="text-[var(--foreground)]">{advanced ? '高级数据中心' : '业务列表视图'}</strong>
+          ：支持排序、页内筛选、选择记录和批量前置检查；{advanced ? '请谨慎编辑，优先确认上下文。' : '复杂创建和关系动作优先从工作台进入。'}
+        </span>
         <Badge>TanStack Table</Badge>
       </div>
       <DataTable
@@ -170,10 +185,14 @@ export function ResourceView({ resource, result, onSearch, onSave, onPublish, lo
 
 function relationResourceSceneHint(resource: OpsResource) {
   const hints: Partial<Record<OpsResource, string>> = {
-    programStudents: '添加项目学员请优先使用“项目工作台”。',
-    programTeachers: '分配项目教师请优先使用“项目工作台”。',
-    sessionStudents: '记录课次出勤请优先使用“课次工作台”。',
-    sessionTeachers: '确认课次教师请优先使用“课次工作台”。',
+    programStudents: '添加班级学员请优先使用“班级工作台”。',
+    programTeachers: '分配班级老师请优先使用“班级工作台”。',
+    sessionStudents: '记录课堂出勤请优先使用“课堂工作台”。',
+    sessionTeachers: '确认课堂老师请优先使用“课堂工作台”。',
   }
   return hints[resource] || ''
+}
+
+function isAdvancedMaintenanceResource(resource: OpsResource) {
+  return ['programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers', 'auditLogs'].includes(resource)
 }

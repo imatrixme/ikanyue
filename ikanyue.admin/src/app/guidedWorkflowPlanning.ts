@@ -98,7 +98,7 @@ function signupActivityOperations(answers: GuidedAnswers): GuidedOperation[] {
 function teachingOperations(answers: GuidedAnswers, programType: 'trial' | 'course_package' | 'activity'): GuidedOperation[] {
   const title = text(answers.title) || (programType === 'course_package' ? '长期课程' : '体验课')
   const operations: GuidedOperation[] = [
-    operation('program', 'learningPrograms', '创建教学项目/班级单元', {
+    operation('program', 'learningPrograms', '创建班级/学习单元', {
       title,
       type: programType,
       status: 'active',
@@ -115,14 +115,14 @@ function teachingOperations(answers: GuidedAnswers, programType: 'trial' | 'cour
     }),
   ]
   selectedIds(answers.studentIds).forEach((studentId, index) => {
-    operations.push(operation(`programStudent${index}`, 'programStudents', '添加项目学员', {
+    operations.push(operation(`programStudent${index}`, 'programStudents', '添加班级学员', {
       programId: ref('program'),
       studentId,
       status: 'active',
     }, ['program']))
   })
   selectedIds(answers.teacherIds).forEach((teacherId, index) => {
-    operations.push(operation(`programTeacher${index}`, 'programTeachers', '添加项目老师', {
+    operations.push(operation(`programTeacher${index}`, 'programTeachers', '添加班级老师', {
       programId: ref('program'),
       teacherId,
       role: index === 0 ? 'lead' : 'assistant',
@@ -147,9 +147,9 @@ function lessonOperations(answers: GuidedAnswers): GuidedOperation[] {
 }
 
 function sessionOperations(answers: GuidedAnswers, programId: unknown): GuidedOperation[] {
-  const title = text(answers.title) || '新课次'
+  const title = text(answers.title) || '新课堂'
   const operations: GuidedOperation[] = [
-    operation('session', 'learningSessions', '创建实际课次', {
+    operation('session', 'learningSessions', '创建课堂/场次', {
       programId,
       title,
       theme: text(answers.theme) || title,
@@ -161,14 +161,14 @@ function sessionOperations(answers: GuidedAnswers, programId: unknown): GuidedOp
     }),
   ]
   selectedIds(answers.studentIds).forEach((studentId, index) => {
-    operations.push(operation(`sessionStudent${index}`, 'sessionStudents', '添加课次学员', {
+    operations.push(operation(`sessionStudent${index}`, 'sessionStudents', '添加课堂学员', {
       sessionId: ref('session'),
       studentId,
       status: bool(answers.attendanceRequired) ? 'present' : 'scheduled',
     }, ['session']))
   })
   selectedIds(answers.teacherIds).forEach((teacherId, index) => {
-    operations.push(operation(`sessionTeacher${index}`, 'sessionTeachers', '添加课次老师', {
+    operations.push(operation(`sessionTeacher${index}`, 'sessionTeachers', '添加课堂老师', {
       sessionId: ref('session'),
       teacherId,
       role: index === 0 ? 'lead' : 'assistant',
@@ -179,7 +179,7 @@ function sessionOperations(answers: GuidedAnswers, programId: unknown): GuidedOp
 }
 
 function reportOperations(answers: GuidedAnswers): GuidedOperation[] {
-  return [reportEventOperation(answers, text(answers.scopeType) || 'custom', '', '创建报告事件')]
+  return [reportEventOperation(answers, text(answers.scopeType) || 'custom', '', '创建报告任务')]
 }
 
 function materialOperations(answers: GuidedAnswers, kind: 'audio' | 'video'): GuidedOperation[] {
@@ -299,19 +299,19 @@ function buildWarnings(answers: GuidedAnswers, operations: GuidedOperation[]): s
 function scenePlacements(id: GuidedWorkflowId): string[] {
   const common = ['高级数据维护']
   const map: Record<GuidedWorkflowId, string[]> = {
-    signupActivity: ['活动中心', '报名中心', '课次中心', '报告中心', ...common],
-    trialLesson: ['班级中心', '课次中心', '学员中心', '报告中心', ...common],
-    longTermClass: ['班级中心', '课程项目', '课表', '学员中心', '老师中心', ...common],
-    addLesson: ['课次中心', '班级详情', '老师日程', '学员学习记录', ...common],
-    attendance: ['课次中心', '出勤记录', '补课队列', '报告队列', ...common],
+    signupActivity: ['活动中心', '报名中心', '课堂中心', '报告中心', ...common],
+    trialLesson: ['班级中心', '课堂中心', '学员中心', '报告中心', ...common],
+    longTermClass: ['班级中心', '课表', '学员中心', '老师中心', ...common],
+    addLesson: ['课堂中心', '班级详情', '老师日程', '学员学习记录', ...common],
+    attendance: ['课堂中心', '出勤记录', '补课队列', '报告队列', ...common],
     reportLaunch: ['测评报告中心', '学员画像', '老师中心', '班级/活动详情', ...common],
     publishAudioMaterial: ['素材库', '课程卡片', '小程序运营位', ...common],
     publishVideoMaterial: ['素材库', '课程卡片', '小程序运营位', ...common],
     promoteContent: ['小程序首页', '活动中心', '素材中心', ...common],
     reviewSignup: ['报名中心', '活动详情', '转化队列', ...common],
-    convertSignupToClass: ['项目中心', '课次中心', '学员中心', '老师中心', ...common],
-    scheduleMakeupLesson: ['补课队列', '课次中心', '老师日程', '学员学习记录', ...common],
-    closeCoursePeriod: ['项目中心', '测评报告中心', '学员画像', '老师中心', ...common],
+    convertSignupToClass: ['班级中心', '课堂中心', '学员中心', '老师中心', ...common],
+    scheduleMakeupLesson: ['补课队列', '课堂中心', '老师日程', '学员学习记录', ...common],
+    closeCoursePeriod: ['班级中心', '测评报告中心', '学员画像', '老师中心', ...common],
   }
   return map[id]
 }

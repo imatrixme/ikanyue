@@ -12,17 +12,17 @@ describe('guided ops workspace', () => {
     const submissions: Array<{ plan: GuidedPlan; answers: GuidedAnswers }> = []
     render(<GuidedOpsWorkspace resources={mockResources} onSubmitPlan={(plan, answers) => submissions.push({ plan, answers })} />)
 
-    expect(screen.getByText('运营流程工作台')).toBeInTheDocument()
+    expect(screen.getByText('发起流程')).toBeInTheDocument()
     expect(screen.queryByText('每次创建都回答 7 个问题')).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '报名与转化' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '教务排课' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '内容与投放' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '测评与报告' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '发布招生活动' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '创建班级/学习单元' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '内容与小程序' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '发起测评/报告' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /发布音频素材/ })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('tab', { name: /内容与投放/ }))
+    await user.click(screen.getByRole('tab', { name: /内容与小程序/ }))
     expect(screen.getByRole('button', { name: /发布音频素材/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /配置运营位/ })).toBeInTheDocument()
-    await user.click(screen.getByRole('tab', { name: /报名与转化/ }))
+    await user.click(screen.getByRole('tab', { name: /发布招生活动/ }))
     expect(screen.getByText('报名中心')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /发布可报名活动/ }))
@@ -71,7 +71,7 @@ describe('guided ops workspace', () => {
     render(<GuidedOpsWorkspace resources={mockResources} onSubmitPlan={() => undefined} />)
 
     expect(screen.getByText('暂无流程草稿')).toBeInTheDocument()
-    await user.click(screen.getByRole('tab', { name: '教务排课' }))
+    await user.click(screen.getByRole('tab', { name: '创建班级/学习单元' }))
     await user.click(screen.getByRole('button', { name: /安排体验课/ }))
     const dialog = await screen.findByRole('dialog', { name: '安排体验课' })
     await user.clear(within(dialog).getByLabelText('体验课名称'))
@@ -96,7 +96,7 @@ describe('guided ops workspace', () => {
     const submissions: GuidedPlan[] = []
     render(<GuidedOpsWorkspace resources={mockResources} onSubmitPlan={(plan) => submissions.push(plan)} />)
 
-    await user.click(screen.getByRole('tab', { name: '教务排课' }))
+    await user.click(screen.getByRole('tab', { name: '创建班级/学习单元' }))
     await user.click(screen.getByRole('button', { name: /安排体验课/ }))
     const dialog = await screen.findByRole('dialog', { name: '安排体验课' })
     await user.click(within(dialog).getByRole('button', { name: /时间.*体验课什么时候上/ }))
@@ -133,7 +133,7 @@ describe('guided ops workspace', () => {
     await user.click(within(activityDialog).getByRole('button', { name: '关闭' }))
     expect(screen.queryByRole('dialog', { name: '发布可报名活动' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('tab', { name: '教务排课' }))
+    await user.click(screen.getByRole('tab', { name: '创建班级/学习单元' }))
     await user.click(screen.getByRole('button', { name: /安排体验课/ }))
     const trialDialog = await screen.findByRole('dialog', { name: '安排体验课' })
     expect(within(trialDialog).getByLabelText('体验课名称')).toHaveValue('一对一体验课')

@@ -34,7 +34,23 @@ const resourceViews = navItems
   .filter((view): view is OpsResource => !['dashboard', 'guidedOps', 'projectScenes', 'lessonScenes', 'assessmentTemplates', 'assessmentWorkspace', 'reports', 'sharePreview', 'systemSettings'].includes(view))
 
 const sceneResources: OpsResource[] = ['students', 'teachers', 'learningPrograms', 'learningSessions', 'programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers']
-const dashboardResources: OpsResource[] = ['students', 'teachers', 'activitySignups', 'learningPrograms', 'learningSessions', 'programStudents', 'programTeachers', 'sessionStudents', 'sessionTeachers']
+const dashboardResources: OpsResource[] = [
+  'students',
+  'teachers',
+  'activities',
+  'activitySignups',
+  'learningPrograms',
+  'learningSessions',
+  'programStudents',
+  'programTeachers',
+  'sessionStudents',
+  'sessionTeachers',
+  'reportEvents',
+  'reportInstances',
+  'audioMaterials',
+  'videoMaterials',
+  'operationSlots',
+]
 
 export default function App({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)

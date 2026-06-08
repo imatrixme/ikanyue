@@ -11,7 +11,7 @@ export function objectSubtitle(object: ResourceRecord, kind: SceneObjectKind) {
   if (kind === 'project') {
     return [
       displayResourceField('learningPrograms', 'type', object.type),
-      object.plannedSessionCount === undefined ? '课次数待定' : `计划 ${Number(object.plannedSessionCount)} 节`,
+      object.plannedSessionCount === undefined ? '课堂数待定' : `计划 ${Number(object.plannedSessionCount)} 节`,
     ].filter(Boolean).join(' · ')
   }
   return [

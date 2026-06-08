@@ -16,9 +16,9 @@ export function defaultResourcePayload(resource: OpsResource, now = new Date()):
     case 'activitySignups':
       return { realName: '新报名', age: 0, status: 'registered', remark: '' }
     case 'learningPrograms':
-      return { title: `新项目 ${suffix}`, type: 'trial', status: 'draft', plannedSessionCount: 0 }
+      return { title: `新班级 ${suffix}`, type: 'trial', status: 'draft', plannedSessionCount: 0 }
     case 'learningSessions':
-      return { title: `新课次 ${suffix}`, theme: '待定', status: 'planned', sequence: 1 }
+      return { title: `新课堂 ${suffix}`, theme: '待定', status: 'planned', sequence: 1 }
     case 'programStudents':
       return { programId: '', studentId: '', status: 'active' }
     case 'programTeachers':
@@ -30,7 +30,7 @@ export function defaultResourcePayload(resource: OpsResource, now = new Date()):
     case 'reportTemplates':
       return { name: `新报告模板 ${suffix}`, reportType: 'student_assessment', version: 1, status: 'draft', schemaJson: {}, reportJson: {} }
     case 'reportEvents':
-      return { title: `新报告事件 ${suffix}`, reportType: 'student_assessment', templateId: '', scopeType: 'program', scopeId: '', status: 'open' }
+      return { title: `新报告任务 ${suffix}`, reportType: 'student_assessment', templateId: '', scopeType: 'program', scopeId: '', status: 'open' }
     default:
       return { realName: `新学员 ${suffix}`, nickName: '新学员', cellphone: '13900000000', gender: 0, blocked: false }
   }

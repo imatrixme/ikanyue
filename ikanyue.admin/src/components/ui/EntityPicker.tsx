@@ -31,8 +31,8 @@ interface EntityOption {
 const resourceLabels: Partial<Record<OpsResource, string>> = {
   activities: '活动',
   audioMaterials: '音频',
-  learningPrograms: '项目',
-  learningSessions: '课次',
+  learningPrograms: '班级',
+  learningSessions: '课堂',
   reportInstances: '报告',
   reportTemplates: '模板',
   students: '学员',
