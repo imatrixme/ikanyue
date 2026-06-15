@@ -1,0 +1,487 @@
+:root {
+  --bg: #f7fbf8;
+  --ink: #1d2730;
+  --muted: #67727c;
+  --soft: #eef6f2;
+  --surface: #ffffff;
+  --surface-strong: #fbf2e6;
+  --line: #dbe8e2;
+  --mint: #4fb99f;
+  --mint-dark: #267d6d;
+  --coral: #f06f5d;
+  --sky: #72bde7;
+  --amber: #f3b957;
+  --shadow: 0 18px 48px rgba(40, 74, 66, 0.12);
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font);
+  font-synthesis: none;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    linear-gradient(140deg, rgba(114, 189, 231, 0.18), transparent 30%),
+    linear-gradient(320deg, rgba(240, 111, 93, 0.12), transparent 34%),
+    var(--bg);
+}
+
+.app-frame {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 310px;
+  gap: 18px;
+  width: min(1240px, 100%);
+  min-height: calc(100vh - 48px);
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.species-rail,
+.status-panel {
+  padding: 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--mint);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.brand h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 820;
+  line-height: 1.05;
+}
+
+.rail-title,
+.panel-title {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 780;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.species-list {
+  display: grid;
+  gap: 10px;
+}
+
+.species-button {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.species-button:hover,
+.species-button:focus-visible,
+.species-button.is-active {
+  border-color: rgba(79, 185, 159, 0.75);
+  box-shadow: 0 10px 24px rgba(79, 185, 159, 0.16);
+  transform: translateY(-1px);
+}
+
+.species-button:focus-visible,
+.food-button:focus-visible,
+.action-button:focus-visible,
+.reset-button:focus-visible,
+.primary-button:focus-visible {
+  outline: 3px solid rgba(114, 189, 231, 0.36);
+  outline-offset: 2px;
+}
+
+.species-thumb {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--soft);
+}
+
+.species-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 760;
+  line-height: 1.15;
+}
+
+.species-trait {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.habitat {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.habitat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px 0;
+}
+
+.pet-name {
+  margin: 0;
+  color: var(--ink);
+  font-size: 34px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.stage-label {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.reset-button {
+  min-width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-height: 420px;
+  margin: 20px 22px 18px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #cfe6df;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 84%, rgba(79, 185, 159, 0.2), transparent 28%),
+    linear-gradient(180deg, #e9f8fb 0%, #f8fff7 56%, #dff2e8 100%);
+}
+
+.stage::before,
+.stage::after {
+  position: absolute;
+  content: '';
+}
+
+.stage::before {
+  right: 12%;
+  bottom: 16%;
+  width: 120px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(38, 125, 109, 0.12);
+}
+
+.stage::after {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 26%;
+  background:
+    linear-gradient(90deg, rgba(79, 185, 159, 0.14) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(79, 185, 159, 0.16), rgba(255, 255, 255, 0));
+  background-size: 44px 100%, 100% 100%;
+}
+
+.pet-sprite {
+  position: relative;
+  z-index: 1;
+  width: min(390px, 72vw);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 24px 22px rgba(39, 98, 86, 0.18));
+}
+
+.sprite-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sprite-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pet-sprite.is-idle {
+  animation: idle-bob 950ms ease-in-out infinite alternate;
+}
+
+.pet-sprite.is-eating {
+  animation: eat-hop 360ms ease-in-out infinite alternate;
+}
+
+.pet-sprite.is-weak {
+  animation: weak-sway 1.6s ease-in-out infinite alternate;
+  filter: grayscale(0.16) drop-shadow(0 20px 18px rgba(39, 98, 86, 0.13));
+}
+
+.food-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+
+.food-button,
+.primary-button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.food-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 58px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+  text-align: left;
+}
+
+.food-button:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 111, 93, 0.55),
+    0 10px 20px rgba(240, 111, 93, 0.12);
+}
+
+.food-icon {
+  font-size: 24px;
+}
+
+.food-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 740;
+  line-height: 1.1;
+}
+
+.food-effect {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.stat-list {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.stat-row {
+  display: grid;
+  gap: 7px;
+}
+
+.stat-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.stat-value {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #edf3f0;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--meter-color, var(--mint));
+  transition: width 220ms ease;
+}
+
+.care-note {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.care-note h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.care-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.adoption-screen {
+  display: grid;
+  width: min(1060px, 100%);
+  min-height: calc(100vh - 48px);
+  margin: 0 auto;
+  place-items: center;
+}
+
+.adoption-panel {
+  width: 100%;
+  padding: 28px;
+}
+
+.adoption-header {
+  max-width: 650px;
+  margin-bottom: 24px;
+}
+
+.adoption-header h1 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: clamp(38px, 6vw, 72px);
+  font-weight: 880;
+  line-height: 0.98;
+}
+
+.adoption-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.adoption-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.adoption-card {
+  display: grid;
+  min-height: 310px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+}
+
+.preview-sprite {
+  display: block;
+  width: min(180px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto 10px;
+  object-fit: contain;
+}
+
+.thumb-sprite {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.adoption-card h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 24px;
+}
+
+.adoption-card p {
+  min-height: 42px;
+  margin: 8px 0 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.primary-button {
+  align-self: end;
+  min-height: 46px;
+  padding: 0 16px;
+  background: var(--coral);
+  color: #fff;
+  font-weight: 780;
+}
+
+.primary-button:hover {
+  background: #de5f4f;
+}

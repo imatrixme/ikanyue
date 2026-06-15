@@ -1,0 +1,40 @@
+.pet-sprite.is-play {
+  animation: play-pop 520ms ease-in-out infinite alternate;
+}
+
+.pet-sprite.is-clean {
+  animation: clean-wiggle 360ms ease-in-out infinite alternate;
+}
+
+.pet-sprite.is-sleep {
+  animation: sleep-settle 1.8s ease-in-out infinite alternate;
+}
+
+.food-bar {
+  padding-bottom: 10px;
+}
+
+.action-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 22px 22px;
+}
+
+.action-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #f7fbf8;
+  color: var(--mint-dark);
+  box-shadow: inset 0 0 0 1px var(--line);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.action-button:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(79, 185, 159, 0.7),
+    0 8px 18px rgba(79, 185, 159, 0.12);
+}
