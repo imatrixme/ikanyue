@@ -1,8 +1,8 @@
-import { petFrameManifest } from './petFrameManifest'
+import { petAnimationManifest } from './generated/petAnimationManifest'
 import type { PetSpecies, SpeciesId } from '../game/types'
 
 function animations(speciesId: SpeciesId) {
-  return petFrameManifest[speciesId]
+  return petAnimationManifest[speciesId]
 }
 
 export const speciesList: PetSpecies[] = [

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { getStage } from '../game/petEngine'
-import type { Condition, PetSpecies, PetState } from '../game/types'
+import type {
+  Condition,
+  PetAnimationClip,
+  PetSpecies,
+  PetState,
+} from '../game/types'
+import type { CSSProperties } from 'react'
 
 interface PetSpriteProps {
   condition: Condition
@@ -10,36 +16,52 @@ interface PetSpriteProps {
 
 export function PetSprite({ condition, pet, species }: PetSpriteProps) {
   const stage = getStage(pet.stageId, species)
-  const frames = stage.animations[condition]
-  const [frameIndex, setFrameIndex] = useState(0)
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setFrameIndex((current) => (current + 1) % frames.length)
-    }, frameDuration(condition))
-
-    return () => window.clearInterval(timer)
-  }, [condition, frames.length, pet.stageId, pet.speciesId])
+  const clip = stage.animations[condition]
+  const spriteStyle = {
+    '--pet-anchor-x': `${clip.anchor.x}px`,
+    '--pet-anchor-y': `${clip.anchor.y}px`,
+    '--pet-canvas-height': `${clip.canvas.height}px`,
+    '--pet-canvas-width': `${clip.canvas.width}px`,
+  } as CSSProperties
 
   return (
-    <div className={`pet-sprite is-${condition}`} data-condition={condition}>
-      <span
-        aria-label={`${species.name} ${stage.name} ${condition}`}
-        className="sprite-frame"
-        role="img"
-      >
-        <img alt="" src={frames[frameIndex]} />
-      </span>
+    <div
+      className={`pet-sprite is-${condition}`}
+      data-condition={condition}
+      style={spriteStyle}
+    >
+      <PetSpritePlayer
+        ariaLabel={`${species.name} ${stage.name} ${condition}`}
+        clip={clip}
+        key={`${pet.speciesId}-${pet.stageId}-${condition}`}
+      />
     </div>
   )
 }
 
-function frameDuration(condition: Condition): number {
-  if (condition === 'eating' || condition === 'play' || condition === 'clean') {
-    return 160
-  }
-  if (condition === 'sleep' || condition === 'weak') {
-    return 320
-  }
-  return 220
+interface PetSpritePlayerProps {
+  ariaLabel: string
+  clip: PetAnimationClip
+}
+
+function PetSpritePlayer({ ariaLabel, clip }: PetSpritePlayerProps) {
+  const [frameIndex, setFrameIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setFrameIndex((current) => (current + 1) % clip.frames.length)
+    }, frameDuration(clip.fps))
+
+    return () => window.clearInterval(timer)
+  }, [clip.fps, clip.frames.length])
+
+  return (
+    <span aria-label={ariaLabel} className="sprite-frame" role="img">
+      <img alt="" src={clip.frames[frameIndex]} />
+    </span>
+  )
+}
+
+function frameDuration(fps: number): number {
+  return Math.round(1000 / fps)
 }

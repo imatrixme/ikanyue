@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { foods } from '../data/foods'
-import { petFrameManifest } from '../data/petFrameManifest'
+import { petAnimationManifest } from '../data/generated/petAnimationManifest'
 import { speciesList } from '../data/pets'
 import {
   adoptPet,
@@ -15,7 +15,7 @@ const now = new Date('2026-06-14T12:00:00Z').getTime()
 describe('pet engine', () => {
   it('provides six multi-frame actions for every species', () => {
     for (const species of speciesList) {
-      const animations = petFrameManifest[species.id]
+      const animations = petAnimationManifest[species.id]
       expect(Object.keys(animations).sort()).toEqual([
         'clean',
         'eating',
@@ -24,8 +24,11 @@ describe('pet engine', () => {
         'sleep',
         'weak',
       ])
-      for (const frames of Object.values(animations)) {
-        expect(frames).toHaveLength(4)
+      for (const clip of Object.values(animations)) {
+        expect(clip.frames).toHaveLength(12)
+        expect(clip.fps).toBeGreaterThan(0)
+        expect(clip.canvas).toEqual({ width: 640, height: 640 })
+        expect(clip.anchor).toEqual({ x: 320, y: 585 })
       }
     }
   })

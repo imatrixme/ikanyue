@@ -10,14 +10,31 @@ export type AnimationAction =
 export type Condition = AnimationAction
 export type FoodId = 'berry' | 'noodle' | 'spark'
 
-export interface PetAnimationSet {
-  idle: string[]
-  eating: string[]
-  play: string[]
-  clean: string[]
-  sleep: string[]
-  weak: string[]
+export interface PetAnimationClip {
+  anchor: {
+    x: number
+    y: number
+  }
+  canvas: {
+    height: number
+    width: number
+  }
+  durationMs: number
+  fps: number
+  frames: string[]
+  loop: boolean
 }
+
+export interface PetAnimationSet {
+  idle: PetAnimationClip
+  eating: PetAnimationClip
+  play: PetAnimationClip
+  clean: PetAnimationClip
+  sleep: PetAnimationClip
+  weak: PetAnimationClip
+}
+
+export type PetAnimationManifest = Record<SpeciesId, PetAnimationSet>
 
 export interface PetStage {
   id: StageId

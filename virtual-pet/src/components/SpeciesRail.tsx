@@ -38,7 +38,7 @@ export function SpeciesRail({
                 <img
                   alt=""
                   className="thumb-sprite"
-                  src={babyStage.animations.idle[0]}
+                  src={babyStage.animations.idle.frames[0]}
                 />
               </span>
               <span>

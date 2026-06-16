@@ -17,6 +17,8 @@ npm run dev
 npm test
 npm run lint
 npm run build
+npm run assets:pets
+npm run assets:validate
 ```
 
 ## Structure
@@ -24,7 +26,10 @@ npm run build
 - `src/game/`: deterministic pet state engine, elapsed-time decay, growth, and persistence helpers.
 - `src/data/`: species, food, and animation-frame configuration.
 - `src/components/`: adoption, care, status, species, and sprite presentation components.
-- `src/assets/pets/frames-v2/`: current runtime pet animation frames.
+- `assets-src/pets/source-seeds/`: canonical per-species/action seed frames for the pet animation pipeline.
+- `assets-src/pets/review/`: generated contact strips for checking frame continuity before runtime use.
+- `src/assets/pets/frames-v4/`: generated normalized runtime pet animation frames.
+- `scripts/`: project-local animation build and validation scripts.
 - `src/styles/`: responsive layout and animation presentation styles.
 
 All package metadata and lockfiles live inside `virtual-pet/`; the parent repository remains dependency-neutral.

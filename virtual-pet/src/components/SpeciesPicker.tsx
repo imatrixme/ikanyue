@@ -28,7 +28,7 @@ export function SpeciesPicker({ onAdopt, speciesList }: SpeciesPickerProps) {
                 <img
                   alt={`${species.name} preview`}
                   className="preview-sprite"
-                  src={stage.animations.idle[0]}
+                  src={stage.animations.idle.frames[0]}
                 />
                 <h2>{species.name}</h2>
                 <p>{species.trait}</p>

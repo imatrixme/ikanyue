@@ -256,7 +256,7 @@ button {
   position: relative;
   z-index: 1;
   width: min(390px, 72vw);
-  aspect-ratio: 1;
+  aspect-ratio: var(--pet-canvas-width) / var(--pet-canvas-height);
   filter: drop-shadow(0 24px 22px rgba(39, 98, 86, 0.18));
 }
 
