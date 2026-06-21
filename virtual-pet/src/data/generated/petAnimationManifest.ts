@@ -1,75 +1,136 @@
-import SproutIdle1Frame from '../../assets/pets/frames-v4/sprout-idle-01.webp'
-import SproutIdle2Frame from '../../assets/pets/frames-v4/sprout-idle-02.webp'
-import SproutIdle3Frame from '../../assets/pets/frames-v4/sprout-idle-03.webp'
-import SproutIdle4Frame from '../../assets/pets/frames-v4/sprout-idle-04.webp'
-import SproutIdle5Frame from '../../assets/pets/frames-v4/sprout-idle-05.webp'
-import SproutIdle6Frame from '../../assets/pets/frames-v4/sprout-idle-06.webp'
-import SproutIdle7Frame from '../../assets/pets/frames-v4/sprout-idle-07.webp'
-import SproutIdle8Frame from '../../assets/pets/frames-v4/sprout-idle-08.webp'
-import SproutIdle9Frame from '../../assets/pets/frames-v4/sprout-idle-09.webp'
-import SproutIdle10Frame from '../../assets/pets/frames-v4/sprout-idle-10.webp'
-import SproutIdle11Frame from '../../assets/pets/frames-v4/sprout-idle-11.webp'
-import SproutIdle12Frame from '../../assets/pets/frames-v4/sprout-idle-12.webp'
-import SproutEating1Frame from '../../assets/pets/frames-v4/sprout-eating-01.webp'
-import SproutEating2Frame from '../../assets/pets/frames-v4/sprout-eating-02.webp'
-import SproutEating3Frame from '../../assets/pets/frames-v4/sprout-eating-03.webp'
-import SproutEating4Frame from '../../assets/pets/frames-v4/sprout-eating-04.webp'
-import SproutEating5Frame from '../../assets/pets/frames-v4/sprout-eating-05.webp'
-import SproutEating6Frame from '../../assets/pets/frames-v4/sprout-eating-06.webp'
-import SproutEating7Frame from '../../assets/pets/frames-v4/sprout-eating-07.webp'
-import SproutEating8Frame from '../../assets/pets/frames-v4/sprout-eating-08.webp'
-import SproutEating9Frame from '../../assets/pets/frames-v4/sprout-eating-09.webp'
-import SproutEating10Frame from '../../assets/pets/frames-v4/sprout-eating-10.webp'
-import SproutEating11Frame from '../../assets/pets/frames-v4/sprout-eating-11.webp'
-import SproutEating12Frame from '../../assets/pets/frames-v4/sprout-eating-12.webp'
-import SproutPlay1Frame from '../../assets/pets/frames-v4/sprout-play-01.webp'
-import SproutPlay2Frame from '../../assets/pets/frames-v4/sprout-play-02.webp'
-import SproutPlay3Frame from '../../assets/pets/frames-v4/sprout-play-03.webp'
-import SproutPlay4Frame from '../../assets/pets/frames-v4/sprout-play-04.webp'
-import SproutPlay5Frame from '../../assets/pets/frames-v4/sprout-play-05.webp'
-import SproutPlay6Frame from '../../assets/pets/frames-v4/sprout-play-06.webp'
-import SproutPlay7Frame from '../../assets/pets/frames-v4/sprout-play-07.webp'
-import SproutPlay8Frame from '../../assets/pets/frames-v4/sprout-play-08.webp'
-import SproutPlay9Frame from '../../assets/pets/frames-v4/sprout-play-09.webp'
-import SproutPlay10Frame from '../../assets/pets/frames-v4/sprout-play-10.webp'
-import SproutPlay11Frame from '../../assets/pets/frames-v4/sprout-play-11.webp'
-import SproutPlay12Frame from '../../assets/pets/frames-v4/sprout-play-12.webp'
-import SproutClean1Frame from '../../assets/pets/frames-v4/sprout-clean-01.webp'
-import SproutClean2Frame from '../../assets/pets/frames-v4/sprout-clean-02.webp'
-import SproutClean3Frame from '../../assets/pets/frames-v4/sprout-clean-03.webp'
-import SproutClean4Frame from '../../assets/pets/frames-v4/sprout-clean-04.webp'
-import SproutClean5Frame from '../../assets/pets/frames-v4/sprout-clean-05.webp'
-import SproutClean6Frame from '../../assets/pets/frames-v4/sprout-clean-06.webp'
-import SproutClean7Frame from '../../assets/pets/frames-v4/sprout-clean-07.webp'
-import SproutClean8Frame from '../../assets/pets/frames-v4/sprout-clean-08.webp'
-import SproutClean9Frame from '../../assets/pets/frames-v4/sprout-clean-09.webp'
-import SproutClean10Frame from '../../assets/pets/frames-v4/sprout-clean-10.webp'
-import SproutClean11Frame from '../../assets/pets/frames-v4/sprout-clean-11.webp'
-import SproutClean12Frame from '../../assets/pets/frames-v4/sprout-clean-12.webp'
-import SproutSleep1Frame from '../../assets/pets/frames-v4/sprout-sleep-01.webp'
-import SproutSleep2Frame from '../../assets/pets/frames-v4/sprout-sleep-02.webp'
-import SproutSleep3Frame from '../../assets/pets/frames-v4/sprout-sleep-03.webp'
-import SproutSleep4Frame from '../../assets/pets/frames-v4/sprout-sleep-04.webp'
-import SproutSleep5Frame from '../../assets/pets/frames-v4/sprout-sleep-05.webp'
-import SproutSleep6Frame from '../../assets/pets/frames-v4/sprout-sleep-06.webp'
-import SproutSleep7Frame from '../../assets/pets/frames-v4/sprout-sleep-07.webp'
-import SproutSleep8Frame from '../../assets/pets/frames-v4/sprout-sleep-08.webp'
-import SproutSleep9Frame from '../../assets/pets/frames-v4/sprout-sleep-09.webp'
-import SproutSleep10Frame from '../../assets/pets/frames-v4/sprout-sleep-10.webp'
-import SproutSleep11Frame from '../../assets/pets/frames-v4/sprout-sleep-11.webp'
-import SproutSleep12Frame from '../../assets/pets/frames-v4/sprout-sleep-12.webp'
-import SproutWeak1Frame from '../../assets/pets/frames-v4/sprout-weak-01.webp'
-import SproutWeak2Frame from '../../assets/pets/frames-v4/sprout-weak-02.webp'
-import SproutWeak3Frame from '../../assets/pets/frames-v4/sprout-weak-03.webp'
-import SproutWeak4Frame from '../../assets/pets/frames-v4/sprout-weak-04.webp'
-import SproutWeak5Frame from '../../assets/pets/frames-v4/sprout-weak-05.webp'
-import SproutWeak6Frame from '../../assets/pets/frames-v4/sprout-weak-06.webp'
-import SproutWeak7Frame from '../../assets/pets/frames-v4/sprout-weak-07.webp'
-import SproutWeak8Frame from '../../assets/pets/frames-v4/sprout-weak-08.webp'
-import SproutWeak9Frame from '../../assets/pets/frames-v4/sprout-weak-09.webp'
-import SproutWeak10Frame from '../../assets/pets/frames-v4/sprout-weak-10.webp'
-import SproutWeak11Frame from '../../assets/pets/frames-v4/sprout-weak-11.webp'
-import SproutWeak12Frame from '../../assets/pets/frames-v4/sprout-weak-12.webp'
+import { goldieAnimationManifest } from './goldieAnimationManifest'
+import SproutV6Idle1Frame from '../../assets/pets/frames-v6/sprout-baby-idle-01.webp'
+import SproutV6Idle2Frame from '../../assets/pets/frames-v6/sprout-baby-idle-02.webp'
+import SproutV6Idle3Frame from '../../assets/pets/frames-v6/sprout-baby-idle-03.webp'
+import SproutV6Idle4Frame from '../../assets/pets/frames-v6/sprout-baby-idle-04.webp'
+import SproutV6Idle5Frame from '../../assets/pets/frames-v6/sprout-baby-idle-05.webp'
+import SproutV6Idle6Frame from '../../assets/pets/frames-v6/sprout-baby-idle-06.webp'
+import SproutV6Idle7Frame from '../../assets/pets/frames-v6/sprout-baby-idle-07.webp'
+import SproutV6Idle8Frame from '../../assets/pets/frames-v6/sprout-baby-idle-08.webp'
+import SproutV6Idle9Frame from '../../assets/pets/frames-v6/sprout-baby-idle-09.webp'
+import SproutV6Idle10Frame from '../../assets/pets/frames-v6/sprout-baby-idle-10.webp'
+import SproutV6Idle11Frame from '../../assets/pets/frames-v6/sprout-baby-idle-11.webp'
+import SproutV6Idle12Frame from '../../assets/pets/frames-v6/sprout-baby-idle-12.webp'
+import SproutV6Idle13Frame from '../../assets/pets/frames-v6/sprout-baby-idle-13.webp'
+import SproutV6Idle14Frame from '../../assets/pets/frames-v6/sprout-baby-idle-14.webp'
+import SproutV6Idle15Frame from '../../assets/pets/frames-v6/sprout-baby-idle-15.webp'
+import SproutV6Idle16Frame from '../../assets/pets/frames-v6/sprout-baby-idle-16.webp'
+import SproutV6Idle17Frame from '../../assets/pets/frames-v6/sprout-baby-idle-17.webp'
+import SproutV6Idle18Frame from '../../assets/pets/frames-v6/sprout-baby-idle-18.webp'
+import SproutV6Idle19Frame from '../../assets/pets/frames-v6/sprout-baby-idle-19.webp'
+import SproutV6Idle20Frame from '../../assets/pets/frames-v6/sprout-baby-idle-20.webp'
+import SproutV6Idle21Frame from '../../assets/pets/frames-v6/sprout-baby-idle-21.webp'
+import SproutV6Idle22Frame from '../../assets/pets/frames-v6/sprout-baby-idle-22.webp'
+import SproutV6Idle23Frame from '../../assets/pets/frames-v6/sprout-baby-idle-23.webp'
+import SproutV6Idle24Frame from '../../assets/pets/frames-v6/sprout-baby-idle-24.webp'
+import SproutV6Eating1Frame from '../../assets/pets/frames-v6/sprout-baby-eating-01.webp'
+import SproutV6Eating2Frame from '../../assets/pets/frames-v6/sprout-baby-eating-02.webp'
+import SproutV6Eating3Frame from '../../assets/pets/frames-v6/sprout-baby-eating-03.webp'
+import SproutV6Eating4Frame from '../../assets/pets/frames-v6/sprout-baby-eating-04.webp'
+import SproutV6Eating5Frame from '../../assets/pets/frames-v6/sprout-baby-eating-05.webp'
+import SproutV6Eating6Frame from '../../assets/pets/frames-v6/sprout-baby-eating-06.webp'
+import SproutV6Eating7Frame from '../../assets/pets/frames-v6/sprout-baby-eating-07.webp'
+import SproutV6Eating8Frame from '../../assets/pets/frames-v6/sprout-baby-eating-08.webp'
+import SproutV6Eating9Frame from '../../assets/pets/frames-v6/sprout-baby-eating-09.webp'
+import SproutV6Eating10Frame from '../../assets/pets/frames-v6/sprout-baby-eating-10.webp'
+import SproutV6Eating11Frame from '../../assets/pets/frames-v6/sprout-baby-eating-11.webp'
+import SproutV6Eating12Frame from '../../assets/pets/frames-v6/sprout-baby-eating-12.webp'
+import SproutV6Eating13Frame from '../../assets/pets/frames-v6/sprout-baby-eating-13.webp'
+import SproutV6Eating14Frame from '../../assets/pets/frames-v6/sprout-baby-eating-14.webp'
+import SproutV6Eating15Frame from '../../assets/pets/frames-v6/sprout-baby-eating-15.webp'
+import SproutV6Eating16Frame from '../../assets/pets/frames-v6/sprout-baby-eating-16.webp'
+import SproutV6Eating17Frame from '../../assets/pets/frames-v6/sprout-baby-eating-17.webp'
+import SproutV6Eating18Frame from '../../assets/pets/frames-v6/sprout-baby-eating-18.webp'
+import SproutV6Eating19Frame from '../../assets/pets/frames-v6/sprout-baby-eating-19.webp'
+import SproutV6Eating20Frame from '../../assets/pets/frames-v6/sprout-baby-eating-20.webp'
+import SproutV6Play1Frame from '../../assets/pets/frames-v6/sprout-baby-play-01.webp'
+import SproutV6Play2Frame from '../../assets/pets/frames-v6/sprout-baby-play-02.webp'
+import SproutV6Play3Frame from '../../assets/pets/frames-v6/sprout-baby-play-03.webp'
+import SproutV6Play4Frame from '../../assets/pets/frames-v6/sprout-baby-play-04.webp'
+import SproutV6Play5Frame from '../../assets/pets/frames-v6/sprout-baby-play-05.webp'
+import SproutV6Play6Frame from '../../assets/pets/frames-v6/sprout-baby-play-06.webp'
+import SproutV6Play7Frame from '../../assets/pets/frames-v6/sprout-baby-play-07.webp'
+import SproutV6Play8Frame from '../../assets/pets/frames-v6/sprout-baby-play-08.webp'
+import SproutV6Play9Frame from '../../assets/pets/frames-v6/sprout-baby-play-09.webp'
+import SproutV6Play10Frame from '../../assets/pets/frames-v6/sprout-baby-play-10.webp'
+import SproutV6Play11Frame from '../../assets/pets/frames-v6/sprout-baby-play-11.webp'
+import SproutV6Play12Frame from '../../assets/pets/frames-v6/sprout-baby-play-12.webp'
+import SproutV6Play13Frame from '../../assets/pets/frames-v6/sprout-baby-play-13.webp'
+import SproutV6Play14Frame from '../../assets/pets/frames-v6/sprout-baby-play-14.webp'
+import SproutV6Play15Frame from '../../assets/pets/frames-v6/sprout-baby-play-15.webp'
+import SproutV6Play16Frame from '../../assets/pets/frames-v6/sprout-baby-play-16.webp'
+import SproutV6Play17Frame from '../../assets/pets/frames-v6/sprout-baby-play-17.webp'
+import SproutV6Play18Frame from '../../assets/pets/frames-v6/sprout-baby-play-18.webp'
+import SproutV6Play19Frame from '../../assets/pets/frames-v6/sprout-baby-play-19.webp'
+import SproutV6Play20Frame from '../../assets/pets/frames-v6/sprout-baby-play-20.webp'
+import SproutV6Clean1Frame from '../../assets/pets/frames-v6/sprout-baby-clean-01.webp'
+import SproutV6Clean2Frame from '../../assets/pets/frames-v6/sprout-baby-clean-02.webp'
+import SproutV6Clean3Frame from '../../assets/pets/frames-v6/sprout-baby-clean-03.webp'
+import SproutV6Clean4Frame from '../../assets/pets/frames-v6/sprout-baby-clean-04.webp'
+import SproutV6Clean5Frame from '../../assets/pets/frames-v6/sprout-baby-clean-05.webp'
+import SproutV6Clean6Frame from '../../assets/pets/frames-v6/sprout-baby-clean-06.webp'
+import SproutV6Clean7Frame from '../../assets/pets/frames-v6/sprout-baby-clean-07.webp'
+import SproutV6Clean8Frame from '../../assets/pets/frames-v6/sprout-baby-clean-08.webp'
+import SproutV6Clean9Frame from '../../assets/pets/frames-v6/sprout-baby-clean-09.webp'
+import SproutV6Clean10Frame from '../../assets/pets/frames-v6/sprout-baby-clean-10.webp'
+import SproutV6Clean11Frame from '../../assets/pets/frames-v6/sprout-baby-clean-11.webp'
+import SproutV6Clean12Frame from '../../assets/pets/frames-v6/sprout-baby-clean-12.webp'
+import SproutV6Clean13Frame from '../../assets/pets/frames-v6/sprout-baby-clean-13.webp'
+import SproutV6Clean14Frame from '../../assets/pets/frames-v6/sprout-baby-clean-14.webp'
+import SproutV6Clean15Frame from '../../assets/pets/frames-v6/sprout-baby-clean-15.webp'
+import SproutV6Clean16Frame from '../../assets/pets/frames-v6/sprout-baby-clean-16.webp'
+import SproutV6Clean17Frame from '../../assets/pets/frames-v6/sprout-baby-clean-17.webp'
+import SproutV6Clean18Frame from '../../assets/pets/frames-v6/sprout-baby-clean-18.webp'
+import SproutV6Clean19Frame from '../../assets/pets/frames-v6/sprout-baby-clean-19.webp'
+import SproutV6Clean20Frame from '../../assets/pets/frames-v6/sprout-baby-clean-20.webp'
+import SproutV6Sleep1Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-01.webp'
+import SproutV6Sleep2Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-02.webp'
+import SproutV6Sleep3Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-03.webp'
+import SproutV6Sleep4Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-04.webp'
+import SproutV6Sleep5Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-05.webp'
+import SproutV6Sleep6Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-06.webp'
+import SproutV6Sleep7Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-07.webp'
+import SproutV6Sleep8Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-08.webp'
+import SproutV6Sleep9Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-09.webp'
+import SproutV6Sleep10Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-10.webp'
+import SproutV6Sleep11Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-11.webp'
+import SproutV6Sleep12Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-12.webp'
+import SproutV6Sleep13Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-13.webp'
+import SproutV6Sleep14Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-14.webp'
+import SproutV6Sleep15Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-15.webp'
+import SproutV6Sleep16Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-16.webp'
+import SproutV6Sleep17Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-17.webp'
+import SproutV6Sleep18Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-18.webp'
+import SproutV6Sleep19Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-19.webp'
+import SproutV6Sleep20Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-20.webp'
+import SproutV6Sleep21Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-21.webp'
+import SproutV6Sleep22Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-22.webp'
+import SproutV6Sleep23Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-23.webp'
+import SproutV6Sleep24Frame from '../../assets/pets/frames-v6/sprout-baby-sleep-24.webp'
+import SproutV6Weak1Frame from '../../assets/pets/frames-v6/sprout-baby-weak-01.webp'
+import SproutV6Weak2Frame from '../../assets/pets/frames-v6/sprout-baby-weak-02.webp'
+import SproutV6Weak3Frame from '../../assets/pets/frames-v6/sprout-baby-weak-03.webp'
+import SproutV6Weak4Frame from '../../assets/pets/frames-v6/sprout-baby-weak-04.webp'
+import SproutV6Weak5Frame from '../../assets/pets/frames-v6/sprout-baby-weak-05.webp'
+import SproutV6Weak6Frame from '../../assets/pets/frames-v6/sprout-baby-weak-06.webp'
+import SproutV6Weak7Frame from '../../assets/pets/frames-v6/sprout-baby-weak-07.webp'
+import SproutV6Weak8Frame from '../../assets/pets/frames-v6/sprout-baby-weak-08.webp'
+import SproutV6Weak9Frame from '../../assets/pets/frames-v6/sprout-baby-weak-09.webp'
+import SproutV6Weak10Frame from '../../assets/pets/frames-v6/sprout-baby-weak-10.webp'
+import SproutV6Weak11Frame from '../../assets/pets/frames-v6/sprout-baby-weak-11.webp'
+import SproutV6Weak12Frame from '../../assets/pets/frames-v6/sprout-baby-weak-12.webp'
+import SproutV6Weak13Frame from '../../assets/pets/frames-v6/sprout-baby-weak-13.webp'
+import SproutV6Weak14Frame from '../../assets/pets/frames-v6/sprout-baby-weak-14.webp'
+import SproutV6Weak15Frame from '../../assets/pets/frames-v6/sprout-baby-weak-15.webp'
+import SproutV6Weak16Frame from '../../assets/pets/frames-v6/sprout-baby-weak-16.webp'
+import SproutV6Weak17Frame from '../../assets/pets/frames-v6/sprout-baby-weak-17.webp'
+import SproutV6Weak18Frame from '../../assets/pets/frames-v6/sprout-baby-weak-18.webp'
+import SproutV6Weak19Frame from '../../assets/pets/frames-v6/sprout-baby-weak-19.webp'
+import SproutV6Weak20Frame from '../../assets/pets/frames-v6/sprout-baby-weak-20.webp'
+import SproutV6Weak21Frame from '../../assets/pets/frames-v6/sprout-baby-weak-21.webp'
+import SproutV6Weak22Frame from '../../assets/pets/frames-v6/sprout-baby-weak-22.webp'
+import SproutV6Weak23Frame from '../../assets/pets/frames-v6/sprout-baby-weak-23.webp'
+import SproutV6Weak24Frame from '../../assets/pets/frames-v6/sprout-baby-weak-24.webp'
 import MochiIdle1Frame from '../../assets/pets/frames-v4/mochi-idle-01.webp'
 import MochiIdle2Frame from '../../assets/pets/frames-v4/mochi-idle-02.webp'
 import MochiIdle3Frame from '../../assets/pets/frames-v4/mochi-idle-03.webp'
@@ -219,52 +280,58 @@ import type { PetAnimationManifest } from '../../game/types'
 export const petAnimationManifest = {
   sprout: {
     idle: {
-      frames: [SproutIdle1Frame, SproutIdle2Frame, SproutIdle3Frame, SproutIdle4Frame, SproutIdle5Frame, SproutIdle6Frame, SproutIdle7Frame, SproutIdle8Frame, SproutIdle9Frame, SproutIdle10Frame, SproutIdle11Frame, SproutIdle12Frame],
+      frames: [SproutV6Idle1Frame, SproutV6Idle2Frame, SproutV6Idle3Frame, SproutV6Idle4Frame, SproutV6Idle5Frame, SproutV6Idle6Frame, SproutV6Idle7Frame, SproutV6Idle8Frame, SproutV6Idle9Frame, SproutV6Idle10Frame, SproutV6Idle11Frame, SproutV6Idle12Frame, SproutV6Idle13Frame, SproutV6Idle14Frame, SproutV6Idle15Frame, SproutV6Idle16Frame, SproutV6Idle17Frame, SproutV6Idle18Frame, SproutV6Idle19Frame, SproutV6Idle20Frame, SproutV6Idle21Frame, SproutV6Idle22Frame, SproutV6Idle23Frame, SproutV6Idle24Frame],
       fps: 12,
       loop: true,
       durationMs: 0,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
     eating: {
-      frames: [SproutEating1Frame, SproutEating2Frame, SproutEating3Frame, SproutEating4Frame, SproutEating5Frame, SproutEating6Frame, SproutEating7Frame, SproutEating8Frame, SproutEating9Frame, SproutEating10Frame, SproutEating11Frame, SproutEating12Frame],
+      frames: [SproutV6Eating1Frame, SproutV6Eating2Frame, SproutV6Eating3Frame, SproutV6Eating4Frame, SproutV6Eating5Frame, SproutV6Eating6Frame, SproutV6Eating7Frame, SproutV6Eating8Frame, SproutV6Eating9Frame, SproutV6Eating10Frame, SproutV6Eating11Frame, SproutV6Eating12Frame, SproutV6Eating13Frame, SproutV6Eating14Frame, SproutV6Eating15Frame, SproutV6Eating16Frame, SproutV6Eating17Frame, SproutV6Eating18Frame, SproutV6Eating19Frame, SproutV6Eating20Frame],
       fps: 14,
       loop: false,
       durationMs: 1500,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
     play: {
-      frames: [SproutPlay1Frame, SproutPlay2Frame, SproutPlay3Frame, SproutPlay4Frame, SproutPlay5Frame, SproutPlay6Frame, SproutPlay7Frame, SproutPlay8Frame, SproutPlay9Frame, SproutPlay10Frame, SproutPlay11Frame, SproutPlay12Frame],
+      frames: [SproutV6Play1Frame, SproutV6Play2Frame, SproutV6Play3Frame, SproutV6Play4Frame, SproutV6Play5Frame, SproutV6Play6Frame, SproutV6Play7Frame, SproutV6Play8Frame, SproutV6Play9Frame, SproutV6Play10Frame, SproutV6Play11Frame, SproutV6Play12Frame, SproutV6Play13Frame, SproutV6Play14Frame, SproutV6Play15Frame, SproutV6Play16Frame, SproutV6Play17Frame, SproutV6Play18Frame, SproutV6Play19Frame, SproutV6Play20Frame],
       fps: 14,
       loop: false,
       durationMs: 1800,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
     clean: {
-      frames: [SproutClean1Frame, SproutClean2Frame, SproutClean3Frame, SproutClean4Frame, SproutClean5Frame, SproutClean6Frame, SproutClean7Frame, SproutClean8Frame, SproutClean9Frame, SproutClean10Frame, SproutClean11Frame, SproutClean12Frame],
+      frames: [SproutV6Clean1Frame, SproutV6Clean2Frame, SproutV6Clean3Frame, SproutV6Clean4Frame, SproutV6Clean5Frame, SproutV6Clean6Frame, SproutV6Clean7Frame, SproutV6Clean8Frame, SproutV6Clean9Frame, SproutV6Clean10Frame, SproutV6Clean11Frame, SproutV6Clean12Frame, SproutV6Clean13Frame, SproutV6Clean14Frame, SproutV6Clean15Frame, SproutV6Clean16Frame, SproutV6Clean17Frame, SproutV6Clean18Frame, SproutV6Clean19Frame, SproutV6Clean20Frame],
       fps: 14,
       loop: false,
       durationMs: 1800,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
     sleep: {
-      frames: [SproutSleep1Frame, SproutSleep2Frame, SproutSleep3Frame, SproutSleep4Frame, SproutSleep5Frame, SproutSleep6Frame, SproutSleep7Frame, SproutSleep8Frame, SproutSleep9Frame, SproutSleep10Frame, SproutSleep11Frame, SproutSleep12Frame],
+      frames: [SproutV6Sleep1Frame, SproutV6Sleep2Frame, SproutV6Sleep3Frame, SproutV6Sleep4Frame, SproutV6Sleep5Frame, SproutV6Sleep6Frame, SproutV6Sleep7Frame, SproutV6Sleep8Frame, SproutV6Sleep9Frame, SproutV6Sleep10Frame, SproutV6Sleep11Frame, SproutV6Sleep12Frame, SproutV6Sleep13Frame, SproutV6Sleep14Frame, SproutV6Sleep15Frame, SproutV6Sleep16Frame, SproutV6Sleep17Frame, SproutV6Sleep18Frame, SproutV6Sleep19Frame, SproutV6Sleep20Frame, SproutV6Sleep21Frame, SproutV6Sleep22Frame, SproutV6Sleep23Frame, SproutV6Sleep24Frame],
       fps: 8,
       loop: false,
       durationMs: 2300,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
     weak: {
-      frames: [SproutWeak1Frame, SproutWeak2Frame, SproutWeak3Frame, SproutWeak4Frame, SproutWeak5Frame, SproutWeak6Frame, SproutWeak7Frame, SproutWeak8Frame, SproutWeak9Frame, SproutWeak10Frame, SproutWeak11Frame, SproutWeak12Frame],
+      frames: [SproutV6Weak1Frame, SproutV6Weak2Frame, SproutV6Weak3Frame, SproutV6Weak4Frame, SproutV6Weak5Frame, SproutV6Weak6Frame, SproutV6Weak7Frame, SproutV6Weak8Frame, SproutV6Weak9Frame, SproutV6Weak10Frame, SproutV6Weak11Frame, SproutV6Weak12Frame, SproutV6Weak13Frame, SproutV6Weak14Frame, SproutV6Weak15Frame, SproutV6Weak16Frame, SproutV6Weak17Frame, SproutV6Weak18Frame, SproutV6Weak19Frame, SproutV6Weak20Frame, SproutV6Weak21Frame, SproutV6Weak22Frame, SproutV6Weak23Frame, SproutV6Weak24Frame],
       fps: 8,
       loop: true,
       durationMs: 0,
-      canvas: { width: 640, height: 640 },
-      anchor: { x: 320, y: 585 },
+      canvas: { width: 160, height: 160 },
+      anchor: { x: 80, y: 146 },
+      renderStyle: 'pixel-3d',
     },
   },
   mochi: {
@@ -366,5 +433,6 @@ export const petAnimationManifest = {
       canvas: { width: 640, height: 640 },
       anchor: { x: 320, y: 585 },
     },
-  }
+  },
+  goldie: goldieAnimationManifest
 } satisfies PetAnimationManifest

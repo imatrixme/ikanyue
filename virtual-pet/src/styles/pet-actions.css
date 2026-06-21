@@ -10,6 +10,14 @@
   animation: sleep-settle 1.8s ease-in-out infinite alternate;
 }
 
+.pet-sprite[data-renderer='three'] {
+  animation: none;
+}
+
+.pet-sprite[data-renderer='pixel-3d'] {
+  transform: translateZ(0);
+}
+
 .food-bar {
   padding-bottom: 10px;
 }

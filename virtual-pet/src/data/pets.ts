@@ -84,4 +84,30 @@ export const speciesList: PetSpecies[] = [
       },
     ],
   },
+  {
+    id: 'goldie',
+    name: 'Goldie',
+    trait: 'A bright pond friend with glassy fins and expressive moods.',
+    favoriteFoods: ['berry', 'spark'],
+    stages: [
+      {
+        id: 'baby',
+        name: 'Fry',
+        threshold: 0,
+        animations: animations('goldie'),
+      },
+      {
+        id: 'teen',
+        name: 'Ripplefin',
+        threshold: 100,
+        animations: animations('goldie'),
+      },
+      {
+        id: 'adult',
+        name: 'Glimmerfin',
+        threshold: 240,
+        animations: animations('goldie'),
+      },
+    ],
+  },
 ]

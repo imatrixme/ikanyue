@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getStage } from '../game/petEngine'
+import { PetThreeScene } from './PetThreeScene'
 import type {
   Condition,
   PetAnimationClip,
@@ -17,6 +18,9 @@ interface PetSpriteProps {
 export function PetSprite({ condition, pet, species }: PetSpriteProps) {
   const stage = getStage(pet.stageId, species)
   const clip = stage.animations[condition]
+  const usesThreePrototype =
+    species.id === 'sprout' && pet.stageId !== 'baby' && !clip.renderStyle
+  const renderer = usesThreePrototype ? 'three' : (clip.renderStyle ?? 'frames')
   const spriteStyle = {
     '--pet-anchor-x': `${clip.anchor.x}px`,
     '--pet-anchor-y': `${clip.anchor.y}px`,
@@ -28,13 +32,22 @@ export function PetSprite({ condition, pet, species }: PetSpriteProps) {
     <div
       className={`pet-sprite is-${condition}`}
       data-condition={condition}
+      data-renderer={renderer}
       style={spriteStyle}
     >
-      <PetSpritePlayer
-        ariaLabel={`${species.name} ${stage.name} ${condition}`}
-        clip={clip}
-        key={`${pet.speciesId}-${pet.stageId}-${condition}`}
-      />
+      {usesThreePrototype ? (
+        <PetThreeScene
+          ariaLabel={`${species.name} ${stage.name} ${condition}`}
+          condition={condition}
+          stageId={pet.stageId}
+        />
+      ) : (
+        <PetSpritePlayer
+          ariaLabel={`${species.name} ${stage.name} ${condition}`}
+          clip={clip}
+          key={`${pet.speciesId}-${pet.stageId}-${condition}`}
+        />
+      )}
     </div>
   )
 }

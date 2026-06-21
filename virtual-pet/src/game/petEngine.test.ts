@@ -25,11 +25,41 @@ describe('pet engine', () => {
         'weak',
       ])
       for (const clip of Object.values(animations)) {
-        expect(clip.frames).toHaveLength(12)
+        expect(clip.frames.length).toBeGreaterThanOrEqual(12)
         expect(clip.fps).toBeGreaterThan(0)
-        expect(clip.canvas).toEqual({ width: 640, height: 640 })
-        expect(clip.anchor).toEqual({ x: 320, y: 585 })
+        expect(clip.canvas.width).toBeGreaterThan(0)
+        expect(clip.canvas.height).toBeGreaterThan(0)
+        expect(clip.anchor.x).toBeGreaterThan(0)
+        expect(clip.anchor.y).toBeGreaterThan(0)
       }
+    }
+  })
+
+  it('uses richer V6 pixel runtime frames for the sprout action set', () => {
+    for (const clip of Object.values(petAnimationManifest.sprout)) {
+      expect(clip.frames.length).toBeGreaterThanOrEqual(20)
+      expect(clip.canvas).toEqual({ width: 160, height: 160 })
+      expect(clip.anchor).toEqual({ x: 80, y: 146 })
+      expect(clip.renderStyle).toBe('pixel-3d')
+    }
+  })
+
+  it('uses sheet-rendered runtime frames for the goldie action set', () => {
+    const { idle, ...v8Clips } = petAnimationManifest.goldie
+
+    expect(idle.frames.length).toBe(32)
+    expect(idle.fps).toBe(18)
+    expect(idle.frames.every((frame) => frame.includes('/frames-v13/'))).toBe(true)
+    expect(idle.canvas).toEqual({ width: 640, height: 640 })
+    expect(idle.anchor).toEqual({ x: 320, y: 585 })
+    expect(idle.renderStyle).toBe('sheet-hd')
+
+    for (const clip of Object.values(v8Clips)) {
+      expect(clip.frames.length).toBeGreaterThanOrEqual(18)
+      expect(clip.frames.every((frame) => frame.includes('/frames-v8/'))).toBe(true)
+      expect(clip.canvas).toEqual({ width: 640, height: 640 })
+      expect(clip.anchor).toEqual({ x: 320, y: 585 })
+      expect(clip.renderStyle).toBe('sheet-hd')
     }
   })
 

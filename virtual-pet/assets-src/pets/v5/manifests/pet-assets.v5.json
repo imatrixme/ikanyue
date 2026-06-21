@@ -1,0 +1,64 @@
+{
+  "canvas": {
+    "width": 640,
+    "height": 640
+  },
+  "schemaVersion": 1,
+  "actions": [
+    {
+      "actionId": "idle",
+      "anchor": {
+        "x": 320,
+        "y": 585
+      },
+      "frameCount": 16,
+      "fps": 16,
+      "rawPaths": [
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-01.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-02.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-03.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-04.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-05.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-06.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-07.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-08.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-09.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-10.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-11.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-12.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-13.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-14.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-15.png",
+        "assets-src/pets/v5/raw/sprout/baby/idle/sprout-baby-idle-16.png"
+      ],
+      "renderer": "three-sprout-rig",
+      "reviewPath": "assets-src/pets/v5/review/sprout-baby-idle-v5-strip.webp",
+      "runtimePaths": [
+        "src/assets/pets/frames-v5/sprout-baby-idle-01.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-02.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-03.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-04.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-05.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-06.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-07.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-08.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-09.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-10.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-11.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-12.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-13.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-14.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-15.webp",
+        "src/assets/pets/frames-v5/sprout-baby-idle-16.webp"
+      ],
+      "speciesId": "sprout",
+      "stageId": "baby",
+      "tolerances": {
+        "maxBaselineStepPx": 5,
+        "maxCenterStepPx": 7,
+        "maxLoopCenterStepPx": 7,
+        "visibleMarginPx": 8
+      }
+    }
+  ]
+}

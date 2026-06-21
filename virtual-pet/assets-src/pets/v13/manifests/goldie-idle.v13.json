@@ -1,0 +1,416 @@
+{
+  "action": {
+    "actionId": "idle",
+    "durationMs": 0,
+    "fps": 18,
+    "loop": true,
+    "runtimeFrames": 32,
+    "sourceFrames": 14
+  },
+  "runtimePaths": [
+    "src/assets/pets/frames-v13/goldie-idle-01.webp",
+    "src/assets/pets/frames-v13/goldie-idle-02.webp",
+    "src/assets/pets/frames-v13/goldie-idle-03.webp",
+    "src/assets/pets/frames-v13/goldie-idle-04.webp",
+    "src/assets/pets/frames-v13/goldie-idle-05.webp",
+    "src/assets/pets/frames-v13/goldie-idle-06.webp",
+    "src/assets/pets/frames-v13/goldie-idle-07.webp",
+    "src/assets/pets/frames-v13/goldie-idle-08.webp",
+    "src/assets/pets/frames-v13/goldie-idle-09.webp",
+    "src/assets/pets/frames-v13/goldie-idle-10.webp",
+    "src/assets/pets/frames-v13/goldie-idle-11.webp",
+    "src/assets/pets/frames-v13/goldie-idle-12.webp",
+    "src/assets/pets/frames-v13/goldie-idle-13.webp",
+    "src/assets/pets/frames-v13/goldie-idle-14.webp",
+    "src/assets/pets/frames-v13/goldie-idle-15.webp",
+    "src/assets/pets/frames-v13/goldie-idle-16.webp",
+    "src/assets/pets/frames-v13/goldie-idle-17.webp",
+    "src/assets/pets/frames-v13/goldie-idle-18.webp",
+    "src/assets/pets/frames-v13/goldie-idle-19.webp",
+    "src/assets/pets/frames-v13/goldie-idle-20.webp",
+    "src/assets/pets/frames-v13/goldie-idle-21.webp",
+    "src/assets/pets/frames-v13/goldie-idle-22.webp",
+    "src/assets/pets/frames-v13/goldie-idle-23.webp",
+    "src/assets/pets/frames-v13/goldie-idle-24.webp",
+    "src/assets/pets/frames-v13/goldie-idle-25.webp",
+    "src/assets/pets/frames-v13/goldie-idle-26.webp",
+    "src/assets/pets/frames-v13/goldie-idle-27.webp",
+    "src/assets/pets/frames-v13/goldie-idle-28.webp",
+    "src/assets/pets/frames-v13/goldie-idle-29.webp",
+    "src/assets/pets/frames-v13/goldie-idle-30.webp",
+    "src/assets/pets/frames-v13/goldie-idle-31.webp",
+    "src/assets/pets/frames-v13/goldie-idle-32.webp"
+  ],
+  "schemaVersion": 1,
+  "sourceManifest": "assets-src/pets/v12/manifests/goldie-idle.v12.json",
+  "sourceSequence": [
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    31,
+    30,
+    29,
+    28,
+    27,
+    26
+  ],
+  "sourceVersion": "v12-body-anchor-stabilized",
+  "stabilization": {
+    "blink": {
+      "masks": [
+        {
+          "centerX": 158,
+          "centerY": 324,
+          "featherRatio": 0.32,
+          "radiusX": 43,
+          "radiusY": 38
+        },
+        {
+          "centerX": 286,
+          "centerY": 323,
+          "featherRatio": 0.3,
+          "radiusX": 63,
+          "radiusY": 46
+        }
+      ],
+      "runtimeAmounts": {
+        "15": 1,
+        "16": 1
+      },
+      "sourceFrame": 12,
+      "strategy": "localized-closed-eye-overlay-v1"
+    },
+    "frameMetrics": [
+      {
+        "blend": 0,
+        "blinkAmount": 0,
+        "frame": 1,
+        "sourceA": 26,
+        "sourceB": 27,
+        "visibleMargin": 97,
+        "visualStepToNext": 14.285
+      },
+      {
+        "blend": 0.375,
+        "blinkAmount": 0,
+        "frame": 2,
+        "sourceA": 26,
+        "sourceB": 27,
+        "visibleMargin": 96,
+        "visualStepToNext": 14.601
+      },
+      {
+        "blend": 0.75,
+        "blinkAmount": 0,
+        "frame": 3,
+        "sourceA": 26,
+        "sourceB": 27,
+        "visibleMargin": 96,
+        "visualStepToNext": 9.163
+      },
+      {
+        "blend": 0.125,
+        "blinkAmount": 0,
+        "frame": 4,
+        "sourceA": 27,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.024
+      },
+      {
+        "blend": 0.5,
+        "blinkAmount": 0,
+        "frame": 5,
+        "sourceA": 27,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.085
+      },
+      {
+        "blend": 0.875,
+        "blinkAmount": 0,
+        "frame": 6,
+        "sourceA": 27,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 7.489
+      },
+      {
+        "blend": 0.25,
+        "blinkAmount": 0,
+        "frame": 7,
+        "sourceA": 28,
+        "sourceB": 29,
+        "visibleMargin": 96,
+        "visualStepToNext": 12.505
+      },
+      {
+        "blend": 0.625,
+        "blinkAmount": 0,
+        "frame": 8,
+        "sourceA": 28,
+        "sourceB": 29,
+        "visibleMargin": 96,
+        "visualStepToNext": 11.92
+      },
+      {
+        "blend": 0,
+        "blinkAmount": 0,
+        "frame": 9,
+        "sourceA": 29,
+        "sourceB": 30,
+        "visibleMargin": 96,
+        "visualStepToNext": 14.523
+      },
+      {
+        "blend": 0.375,
+        "blinkAmount": 0,
+        "frame": 10,
+        "sourceA": 29,
+        "sourceB": 30,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.124
+      },
+      {
+        "blend": 0.75,
+        "blinkAmount": 0,
+        "frame": 11,
+        "sourceA": 29,
+        "sourceB": 30,
+        "visibleMargin": 96,
+        "visualStepToNext": 11.147
+      },
+      {
+        "blend": 0.125,
+        "blinkAmount": 0,
+        "frame": 12,
+        "sourceA": 30,
+        "sourceB": 31,
+        "visibleMargin": 94,
+        "visualStepToNext": 15.685
+      },
+      {
+        "blend": 0.5,
+        "blinkAmount": 0,
+        "frame": 13,
+        "sourceA": 30,
+        "sourceB": 31,
+        "visibleMargin": 93,
+        "visualStepToNext": 15.999
+      },
+      {
+        "blend": 0.875,
+        "blinkAmount": 0,
+        "frame": 14,
+        "sourceA": 30,
+        "sourceB": 31,
+        "visibleMargin": 93,
+        "visualStepToNext": 22.335
+      },
+      {
+        "blend": 0.25,
+        "blinkAmount": 1,
+        "frame": 15,
+        "sourceA": 31,
+        "sourceB": 32,
+        "visibleMargin": 93,
+        "visualStepToNext": 11.737
+      },
+      {
+        "blend": 0.625,
+        "blinkAmount": 1,
+        "frame": 16,
+        "sourceA": 31,
+        "sourceB": 32,
+        "visibleMargin": 93,
+        "visualStepToNext": 26.237
+      },
+      {
+        "blend": 0,
+        "blinkAmount": 0,
+        "frame": 17,
+        "sourceA": 32,
+        "sourceB": 31,
+        "visibleMargin": 95,
+        "visualStepToNext": 12.168
+      },
+      {
+        "blend": 0.375,
+        "blinkAmount": 0,
+        "frame": 18,
+        "sourceA": 32,
+        "sourceB": 31,
+        "visibleMargin": 93,
+        "visualStepToNext": 12.86
+      },
+      {
+        "blend": 0.75,
+        "blinkAmount": 0,
+        "frame": 19,
+        "sourceA": 32,
+        "sourceB": 31,
+        "visibleMargin": 93,
+        "visualStepToNext": 7.682
+      },
+      {
+        "blend": 0.125,
+        "blinkAmount": 0,
+        "frame": 20,
+        "sourceA": 31,
+        "sourceB": 30,
+        "visibleMargin": 93,
+        "visualStepToNext": 15.999
+      },
+      {
+        "blend": 0.5,
+        "blinkAmount": 0,
+        "frame": 21,
+        "sourceA": 31,
+        "sourceB": 30,
+        "visibleMargin": 93,
+        "visualStepToNext": 15.685
+      },
+      {
+        "blend": 0.875,
+        "blinkAmount": 0,
+        "frame": 22,
+        "sourceA": 31,
+        "sourceB": 30,
+        "visibleMargin": 94,
+        "visualStepToNext": 11.147
+      },
+      {
+        "blend": 0.25,
+        "blinkAmount": 0,
+        "frame": 23,
+        "sourceA": 30,
+        "sourceB": 29,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.124
+      },
+      {
+        "blend": 0.625,
+        "blinkAmount": 0,
+        "frame": 24,
+        "sourceA": 30,
+        "sourceB": 29,
+        "visibleMargin": 96,
+        "visualStepToNext": 14.523
+      },
+      {
+        "blend": 0,
+        "blinkAmount": 0,
+        "frame": 25,
+        "sourceA": 29,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 11.92
+      },
+      {
+        "blend": 0.375,
+        "blinkAmount": 0,
+        "frame": 26,
+        "sourceA": 29,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 12.505
+      },
+      {
+        "blend": 0.75,
+        "blinkAmount": 0,
+        "frame": 27,
+        "sourceA": 29,
+        "sourceB": 28,
+        "visibleMargin": 96,
+        "visualStepToNext": 7.489
+      },
+      {
+        "blend": 0.125,
+        "blinkAmount": 0,
+        "frame": 28,
+        "sourceA": 28,
+        "sourceB": 27,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.085
+      },
+      {
+        "blend": 0.5,
+        "blinkAmount": 0,
+        "frame": 29,
+        "sourceA": 28,
+        "sourceB": 27,
+        "visibleMargin": 96,
+        "visualStepToNext": 15.024
+      },
+      {
+        "blend": 0.875,
+        "blinkAmount": 0,
+        "frame": 30,
+        "sourceA": 28,
+        "sourceB": 27,
+        "visibleMargin": 96,
+        "visualStepToNext": 9.163
+      },
+      {
+        "blend": 0.25,
+        "blinkAmount": 0,
+        "frame": 31,
+        "sourceA": 27,
+        "sourceB": 26,
+        "visibleMargin": 96,
+        "visualStepToNext": 14.601
+      },
+      {
+        "blend": 0.625,
+        "blinkAmount": 0,
+        "frame": 32,
+        "sourceA": 27,
+        "sourceB": 26,
+        "visibleMargin": 96,
+        "visualStepToNext": 14.285
+      }
+    ],
+    "maxVisualStep": 26.236559536622345,
+    "meanVisualStep": 13.691185209408504,
+    "strategy": "continuous-segment-crossfade-local-blink-v2"
+  },
+  "stabilizedFrames": [
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-01.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-02.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-03.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-04.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-05.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-06.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-07.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-08.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-09.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-10.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-11.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-12.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-13.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-14.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-15.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-16.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-17.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-18.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-19.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-20.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-21.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-22.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-23.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-24.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-25.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-26.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-27.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-28.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-29.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-30.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-31.png",
+    "assets-src/pets/v13/stabilized/goldie-idle/goldie-idle-source-32.png"
+  ],
+  "v12SourceStrategy": "body-anchor-stabilized-v1"
+}

@@ -1,0 +1,1 @@
+Use the layout guide as layout-only reference and the Goldie image as identity/style reference. Create a clean HD hand-painted 8x4, 32-frame Goldie idle swim loop on solid #FF00FF magenta, with stable scale, centered character, generous safe margin, no grid lines, no labels, no props, and no background texture.

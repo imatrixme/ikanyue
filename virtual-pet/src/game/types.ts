@@ -1,4 +1,4 @@
-export type SpeciesId = 'sprout' | 'mochi' | 'pebble'
+export type SpeciesId = 'sprout' | 'mochi' | 'pebble' | 'goldie'
 export type StageId = 'baby' | 'teen' | 'adult'
 export type AnimationAction =
   | 'idle'
@@ -23,6 +23,7 @@ export interface PetAnimationClip {
   fps: number
   frames: string[]
   loop: boolean
+  renderStyle?: 'pixel-3d' | 'sheet-hd'
 }
 
 export interface PetAnimationSet {

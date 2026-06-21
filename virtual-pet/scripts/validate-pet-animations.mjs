@@ -139,12 +139,18 @@ async function validateManifest() {
 
   for (const speciesId of speciesIds) {
     for (const actionId of actionIds) {
-      const frameRefs = contents.match(
-        new RegExp(`${speciesId}-${actionId}-[0-9]{2}\\.webp`, 'g'),
-      ) ?? []
-      if (frameRefs.length !== animationPipeline.runtimeFramesPerAction) {
+      const frameRefs = contents
+        .split('\n')
+        .filter(
+          (line) =>
+            line.startsWith('import ') &&
+            line.includes(`${speciesId}`) &&
+            line.includes(`${actionId}`) &&
+            line.includes('.webp'),
+        )
+      if (frameRefs.length < animationPipeline.runtimeFramesPerAction) {
         errors.push(
-          `Manifest has ${frameRefs.length} frames for ${speciesId}/${actionId}; expected ${animationPipeline.runtimeFramesPerAction}`,
+          `Manifest has ${frameRefs.length} frames for ${speciesId}/${actionId}; expected at least ${animationPipeline.runtimeFramesPerAction}`,
         )
       }
 

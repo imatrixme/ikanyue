@@ -1,0 +1,332 @@
+{
+  "anchor": {
+    "x": 320,
+    "y": 585
+  },
+  "canvas": {
+    "width": 640,
+    "height": 640
+  },
+  "schemaVersion": 1,
+  "source": "assets-src/pets/v8/source/goldie-sheet.png",
+  "extracted": {
+    "topFront": {
+      "bounds": {
+        "left": 28,
+        "top": 62,
+        "width": 145,
+        "height": 214
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-topFront.png"
+    },
+    "topBackSide": {
+      "bounds": {
+        "left": 410,
+        "top": 70,
+        "width": 156,
+        "height": 205
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-topBackSide.png"
+    },
+    "topBack": {
+      "bounds": {
+        "left": 588,
+        "top": 70,
+        "width": 115,
+        "height": 210
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-topBack.png"
+    },
+    "swimLeft": {
+      "bounds": {
+        "left": 16,
+        "top": 690,
+        "width": 208,
+        "height": 188
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-swimLeft.png"
+    },
+    "dance": {
+      "bounds": {
+        "left": 238,
+        "top": 690,
+        "width": 198,
+        "height": 188
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-dance.png"
+    },
+    "uprightOpen": {
+      "bounds": {
+        "left": 450,
+        "top": 690,
+        "width": 198,
+        "height": 190
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-uprightOpen.png"
+    },
+    "uprightLook": {
+      "bounds": {
+        "left": 685,
+        "top": 690,
+        "width": 178,
+        "height": 198
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-uprightLook.png"
+    },
+    "sideRight": {
+      "bounds": {
+        "left": 865,
+        "top": 692,
+        "width": 230,
+        "height": 178
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-sideRight.png"
+    },
+    "backTail": {
+      "bounds": {
+        "left": 1105,
+        "top": 690,
+        "width": 180,
+        "height": 190
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-backTail.png"
+    },
+    "bottomOpen": {
+      "bounds": {
+        "left": 22,
+        "top": 925,
+        "width": 174,
+        "height": 250
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-bottomOpen.png"
+    },
+    "bottomSideLook": {
+      "bounds": {
+        "left": 220,
+        "top": 935,
+        "width": 202,
+        "height": 245
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-bottomSideLook.png"
+    },
+    "bottomSideFront": {
+      "bounds": {
+        "left": 430,
+        "top": 935,
+        "width": 202,
+        "height": 245
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-bottomSideFront.png"
+    },
+    "bottomFront": {
+      "bounds": {
+        "left": 680,
+        "top": 925,
+        "width": 180,
+        "height": 250
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-bottomFront.png"
+    },
+    "bottomLaugh": {
+      "bounds": {
+        "left": 1088,
+        "top": 925,
+        "width": 182,
+        "height": 250
+      },
+      "path": "assets-src/pets/v8/extracted/goldie-bottomLaugh.png"
+    }
+  },
+  "actions": {
+    "idle": {
+      "durationMs": 0,
+      "fps": 12,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-idle-01.webp",
+        "src/assets/pets/frames-v8/goldie-idle-02.webp",
+        "src/assets/pets/frames-v8/goldie-idle-03.webp",
+        "src/assets/pets/frames-v8/goldie-idle-04.webp",
+        "src/assets/pets/frames-v8/goldie-idle-05.webp",
+        "src/assets/pets/frames-v8/goldie-idle-06.webp",
+        "src/assets/pets/frames-v8/goldie-idle-07.webp",
+        "src/assets/pets/frames-v8/goldie-idle-08.webp",
+        "src/assets/pets/frames-v8/goldie-idle-09.webp",
+        "src/assets/pets/frames-v8/goldie-idle-10.webp",
+        "src/assets/pets/frames-v8/goldie-idle-11.webp",
+        "src/assets/pets/frames-v8/goldie-idle-12.webp",
+        "src/assets/pets/frames-v8/goldie-idle-13.webp",
+        "src/assets/pets/frames-v8/goldie-idle-14.webp",
+        "src/assets/pets/frames-v8/goldie-idle-15.webp",
+        "src/assets/pets/frames-v8/goldie-idle-16.webp",
+        "src/assets/pets/frames-v8/goldie-idle-17.webp",
+        "src/assets/pets/frames-v8/goldie-idle-18.webp"
+      ],
+      "loop": true,
+      "poses": [
+        "bottomFront",
+        "bottomSideFront",
+        "bottomSideLook",
+        "bottomSideFront",
+        "bottomFront"
+      ]
+    },
+    "eating": {
+      "durationMs": 1500,
+      "fps": 14,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-eating-01.webp",
+        "src/assets/pets/frames-v8/goldie-eating-02.webp",
+        "src/assets/pets/frames-v8/goldie-eating-03.webp",
+        "src/assets/pets/frames-v8/goldie-eating-04.webp",
+        "src/assets/pets/frames-v8/goldie-eating-05.webp",
+        "src/assets/pets/frames-v8/goldie-eating-06.webp",
+        "src/assets/pets/frames-v8/goldie-eating-07.webp",
+        "src/assets/pets/frames-v8/goldie-eating-08.webp",
+        "src/assets/pets/frames-v8/goldie-eating-09.webp",
+        "src/assets/pets/frames-v8/goldie-eating-10.webp",
+        "src/assets/pets/frames-v8/goldie-eating-11.webp",
+        "src/assets/pets/frames-v8/goldie-eating-12.webp",
+        "src/assets/pets/frames-v8/goldie-eating-13.webp",
+        "src/assets/pets/frames-v8/goldie-eating-14.webp",
+        "src/assets/pets/frames-v8/goldie-eating-15.webp",
+        "src/assets/pets/frames-v8/goldie-eating-16.webp",
+        "src/assets/pets/frames-v8/goldie-eating-17.webp",
+        "src/assets/pets/frames-v8/goldie-eating-18.webp"
+      ],
+      "loop": false,
+      "poses": [
+        "bottomFront",
+        "bottomOpen",
+        "bottomLaugh",
+        "bottomOpen",
+        "bottomFront"
+      ]
+    },
+    "play": {
+      "durationMs": 1800,
+      "fps": 14,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-play-01.webp",
+        "src/assets/pets/frames-v8/goldie-play-02.webp",
+        "src/assets/pets/frames-v8/goldie-play-03.webp",
+        "src/assets/pets/frames-v8/goldie-play-04.webp",
+        "src/assets/pets/frames-v8/goldie-play-05.webp",
+        "src/assets/pets/frames-v8/goldie-play-06.webp",
+        "src/assets/pets/frames-v8/goldie-play-07.webp",
+        "src/assets/pets/frames-v8/goldie-play-08.webp",
+        "src/assets/pets/frames-v8/goldie-play-09.webp",
+        "src/assets/pets/frames-v8/goldie-play-10.webp",
+        "src/assets/pets/frames-v8/goldie-play-11.webp",
+        "src/assets/pets/frames-v8/goldie-play-12.webp",
+        "src/assets/pets/frames-v8/goldie-play-13.webp",
+        "src/assets/pets/frames-v8/goldie-play-14.webp",
+        "src/assets/pets/frames-v8/goldie-play-15.webp",
+        "src/assets/pets/frames-v8/goldie-play-16.webp",
+        "src/assets/pets/frames-v8/goldie-play-17.webp",
+        "src/assets/pets/frames-v8/goldie-play-18.webp",
+        "src/assets/pets/frames-v8/goldie-play-19.webp",
+        "src/assets/pets/frames-v8/goldie-play-20.webp"
+      ],
+      "loop": false,
+      "poses": [
+        "swimLeft",
+        "dance",
+        "uprightOpen",
+        "uprightLook",
+        "bottomLaugh"
+      ]
+    },
+    "clean": {
+      "durationMs": 1800,
+      "fps": 14,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-clean-01.webp",
+        "src/assets/pets/frames-v8/goldie-clean-02.webp",
+        "src/assets/pets/frames-v8/goldie-clean-03.webp",
+        "src/assets/pets/frames-v8/goldie-clean-04.webp",
+        "src/assets/pets/frames-v8/goldie-clean-05.webp",
+        "src/assets/pets/frames-v8/goldie-clean-06.webp",
+        "src/assets/pets/frames-v8/goldie-clean-07.webp",
+        "src/assets/pets/frames-v8/goldie-clean-08.webp",
+        "src/assets/pets/frames-v8/goldie-clean-09.webp",
+        "src/assets/pets/frames-v8/goldie-clean-10.webp",
+        "src/assets/pets/frames-v8/goldie-clean-11.webp",
+        "src/assets/pets/frames-v8/goldie-clean-12.webp",
+        "src/assets/pets/frames-v8/goldie-clean-13.webp",
+        "src/assets/pets/frames-v8/goldie-clean-14.webp",
+        "src/assets/pets/frames-v8/goldie-clean-15.webp",
+        "src/assets/pets/frames-v8/goldie-clean-16.webp",
+        "src/assets/pets/frames-v8/goldie-clean-17.webp",
+        "src/assets/pets/frames-v8/goldie-clean-18.webp"
+      ],
+      "loop": false,
+      "poses": [
+        "sideRight",
+        "topBackSide",
+        "backTail",
+        "topBack",
+        "topFront"
+      ]
+    },
+    "sleep": {
+      "durationMs": 2300,
+      "fps": 8,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-sleep-01.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-02.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-03.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-04.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-05.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-06.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-07.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-08.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-09.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-10.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-11.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-12.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-13.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-14.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-15.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-16.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-17.webp",
+        "src/assets/pets/frames-v8/goldie-sleep-18.webp"
+      ],
+      "loop": false,
+      "poses": [
+        "backTail",
+        "backTail",
+        "bottomSideLook"
+      ]
+    },
+    "weak": {
+      "durationMs": 0,
+      "fps": 8,
+      "frames": [
+        "src/assets/pets/frames-v8/goldie-weak-01.webp",
+        "src/assets/pets/frames-v8/goldie-weak-02.webp",
+        "src/assets/pets/frames-v8/goldie-weak-03.webp",
+        "src/assets/pets/frames-v8/goldie-weak-04.webp",
+        "src/assets/pets/frames-v8/goldie-weak-05.webp",
+        "src/assets/pets/frames-v8/goldie-weak-06.webp",
+        "src/assets/pets/frames-v8/goldie-weak-07.webp",
+        "src/assets/pets/frames-v8/goldie-weak-08.webp",
+        "src/assets/pets/frames-v8/goldie-weak-09.webp",
+        "src/assets/pets/frames-v8/goldie-weak-10.webp",
+        "src/assets/pets/frames-v8/goldie-weak-11.webp",
+        "src/assets/pets/frames-v8/goldie-weak-12.webp",
+        "src/assets/pets/frames-v8/goldie-weak-13.webp",
+        "src/assets/pets/frames-v8/goldie-weak-14.webp",
+        "src/assets/pets/frames-v8/goldie-weak-15.webp",
+        "src/assets/pets/frames-v8/goldie-weak-16.webp",
+        "src/assets/pets/frames-v8/goldie-weak-17.webp",
+        "src/assets/pets/frames-v8/goldie-weak-18.webp"
+      ],
+      "loop": true,
+      "poses": [
+        "bottomFront",
+        "bottomSideLook",
+        "bottomFront"
+      ]
+    }
+  }
+}
