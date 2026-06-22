@@ -147,19 +147,6 @@ async function validateAssetManifest() {
   await fs.access(resolveProjectPath(v13Paths.sourceManifestPath))
 }
 
-async function validateRuntimeManifest() {
-  const runtimeManifest = await fs.readFile(
-    resolveProjectPath('src/data/generated/goldieAnimationManifest.ts'),
-    'utf8',
-  )
-  if (!runtimeManifest.includes('GoldieV13Idle1Frame') || !runtimeManifest.includes('/frames-v13/')) {
-    errors.push('Goldie runtime manifest is missing V13 idle frames')
-  }
-  if (!runtimeManifest.includes(`fps: ${v13IdleAction.fps}`)) {
-    errors.push('Goldie runtime manifest is missing V13 idle fps')
-  }
-}
-
 async function validateReview() {
   for (const relativePath of [
     path.join(v13Paths.reviewDir, 'goldie-idle-v13-strip.webp'),
@@ -177,7 +164,6 @@ async function validateReview() {
 async function main() {
   await validateFrames()
   await validateAssetManifest()
-  await validateRuntimeManifest()
   await validateReview()
 
   if (errors.length > 0) {

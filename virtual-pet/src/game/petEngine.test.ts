@@ -45,18 +45,9 @@ describe('pet engine', () => {
   })
 
   it('uses sheet-rendered runtime frames for the goldie action set', () => {
-    const { idle, ...v8Clips } = petAnimationManifest.goldie
-
-    expect(idle.frames.length).toBe(32)
-    expect(idle.fps).toBe(18)
-    expect(idle.frames.every((frame) => frame.includes('/frames-v13/'))).toBe(true)
-    expect(idle.canvas).toEqual({ width: 640, height: 640 })
-    expect(idle.anchor).toEqual({ x: 320, y: 585 })
-    expect(idle.renderStyle).toBe('sheet-hd')
-
-    for (const clip of Object.values(v8Clips)) {
-      expect(clip.frames.length).toBeGreaterThanOrEqual(18)
-      expect(clip.frames.every((frame) => frame.includes('/frames-v8/'))).toBe(true)
+    for (const clip of Object.values(petAnimationManifest.goldie)) {
+      expect(clip.frames.length).toBe(64)
+      expect(clip.frames.every((frame) => frame.includes('/frames-v14/'))).toBe(true)
       expect(clip.canvas).toEqual({ width: 640, height: 640 })
       expect(clip.anchor).toEqual({ x: 320, y: 585 })
       expect(clip.renderStyle).toBe('sheet-hd')

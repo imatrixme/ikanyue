@@ -62,11 +62,16 @@ function PetSpritePlayer({ ariaLabel, clip }: PetSpritePlayerProps) {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setFrameIndex((current) => (current + 1) % clip.frames.length)
+      setFrameIndex((current) => {
+        if (clip.loop) {
+          return (current + 1) % clip.frames.length
+        }
+        return Math.min(current + 1, clip.frames.length - 1)
+      })
     }, frameDuration(clip.fps))
 
     return () => window.clearInterval(timer)
-  }, [clip.fps, clip.frames.length])
+  }, [clip.fps, clip.frames.length, clip.loop])
 
   return (
     <span aria-label={ariaLabel} className="sprite-frame" role="img">
