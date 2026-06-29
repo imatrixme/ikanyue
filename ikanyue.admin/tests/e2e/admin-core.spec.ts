@@ -1,176 +1,73 @@
 import { expect, test } from '@playwright/test'
 
-async function submitLogin(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: '登录', exact: true }).click()
-}
-
 async function loginAsAdmin(page: import('@playwright/test').Page) {
   await page.goto('/')
-  await fillCredentials(page, 'admin', 'secret')
-  await submitLogin(page)
-  await expect(page.getByRole('heading', { name: '运营总览' })).toBeVisible()
+  await page.getByLabel('账号或手机号').fill('admin')
+  await page.getByLabel('密码').fill('secret')
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '学员积分' })).toBeVisible()
 }
 
-async function fillCredentials(page: import('@playwright/test').Page, account: string, password: string) {
-  await page.getByLabel('账号或手机号').fill(account)
-  await page.getByLabel('密码').fill(password)
+async function openRewards(page: import('@playwright/test').Page) {
+  const mobileMenu = page.getByRole('button', { name: '打开导航' })
+  if (await mobileMenu.isVisible()) {
+    await mobileMenu.click()
+    await page.getByRole('button', { name: '实物列表' }).last().click()
+    return
+  }
+  await page.getByRole('button', { name: '实物列表' }).click()
 }
 
-test('admin can complete the first-phase operations path', async ({ page }) => {
-  await page.goto('/')
-
-  await expect(page.getByRole('heading', { name: '看乐声乐运营后台' })).toBeVisible()
-  await fillCredentials(page, 'admin', 'secret')
-  await submitLogin(page)
-
-  await expect(page.getByRole('heading', { name: '运营总览' })).toBeVisible()
-  await expect(page.getByText('评估报告')).toBeVisible()
-
-  await page.getByRole('button', { name: '学员', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '学员管理' })).toBeVisible()
-  await expect(page.getByText('小张')).toBeVisible()
-
-  await page.getByRole('button', { name: '审计日志' }).click()
-  await expect(page.getByRole('heading', { name: '审计日志' })).toBeVisible()
-  await expect(page.getByText('提交评估')).toBeVisible()
-
-  await page.getByRole('button', { name: '评估表模板' }).click()
-  await expect(page.getByRole('heading', { name: '评估表模板' })).toBeVisible()
-  await expect(page.getByText('声乐阶段测评')).toBeVisible()
-
-  await page.getByRole('button', { name: '评估工作台' }).click()
-  await expect(page.getByRole('heading', { name: '评估工作台' })).toBeVisible()
-  await page.getByLabel('气息支撑').fill('92')
-  await expect(page.getByText('实时评分')).toBeVisible()
-
-  await page.getByRole('button', { name: '提交并生成报告' }).click()
-  await expect(page.getByRole('heading', { name: '评估报告' })).toBeVisible()
-  await page.getByRole('main').getByRole('button', { name: '预览' }).first().click()
-  await expect(page.getByRole('heading', { name: '分享报告预览' })).toBeVisible()
-  await expect(page.getByText('声乐阶段评估报告')).toBeVisible()
-})
-
-test('teacher login hides admin-only management', async ({ page }) => {
-  await page.goto('/')
-  await fillCredentials(page, '13800138001', 'secret')
-  await submitLogin(page)
-
-  await expect(page.getByRole('heading', { name: '运营总览' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '教师', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '评估表模板' })).toHaveCount(0)
-  await page.getByRole('button', { name: '学员', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '学员管理' })).toBeVisible()
-})
-
-test('login validation blocks empty credentials and then recovers', async ({ page }) => {
-  await page.goto('/')
-
-  await page.getByLabel('账号或手机号').fill('')
-  await page.getByLabel('密码').fill('')
-  await submitLogin(page)
-
-  await expect(page.getByText('账号和密码不能为空')).toBeVisible()
-
-  await fillCredentials(page, '13800138002', 'secret')
-  await submitLogin(page)
-
-  await expect(page.getByRole('heading', { name: '运营总览' })).toBeVisible()
-})
-
-test('admin can filter and create operation slots', async ({ page }) => {
+test('admin can grant points and complete an offline reward redemption', async ({ page }) => {
   await loginAsAdmin(page)
 
-  await page.getByRole('button', { name: '运营位' }).click()
-  await expect(page.getByRole('heading', { name: '运营位' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /张同学 120 分/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '张同学' })).toBeVisible()
+  await expect(page.getByText('120', { exact: true }).first()).toBeVisible()
 
-  await page.getByLabel('运营位搜索').fill('春季')
-  await page.getByRole('button', { name: '刷新' }).click()
-  await expect(page.getByText('春季测评入口')).toBeVisible()
-  await expect(page.getByText('一对一体验课')).toHaveCount(0)
-  await expect(page.getByText('共 1 条记录')).toBeVisible()
+  await page.getByLabel('积分数量').fill('30')
+  await page.getByRole('button', { name: '确认加分' }).click()
+  await expect(page.getByText('积分已增加')).toBeVisible()
+  await expect(page.getByText('150', { exact: true }).first()).toBeVisible()
 
-  await page.getByLabel('运营位搜索').fill('')
-  await page.getByRole('button', { name: '刷新' }).click()
-  await page.getByRole('button', { name: '新建运营位' }).click()
-  await page.getByLabel('标题').fill('端到端运营位')
-  await page.getByRole('button', { name: '保存' }).click()
-
-  await expect(page.getByText('已创建记录')).toBeVisible()
-  await expect(page.getByText('端到端运营位')).toBeVisible()
-  await expect(page.getByText('共 3 条记录')).toBeVisible()
+  await page.getByRole('button', { name: '扣除积分并确认领取' }).click()
+  await expect(page.getByText('已扣除积分，确认线下领取')).toBeVisible()
+  await expect(page.getByText('100', { exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('cell', { name: '线下兑换' }).first()).toBeVisible()
 })
 
-test('admin can edit publishable content, review signups, and inspect report details', async ({ page }) => {
+test('admin can search students and manage reward items', async ({ page }) => {
   await loginAsAdmin(page)
 
-  await page.getByRole('button', { name: '活动内容' }).click()
-  await page.getByRole('button', { name: '新建活动' }).click()
-  await page.getByLabel('标题').fill('闭环公开课')
-  await page.getByLabel('状态').selectOption('active')
-  await page.getByLabel('地点').fill('上海静安')
-  await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.getByText('已创建记录')).toBeVisible()
-  await expect(page.getByText('闭环公开课')).toBeVisible()
-  await page.getByRole('button', { name: '转草稿' }).first().click()
-  await expect(page.getByText('已转为草稿')).toBeVisible()
+  await page.getByLabel('搜索学员').fill('李')
+  await page.getByRole('button', { name: '搜索' }).click()
+  await expect(page.getByRole('button', { name: /李同学 40 分/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '李同学' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /张同学/ })).toHaveCount(0)
 
-  await page.getByRole('button', { name: '活动报名' }).click()
-  await expect(page.getByRole('heading', { name: '报名审核' })).toBeVisible()
-  await expect(page.getByRole('cell', { name: '张同学', exact: true })).toBeVisible()
+  await openRewards(page)
+  await expect(page.getByRole('heading', { name: '实物列表' })).toBeVisible()
   await page.getByRole('button', { name: '编辑' }).first().click()
-  await page.getByLabel('状态').selectOption('attended')
-  await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.getByText('已保存记录')).toBeVisible()
-  await expect(page.getByText('已到场').first()).toBeVisible()
+  await page.getByLabel('积分价格').fill('60')
+  await page.getByRole('button', { name: '保存实物' }).click()
+  await expect(page.getByText('实物已更新')).toBeVisible()
+  await expect(page.getByRole('cell', { name: '60' })).toBeVisible()
 
-  await page.getByRole('button', { name: '报告历史' }).click()
-  await page.getByRole('main').getByRole('button', { name: '查看' }).first().click()
-  await expect(page.getByRole('heading', { name: '报告详情' })).toBeVisible()
-  await expect(page.getByText('阶段表现稳定')).toBeVisible()
-  await page.getByRole('main').getByRole('button', { name: '创建分享' }).first().click()
-  await expect(page.getByText('分享链接已创建')).toBeVisible()
-  await expect(page.getByText(/Token:/)).toBeVisible()
-  await page.getByRole('button', { name: '撤销分享' }).click()
-  await expect(page.getByText('分享链接已撤销')).toBeVisible()
+  await page.getByLabel('实物名称').fill('帆布袋')
+  await page.getByLabel('积分价格').fill('90')
+  await page.getByRole('button', { name: '创建实物' }).click()
+  await expect(page.getByText('实物已创建')).toBeVisible()
+  await expect(page.getByText('帆布袋')).toBeVisible()
 })
 
-test('admin can create and publish an assessment template draft', async ({ page }) => {
-  await loginAsAdmin(page)
-
-  await page.getByRole('button', { name: '评估表模板' }).click()
-  await expect(page.getByRole('heading', { name: '评估表模板' })).toBeVisible()
-
-  await page.getByRole('button', { name: '新建模板' }).click()
-  await expect(page.getByText('已创建模板草稿')).toBeVisible()
-
-  const draft = page.locator('article').filter({ hasText: '声乐阶段测评 副本' })
-  await expect(draft).toBeVisible()
-  await expect(draft.getByText('草稿')).toBeVisible()
-
-  await draft.getByRole('button', { name: '发布' }).click()
-  await expect(page.getByText('模板已发布')).toBeVisible()
-  await expect(draft.getByText('已发布')).toBeVisible()
-})
-
-test('teacher can submit an assessment and share the generated report', async ({ page }) => {
+test('non-admin login is blocked from the points console', async ({ page }) => {
   await page.goto('/')
-  await fillCredentials(page, '13800138001', 'secret')
-  await submitLogin(page)
+  await page.getByLabel('账号或手机号').fill('13800138001')
+  await page.getByLabel('密码').fill('secret')
+  await page.getByRole('button', { name: '登录', exact: true }).click()
 
-  await page.getByRole('button', { name: '评估工作台' }).click()
-  await expect(page.getByRole('heading', { name: '评估工作台' })).toBeVisible()
-
-  await page.getByLabel('气息支撑').fill('95')
-  await page.getByLabel('舞台表现').fill('91')
-  await expect(page.getByText('实时评分')).toBeVisible()
-
-  await page.getByRole('button', { name: '提交并生成报告' }).click()
-  await expect(page.getByText('评估报告已生成')).toBeVisible()
-  await expect(page.getByRole('heading', { name: '评估报告' })).toBeVisible()
-
-  await page.getByRole('main').getByRole('button', { name: '预览' }).first().click()
-  await expect(page.getByRole('heading', { name: '分享报告预览' })).toBeVisible()
-  await expect(page.getByText('已脱敏')).toBeVisible()
+  await expect(page.getByText('积分兑换后台仅允许管理员访问')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '学员积分' })).toHaveCount(0)
 })
 
 test('admin logout returns to the login screen', async ({ page }) => {
@@ -178,6 +75,6 @@ test('admin logout returns to the login screen', async ({ page }) => {
 
   await page.getByRole('button', { name: '退出' }).click()
 
-  await expect(page.getByRole('heading', { name: '看乐声乐运营后台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '看乐积分兑换后台' })).toBeVisible()
   await expect(page.getByRole('button', { name: '登录', exact: true })).toBeVisible()
 })

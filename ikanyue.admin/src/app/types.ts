@@ -1,38 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
-import type { AssessmentAnswers } from './assessment'
-
 export type Role = 'teacher' | 'admin'
 
-export type OpsResource =
-  | 'students'
-  | 'teachers'
-  | 'activities'
-  | 'audioMaterials'
-  | 'videoMaterials'
-  | 'operationSlots'
-  | 'activitySignups'
-  | 'learningPrograms'
-  | 'learningSessions'
-  | 'programStudents'
-  | 'programTeachers'
-  | 'sessionStudents'
-  | 'sessionTeachers'
-  | 'reportTemplates'
-  | 'reportEvents'
-  | 'reportInstances'
-  | 'auditLogs'
-
-export type AppView =
-  | 'dashboard'
-  | 'guidedOps'
-  | 'projectScenes'
-  | 'lessonScenes'
-  | OpsResource
-  | 'assessmentTemplates'
-  | 'assessmentWorkspace'
-  | 'reports'
-  | 'sharePreview'
-  | 'systemSettings'
+export type AppView = 'points' | 'rewards'
 
 export interface OpsProfile {
   id: string
@@ -57,17 +25,6 @@ export interface RegisterResult {
   profile: OpsProfile
 }
 
-export interface DashboardCard {
-  key: string
-  label: string
-  value: number
-}
-
-export interface DashboardData {
-  cards: DashboardCard[]
-  pending: DashboardCard[]
-}
-
 export interface Pagination {
   page: number
   perPage: number
@@ -80,135 +37,72 @@ export interface ListResult<T> {
   pagination: Pagination
 }
 
-export interface ResourceRecord {
+export interface StudentPointsRow {
   id: string
-  [key: string]: unknown
+  realName: string
+  nickName: string
+  cellphone: string
+  avatar?: string
+  balance: number
 }
 
-export type ResourceLookup = Partial<Record<OpsResource, ListResult<ResourceRecord>>>
+export type PointEventType = 'earn' | 'offline_redeem'
 
-export interface AssessmentOption {
-  value: string
-  label: string
-  score: number
+export interface PointEvent {
+  id: string
+  studentId: string
+  type: PointEventType
+  delta: number
+  balanceAfter: number
+  reason: string
+  remark?: string
+  rewardItemId?: string
+  rewardSnapshot?: {
+    id: string
+    name: string
+    pointsPrice: number
+  } | null
+  created?: string
 }
 
-export interface AssessmentItem {
-  key: string
-  label: string
-  type: 'single_choice' | 'multi_choice' | 'score_slider' | 'number_score' | 'textarea' | 'rich_comment'
-  required?: boolean
-  options?: AssessmentOption[]
+export interface StudentPointSummary {
+  studentId: string
+  balance: number
+  events: PointEvent[]
+  pagination: Pagination
+  reward?: RewardItem
 }
 
-export interface AssessmentSection {
-  key: string
-  title: string
-  weight: number
-  items: AssessmentItem[]
-}
-
-export interface AssessmentSchema {
-  sections: AssessmentSection[]
-  scoring: {
-    type: 'weighted_sum' | 'rubric_sum'
-    maxScore: number
-    gradeBands: Array<{ min: number; label: string }>
-  }
-}
-
-export interface AssessmentTemplate {
+export interface RewardItem {
   id: string
   name: string
-  version: number
-  status: 'draft' | 'published'
-  schemaJson: AssessmentSchema
-  scoringJson: AssessmentSchema['scoring']
-  reportJson: { title?: string }
-  updated?: string
+  description: string
+  image: string
+  pointsPrice: number
+  sortOrder?: number
+  status: 'active' | 'inactive'
 }
 
-export interface AssessmentReport {
-  id: string
+export interface RewardItemInput {
+  name: string
+  description?: string
+  image?: string
+  pointsPrice: number
+  sortOrder?: number
+  status?: 'active' | 'inactive'
+}
+
+export interface AddPointsInput {
   studentId: string
-  teacherId: string
-  templateId: string
-  reportType?: string
-  status?: string
-  recipientType?: string
-  recipientId?: string
-  totalScore: number
-  grade: string
-  created?: string
-  publishedAt?: string
-  reportJson?: unknown
+  amount: number
+  reason?: string
+  remark?: string
 }
 
-export interface AssessmentReportSection {
-  key: string
-  title: string
-  score?: number | string
-  maxScore?: number | string
-  comment?: string
-  recommendations?: string[]
-}
-
-export interface AssessmentReportDetail {
-  id: string
-  title: string
-  reportType?: string
-  scope?: { type?: string; id?: string; title?: string }
-  subject?: { type?: string; id?: string; name?: string }
-  recipient?: { type?: string; id?: string; name?: string }
-  student: { name?: string; realName?: string; nickName?: string }
-  teacher: { name?: string; realName?: string; nickName?: string }
-  score: { totalScore: number; grade: string; sections?: AssessmentReportSection[] }
-  summary?: string
-  recommendations?: string[]
-  sections?: AssessmentReportSection[]
-  generatedAt: string
-}
-
-export interface AssessmentRecord {
-  id: string
+export interface OfflineRedeemInput {
   studentId: string
-  teacherId?: string
-  templateId: string
-  status: 'draft' | 'submitted'
-  answersJson?: AssessmentAnswers
-  scoreJson?: unknown
-}
-
-export interface ShareLink {
-  id: string
-  reportId: string
-  token: string
-  expiresAt?: string
-  revokedAt?: string
-}
-
-export interface SharePreview {
-  id: string
-  title: string
-  student: { name: string; nickName?: string }
-  teacher: { name: string; nickName?: string }
-  score: { totalScore: number; grade: string }
-  generatedAt: string
-}
-
-export interface NavItem {
-  view: AppView
-  label: string
-  icon: LucideIcon
-  adminOnly?: boolean
-  section?: string
-}
-
-export interface NavGroup {
-  key: string
-  label: string
-  icon?: LucideIcon
-  items: NavItem[]
+  itemId: string
+  remark?: string
 }
 
 export interface ToastState {
@@ -222,13 +116,10 @@ export interface AppState {
   activeView: AppView
   loading: boolean
   toast: ToastState | null
-  dashboard: DashboardData | null
-  resources: Partial<Record<OpsResource, ListResult<ResourceRecord>>>
-  templates: ListResult<AssessmentTemplate> | null
-  reports: ListResult<AssessmentReport> | null
-  reportDetail: AssessmentReportDetail | null
-  activeShareLink: ShareLink | null
-  sharePreview: SharePreview | null
+  students: ListResult<StudentPointsRow> | null
+  rewards: ListResult<RewardItem> | null
+  selectedStudentId: string
+  selectedStudentSummary: StudentPointSummary | null
 }
 
 export type AppAction =
@@ -238,10 +129,7 @@ export type AppAction =
   | { type: 'view:set'; payload: AppView }
   | { type: 'loading:set'; payload: boolean }
   | { type: 'toast:set'; payload: ToastState | null }
-  | { type: 'dashboard:set'; payload: DashboardData }
-  | { type: 'resource:set'; resource: OpsResource; payload: ListResult<ResourceRecord> }
-  | { type: 'templates:set'; payload: ListResult<AssessmentTemplate> }
-  | { type: 'reports:set'; payload: ListResult<AssessmentReport> }
-  | { type: 'reportDetail:set'; payload: AssessmentReportDetail | null }
-  | { type: 'shareLink:set'; payload: ShareLink | null }
-  | { type: 'share:set'; payload: SharePreview }
+  | { type: 'students:set'; payload: ListResult<StudentPointsRow> }
+  | { type: 'rewards:set'; payload: ListResult<RewardItem> }
+  | { type: 'student:select'; payload: string }
+  | { type: 'studentSummary:set'; payload: StudentPointSummary | null }

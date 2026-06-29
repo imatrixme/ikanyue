@@ -1,10 +1,22 @@
 # ikanyue.admin
 
-React + TypeScript + Vite operations admin for the kanyue lightweight education loop.
+React + TypeScript + Vite admin for the WeChat points-lite hard fork.
+
+This branch intentionally keeps only:
+
+- ops login / registration / forced password change
+- admin student point balance lookup
+- admin point grants
+- admin offline reward redemption
+- reward item catalog management
+
+It does not ship the older teaching operations, assessment, report, resource, shipping, or refund workflows.
 
 ## Docker
 
 The production image serves the built admin app with Nginx. `/ops/*` is proxied to the Hono service name used by the parent Compose stack.
+
+Do not use Docker as the normal development verification loop for this fork. Run Docker only for final release verification.
 
 ```bash
 docker build \

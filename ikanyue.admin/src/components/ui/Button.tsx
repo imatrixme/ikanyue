@@ -7,7 +7,6 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   icon?: ReactNode
-  asSpan?: boolean
 }
 
 const variantClass: Record<ButtonVariant, string> = {
@@ -17,7 +16,7 @@ const variantClass: Record<ButtonVariant, string> = {
   danger: 'border-[var(--destructive)] bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:bg-[var(--destructive-hover)]',
 }
 
-export function Button({ variant = 'primary', icon, className, children, asSpan = false, ...props }: ButtonProps) {
+export function Button({ variant = 'primary', icon, className, children, ...props }: ButtonProps) {
   const classes = cn(
     'inline-flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:pointer-events-none disabled:opacity-50',
     variantClass[variant],
@@ -29,10 +28,6 @@ export function Button({ variant = 'primary', icon, className, children, asSpan 
       {children}
     </>
   )
-
-  if (asSpan) {
-    return <span className={classes}>{content}</span>
-  }
 
   return (
     <button className={classes} {...props}>

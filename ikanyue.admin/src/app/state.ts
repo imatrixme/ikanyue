@@ -3,16 +3,13 @@ import type { AppAction, AppState, AppView, OpsProfile } from './types'
 export const initialState: AppState = {
   profile: null,
   token: '',
-  activeView: 'dashboard',
+  activeView: 'points',
   loading: false,
   toast: null,
-  dashboard: null,
-  resources: {},
-  templates: null,
-  reports: null,
-  reportDetail: null,
-  activeShareLink: null,
-  sharePreview: null,
+  students: null,
+  rewards: null,
+  selectedStudentId: '',
+  selectedStudentSummary: null,
 }
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -22,10 +19,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'login:success':
       return {
         ...state,
+        activeView: 'points',
         loading: false,
         profile: action.payload.profile,
         token: action.payload.token,
-        activeView: 'dashboard',
       }
     case 'logout':
       return initialState
@@ -35,39 +32,22 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, loading: action.payload }
     case 'toast:set':
       return { ...state, loading: false, toast: action.payload }
-    case 'dashboard:set':
-      return { ...state, dashboard: action.payload, loading: false }
-    case 'resource:set':
-      return { ...state, resources: { ...state.resources, [action.resource]: action.payload }, loading: false }
-    case 'templates:set':
-      return { ...state, templates: action.payload, loading: false }
-    case 'reports:set':
-      return { ...state, reports: action.payload, loading: false }
-    case 'reportDetail:set':
-      return { ...state, reportDetail: action.payload, loading: false }
-    case 'shareLink:set':
-      return { ...state, activeShareLink: action.payload, loading: false }
-    case 'share:set':
-      return { ...state, sharePreview: action.payload, loading: false }
+    case 'students:set': {
+      const firstStudentId = action.payload.items[0]?.id || ''
+      const selectedStudentId = state.selectedStudentId || firstStudentId
+      return { ...state, loading: false, students: action.payload, selectedStudentId }
+    }
+    case 'rewards:set':
+      return { ...state, loading: false, rewards: action.payload }
+    case 'student:select':
+      return { ...state, selectedStudentId: action.payload, selectedStudentSummary: null }
+    case 'studentSummary:set':
+      return { ...state, loading: false, selectedStudentSummary: action.payload }
     default:
       return state
   }
 }
 
 export function canAccessView(profile: OpsProfile | null, view: AppView): boolean {
-  if (!profile) {
-    return false
-  }
-  if (profile.isAdmin) {
-    return true
-  }
-  return teacherViews.has(view)
+  return Boolean(profile?.isAdmin && (view === 'points' || view === 'rewards'))
 }
-
-const teacherViews = new Set<AppView>([
-  'dashboard',
-  'lessonScenes',
-  'students',
-  'assessmentWorkspace',
-  'reports',
-])
