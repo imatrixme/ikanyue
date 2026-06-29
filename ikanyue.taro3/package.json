@@ -11,6 +11,7 @@
 	"scripts": {
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
+		"test:e2e": "node tests/e2e/points-lite-build.test.mjs",
 		"build:weapp": "taro build --type weapp",
 		"build:swan": "taro build --type swan",
 		"build:alipay": "taro build --type alipay",
@@ -55,7 +56,6 @@
 		"@tarojs/shared": "4.1.8",
 		"@tarojs/taro": "4.1.8",
 		"@tarojs/taro-h5": "4.1.8",
-		"dayjs": "^1.11.5",
 		"vue": "^3.0.0"
 	},
 	"devDependencies": {

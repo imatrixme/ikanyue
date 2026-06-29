@@ -32,16 +32,16 @@ describe('iNet request wrapper', () => {
                 data: {
                     code: 10000,
                     message: 'ok',
-                    data: { id: 'activity_1' },
+                    data: { balance: 120 },
                 },
             });
         });
 
-        await expect(iNet.get('/v1/activity', { page: 1 })).resolves.toEqual({ id: 'activity_1' });
+        await expect(iNet.get('/v1/points/me', { page: 1 })).resolves.toEqual({ balance: 120 });
 
         const requestOptions = taroMock.request.mock.calls[0][0];
         expect(requestOptions).toMatchObject({
-            url: 'https://api.example.com/v1/activity',
+            url: 'https://api.example.com/v1/points/me',
             data: { page: 1 },
             method: 'GET',
         });
@@ -84,7 +84,7 @@ describe('iNet request wrapper', () => {
             });
         });
 
-        await expect(iNet.Request('DELETE', '/v1/activity/1')).rejects.toMatchObject({
+        await expect(iNet.Request('DELETE', '/v1/reward-items/1')).rejects.toMatchObject({
             message: '未登录',
             code: 40001,
         });
@@ -96,6 +96,6 @@ describe('iNet request wrapper', () => {
             fail(networkError);
         });
 
-        await expect(iNet.get('/v1/activity')).rejects.toBe(networkError);
+        await expect(iNet.get('/v1/points/me')).rejects.toBe(networkError);
     });
 });

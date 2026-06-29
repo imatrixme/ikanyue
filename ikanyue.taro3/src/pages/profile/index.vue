@@ -1,61 +1,49 @@
 <template>
-    <view class="container">
-        <view class="unloginview" v-if="!isLogin()">
-            <image class="logo" :src="images.logo" mode="widthFix" />
-            <view class="content">
-                <!-- <text class="incname">看乐艺术</text> -->
-                <text class="slogan">理解音乐·看见音乐·成为音乐</text>
-            </view>
-            <nut-button type="primary" class="loginbtn" @click="showLoginPopup">登录·注册</nut-button>
-        </view>
+    <view class="profile-page">
+        <view class="profile-card">
+            <image class="profile-logo" :src="images.logo" mode="widthFix" />
+            <text class="profile-title">看乐积分</text>
+            <text class="profile-desc">登录后查看积分余额和可兑换实物。</text>
 
-        <view class="loginview" v-if="isLogin()">
-            <view class="avatar-box">
-                <image class="avatar" :src="displayAvatar" mode="aspectFill" />
-                <view class="brand-badge">
-                    <image class="brand-badge__logo" :src="images.logoBadge" mode="widthFix" />
+            <view class="profile-user" v-if="isLogin()">
+                <text class="profile-user__name">{{ displayName }}</text>
+                <text class="profile-user__phone">{{ userInfo.cellphone || '已登录账号' }}</text>
+                <view class="profile-actions">
+                    <nut-button type="primary" class="profile-action" @click="goPoints">查看积分</nut-button>
+                    <nut-button type="default" class="profile-action" @click="logout">退出登录</nut-button>
                 </view>
             </view>
-            <view class="content">
-                <text class="nickname">{{ userInfo.nickname }}</text>
-                <text class="province" v-if="userInfo.province !== undefined">{{ userInfo.province }}</text>
+
+            <view class="profile-login" v-else>
+                <nut-button type="primary" class="profile-login__button" @click="showLoginPopup">登录 / 注册</nut-button>
             </view>
-            <nut-button type="default" class="modifybtn" @click="modifyInfo">修改信息</nut-button>
         </view>
 
-        <!-- 登录弹窗 -->
         <nut-popup
             position="bottom"
             :visible="showLogin"
             @close="handleLoginPopupClose"
             :close-on-click-overlay="true"
             closeable
-            :style="{ height: '60%', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }"
+            :style="{ height: '54%', borderTopLeftRadius: '14px', borderTopRightRadius: '14px' }"
             @click-overlay="handleLoginPopupClose"
             @click-close-icon="handleLoginPopupClose"
         >
             <view class="login-popup">
-                <view class="login-header">
-                    <view class="login-title">账号登录</view>
-                </view>
+                <view class="login-title">微信手机号登录</view>
                 <view class="login-desc">
-                    <text>为了保证账号安全，请使用微信官方授权方式完成登录。</text>
+                    <text>用于绑定你的积分账户，查看可兑换实物。</text>
                 </view>
-                <view class="wechat-login">
-                    <button
-                        class="wechat-login__phone-btn"
-                        open-type="getPhoneNumber"
-                        :loading="wechatLoginLoading || wechatProfileLoading"
-                        :disabled="wechatLoginLoading || wechatProfileLoading"
-                        @tap="handleWechatTap"
-                        @getphonenumber="handleWechatPhone"
-                    >
-                        使用微信手机号一键登录
-                    </button>
-                    <view class="wechat-login__note">
-                        <text>用于同步课堂报名、老师回访等账号服务</text>
-                    </view>
-                </view>
+                <button
+                    class="wechat-login-btn"
+                    open-type="getPhoneNumber"
+                    :loading="wechatLoginLoading || wechatProfileLoading"
+                    :disabled="wechatLoginLoading || wechatProfileLoading"
+                    @tap="handleWechatTap"
+                    @getphonenumber="handleWechatPhone"
+                >
+                    使用微信手机号一键登录
+                </button>
             </view>
         </nut-popup>
     </view>
@@ -65,81 +53,55 @@
 import Taro from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
 import { Api } from '../../../utils/apis';
-import dayjs from 'dayjs';
-import 'dayjs/locale/zh-cn';
-dayjs.locale('zh-cn');
+import './index.scss';
 
 export default {
     data() {
         return {
-            dayjs: dayjs,
             images: {
                 logo: require('../../imgs/logo_kanyue@512.png'),
-                logoBadge: require('../../imgs/logo_kanyue@512.png'),
-                avatarFallback: require('../../imgs/logo_kanyue@512.png'),
             },
-            userInfo: undefined,
             showLogin: false,
-            wechatUserInfo: null,
-            wechatProfileLoading: false,
+            userInfo: {},
             wechatLoginLoading: false,
+            wechatProfileLoading: false,
+            wechatUserInfo: null,
         };
     },
     computed: {
-        displayAvatar() {
-            return this.userInfo?.avatarUrl || this.userInfo?.avatar || this.images.avatarFallback;
+        displayName() {
+            return this.userInfo.nickname || this.userInfo.nickName || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
         },
     },
     mounted() {
         this.refreshUserInfo();
     },
     onShow() {
-        // 在页面显示时重新获取用户信息，确保从userinfo页面返回时数据是最新的
         this.refreshUserInfo();
     },
     methods: {
         isLogin() {
-            return this.userInfo !== undefined && this.userInfo.token !== undefined;
+            return UserManager.isLogin();
         },
         refreshUserInfo() {
-            console.log('开始刷新用户信息');
-            // 先从本地获取缓存的用户信息
             this.userInfo = UserManager.getUserInfo();
-            console.log('从缓存获取的用户信息:', this.userInfo);
-
-            // 如果已登录，尝试刷新用户信息
-            if (UserManager.isLogin()) {
-                console.log('检测到已登录状态，开始刷新登录信息');
-                Api.refreshLogin()
-                    .then((res) => {
-                        console.log('刷新登录成功:', res);
-                        // 刷新成功后再次从缓存获取更新后的用户信息
-                        this.userInfo = UserManager.getUserInfo();
-                        console.log('更新后的用户信息:', this.userInfo);
-                    })
-                    .catch((err) => {
-                        console.error('刷新用户信息失败', err);
-                        // 如果刷新失败，可能是token过期，尝试清除本地缓存
-                        if (this.userInfo && this.userInfo.token) {
-                            console.log('清除过期的登录状态');
-                            UserManager.logout();
-                            this.userInfo = undefined;
-                        }
-                    });
-            } else {
-                console.log('用户未登录状态');
-            }
-        },
-        modifyInfo() {
-            if (!this.isLogin()) {
+            if (!UserManager.isLogin()) {
                 return;
             }
-            Taro.navigateTo({ url: '/pages/userinfo/index' });
+            Api.refreshLogin()
+                .then(() => {
+                    this.userInfo = UserManager.getUserInfo();
+                })
+                .catch(() => {
+                    UserManager.logout();
+                    this.userInfo = {};
+                });
         },
-        // 显示登录弹窗
+        goPoints() {
+            Taro.switchTab({ url: '/pages/points/index' });
+        },
         showLoginPopup() {
             this.showLogin = true;
-            console.log('显示登录弹窗', this.showLogin);
         },
         handleLoginPopupClose() {
             this.showLogin = false;
@@ -155,24 +117,15 @@ export default {
                 return;
             }
             if (!Taro.getUserProfile) {
-                Taro.showToast({
-                    title: '当前基础库版本过低，无法授权',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: '当前基础库版本过低，无法授权', icon: 'none' });
                 return;
             }
             this.wechatProfileLoading = true;
             try {
-                const result = await Taro.getUserProfile({
-                    desc: '用于完善个人资料',
-                });
+                const result = await Taro.getUserProfile({ desc: '用于完善积分账户资料' });
                 this.wechatUserInfo = result.userInfo || null;
             } catch (error) {
-                console.error('获取微信用户信息失败', error);
-                Taro.showToast({
-                    title: '已取消授权',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: '已取消授权', icon: 'none' });
             } finally {
                 this.wechatProfileLoading = false;
             }
@@ -184,51 +137,27 @@ export default {
             }
             return loginResult.code;
         },
-        async ensureWechatProfile() {
-            if (this.wechatUserInfo) {
-                return this.wechatUserInfo;
-            }
-            if (!Taro.getUserProfile) {
-                throw new Error('当前基础库版本过低，无法获取微信资料');
-            }
-            const result = await Taro.getUserProfile({
-                desc: '用于完善个人资料',
-            });
-            this.wechatUserInfo = result.userInfo || null;
-            return this.wechatUserInfo;
-        },
         async handleWechatPhone(event) {
             if (this.wechatLoginLoading) {
                 return;
             }
             const detail = event?.detail || {};
             if (detail.errMsg !== 'getPhoneNumber:ok') {
-                Taro.showToast({
-                    title: '未获取到手机号',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: '未获取到手机号', icon: 'none' });
                 return;
             }
             if (!this.wechatUserInfo) {
-                Taro.showToast({
-                    title: '请先允许获取头像昵称',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: '请先允许获取头像昵称', icon: 'none' });
                 return;
             }
             if (!detail.encryptedData || !detail.iv) {
-                Taro.showToast({
-                    title: '微信未返回手机号信息',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: '微信未返回手机号信息', icon: 'none' });
                 return;
             }
             this.wechatLoginLoading = true;
             try {
-                await this.ensureWechatProfile();
-                const code = await this.ensureWechatCode();
                 await Api.loginWithWechat({
-                    code,
+                    code: await this.ensureWechatCode(),
                     userInfo: this.wechatUserInfo,
                     phone: {
                         encryptedData: detail.encryptedData,
@@ -237,60 +166,19 @@ export default {
                 });
                 this.showLogin = false;
                 this.resetWechatAuthState();
-                setTimeout(() => {
-                    this.refreshUserInfo();
-                    this.$forceUpdate();
-                }, 100);
-                Taro.showToast({
-                    title: '登录成功',
-                    icon: 'success',
-                });
+                this.refreshUserInfo();
+                Taro.showToast({ title: '登录成功', icon: 'success' });
             } catch (error) {
-                console.error('微信登录失败', error);
-                Taro.showToast({
-                    title: error?.message || '登录失败，请重试',
-                    icon: 'none',
-                });
+                Taro.showToast({ title: error?.message || '登录失败，请重试', icon: 'none' });
             } finally {
                 this.wechatLoginLoading = false;
             }
         },
+        logout() {
+            UserManager.logout();
+            this.userInfo = {};
+            Taro.showToast({ title: '已退出', icon: 'none' });
+        },
     },
 };
 </script>
-
-<style lang="scss">
-@import './index.scss';
-
-.login-popup {
-    padding: 20px;
-    padding-bottom: 50px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-
-    .login-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        margin-bottom: 30px;
-        margin-top: 10px;
-
-        .login-title {
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-        }
-    }
-
-    .login-desc {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.6;
-        margin-bottom: 12px;
-    }
-}
-</style>

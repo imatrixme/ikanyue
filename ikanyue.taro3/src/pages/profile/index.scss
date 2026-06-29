@@ -1,149 +1,111 @@
-.container {
-    padding: 16px;
+.profile-page {
+    background: #f6f7fb;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: 24px 16px;
 }
 
-.unloginview {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    justify-content: center;
+.profile-card {
     align-items: center;
-    height: 88vh;
-
-    .logo {
-        width: 180px;
-        border-radius: 12px;
-    }
-
-    .content {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
-
-        .incname {
-            font-size: 20px;
-            font-weight: bolder;
-            color: #202020;
-        }
-        .slogan {
-            font-size: 12px;
-            color: #888888;
-            font-family: 'SimSun', '宋体', serif;
-        }
-    }
-
-    .loginbtn {
-        margin-top: 16px;
-        padding: 0 32px;
-    }
-}
-
-.loginview {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(24, 34, 56, 0.08);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    justify-content: center;
+    padding: 30px 20px;
+}
+
+.profile-logo {
+    border-radius: 18px;
+    height: 88px;
+    width: 88px;
+}
+
+.profile-title {
+    color: #182238;
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 18px;
+}
+
+.profile-desc {
+    color: #758198;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.profile-user,
+.profile-login {
     align-items: center;
-    height: 88vh;
-
-    .avatar-box {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-    }
-
-    .avatar {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        border: 1px solid #eee;
-        background-color: #f0f0f0;
-        overflow: hidden;
-        position: relative;
-        z-index: 1;
-    }
-
-    .brand-badge {
-        position: absolute;
-        top: 86px; // 100px avatar height - 14px (badge half height)
-        left: 50%;
-        transform: translateX(-50%);
-        width: 66px; // 2/3 of avatar width
-        height: 26px;
-        padding: 1px 2px;
-        border-radius: 999px;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-
-        &__logo {
-            width: 58px;
-            height: 16px;
-            filter: none;
-        }
-    }
-
-    .content {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
-
-        .nickName {
-            font-size: 20px;
-            font-weight: bolder;
-            color: #202020;
-        }
-        .province {
-            font-size: 13px;
-            color: #888888;
-        }
-    }
-
-    .modifybtn {
-        margin-top: 16px;
-        padding: 0 32px;
-    }
-
-}
-
-.wechat-login {
-    margin-top: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    margin-top: 26px;
+    width: 100%;
+}
 
-    &__phone-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 44px;
-        border-radius: 8px;
-        border: none;
-        background: linear-gradient(90deg, #07c160, #06ae56);
-        color: #fff;
-        font-size: 15px;
+.profile-user__name {
+    color: #182238;
+    font-size: 18px;
+    font-weight: 700;
+}
 
-        &[disabled='true'],
-        &[disabled='disabled'],
-        &:disabled {
-            opacity: 0.6;
-        }
-    }
+.profile-user__phone {
+    color: #758198;
+    font-size: 13px;
+    margin-top: 8px;
+}
 
-    &__note {
-        font-size: 10px;
-        color: #999;
-        text-align: center;
-    }
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    width: 100%;
+}
+
+.profile-action {
+    flex: 1;
+}
+
+.profile-login__button {
+    width: 100%;
+}
+
+.login-popup {
+    box-sizing: border-box;
+    padding: 24px 20px;
+}
+
+.login-title {
+    color: #182238;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.login-desc {
+    color: #758198;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 10px;
+}
+
+.wechat-login-btn {
+    align-items: center;
+    background: #07c160;
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    display: flex;
+    font-size: 15px;
+    height: 46px;
+    justify-content: center;
+    margin-top: 28px;
+    width: 100%;
+}
+
+.wechat-login-btn[disabled='true'],
+.wechat-login-btn[disabled='disabled'],
+.wechat-login-btn:disabled {
+    opacity: 0.6;
 }

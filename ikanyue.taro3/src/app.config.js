@@ -1,23 +1,12 @@
 export default defineAppConfig({
     pages: [
-        // 'pages/slogan/index',
-        'pages/activity/index',
+        'pages/points/index',
         'pages/profile/index',
-        'pages/pricing/index',
-        'pages/userinfo/index',
-        'pages/activityDetail/index',
-        'pages/imageDetail/index',
-        'pages/webview/index',
-        'pages/prompt/index',
-        'pages/audioMaterial/index',
-        'pages/audioMaterial/detail/index',
-        'pages/videoMaterial/index',
-        'pages/videoMaterial/detail/index',
     ],
     window: {
         backgroundTextStyle: 'light',
         navigationBarBackgroundColor: '#fff',
-        navigationBarTitleText: '看乐艺术',
+        navigationBarTitleText: '看乐积分',
         navigationBarTextStyle: 'black',
     },
     tabBar: {
@@ -26,17 +15,11 @@ export default defineAppConfig({
         backgroundColor: '#fafafa',
         borderStyle: 'black',
         list: [
-            // {
-            //     pagePath: 'pages/slogan/index',
-            //     iconPath: 'imgs/shouye.png',
-            //     selectedIconPath: 'imgs/shouye-sel.png',
-            //     text: '首页',
-            // },
             {
-                pagePath: 'pages/activity/index',
+                pagePath: 'pages/points/index',
                 iconPath: 'imgs/record.png',
                 selectedIconPath: 'imgs/record-sel.png',
-                text: '首页',
+                text: '积分',
             },
             {
                 pagePath: 'pages/profile/index',
@@ -50,5 +33,4 @@ export default defineAppConfig({
         request: 10000,
         downloadFile: 60000,
     },
-    requiredBackgroundModes: ['audio'],
 });

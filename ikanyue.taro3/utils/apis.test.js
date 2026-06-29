@@ -47,6 +47,14 @@ describe('Api page-facing request wrappers', () => {
         expect(userManagerMock.updateUserInfoCache).toHaveBeenCalledWith(user);
     });
 
+    it('propagates password login errors without caching', async () => {
+        const error = new Error('login failed');
+        iNetMock.post.mockRejectedValue(error);
+
+        await expect(Api.loginWithPassword('13800138000', 'bad')).rejects.toBe(error);
+        expect(userManagerMock.updateUserInfoCache).not.toHaveBeenCalled();
+    });
+
     it('logs in with WeChat payload and caches returned user info', async () => {
         const payload = {
             code: 'wx-code',
@@ -63,16 +71,12 @@ describe('Api page-facing request wrappers', () => {
         expect(userManagerMock.updateUserInfoCache).toHaveBeenCalledWith(user);
     });
 
-    it('updates user info and refreshes local cache with submitted form data', async () => {
-        const formData = {
-            nickname: '看乐用户',
-            age: 12,
-        };
-        iNetMock.post.mockResolvedValue({ id: 'student_1', ...formData });
+    it('propagates WeChat login errors without caching', async () => {
+        const error = new Error('wechat failed');
+        iNetMock.post.mockRejectedValue(error);
 
-        await expect(Api.updateUserInfo(formData)).resolves.toEqual({ id: 'student_1', ...formData });
-        expect(iNetMock.post).toHaveBeenCalledWith('/v1/user/update', formData);
-        expect(userManagerMock.updateUserInfoCache).toHaveBeenCalledWith(formData);
+        await expect(Api.loginWithWechat({ code: 'bad' })).rejects.toBe(error);
+        expect(userManagerMock.updateUserInfoCache).not.toHaveBeenCalled();
     });
 
     it('refreshes login only when a local token exists', async () => {
@@ -97,19 +101,23 @@ describe('Api page-facing request wrappers', () => {
         expect(userManagerMock.logout).toHaveBeenCalled();
     });
 
-    it('uses page-facing find endpoints for activities and material resources', async () => {
+    it('clears local login when refresh returns a forbidden auth error', async () => {
+        const authError = new Error('forbidden');
+        authError.code = 10403;
+        userManagerMock.isLogin.mockReturnValue(true);
+        iNetMock.post.mockRejectedValue(authError);
+
+        await expect(Api.refreshLogin()).rejects.toBe(authError);
+        expect(userManagerMock.logout).toHaveBeenCalled();
+    });
+
+    it('uses points-lite endpoints for balance and reward catalog', async () => {
         iNetMock.get.mockResolvedValue({ items: [] });
 
-        await Api.findActivities({ page: 1 });
-        await Api.findAudioMaterials({ status: 'published' });
-        await Api.findAudioMaterialDetail({ id: 'audio_1' });
-        await Api.findVideoMaterials({ status: 'published' });
-        await Api.findVideoMaterialDetail({ id: 'video_1' });
+        await Api.getMyPointSummary();
+        await Api.listRewardItems({ status: 'active' });
 
-        expect(iNetMock.get).toHaveBeenNthCalledWith(1, '/v1/activity/find', { page: 1 });
-        expect(iNetMock.get).toHaveBeenNthCalledWith(2, '/v1/audioMaterial/find', { status: 'published' });
-        expect(iNetMock.get).toHaveBeenNthCalledWith(3, '/v1/audioMaterial/find', { id: 'audio_1' });
-        expect(iNetMock.get).toHaveBeenNthCalledWith(4, '/v1/videoMaterial/find', { status: 'published' });
-        expect(iNetMock.get).toHaveBeenNthCalledWith(5, '/v1/videoMaterial/find', { id: 'video_1' });
+        expect(iNetMock.get).toHaveBeenNthCalledWith(1, '/v1/points/me');
+        expect(iNetMock.get).toHaveBeenNthCalledWith(2, '/v1/reward-items', { status: 'active' });
     });
 });

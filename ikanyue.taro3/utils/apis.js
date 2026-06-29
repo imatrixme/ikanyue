@@ -54,50 +54,6 @@ const loginWithWechat = (payload) => {
 };
 
 /**
- * 更新用户信息
- * @param {Object} userInfo - 要更新的用户信息
- * @returns {Promise} - 更新结果Promise
- */
-const updateUserInfo = (userInfo) => {
-    return new Promise((resolve, reject) => {
-        iNet.post('/v1/user/update', userInfo)
-            .then((res) => {
-                console.log('更新用户信息API返回:', res);
-                // 更新成功后，更新本地缓存
-                UserManager.updateUserInfoCache(userInfo);
-                resolve(res);
-            })
-            .catch((err) => {
-                console.error('更新用户信息API错误:', err);
-                reject(err);
-            });
-    });
-};
-
-/**
- * 查询活动列表或活动详情
- * @param {Object} params - 查询参数
- * @param {string} [params.id] - 活动ID，如果提供则返回单个活动详情
- * @param {number} [params.page=1] - 页码
- * @param {number} [params.perPage=20] - 每页数量
- * @param {string} [params.status='active'] - 活动状态过滤
- * @param {string} [params.sort='-sequence'] - 排序字段
- * @param {string} [params.tags] - 标签过滤，多个标签用逗号分隔
- * @returns {Promise} - 查询结果Promise
- */
-const findActivities = (params = {}) => {
-    return new Promise((resolve, reject) => {
-        iNet.get('/v1/activity/find', params)
-            .then((res) => {
-                resolve(res);
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
-};
-
-/**
  * 刷新登录状态
  * @returns {Promise} - 刷新结果Promise
  */
@@ -129,100 +85,20 @@ const refreshLogin = () => {
     });
 };
 
-/**
- * 查询音频材料列表
- * @param {Object} params - 查询参数
- * @param {number} [params.page=1] - 页码
- * @param {number} [params.perPage=20] - 每页数量
- * @param {string} [params.status='published'] - 状态筛选
- * @param {string} [params.sort='-sequence'] - 排序字段
- * @param {string} [params.type] - 类型筛选
- * @param {string} [params.language] - 语言筛选
- * @param {number} [params.difficulty] - 难度等级筛选
- * @returns {Promise} - 查询结果Promise
- */
-const findAudioMaterials = (params = {}) => {
-    return new Promise((resolve, reject) => {
-        iNet.get('/v1/audioMaterial/find', params)
-            .then((res) => {
-                resolve(res);
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
+const getMyPointSummary = () => {
+    return iNet.get('/v1/points/me');
 };
 
-/**
- * 查询单个音频材料详情
- * @param {Object} params - 查询参数
- * @param {string} params.id - 音频材料ID
- * @returns {Promise} - 查询结果Promise
- */
-const findAudioMaterialDetail = (params = {}) => {
-    return new Promise((resolve, reject) => {
-        iNet.get('/v1/audioMaterial/find', params)
-            .then((res) => {
-                resolve(res);
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
-};
-
-/**
- * 查询视频材料列表
- * @param {Object} params - 查询参数
- * @param {number} [params.page=1] - 页码
- * @param {number} [params.perPage=20] - 每页数量
- * @param {string} [params.status='published'] - 状态筛选
- * @param {string} [params.sort='-sequence'] - 排序字段
- * @param {string} [params.type] - 类型筛选
- * @param {string} [params.language] - 语言筛选
- * @param {number} [params.difficulty] - 难度等级筛选
- * @returns {Promise} - 查询结果Promise
- */
-const findVideoMaterials = (params = {}) => {
-    return new Promise((resolve, reject) => {
-        iNet.get('/v1/videoMaterial/find', params)
-            .then((res) => {
-                resolve(res);
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
-};
-
-/**
- * 查询单个视频材料详情
- * @param {Object} params - 查询参数
- * @param {string} params.id - 视频材料ID
- * @returns {Promise} - 查询结果Promise
- */
-const findVideoMaterialDetail = (params = {}) => {
-    return new Promise((resolve, reject) => {
-        iNet.get('/v1/videoMaterial/find', params)
-            .then((res) => {
-                resolve(res);
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
+const listRewardItems = (params = {}) => {
+    return iNet.get('/v1/reward-items', params);
 };
 
 const Api = {
     loginWithPassword,
     loginWithWechat,
-    updateUserInfo,
     refreshLogin,
-    findActivities,
-    findAudioMaterials,
-    findAudioMaterialDetail,
-    findVideoMaterials,
-    findVideoMaterialDetail,
+    getMyPointSummary,
+    listRewardItems,
 };
 
 export { Api };

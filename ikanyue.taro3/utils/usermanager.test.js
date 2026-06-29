@@ -74,6 +74,14 @@ describe('UserManager', () => {
         expect(taroMock.setStorageSync).toHaveBeenCalledWith(storageKey, JSON.stringify(updated));
     });
 
+    it('keeps an explicitly refreshed token when cache already has one', () => {
+        taroMock.getStorageSync.mockReturnValue(JSON.stringify({ id: 'student_1', token: 'old-token' }));
+
+        const updated = UserManager.updateUserInfoCache({ token: 'new-token' });
+
+        expect(updated.token).toBe('new-token');
+    });
+
     it('returns the original user data when cache writing fails', () => {
         taroMock.getStorageSync.mockReturnValue('{}');
         taroMock.setStorageSync.mockImplementation(() => {
