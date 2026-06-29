@@ -12,7 +12,7 @@
     "start:bun": "NODE_ENV=production bun run src/app.js",
     "lint": "eslint src --max-warnings=0",
     "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js' --test-coverage-lines=90 --test-coverage-branches=90 --test-coverage-functions=90",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/routes/ops/*.js' --test-coverage-include='src/routes/points/*.js' --test-coverage-include='src/services/points/*.js' --test-coverage-include='src/middleware/opsAuth.js' --test-coverage-include='src/middleware/auth.js' --test-coverage-include='src/services/ops/authService.js' --test-coverage-include='src/services/ops/auditService.js' --test-coverage-include='src/services/ops/opsUtils.js' --test-coverage-include='src/services/ops/schema.js' --test-coverage-exclude='src/services/ops/pocketbaseTeacherAuth.js' --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-functions=95",
     "ops:schema:check": "node scripts/check-ops-schema.js",
     "ops:schema:apply": "node scripts/pb-ensure-ops-schema.js",
     "check-docs": "./scripts/check-docs.sh",

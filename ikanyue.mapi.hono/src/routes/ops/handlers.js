@@ -1,4 +1,3 @@
-const { OpsAuthorizationError } = require('../../services/ops/rbacService');
 const { readRequestBody } = require('../../services/ops/opsUtils');
 
 function createOpsHandlers(services = createDefaultOpsServices()) {
@@ -22,118 +21,39 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return sendResult(c, await services.authService.changePassword(c.get('user'), body, c.req));
         },
 
-        async dashboard(c) {
-            return safe(c, () => services.managementService.dashboard(c.get('user')));
+        async listStudents(c) {
+            return safe(c, () => services.pointService.listStudentBalances(c.req.query()));
         },
 
-        async publicOperationSlots(c) {
-            return safe(c, () => services.managementService.publicOperationSlots(c.req.query()));
+        async studentPoints(c) {
+            return safe(c, () => services.pointService.getStudentSummary(c.req.param('studentId'), c.req.query()));
         },
 
-        async uploadRichTextImage(c) {
-            return safe(c, async () => services.richTextAssetService.uploadImage(c.get('user'), await c.req.parseBody()));
-        },
-
-        async list(c) {
-            return safe(c, () => services.managementService.list(c.req.param('resource'), c.get('user'), c.req.query()));
-        },
-
-        async detail(c) {
-            return safe(c, () => services.managementService.detail(c.req.param('resource'), c.req.param('id'), c.get('user')));
-        },
-
-        async create(c) {
+        async addStudentPoints(c) {
             const body = await readRequestBody(c);
-            return safe(c, () => services.managementService.create(c.req.param('resource'), c.get('user'), body));
+            return safe(c, () => services.pointService.addPoints(c.get('user'), {
+                ...body,
+                studentId: c.req.param('studentId'),
+            }));
         },
 
-        async update(c) {
+        async offlineRedeem(c) {
             const body = await readRequestBody(c);
-            return safe(c, () => services.managementService.update(c.req.param('resource'), c.req.param('id'), c.get('user'), body));
+            return safe(c, () => services.pointService.offlineRedeem(c.get('user'), body, services.rewardService));
         },
 
-        async listTemplates(c) {
-            return safe(c, () => services.assessmentService.listTemplates(c.get('user'), c.req.query()));
+        async listRewards(c) {
+            return safe(c, () => services.rewardService.listForAdmin(c.req.query()));
         },
 
-        async createTemplate(c) {
+        async createReward(c) {
             const body = await readRequestBody(c);
-            return safeResult(c, () => services.assessmentService.createTemplate(c.get('user'), body));
+            return safe(c, () => services.rewardService.create(body));
         },
 
-        async publishTemplate(c) {
-            return safeResult(c, () => services.assessmentService.publishTemplate(c.get('user'), c.req.param('id')));
-        },
-
-        async createAssessment(c) {
+        async updateReward(c) {
             const body = await readRequestBody(c);
-            return safeResult(c, () => services.assessmentService.createRecord(c.get('user'), body));
-        },
-
-        async saveAssessment(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.assessmentService.saveRecord(c.get('user'), c.req.param('id'), body));
-        },
-
-        async submitAssessment(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.assessmentService.submitRecord(c.get('user'), c.req.param('id'), body));
-        },
-
-        async listReports(c) {
-            return safe(c, () => services.assessmentService.listReports(c.get('user'), c.req.query()));
-        },
-
-        async reportDetail(c) {
-            return safeResult(c, () => services.assessmentService.getReportDetail(c.get('user'), c.req.param('reportId')));
-        },
-
-        async createShare(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.assessmentService.createShareLink(c.get('user'), c.req.param('reportId'), body));
-        },
-
-        async revokeShare(c) {
-            return safeResult(c, () => services.assessmentService.revokeShareLink(c.get('user'), c.req.param('id')));
-        },
-
-        async viewSharedReport(c) {
-            return safeResult(c, () => services.assessmentService.viewSharedReport(c.req.param('token')));
-        },
-
-        async listReportEvents(c) {
-            return safe(c, () => services.reportingService.listEvents(c.get('user'), c.req.query()));
-        },
-
-        async createReportEvent(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.reportingService.createEvent(c.get('user'), body));
-        },
-
-        async updateReportEvent(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.reportingService.updateEvent(c.get('user'), c.req.param('id'), body));
-        },
-
-        async listReportInstances(c) {
-            return safe(c, () => services.reportingService.listInstances(c.get('user'), c.req.query()));
-        },
-
-        async reportInstanceDetail(c) {
-            return safeResult(c, () => services.reportingService.getInstance(c.get('user'), c.req.param('id')));
-        },
-
-        async generateReportInstances(c) {
-            const body = await readRequestBody(c);
-            return safeResult(c, () => services.reportingService.generateInstances(c.get('user'), c.req.param('eventId'), body));
-        },
-
-        async publishReportInstance(c) {
-            return safeResult(c, () => services.reportingService.publishInstance(c.get('user'), c.req.param('id')));
-        },
-
-        async revokeReportInstance(c) {
-            return safeResult(c, () => services.reportingService.revokeInstance(c.get('user'), c.req.param('id')));
+            return safe(c, () => services.rewardService.update(c.req.param('id'), body));
         },
     };
 }
@@ -141,14 +61,6 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
 async function safe(c, operation) {
     try {
         return c.data(await operation());
-    } catch (error) {
-        return sendError(c, error);
-    }
-}
-
-async function safeResult(c, operation) {
-    try {
-        return sendResult(c, await operation());
     } catch (error) {
         return sendError(c, error);
     }
@@ -162,9 +74,6 @@ function sendResult(c, result) {
 }
 
 function sendError(c, error) {
-    if (error instanceof OpsAuthorizationError) {
-        return c.error(error.code, error.message);
-    }
     return c.error(error.code || error.status || 500, error.message || '服务器内部错误');
 }
 

@@ -1,15 +1,17 @@
 const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 const { normalizeBoolean, normalizeString } = require('./opsUtils');
+const { authenticatePocketBaseTeacher } = require('./pocketbaseTeacherAuth');
 
 const TEACHER_FIELDS = 'id,sn,username,email,cellphone,nickname,nickName,avatar,realname,realName,blocked,verified,isAdmin,idAdmin,opsPasswordChangeRequired,lastLoginAt,created,updated';
 const DEFAULT_ADMIN_PASSWORD = '1loveU_shaoyi';
 const MIN_PASSWORD_LENGTH = 8;
 
 class OpsAuthService {
-    constructor(repository, auditService) {
+    constructor(repository, auditService, teacherAuthenticator = authenticatePocketBaseTeacher) {
         this.repository = repository;
         this.auditService = auditService;
+        this.teacherAuthenticator = teacherAuthenticator;
     }
 
     async login({ account, username, cellphone, password }, request = {}) {
@@ -168,7 +170,7 @@ class OpsAuthService {
     }
 
     async matchesPassword(teacher, password, cellphone) {
-        if (await authenticatePocketBaseTeacher(teacher, password, cellphone)) {
+        if (await this.teacherAuthenticator(teacher, password, cellphone)) {
             return true;
         }
         return teacher.password === md5(password) || teacher.password === password;
@@ -250,31 +252,6 @@ function buildPendingTeacherRecord(payload) {
         verified: false,
         idAdmin: false,
     };
-}
-
-async function authenticatePocketBaseTeacher(teacher, password, cellphone) {
-    const identities = [teacher.username, teacher.email, cellphone].map(normalizeString).filter(Boolean);
-    if (!identities.length) {
-        return false;
-    }
-    try {
-        const PocketBase = await import('pocketbase');
-        const url = process.env.PB_URL || 'http://127.0.0.1:8090';
-        for (const identity of [...new Set(identities)]) {
-            const authClient = new PocketBase.default(url);
-            try {
-                const auth = await authClient.collection('teachers').authWithPassword(identity, password);
-                if (auth?.record?.id === teacher.id) {
-                    return true;
-                }
-            } catch {
-                // Try the next configured identity.
-            }
-        }
-    } catch {
-        return false;
-    }
-    return false;
 }
 
 function isDuplicateTeacherError(error = {}) {

@@ -1,23 +1,23 @@
 # index.js
 
-运营后台路由注册文件。所有 `/ops/*` 路由在这里挂载，并按公开入口、认证入口、通用资源入口分层。
+轻量运营后台路由注册文件。`/ops/*` 在本分支只挂载后台认证、积分台账、实物列表和线下兑换。
 
 ```mermaid
 flowchart TD
     A[opsRoutes] --> B[公开入口]
     A --> C[opsAuthMiddleware]
     C --> D[opsPasswordChangeGuard]
-    D --> E[Dashboard/CRUD/报告/上传]
+    D --> E[Points/Rewards]
     E --> F[handlers]
 ```
 
 ## 路由层级
 
-- 公开入口：登录、注册、公开分享、公开运营位。
+- 公开入口：登录、注册。
 - 认证入口：`/ops/auth/me` 和修改密码。
-- 业务入口：dashboard、测评模板、报告事件、报告实例、通用资源 CRUD。
-- 上传入口：`POST /ops/uploads/rich-text-image`，用于后台富文本图片。
+- 积分入口：查看学员积分、添加积分、线下兑换扣分。
+- 实物入口：查看、创建、更新实物兑换项。
 
 ## 顺序要求
 
-上传、报告等固定路径必须放在 `/ops/:resource` 动态路径之前，否则会被通用资源路由吞掉。
+本分支不注册 `/ops/:resource` 动态路由；新增 ops 能力必须显式列出固定路径。

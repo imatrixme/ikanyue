@@ -4,6 +4,8 @@ const md5 = require('licia/md5');
 const { responseMiddleware } = require('../../src/middleware/response');
 const opsRoutes = require('../../src/routes/ops');
 const { createOpsHandlers } = require('../../src/routes/ops/handlers');
+const pointsRoutes = require('../../src/routes/points');
+const { createPointHandlers } = require('../../src/routes/points/handlers');
 const { createOpsServices } = require('../../src/services/ops');
 const { jwtAuth } = require('../../src/utils/jwtAuth');
 const { createRouteBuilder } = require('../../src/utils/routeBuilder');
@@ -12,7 +14,9 @@ function createOpsApp(repository) {
     const app = new Hono();
     app.use('*', responseMiddleware());
     const routes = createRouteBuilder(app);
-    opsRoutes(routes, createOpsHandlers(createOpsServices(repository)));
+    const services = createOpsServices(repository);
+    opsRoutes(routes, createOpsHandlers(services));
+    pointsRoutes(routes, createPointHandlers(services));
     routes.finalize();
     return app;
 }
@@ -222,6 +226,9 @@ function createOpsSeed() {
                 created: '2026-05-19T09:00:00.000Z',
             },
         ],
+        reward_items: [],
+        student_points: [],
+        point_events: [],
         ops_audit_logs: [],
     };
 }
@@ -284,6 +291,10 @@ function createTemplateSchema(overrides = {}) {
 
 function createToken(user) {
     return jwtAuth.sign({ headers: {} }, user.id, user.sn, 'teacher', Boolean(user.isAdmin));
+}
+
+function createStudentToken(user) {
+    return jwtAuth.sign({ headers: {} }, user.id, user.sn || user.id, 'student', false);
 }
 
 async function jsonRequest(app, path, { method = 'GET', token = '', body } = {}) {
@@ -358,6 +369,7 @@ module.exports = {
     createOpsSeed,
     createOpsTestRepository,
     createTemplateSchema,
+    createStudentToken,
     createToken,
     jsonRequest,
 };
