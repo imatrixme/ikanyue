@@ -12,7 +12,7 @@ interface SemanticSurfaceProps extends HTMLAttributes<HTMLDivElement> {
 export function SemanticSurface({ tone = 'neutral', insetAccent = true, className, children, ...props }: SemanticSurfaceProps) {
   const colors = semanticTone(tone)
   return (
-    <div className={cn('relative overflow-hidden rounded-md border p-4 shadow-sm', colors.surface, insetAccent && 'pl-5 before:absolute before:inset-y-3 before:left-0 before:w-1 before:rounded-r-full', insetAccent && colors.surfaceAccent, className)} {...props}>
+    <div className={cn('relative overflow-hidden rounded-xl border p-5 shadow-sm', colors.surface, insetAccent && 'pl-6 before:absolute before:inset-y-4 before:left-0 before:w-1 before:rounded-r-full', insetAccent && colors.surfaceAccent, className)} {...props}>
       {children}
     </div>
   )
@@ -33,7 +33,7 @@ export function ActionTile({ title, description, actionLabel, actionIcon, badge,
   return (
     <button
       className={cn(
-        'group relative min-h-36 overflow-hidden rounded-md border bg-[var(--card)] p-4 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:pointer-events-none disabled:opacity-50',
+        'group relative min-h-36 overflow-hidden rounded-xl border bg-[var(--card)] p-4 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[var(--input)] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:pointer-events-none disabled:opacity-50',
         colors.surface,
         className,
       )}
@@ -42,7 +42,7 @@ export function ActionTile({ title, description, actionLabel, actionIcon, badge,
     >
       <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-1', colors.accent)} />
       <span className="flex items-start justify-between gap-3">
-        {icon ? <span className={cn('inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-current/10 shadow-sm transition group-hover:scale-[1.03]', colors.icon)}>{icon}</span> : null}
+        {icon ? <span className={cn('inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent transition group-hover:scale-[1.03]', colors.icon)}>{icon}</span> : null}
         {badge ? <Badge tone={colors.badge}>{badge}</Badge> : null}
       </span>
       <span className="mt-4 block min-w-0 font-semibold leading-5 text-[var(--foreground)] [overflow-wrap:anywhere]">{title}</span>
@@ -80,7 +80,7 @@ export function MetricTile({ label, value, hint, icon, onClick, tone = 'neutral'
   if (onClick) {
     return (
       <button
-        className={cn('min-w-0 rounded-md border bg-[var(--card)] p-4 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]', colors.surface, className)}
+        className={cn('min-w-0 rounded-xl border bg-[var(--card)] p-4 text-left shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-[var(--input)] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]', colors.surface, className)}
         onClick={onClick}
         type="button"
       >
@@ -90,7 +90,7 @@ export function MetricTile({ label, value, hint, icon, onClick, tone = 'neutral'
   }
 
   return (
-    <div className={cn('min-w-0 rounded-md border bg-[var(--card)] p-4 shadow-sm', colors.surface, className)} {...props}>
+    <div className={cn('min-w-0 rounded-xl border bg-[var(--card)] p-4 shadow-sm', colors.surface, className)} {...props}>
       {content}
     </div>
   )

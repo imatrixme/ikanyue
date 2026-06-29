@@ -1,44 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --background: oklch(98.2% 0.012 188);
-  --foreground: oklch(22% 0.043 246);
-  --card: oklch(99.4% 0.006 160);
-  --card-foreground: oklch(22% 0.043 246);
-  --popover: oklch(99.5% 0.004 160);
-  --popover-foreground: oklch(22% 0.043 246);
-  --primary: oklch(45.5% 0.095 184);
-  --primary-hover: oklch(38% 0.09 184);
-  --primary-foreground: oklch(98.5% 0.012 180);
-  --secondary: oklch(95.7% 0.018 192);
-  --secondary-foreground: oklch(26% 0.05 232);
-  --muted: oklch(95.3% 0.014 205);
-  --muted-foreground: oklch(48% 0.042 230);
-  --accent: oklch(94.2% 0.035 178);
-  --accent-foreground: oklch(31% 0.075 185);
-  --destructive: oklch(46% 0.16 24);
-  --destructive-hover: oklch(40% 0.15 24);
-  --destructive-foreground: oklch(97% 0.02 20);
-  --border: oklch(89.5% 0.02 198);
-  --input: oklch(83.5% 0.028 202);
-  --ring: oklch(52% 0.11 184);
-  --sidebar: oklch(98.7% 0.014 178);
-  --sidebar-accent: oklch(94.6% 0.028 178);
-  --brand: oklch(45.5% 0.095 184);
-  --brand-foreground: oklch(98.5% 0.012 180);
-  --brand-soft: oklch(93.8% 0.04 180);
-  --brand-border: oklch(80.5% 0.06 180);
-  --info: oklch(53% 0.12 236);
-  --info-soft: oklch(94.3% 0.035 235);
-  --success: oklch(48% 0.11 152);
-  --success-soft: oklch(94% 0.042 152);
-  --warning: oklch(57% 0.13 72);
-  --warning-soft: oklch(94.5% 0.052 78);
-  --warning-foreground: oklch(28% 0.08 60);
-  --danger-soft: oklch(94.8% 0.038 25);
+  --background: oklch(99% 0 0);
+  --foreground: oklch(14.5% 0 0);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(14.5% 0 0);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(14.5% 0 0);
+  --primary: oklch(20.5% 0 0);
+  --primary-hover: oklch(14.5% 0 0);
+  --primary-foreground: oklch(98.5% 0 0);
+  --secondary: oklch(96.8% 0 0);
+  --secondary-foreground: oklch(20.5% 0 0);
+  --muted: oklch(96.8% 0 0);
+  --muted-foreground: oklch(45.5% 0 0);
+  --accent: oklch(96.8% 0 0);
+  --accent-foreground: oklch(20.5% 0 0);
+  --destructive: oklch(57.7% 0.245 27.325);
+  --destructive-hover: oklch(50.5% 0.213 27.518);
+  --destructive-foreground: oklch(98.5% 0 0);
+  --border: oklch(92.2% 0 0);
+  --input: oklch(92.2% 0 0);
+  --ring: oklch(70.8% 0 0);
+  --sidebar: oklch(98.5% 0 0);
+  --sidebar-accent: oklch(96.8% 0 0);
+  --brand: oklch(20.5% 0 0);
+  --brand-foreground: oklch(98.5% 0 0);
+  --brand-soft: oklch(96.8% 0 0);
+  --brand-wash: oklch(99% 0 0);
+  --brand-border: oklch(87% 0 0);
+  --info: oklch(48.8% 0.243 264.376);
+  --info-soft: oklch(97% 0.014 254.604);
+  --info-wash: oklch(99% 0.006 254.604);
+  --success: oklch(52.7% 0.154 150.069);
+  --success-soft: oklch(96.2% 0.044 156.743);
+  --success-wash: oklch(99% 0.01 156.743);
+  --warning: oklch(64.6% 0.188 72.488);
+  --warning-soft: oklch(97.3% 0.071 103.193);
+  --warning-wash: oklch(99% 0.014 103.193);
+  --warning-foreground: oklch(26.9% 0.074 45.635);
+  --danger-soft: oklch(97.1% 0.013 17.38);
   color: var(--foreground);
   background: var(--background);
-  font-family: "Avenir Next", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
@@ -55,10 +59,9 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(to right, oklch(45.5% 0.095 184 / 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(57% 0.13 72 / 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% -12rem, oklch(96.8% 0 0), transparent 38rem),
+    linear-gradient(180deg, oklch(100% 0 0), var(--background) 34rem),
     var(--background);
-  background-size: 28px 28px;
 }
 
 button,
@@ -81,7 +84,7 @@ button:disabled {
 }
 
 ::selection {
-  background: oklch(45.5% 0.095 184 / 0.2);
+  background: oklch(20.5% 0 0 / 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {

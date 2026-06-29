@@ -9,7 +9,7 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel, SectionHeader } from '../ui/Card'
 import { PageHeader } from '../ui/PageHeader'
-import { ActionTile, MetricTile, SemanticSurface } from '../ui/SemanticSurface'
+import { MetricTile, SemanticSurface } from '../ui/SemanticSurface'
 import { semanticTone, type SemanticTone } from '../ui/semanticTone'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'
 import { cn } from '../ui/utils'
@@ -116,9 +116,9 @@ export function GuidedOpsWorkspace({ resources = {}, submitting = false, onSubmi
           icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
         />
         <Tabs value={activeGroup} onValueChange={setActiveGroup} className="p-4">
-          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-[var(--muted)]/60">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1.5 bg-[var(--muted)]/42">
             {workflowGroups.map((group) => (
-              <TabsTrigger key={group.key} value={group.key} className={cn('min-h-10 flex-1 basis-[180px] justify-start gap-2 border border-transparent px-3 data-[state=active]:border-current', groupColorClass(group.tone).tab)}>
+              <TabsTrigger key={group.key} value={group.key} className={cn('min-h-10 flex-1 basis-[180px] justify-start gap-2 border border-transparent px-3 text-[var(--muted-foreground)] data-[state=active]:border-current data-[state=active]:bg-[var(--card)]', groupColorClass(group.tone).tab)}>
                 <span>{group.title}</span>
                 <Badge aria-hidden="true">{new Intl.NumberFormat('zh-CN').format(group.ids.length)}</Badge>
               </TabsTrigger>
@@ -249,27 +249,41 @@ function formatDraftTime(value: string) {
 function WorkflowCard({ workflow, onOpen }: { workflow: GuidedWorkflow; onOpen: (workflow: GuidedWorkflow) => void }) {
   const [expanded, setExpanded] = useState(false)
   const tone = workflowTone(workflow.tone)
+  const colors = semanticTone(tone)
   return (
-    <article>
-      <ActionTile
-        title={workflow.title}
-        description={workflow.intent}
-        actionLabel="开始填写"
-        actionIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
-        badge={toneLabels[workflow.tone]}
-        icon={<Plus className="h-4 w-4" aria-hidden="true" />}
-        tone={tone}
-        onClick={() => onOpen(workflow)}
-      />
-      {expanded ? <p className="mt-3 rounded-md border border-[var(--border)] bg-[var(--muted)]/20 px-3 py-2 text-xs leading-5 text-[var(--muted-foreground)] [overflow-wrap:anywhere]">{workflow.description}</p> : null}
-      <button
-        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] transition hover:text-[var(--accent-foreground)]"
-        onClick={() => setExpanded((current) => !current)}
-        type="button"
-      >
-        {expanded ? '收起细节' : '查看细节'}
-        <ChevronDown className={expanded ? 'h-3.5 w-3.5 rotate-180 transition' : 'h-3.5 w-3.5 transition'} aria-hidden="true" />
-      </button>
+    <article className={cn('group relative flex min-h-44 flex-col overflow-hidden rounded-md border p-4 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md', colors.surface)}>
+      <span aria-hidden="true" className={cn('absolute inset-x-0 top-0 h-1', colors.accent)} />
+      <div className="flex items-start justify-between gap-3">
+        <span className={cn('inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-current/10 bg-[var(--card)] shadow-sm', colors.emphasis)}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <Badge tone={colors.badge}>{toneLabels[workflow.tone]}</Badge>
+      </div>
+      <div className="mt-4 min-w-0">
+        <h4 className="font-semibold leading-5 text-[var(--foreground)] [overflow-wrap:anywhere]">{workflow.title}</h4>
+        <p className="mt-1 min-h-10 text-sm leading-5 text-[var(--muted-foreground)] [overflow-wrap:anywhere]">{workflow.intent}</p>
+      </div>
+      {expanded ? <p className="mt-3 rounded-md border border-[var(--border)] bg-[var(--card)]/70 px-3 py-2 text-xs leading-5 text-[var(--muted-foreground)] shadow-inner [overflow-wrap:anywhere]">{workflow.description}</p> : null}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
+        <button
+          aria-label={`开始填写：${workflow.title}`}
+          className={cn('inline-flex min-h-9 items-center gap-1 rounded-md bg-[var(--card)]/72 px-2.5 text-xs font-semibold shadow-sm transition hover:-translate-y-px hover:bg-[var(--card)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]', colors.emphasis)}
+          onClick={() => onOpen(workflow)}
+          type="button"
+        >
+          开始填写
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <button
+          aria-expanded={expanded}
+          className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-[var(--muted-foreground)] transition hover:bg-[var(--secondary)] hover:text-[var(--foreground)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
+          onClick={() => setExpanded((current) => !current)}
+          type="button"
+        >
+          {expanded ? '收起细节' : '查看细节'}
+          <ChevronDown className={expanded ? 'h-3.5 w-3.5 rotate-180 transition' : 'h-3.5 w-3.5 transition'} aria-hidden="true" />
+        </button>
+      </div>
     </article>
   )
 }
