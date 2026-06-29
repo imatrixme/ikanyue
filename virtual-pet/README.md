@@ -37,6 +37,8 @@ npm run assets:pets:v13
 npm run assets:validate:v13
 npm run assets:pets:v14
 npm run assets:validate:v14
+npm run assets:pets:v15
+npm run assets:validate:v15
 ```
 
 ## Structure
@@ -55,6 +57,7 @@ npm run assets:validate:v14
 - `assets-src/pets/v12/`: V12 body-anchor-stabilized Goldie idle frames derived from the V11 Agent Sprite Forge output.
 - `assets-src/pets/v13/`: V13 continuous Goldie idle loop rebuilt from the smoothest V12 stabilized frame segment with a localized blink overlay.
 - `assets-src/pets/v14/`: V14 Goldie action set with per-action Agent Sprite Forge sheets, idle-aligned stabilization, and 64-frame runtime interpolation.
+- `assets-src/pets/v15/`: V15 Gorest-style experimental normalization from whole raw Forge sheets, using auto grid detection, fixed fish-body anchoring, metadata, and review strips without changing runtime manifests.
 - `src/assets/pets/frames-v4/`: generated normalized runtime pet animation frames.
 - `src/assets/pets/frames-v5/`: generated V5 runtime frames for selected source-rendered pet actions.
 - `src/assets/pets/frames-v6/`: generated V6 low-resolution pixel-art runtime frames for selected pet actions.

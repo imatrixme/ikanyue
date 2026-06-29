@@ -1,0 +1,1752 @@
+{
+  "actionId": "sleep",
+  "frameCount": 32,
+  "frameSize": [
+    640,
+    640
+  ],
+  "generationMode": "existing-v14-forge-sheet-postprocess-only",
+  "gridDetection": {
+    "mode": "auto_detected",
+    "xBounds": [
+      14,
+      235,
+      454,
+      673,
+      894,
+      1111,
+      1328,
+      1546,
+      1764
+    ],
+    "xRuns": [
+      [
+        46,
+        202
+      ],
+      [
+        269,
+        422
+      ],
+      [
+        485,
+        641
+      ],
+      [
+        707,
+        860
+      ],
+      [
+        921,
+        1086
+      ],
+      [
+        1141,
+        1296
+      ],
+      [
+        1358,
+        1518
+      ],
+      [
+        1577,
+        1732
+      ]
+    ],
+    "yBounds": [
+      48,
+      265,
+      482,
+      679,
+      876
+    ],
+    "yRuns": [
+      [
+        80,
+        226
+      ],
+      [
+        302,
+        451
+      ],
+      [
+        522,
+        652
+      ],
+      [
+        707,
+        834
+      ]
+    ]
+  },
+  "normalizedSheetPath": "assets-src/pets/v15/normalized/sleep/goldie-sleep-v15-normalized-sheet.png",
+  "proportionPolicy": "one_global_uniform_scale_no_per_frame_scale",
+  "reviewStripPath": "assets-src/pets/v15/review/goldie-sleep-v15-strip.webp",
+  "rootAnchorPolicy": "fixed_goldfish_body_anchor_tail_excluded",
+  "runtimeFrameCount": 64,
+  "runtimeFramePaths": [
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-01.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-02.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-03.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-04.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-05.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-06.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-07.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-08.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-09.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-10.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-11.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-12.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-13.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-14.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-15.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-16.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-17.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-18.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-19.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-20.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-21.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-22.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-23.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-24.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-25.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-26.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-27.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-28.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-29.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-30.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-31.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-32.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-33.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-34.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-35.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-36.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-37.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-38.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-39.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-40.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-41.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-42.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-43.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-44.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-45.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-46.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-47.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-48.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-49.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-50.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-51.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-52.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-53.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-54.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-55.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-56.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-57.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-58.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-59.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-60.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-61.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-62.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-63.webp",
+    "assets-src/pets/v15/normalized/sleep/runtime-preview/goldie-sleep-64.webp"
+  ],
+  "scale": 2.8194557823129256,
+  "sourceCells": [
+    [
+      16,
+      50,
+      233,
+      263
+    ],
+    [
+      237,
+      50,
+      452,
+      263
+    ],
+    [
+      456,
+      50,
+      671,
+      263
+    ],
+    [
+      675,
+      50,
+      892,
+      263
+    ],
+    [
+      896,
+      50,
+      1109,
+      263
+    ],
+    [
+      1113,
+      50,
+      1326,
+      263
+    ],
+    [
+      1330,
+      50,
+      1544,
+      263
+    ],
+    [
+      1548,
+      50,
+      1762,
+      263
+    ],
+    [
+      16,
+      267,
+      233,
+      480
+    ],
+    [
+      237,
+      267,
+      452,
+      480
+    ],
+    [
+      456,
+      267,
+      671,
+      480
+    ],
+    [
+      675,
+      267,
+      892,
+      480
+    ],
+    [
+      896,
+      267,
+      1109,
+      480
+    ],
+    [
+      1113,
+      267,
+      1326,
+      480
+    ],
+    [
+      1330,
+      267,
+      1544,
+      480
+    ],
+    [
+      1548,
+      267,
+      1762,
+      480
+    ],
+    [
+      16,
+      484,
+      233,
+      677
+    ],
+    [
+      237,
+      484,
+      452,
+      677
+    ],
+    [
+      456,
+      484,
+      671,
+      677
+    ],
+    [
+      675,
+      484,
+      892,
+      677
+    ],
+    [
+      896,
+      484,
+      1109,
+      677
+    ],
+    [
+      1113,
+      484,
+      1326,
+      677
+    ],
+    [
+      1330,
+      484,
+      1544,
+      677
+    ],
+    [
+      1548,
+      484,
+      1762,
+      677
+    ],
+    [
+      16,
+      681,
+      233,
+      874
+    ],
+    [
+      237,
+      681,
+      452,
+      874
+    ],
+    [
+      456,
+      681,
+      671,
+      874
+    ],
+    [
+      675,
+      681,
+      892,
+      874
+    ],
+    [
+      896,
+      681,
+      1109,
+      874
+    ],
+    [
+      1113,
+      681,
+      1326,
+      874
+    ],
+    [
+      1330,
+      681,
+      1544,
+      874
+    ],
+    [
+      1548,
+      681,
+      1762,
+      874
+    ]
+  ],
+  "sourceSheet": "assets-src/pets/v14/source/goldie-sleep-32-sheet-forge.png",
+  "sourceSheetSize": [
+    1774,
+    887
+  ],
+  "stableFramePaths": [
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-01.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-02.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-03.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-04.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-05.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-06.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-07.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-08.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-09.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-10.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-11.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-12.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-13.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-14.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-15.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-16.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-17.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-18.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-19.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-20.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-21.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-22.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-23.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-24.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-25.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-26.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-27.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-28.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-29.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-30.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-31.png",
+    "assets-src/pets/v15/normalized/sleep/goldie-sleep-32.png"
+  ],
+  "strategy": "gorest-style-auto-grid-fixed-fish-body-anchor-v1",
+  "targetAnchor": {
+    "x": 250.3281451940437,
+    "y": 315.2786216503939
+  },
+  "metrics": {
+    "runtimeBodySteps": {
+      "max": 3.8750433685758585,
+      "mean": 0.7935333729911381,
+      "steps": [
+        1.0987632319371774,
+        0.9482886650494602,
+        0.842466822089543,
+        0.6967198285817259,
+        0.870494539418032,
+        1.177359493376256,
+        0.5365228705873505,
+        1.2755418224046078,
+        1.4126038611620109,
+        1.0106831465309432,
+        0.08212361658706847,
+        0.6635370122007682,
+        0.613726746646039,
+        0.9312573549211505,
+        0.8591057112625092,
+        1.5390937738378891,
+        0.17275682454186742,
+        0.7615830758645672,
+        0.754146481343324,
+        0.24186609837401293,
+        0.355973827901294,
+        0.6799555364633091,
+        0.36031058172639713,
+        0.44068720524423577,
+        0.55505327867505,
+        0.3746198652105424,
+        0.3448776511677482,
+        0.3616062355652956,
+        0.1526410010945626,
+        0.2758817925432585,
+        1.3870696808255332,
+        2.7609944593266706,
+        3.8750433685758585,
+        0.7814428031127647,
+        0.5373137513904951,
+        0.2923851355851194,
+        0.9176664330933086,
+        1.08961564726131,
+        0.7767780302607811,
+        1.4627264384257999,
+        1.689798626574139,
+        0.7672673235307689,
+        0.11617774588519036,
+        0.5832072617371222,
+        0.33388684575905303,
+        0.28288381864657214,
+        1.1268487738090405,
+        1.4157473977420465,
+        0.2300155992655863,
+        0.5023729033830104,
+        0.4216294864301751,
+        0.5876036548427025,
+        1.104188701463402,
+        0.6572890570683956,
+        0.2442523340828006,
+        1.3314374349665248,
+        0.5997005194065097,
+        0.5387664680045469,
+        0.27161941500910197,
+        0.8422906848132078,
+        0.5670598156491127,
+        0.60253498467083,
+        0.9047399455362379
+      ],
+      "terminalStep": 0.10694304935137074
+    },
+    "stabilizedBodySteps": {
+      "max": 1.6674628501480422,
+      "mean": 0.7170088827656564,
+      "steps": [
+        0.1565043048198382,
+        1.2136132261572767,
+        0.9925061007368158,
+        1.0876605411846365,
+        0.6252377748492208,
+        0.8173001434403242,
+        0.8137712304333633,
+        1.1025249894033902,
+        0.9012402966144502,
+        0.45516161199178296,
+        0.8019456808946016,
+        0.6634850264046379,
+        0.2668760464227445,
+        0.7285791801143139,
+        0.10552705442782041,
+        0.5293193275972226,
+        0.768275573581302,
+        0.6984635858796399,
+        1.4785396389938008,
+        0.8795417658568953,
+        0.47793090835047664,
+        0.9448885187307188,
+        0.07080678416365999,
+        0.7237301449171588,
+        0.7841145141537385,
+        0.5897823616409784,
+        0.8555695757283849,
+        1.6674628501480422,
+        0.38836735664031075,
+        0.33410338004928514,
+        0.3044458714085145
+      ],
+      "terminalStep": 0.10694304935137074
+    },
+    "stableFrames": [
+      {
+        "afterBodyAnchor": {
+          "x": 251.4559468327241,
+          "y": 316.4643625311314
+        },
+        "afterBounds": {
+          "maxX": 541,
+          "maxY": 508,
+          "minX": 102,
+          "minY": 100
+        },
+        "beforeBodyAnchor": {
+          "x": 82.66615533555702,
+          "y": 106.31299623787791
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 174,
+          "minX": 30,
+          "minY": 30
+        },
+        "paste": {
+          "x": 102,
+          "y": 100
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          16,
+          50,
+          233,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 99,
+        "frame": 1
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.601372673365,
+          "y": 316.40652722789
+        },
+        "afterBounds": {
+          "maxX": 534,
+          "maxY": 510,
+          "minX": 104,
+          "minY": 102
+        },
+        "beforeBodyAnchor": {
+          "x": 85.07048871233306,
+          "y": 107.5742795813272
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 176,
+          "minX": 33,
+          "minY": 32
+        },
+        "paste": {
+          "x": 104,
+          "y": 102
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          237,
+          50,
+          452,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 102,
+        "frame": 2
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.72360339342256,
+          "y": 317.2446072681566
+        },
+        "afterBounds": {
+          "maxX": 532,
+          "maxY": 513,
+          "minX": 104,
+          "minY": 102
+        },
+        "beforeBodyAnchor": {
+          "x": 85.91613669944356,
+          "y": 105.81571264640577
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 175,
+          "minX": 34,
+          "minY": 30
+        },
+        "paste": {
+          "x": 104,
+          "y": 102
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          456,
+          50,
+          671,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 102,
+        "frame": 3
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.16341713512503,
+          "y": 316.35487009763403
+        },
+        "afterBounds": {
+          "maxX": 535,
+          "maxY": 506,
+          "minX": 105,
+          "minY": 104
+        },
+        "beforeBodyAnchor": {
+          "x": 84.56564950851521,
+          "y": 106.91249117075225
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 174,
+          "minX": 33,
+          "minY": 32
+        },
+        "paste": {
+          "x": 105,
+          "y": 104
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          675,
+          50,
+          892,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 4
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.36367645507914,
+          "y": 317.09204056471054
+        },
+        "afterBounds": {
+          "maxX": 545,
+          "maxY": 504,
+          "minX": 98,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 85.94452298643,
+          "y": 107.93033711554428
+        },
+        "beforeBounds": {
+          "maxX": 190,
+          "maxY": 174,
+          "minX": 32,
+          "minY": 34
+        },
+        "paste": {
+          "x": 98,
+          "y": 107
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          896,
+          50,
+          1109,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 95,
+        "frame": 5
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.98879435475908,
+          "y": 317.10428338293804
+        },
+        "afterBounds": {
+          "maxX": 527,
+          "maxY": 503,
+          "minX": 108,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 83.46320047193059,
+          "y": 110.3209578309606
+        },
+        "beforeBounds": {
+          "maxX": 181,
+          "maxY": 176,
+          "minX": 33,
+          "minY": 37
+        },
+        "paste": {
+          "x": 108,
+          "y": 109
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1113,
+          50,
+          1326,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 108,
+        "frame": 6
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.3830972870525,
+          "y": 316.5555479397241
+        },
+        "afterBounds": {
+          "maxX": 531,
+          "maxY": 508,
+          "minX": 103,
+          "minY": 106
+        },
+        "beforeBodyAnchor": {
+          "x": 84.16132823777866,
+          "y": 105.23900336734549
+        },
+        "beforeBounds": {
+          "maxX": 183,
+          "maxY": 173,
+          "minX": 32,
+          "minY": 31
+        },
+        "paste": {
+          "x": 103,
+          "y": 106
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1330,
+          50,
+          1544,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 103,
+        "frame": 7
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.18059652094502,
+          "y": 316.7174694868445
+        },
+        "afterBounds": {
+          "maxX": 525,
+          "maxY": 506,
+          "minX": 106,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 84.24343363147113,
+          "y": 104.9935149302154
+        },
+        "beforeBounds": {
+          "maxX": 181,
+          "maxY": 172,
+          "minX": 33,
+          "minY": 31
+        },
+        "paste": {
+          "x": 106,
+          "y": 107
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1548,
+          50,
+          1762,
+          263
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 8
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.44107907435694,
+          "y": 315.89974380029014
+        },
+        "afterBounds": {
+          "maxX": 535,
+          "maxY": 512,
+          "minX": 102,
+          "minY": 99
+        },
+        "beforeBodyAnchor": {
+          "x": 84.55357096901135,
+          "y": 110.54293992383268
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 180,
+          "minX": 32,
+          "minY": 34
+        },
+        "paste": {
+          "x": 102,
+          "y": 99
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          16,
+          267,
+          233,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 99,
+        "frame": 9
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.18357779015292,
+          "y": 316.7634145482462
+        },
+        "afterBounds": {
+          "maxX": 527,
+          "maxY": 509,
+          "minX": 105,
+          "minY": 104
+        },
+        "beforeBodyAnchor": {
+          "x": 82.41203826559305,
+          "y": 112.99788387199811
+        },
+        "beforeBounds": {
+          "maxX": 180,
+          "maxY": 181,
+          "minX": 31,
+          "minY": 38
+        },
+        "paste": {
+          "x": 105,
+          "y": 104
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          237,
+          267,
+          452,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 10
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.37991249415782,
+          "y": 316.35277507494357
+        },
+        "afterBounds": {
+          "maxX": 534,
+          "maxY": 504,
+          "minX": 101,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 81.80174245675562,
+          "y": 114.63650645327647
+        },
+        "beforeBounds": {
+          "maxX": 182,
+          "maxY": 181,
+          "minX": 29,
+          "minY": 42
+        },
+        "paste": {
+          "x": 101,
+          "y": 110
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          456,
+          267,
+          671,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 101,
+        "frame": 11
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.53900859868315,
+          "y": 317.13878099389734
+        },
+        "afterBounds": {
+          "maxX": 528,
+          "maxY": 503,
+          "minX": 106,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 84.13682220299029,
+          "y": 116.305536107844
+        },
+        "beforeBounds": {
+          "maxX": 182,
+          "maxY": 182,
+          "minX": 33,
+          "minY": 43
+        },
+        "paste": {
+          "x": 106,
+          "y": 109
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          675,
+          267,
+          892,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 12
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.9111658730065,
+          "y": 316.5894984223266
+        },
+        "afterBounds": {
+          "maxX": 526,
+          "maxY": 501,
+          "minX": 107,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 81.78702995136156,
+          "y": 117.82901338153057
+        },
+        "beforeBounds": {
+          "maxX": 179,
+          "maxY": 183,
+          "minX": 31,
+          "minY": 44
+        },
+        "paste": {
+          "x": 107,
+          "y": 107
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          896,
+          267,
+          1109,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 13
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.98977247142253,
+          "y": 316.8445353350269
+        },
+        "afterBounds": {
+          "maxX": 529,
+          "maxY": 500,
+          "minX": 107,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 84.94650011654716,
+          "y": 118.23385397715276
+        },
+        "beforeBounds": {
+          "maxX": 183,
+          "maxY": 183,
+          "minX": 34,
+          "minY": 45
+        },
+        "paste": {
+          "x": 107,
+          "y": 109
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1113,
+          267,
+          1326,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 14
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.8396623678321,
+          "y": 316.13158752592994
+        },
+        "afterBounds": {
+          "maxX": 529,
+          "maxY": 500,
+          "minX": 107,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 89.90591838276669,
+          "y": 117.99050668776954
+        },
+        "beforeBounds": {
+          "maxX": 188,
+          "maxY": 183,
+          "minX": 39,
+          "minY": 45
+        },
+        "paste": {
+          "x": 107,
+          "y": 109
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1330,
+          267,
+          1544,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 15
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.74658106907665,
+          "y": 316.1813050383196
+        },
+        "afterBounds": {
+          "maxX": 527,
+          "maxY": 498,
+          "minX": 108,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 86.37831535745207,
+          "y": 118.71088220223687
+        },
+        "beforeBounds": {
+          "maxX": 184,
+          "maxY": 183,
+          "minX": 36,
+          "minY": 46
+        },
+        "paste": {
+          "x": 108,
+          "y": 110
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1548,
+          267,
+          1762,
+          480
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 108,
+        "frame": 16
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.64865246509015,
+          "y": 316.70148667879647
+        },
+        "afterBounds": {
+          "maxX": 533,
+          "maxY": 473,
+          "minX": 105,
+          "minY": 124
+        },
+        "beforeBodyAnchor": {
+          "x": 84.57652265501633,
+          "y": 105.8049326735662
+        },
+        "beforeBounds": {
+          "maxX": 184,
+          "maxY": 161,
+          "minX": 33,
+          "minY": 38
+        },
+        "paste": {
+          "x": 105,
+          "y": 124
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          16,
+          484,
+          233,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 105,
+        "frame": 17
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.3192746474627,
+          "y": 316.3266357144499
+        },
+        "afterBounds": {
+          "maxX": 526,
+          "maxY": 475,
+          "minX": 110,
+          "minY": 121
+        },
+        "beforeBodyAnchor": {
+          "x": 82.70586564408465,
+          "y": 106.82403067746058
+        },
+        "beforeBounds": {
+          "maxX": 180,
+          "maxY": 163,
+          "minX": 33,
+          "minY": 38
+        },
+        "paste": {
+          "x": 110,
+          "y": 121
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          237,
+          484,
+          452,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 18
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.4994110319171,
+          "y": 317.0014707044997
+        },
+        "afterBounds": {
+          "maxX": 528,
+          "maxY": 477,
+          "minX": 109,
+          "minY": 120
+        },
+        "beforeBodyAnchor": {
+          "x": 82.28507607661187,
+          "y": 107.34566973255177
+        },
+        "beforeBounds": {
+          "maxX": 180,
+          "maxY": 164,
+          "minX": 32,
+          "minY": 38
+        },
+        "paste": {
+          "x": 109,
+          "y": 120
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          456,
+          484,
+          671,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 19
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.75122006229032,
+          "y": 315.7262100499491
+        },
+        "afterBounds": {
+          "maxX": 536,
+          "maxY": 473,
+          "minX": 106,
+          "minY": 122
+        },
+        "beforeBodyAnchor": {
+          "x": 83.09861054903548,
+          "y": 106.47349251315256
+        },
+        "beforeBounds": {
+          "maxX": 184,
+          "maxY": 162,
+          "minX": 32,
+          "minY": 38
+        },
+        "paste": {
+          "x": 106,
+          "y": 122
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          675,
+          484,
+          892,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 20
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.8850840037934,
+          "y": 316.59550526047997
+        },
+        "afterBounds": {
+          "maxX": 525,
+          "maxY": 481,
+          "minX": 109,
+          "minY": 118
+        },
+        "beforeBodyAnchor": {
+          "x": 73.95566981656476,
+          "y": 107.93010005558644
+        },
+        "beforeBounds": {
+          "maxX": 171,
+          "maxY": 166,
+          "minX": 24,
+          "minY": 38
+        },
+        "paste": {
+          "x": 109,
+          "y": 118
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          896,
+          484,
+          1109,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 21
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.41032851080539,
+          "y": 316.54050366928095
+        },
+        "afterBounds": {
+          "maxX": 520,
+          "maxY": 475,
+          "minX": 112,
+          "minY": 121
+        },
+        "beforeBodyAnchor": {
+          "x": 76.92248753731519,
+          "y": 113.82394124630211
+        },
+        "beforeBounds": {
+          "maxX": 172,
+          "maxY": 170,
+          "minX": 28,
+          "minY": 45
+        },
+        "paste": {
+          "x": 112,
+          "y": 121
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1113,
+          484,
+          1326,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 112,
+        "frame": 22
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.35456581347555,
+          "y": 316.57557829080866
+        },
+        "afterBounds": {
+          "maxX": 523,
+          "maxY": 479,
+          "minX": 110,
+          "minY": 119
+        },
+        "beforeBodyAnchor": {
+          "x": 84.9059951443251,
+          "y": 109.53791093976305
+        },
+        "beforeBounds": {
+          "maxX": 181,
+          "maxY": 167,
+          "minX": 35,
+          "minY": 40
+        },
+        "paste": {
+          "x": 110,
+          "y": 119
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1330,
+          484,
+          1544,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 23
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.29103686211417,
+          "y": 316.60684605412047
+        },
+        "afterBounds": {
+          "maxX": 523,
+          "maxY": 477,
+          "minX": 110,
+          "minY": 120
+        },
+        "beforeBodyAnchor": {
+          "x": 79.88399378546069,
+          "y": 108.22546806164343
+        },
+        "beforeBounds": {
+          "maxX": 176,
+          "maxY": 165,
+          "minX": 30,
+          "minY": 39
+        },
+        "paste": {
+          "x": 110,
+          "y": 120
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1548,
+          484,
+          1762,
+          677
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 24
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.66531755934662,
+          "y": 316.97052266431956
+        },
+        "afterBounds": {
+          "maxX": 533,
+          "maxY": 472,
+          "minX": 105,
+          "minY": 123
+        },
+        "beforeBodyAnchor": {
+          "x": 85.56204215126142,
+          "y": 95.28608031267387
+        },
+        "beforeBounds": {
+          "maxX": 185,
+          "maxY": 150,
+          "minX": 34,
+          "minY": 27
+        },
+        "paste": {
+          "x": 105,
+          "y": 123
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          16,
+          681,
+          233,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 105,
+        "frame": 25
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.39005645284277,
+          "y": 316.6712082684738
+        },
+        "afterBounds": {
+          "maxX": 536,
+          "maxY": 475,
+          "minX": 106,
+          "minY": 121
+        },
+        "beforeBodyAnchor": {
+          "x": 82.26027816732406,
+          "y": 95.90480263634194
+        },
+        "beforeBounds": {
+          "maxX": 183,
+          "maxY": 152,
+          "minX": 31,
+          "minY": 27
+        },
+        "paste": {
+          "x": 106,
+          "y": 121
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          237,
+          681,
+          452,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 26
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.94125585793412,
+          "y": 316.28855795799115
+        },
+        "afterBounds": {
+          "maxX": 529,
+          "maxY": 475,
+          "minX": 107,
+          "minY": 121
+        },
+        "beforeBodyAnchor": {
+          "x": 78.9276403342189,
+          "y": 95.77181085313343
+        },
+        "beforeBounds": {
+          "maxX": 177,
+          "maxY": 152,
+          "minX": 28,
+          "minY": 27
+        },
+        "paste": {
+          "x": 107,
+          "y": 121
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          456,
+          681,
+          671,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 27
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.46961803904648,
+          "y": 317.00239061814824
+        },
+        "afterBounds": {
+          "maxX": 529,
+          "maxY": 477,
+          "minX": 107,
+          "minY": 120
+        },
+        "beforeBodyAnchor": {
+          "x": 81.77072769631356,
+          "y": 95.33369878032067
+        },
+        "beforeBounds": {
+          "maxX": 180,
+          "maxY": 152,
+          "minX": 31,
+          "minY": 26
+        },
+        "paste": {
+          "x": 107,
+          "y": 120
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          675,
+          681,
+          892,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 28
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.96203173670716,
+          "y": 316.2586610223551
+        },
+        "afterBounds": {
+          "maxX": 532,
+          "maxY": 475,
+          "minX": 107,
+          "minY": 121
+        },
+        "beforeBodyAnchor": {
+          "x": 79.93347319451394,
+          "y": 94.79345501945733
+        },
+        "beforeBounds": {
+          "maxX": 179,
+          "maxY": 151,
+          "minX": 29,
+          "minY": 26
+        },
+        "paste": {
+          "x": 107,
+          "y": 121
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          896,
+          681,
+          1109,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 29
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.61054074158744,
+          "y": 316.4238375462728
+        },
+        "afterBounds": {
+          "maxX": 531,
+          "maxY": 472,
+          "minX": 106,
+          "minY": 123
+        },
+        "beforeBodyAnchor": {
+          "x": 79.23551107387942,
+          "y": 94.10771264626152
+        },
+        "beforeBounds": {
+          "maxX": 178,
+          "maxY": 149,
+          "minX": 28,
+          "minY": 26
+        },
+        "paste": {
+          "x": 106,
+          "y": 123
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1113,
+          681,
+          1326,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 30
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.65506516385918,
+          "y": 316.7549608531869
+        },
+        "afterBounds": {
+          "maxX": 527,
+          "maxY": 478,
+          "minX": 111,
+          "minY": 118
+        },
+        "beforeBodyAnchor": {
+          "x": 76.50138619351262,
+          "y": 94.93484890490713
+        },
+        "beforeBounds": {
+          "maxX": 174,
+          "maxY": 152,
+          "minX": 27,
+          "minY": 25
+        },
+        "paste": {
+          "x": 111,
+          "y": 118
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1330,
+          681,
+          1544,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 111,
+        "frame": 31
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.41775198797083,
+          "y": 316.5642523185916
+        },
+        "afterBounds": {
+          "maxX": 526,
+          "maxY": 472,
+          "minX": 110,
+          "minY": 123
+        },
+        "beforeBodyAnchor": {
+          "x": 77.81598976805499,
+          "y": 95.16689515170809
+        },
+        "beforeBounds": {
+          "maxX": 175,
+          "maxY": 150,
+          "minX": 28,
+          "minY": 27
+        },
+        "paste": {
+          "x": 110,
+          "y": 123
+        },
+        "scale": 2.8194557823129256,
+        "sourceCell": [
+          1548,
+          681,
+          1762,
+          874
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 315.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 32
+      }
+    ]
+  }
+}

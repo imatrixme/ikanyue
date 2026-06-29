@@ -1,0 +1,1754 @@
+{
+  "actionId": "weak",
+  "frameCount": 32,
+  "frameSize": [
+    640,
+    640
+  ],
+  "generationMode": "existing-v14-forge-sheet-postprocess-only",
+  "gridDetection": {
+    "mode": "auto_detected",
+    "xBounds": [
+      14,
+      219,
+      424,
+      628,
+      834,
+      1041,
+      1247,
+      1453,
+      1659
+    ],
+    "xRuns": [
+      [
+        58,
+        175
+      ],
+      [
+        263,
+        380
+      ],
+      [
+        466,
+        585
+      ],
+      [
+        673,
+        787
+      ],
+      [
+        880,
+        996
+      ],
+      [
+        1085,
+        1203
+      ],
+      [
+        1292,
+        1407
+      ],
+      [
+        1499,
+        1613
+      ]
+    ],
+    "yBounds": [
+      53,
+      273,
+      493,
+      703,
+      913
+    ],
+    "yRuns": [
+      [
+        96,
+        228
+      ],
+      [
+        318,
+        449
+      ],
+      [
+        539,
+        666
+      ],
+      [
+        738,
+        868
+      ]
+    ]
+  },
+  "normalizedSheetPath": "assets-src/pets/v15/normalized/weak/goldie-weak-v15-normalized-sheet.png",
+  "proportionPolicy": "one_global_uniform_scale_no_per_frame_scale",
+  "reviewStripPath": "assets-src/pets/v15/review/goldie-weak-v15-strip.webp",
+  "rootAnchorPolicy": "fixed_goldfish_body_anchor_tail_excluded",
+  "runtimeFrameCount": 64,
+  "runtimeFramePaths": [
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-01.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-02.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-03.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-04.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-05.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-06.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-07.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-08.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-09.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-10.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-11.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-12.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-13.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-14.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-15.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-16.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-17.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-18.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-19.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-20.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-21.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-22.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-23.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-24.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-25.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-26.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-27.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-28.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-29.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-30.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-31.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-32.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-33.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-34.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-35.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-36.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-37.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-38.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-39.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-40.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-41.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-42.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-43.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-44.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-45.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-46.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-47.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-48.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-49.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-50.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-51.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-52.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-53.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-54.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-55.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-56.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-57.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-58.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-59.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-60.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-61.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-62.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-63.webp",
+    "assets-src/pets/v15/normalized/weak/runtime-preview/goldie-weak-64.webp"
+  ],
+  "scale": 3.1750375939849627,
+  "sourceCells": [
+    [
+      16,
+      55,
+      217,
+      271
+    ],
+    [
+      221,
+      55,
+      422,
+      271
+    ],
+    [
+      426,
+      55,
+      626,
+      271
+    ],
+    [
+      630,
+      55,
+      832,
+      271
+    ],
+    [
+      836,
+      55,
+      1039,
+      271
+    ],
+    [
+      1043,
+      55,
+      1245,
+      271
+    ],
+    [
+      1249,
+      55,
+      1451,
+      271
+    ],
+    [
+      1455,
+      55,
+      1657,
+      271
+    ],
+    [
+      16,
+      275,
+      217,
+      491
+    ],
+    [
+      221,
+      275,
+      422,
+      491
+    ],
+    [
+      426,
+      275,
+      626,
+      491
+    ],
+    [
+      630,
+      275,
+      832,
+      491
+    ],
+    [
+      836,
+      275,
+      1039,
+      491
+    ],
+    [
+      1043,
+      275,
+      1245,
+      491
+    ],
+    [
+      1249,
+      275,
+      1451,
+      491
+    ],
+    [
+      1455,
+      275,
+      1657,
+      491
+    ],
+    [
+      16,
+      495,
+      217,
+      701
+    ],
+    [
+      221,
+      495,
+      422,
+      701
+    ],
+    [
+      426,
+      495,
+      626,
+      701
+    ],
+    [
+      630,
+      495,
+      832,
+      701
+    ],
+    [
+      836,
+      495,
+      1039,
+      701
+    ],
+    [
+      1043,
+      495,
+      1245,
+      701
+    ],
+    [
+      1249,
+      495,
+      1451,
+      701
+    ],
+    [
+      1455,
+      495,
+      1657,
+      701
+    ],
+    [
+      16,
+      705,
+      217,
+      911
+    ],
+    [
+      221,
+      705,
+      422,
+      911
+    ],
+    [
+      426,
+      705,
+      626,
+      911
+    ],
+    [
+      630,
+      705,
+      832,
+      911
+    ],
+    [
+      836,
+      705,
+      1039,
+      911
+    ],
+    [
+      1043,
+      705,
+      1245,
+      911
+    ],
+    [
+      1249,
+      705,
+      1451,
+      911
+    ],
+    [
+      1455,
+      705,
+      1657,
+      911
+    ]
+  ],
+  "sourceSheet": "assets-src/pets/v14/source/goldie-weak-32-sheet-forge.png",
+  "sourceSheetSize": [
+    1672,
+    941
+  ],
+  "stableFramePaths": [
+    "assets-src/pets/v15/normalized/weak/goldie-weak-01.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-02.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-03.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-04.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-05.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-06.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-07.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-08.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-09.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-10.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-11.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-12.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-13.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-14.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-15.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-16.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-17.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-18.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-19.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-20.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-21.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-22.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-23.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-24.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-25.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-26.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-27.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-28.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-29.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-30.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-31.png",
+    "assets-src/pets/v15/normalized/weak/goldie-weak-32.png"
+  ],
+  "strategy": "gorest-style-auto-grid-fixed-fish-body-anchor-v1",
+  "targetAnchor": {
+    "x": 250.3281451940437,
+    "y": 319.2786216503939
+  },
+  "metrics": {
+    "runtimeBodySteps": {
+      "max": 1.5844204649281763,
+      "mean": 0.583782425492537,
+      "steps": [
+        0.7224532554326605,
+        0.6261134544204047,
+        0.43286627653493776,
+        0.9743944224911726,
+        0.5497639210677188,
+        0.07626189108528633,
+        0.3891863126875516,
+        0.43330353055993315,
+        0.32836191560968686,
+        0.7606334971930339,
+        0.8358760777153268,
+        1.242450051042463,
+        0.24032871387948795,
+        0.338092929455476,
+        0.42421266809089764,
+        0.7816363532762518,
+        0.7387814408530938,
+        0.2450463768917706,
+        0.11733675003458435,
+        1.5844204649281763,
+        1.0434706941298937,
+        0.10100456370187767,
+        0.4053786493658294,
+        1.0697739506532067,
+        0.3027677645510634,
+        1.2295220703389527,
+        0.44239392345509493,
+        0.4683426480655096,
+        0.35916590444919355,
+        0.3673532831180377,
+        0.45429039257783266,
+        0.31699662989230704,
+        0.08725451808502394,
+        0.04240070036086568,
+        0.9743163135843328,
+        0.45314555549726293,
+        0.6203661741856858,
+        0.15003053369248182,
+        0.15227179013522468,
+        0.6715941845290816,
+        1.320868527257172,
+        0.6357580028283483,
+        0.22755746374794505,
+        0.7543692529241266,
+        0.4195488003239091,
+        0.7075827378566943,
+        0.8994919706143351,
+        1.2745311197955864,
+        1.0510482100102287,
+        0.26214606946728536,
+        0.5714314830431158,
+        0.21033917246288947,
+        0.45490197644265756,
+        0.5604463655701819,
+        0.5059784566881015,
+        0.45438823499364706,
+        0.25952131185441935,
+        1.4496041418600454,
+        0.13192999326133178,
+        0.13105789702952272,
+        0.6134670500016001,
+        0.6209915896123581,
+        1.2774680178154718,
+        1.0142868384427195
+      ],
+      "terminalStep": 1.0142868384427195
+    },
+    "stabilizedBodySteps": {
+      "max": 2.075653483014199,
+      "mean": 0.9089043458936461,
+      "steps": [
+        0.6615627981043802,
+        1.3806945110122713,
+        0.47889297780336193,
+        0.7672264339851166,
+        0.6747109282558913,
+        2.075653483014199,
+        0.18819886365930638,
+        0.4006473786327982,
+        0.5531149501761785,
+        1.485648491959182,
+        0.9496050259029265,
+        0.9347527751422922,
+        1.4838126717260138,
+        0.8792129901431304,
+        0.7264882180435436,
+        0.28534187074648854,
+        0.09521438553051742,
+        1.4271614491603488,
+        0.7106308562821683,
+        0.7391703253757281,
+        1.6713610738257987,
+        0.9668358446618898,
+        0.32162144887947103,
+        2.038117062179289,
+        1.3088221543346532,
+        0.7185583063874333,
+        0.9434140587673816,
+        0.7457462132974884,
+        1.7072744467770617,
+        0.26298621705469905,
+        1.2344537017135346,
+        0.26800715606212777
+      ],
+      "terminalStep": 0.26800715606212777
+    },
+    "stableFrames": [
+      {
+        "afterBodyAnchor": {
+          "x": 251.45904450702648,
+          "y": 320.7565212162508
+        },
+        "afterBounds": {
+          "maxX": 489,
+          "maxY": 515,
+          "minX": 125,
+          "minY": 103
+        },
+        "beforeBodyAnchor": {
+          "x": 84.50773367843051,
+          "y": 110.05948517857956
+        },
+        "beforeBounds": {
+          "maxX": 159,
+          "maxY": 171,
+          "minX": 45,
+          "minY": 42
+        },
+        "paste": {
+          "x": 125,
+          "y": 103
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          16,
+          55,
+          217,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 103,
+        "frame": 1
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.85287874624242,
+          "y": 320.22495755321796
+        },
+        "afterBounds": {
+          "maxX": 493,
+          "maxY": 518,
+          "minX": 123,
+          "minY": 103
+        },
+        "beforeBodyAnchor": {
+          "x": 82.12545623593432,
+          "y": 109.00132584182947
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 171,
+          "minX": 42,
+          "minY": 41
+        },
+        "paste": {
+          "x": 123,
+          "y": 103
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          221,
+          55,
+          422,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 103,
+        "frame": 2
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.65483377781396,
+          "y": 320.9112560206231
+        },
+        "afterBounds": {
+          "maxX": 491,
+          "maxY": 519,
+          "minX": 124,
+          "minY": 104
+        },
+        "beforeBodyAnchor": {
+          "x": 82.78947067998351,
+          "y": 108.84675148801242
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 171,
+          "minX": 43,
+          "minY": 41
+        },
+        "paste": {
+          "x": 124,
+          "y": 104
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          426,
+          55,
+          626,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 3
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.13316246134994,
+          "y": 320.8880147922539
+        },
+        "afterBounds": {
+          "maxX": 486,
+          "maxY": 520,
+          "minX": 128,
+          "minY": 105
+        },
+        "beforeBodyAnchor": {
+          "x": 82.43293849607927,
+          "y": 110.55198248117058
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 173,
+          "minX": 44,
+          "minY": 43
+        },
+        "paste": {
+          "x": 128,
+          "y": 105
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          630,
+          55,
+          832,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 105,
+        "frame": 4
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.55536628687096,
+          "y": 320.3832495183265
+        },
+        "afterBounds": {
+          "maxX": 488,
+          "maxY": 523,
+          "minX": 127,
+          "minY": 102
+        },
+        "beforeBodyAnchor": {
+          "x": 85.96110070513302,
+          "y": 109.3506884724292
+        },
+        "beforeBounds": {
+          "maxX": 160,
+          "maxY": 173,
+          "minX": 47,
+          "minY": 41
+        },
+        "paste": {
+          "x": 127,
+          "y": 102
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          836,
+          55,
+          1039,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 102,
+        "frame": 5
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 249.8860165622618,
+          "y": 320.4681364011387
+        },
+        "afterBounds": {
+          "maxX": 487,
+          "maxY": 517,
+          "minX": 126,
+          "minY": 105
+        },
+        "beforeBodyAnchor": {
+          "x": 85.0506780783373,
+          "y": 109.339320185125
+        },
+        "beforeBounds": {
+          "maxX": 159,
+          "maxY": 171,
+          "minX": 46,
+          "minY": 42
+        },
+        "paste": {
+          "x": 126,
+          "y": 105
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1043,
+          55,
+          1245,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 105,
+        "frame": 6
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.89887022455073,
+          "y": 320.97484885979645
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 519,
+          "minX": 130,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 83.84852600511675,
+          "y": 110.92806088708001
+        },
+        "beforeBounds": {
+          "maxX": 157,
+          "maxY": 173,
+          "minX": 46,
+          "minY": 44
+        },
+        "paste": {
+          "x": 130,
+          "y": 107
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1249,
+          55,
+          1451,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 7
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.81436783271673,
+          "y": 321.143009967241
+        },
+        "afterBounds": {
+          "maxX": 484,
+          "maxY": 519,
+          "minX": 129,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 84.13299992857807,
+          "y": 110.98643674435786
+        },
+        "beforeBounds": {
+          "maxX": 157,
+          "maxY": 173,
+          "minX": 46,
+          "minY": 44
+        },
+        "paste": {
+          "x": 129,
+          "y": 107
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1455,
+          55,
+          1657,
+          271
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 8
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.41719118378649,
+          "y": 321.09038837899175
+        },
+        "afterBounds": {
+          "maxX": 490,
+          "maxY": 518,
+          "minX": 126,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 80.1602125170084,
+          "y": 109.32647401233989
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 171,
+          "minX": 41,
+          "minY": 43
+        },
+        "paste": {
+          "x": 126,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          16,
+          275,
+          217,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 9
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.56583052748638,
+          "y": 320.5576196734423
+        },
+        "afterBounds": {
+          "maxX": 489,
+          "maxY": 518,
+          "minX": 125,
+          "minY": 106
+        },
+        "beforeBodyAnchor": {
+          "x": 81.55413438872688,
+          "y": 109.09113994247768
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 171,
+          "minX": 42,
+          "minY": 42
+        },
+        "paste": {
+          "x": 125,
+          "y": 106
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          221,
+          275,
+          422,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 10
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.08086705059256,
+          "y": 320.6027296939698
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 516,
+          "minX": 124,
+          "minY": 107
+        },
+        "beforeBodyAnchor": {
+          "x": 78.70596486929587,
+          "y": 109.75533963108829
+        },
+        "beforeBounds": {
+          "maxX": 152,
+          "maxY": 171,
+          "minX": 39,
+          "minY": 43
+        },
+        "paste": {
+          "x": 124,
+          "y": 107
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          426,
+          275,
+          626,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 107,
+        "frame": 11
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.02964954635266,
+          "y": 320.64224527266146
+        },
+        "afterBounds": {
+          "maxX": 488,
+          "maxY": 518,
+          "minX": 124,
+          "minY": 106
+        },
+        "beforeBodyAnchor": {
+          "x": 81.69771884090824,
+          "y": 110.12661679700783
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 172,
+          "minX": 42,
+          "minY": 43
+        },
+        "paste": {
+          "x": 124,
+          "y": 106
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          630,
+          275,
+          832,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 12
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.146012490955,
+          "y": 320.33737102815337
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 519,
+          "minX": 124,
+          "minY": 104
+        },
+        "beforeBodyAnchor": {
+          "x": 83.76524013551587,
+          "y": 109.66077092709506
+        },
+        "beforeBounds": {
+          "maxX": 157,
+          "maxY": 172,
+          "minX": 44,
+          "minY": 42
+        },
+        "paste": {
+          "x": 124,
+          "y": 104
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          836,
+          275,
+          1039,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 104,
+        "frame": 13
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.48413963153175,
+          "y": 320.9785541536539
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 518,
+          "minX": 127,
+          "minY": 106
+        },
+        "beforeBodyAnchor": {
+          "x": 84.87403419623003,
+          "y": 111.21885889241665
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 173,
+          "minX": 46,
+          "minY": 44
+        },
+        "paste": {
+          "x": 127,
+          "y": 106
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1043,
+          275,
+          1245,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 106,
+        "frame": 14
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.9368316259157,
+          "y": 320.2248397248036
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 514,
+          "minX": 127,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 84.97906221718935,
+          "y": 112.15815654707121
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 173,
+          "minX": 46,
+          "minY": 46
+        },
+        "paste": {
+          "x": 127,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1249,
+          275,
+          1451,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 15
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.23679300699914,
+          "y": 320.4190845779696
+        },
+        "afterBounds": {
+          "maxX": 488,
+          "maxY": 514,
+          "minX": 124,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 83.72850138974675,
+          "y": 112.21174722050648
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 173,
+          "minX": 44,
+          "minY": 46
+        },
+        "paste": {
+          "x": 124,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1455,
+          275,
+          1657,
+          491
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 16
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.26724547145304,
+          "y": 320.7027968100108
+        },
+        "afterBounds": {
+          "maxX": 484,
+          "maxY": 510,
+          "minX": 126,
+          "minY": 111
+        },
+        "beforeBodyAnchor": {
+          "x": 83.05546961519507,
+          "y": 110.64411375761422
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 170,
+          "minX": 44,
+          "minY": 45
+        },
+        "paste": {
+          "x": 126,
+          "y": 111
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          16,
+          495,
+          217,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 111,
+        "frame": 17
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.24437538234847,
+          "y": 320.7952237445932
+        },
+        "afterBounds": {
+          "maxX": 484,
+          "maxY": 511,
+          "minX": 126,
+          "minY": 112
+        },
+        "beforeBodyAnchor": {
+          "x": 82.05438641295382,
+          "y": 110.34614323058767
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 170,
+          "minX": 43,
+          "minY": 45
+        },
+        "paste": {
+          "x": 126,
+          "y": 112
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          221,
+          495,
+          422,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 112,
+        "frame": 18
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 249.93833207232356,
+          "y": 320.2198624022103
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 512,
+          "minX": 124,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 81.67145873565256,
+          "y": 109.79894689541722
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 170,
+          "minX": 42,
+          "minY": 44
+        },
+        "paste": {
+          "x": 124,
+          "y": 110
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          426,
+          495,
+          626,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 19
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.61357612667572,
+          "y": 320.44131596610663
+        },
+        "afterBounds": {
+          "maxX": 486,
+          "maxY": 512,
+          "minX": 125,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 82.58220977587338,
+          "y": 109.84310674411518
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 170,
+          "minX": 43,
+          "minY": 44
+        },
+        "paste": {
+          "x": 125,
+          "y": 110
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          630,
+          495,
+          832,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 20
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 249.90917057814983,
+          "y": 320.2172945539113
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 511,
+          "minX": 124,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 82.67809741705186,
+          "y": 110.08069120101052
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 170,
+          "minX": 43,
+          "minY": 44
+        },
+        "paste": {
+          "x": 124,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          836,
+          495,
+          1039,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 21
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.32886863267788,
+          "y": 321.0992839376736
+        },
+        "afterBounds": {
+          "maxX": 488,
+          "maxY": 510,
+          "minX": 124,
+          "minY": 111
+        },
+        "beforeBodyAnchor": {
+          "x": 80.74596509849218,
+          "y": 110.75240377111105
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 170,
+          "minX": 41,
+          "minY": 45
+        },
+        "paste": {
+          "x": 124,
+          "y": 111
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1043,
+          495,
+          1245,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 111,
+        "frame": 22
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.37448812228303,
+          "y": 320.9445926583411
+        },
+        "afterBounds": {
+          "maxX": 486,
+          "maxY": 510,
+          "minX": 125,
+          "minY": 111
+        },
+        "beforeBodyAnchor": {
+          "x": 82.48634309294557,
+          "y": 111.65454902731382
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 171,
+          "minX": 43,
+          "minY": 46
+        },
+        "paste": {
+          "x": 125,
+          "y": 111
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1249,
+          495,
+          1451,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 111,
+        "frame": 23
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.28018262258476,
+          "y": 321.2520773394327
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 510,
+          "minX": 124,
+          "minY": 114
+        },
+        "beforeBodyAnchor": {
+          "x": 82.8351377006163,
+          "y": 111.77448640821184
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 171,
+          "minX": 43,
+          "minY": 47
+        },
+        "paste": {
+          "x": 124,
+          "y": 114
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1455,
+          495,
+          1657,
+          701
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 114,
+        "frame": 24
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.8728390320039,
+          "y": 319.98032000382085
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 514,
+          "minX": 127,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 80.95030230462548,
+          "y": 99.11672490625364
+        },
+        "beforeBounds": {
+          "maxX": 154,
+          "maxY": 160,
+          "minX": 42,
+          "minY": 33
+        },
+        "paste": {
+          "x": 127,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          16,
+          705,
+          217,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 25
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.9185542076036,
+          "y": 321.2883435335775
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 518,
+          "minX": 127,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 80.97535897998955,
+          "y": 98.37925211577645
+        },
+        "beforeBounds": {
+          "maxX": 154,
+          "maxY": 160,
+          "minX": 42,
+          "minY": 32
+        },
+        "paste": {
+          "x": 127,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          221,
+          705,
+          422,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 26
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.32212859769834,
+          "y": 320.8875910769069
+        },
+        "afterBounds": {
+          "maxX": 484,
+          "maxY": 517,
+          "minX": 126,
+          "minY": 108
+        },
+        "beforeBodyAnchor": {
+          "x": 82.10617462149135,
+          "y": 98.5463677448487
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 160,
+          "minX": 43,
+          "minY": 32
+        },
+        "paste": {
+          "x": 126,
+          "y": 108
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          426,
+          705,
+          626,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 108,
+        "frame": 27
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.76251894791326,
+          "y": 320.0532731364804
+        },
+        "afterBounds": {
+          "maxX": 485,
+          "maxY": 515,
+          "minX": 127,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 82.91279437628897,
+          "y": 100.83752295261867
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 162,
+          "minX": 44,
+          "minY": 35
+        },
+        "paste": {
+          "x": 127,
+          "y": 110
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          630,
+          705,
+          832,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 28
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 252.50826366125904,
+          "y": 320.05476885181946
+        },
+        "afterBounds": {
+          "maxX": 484,
+          "maxY": 512,
+          "minX": 129,
+          "minY": 110
+        },
+        "beforeBodyAnchor": {
+          "x": 82.31529954114296,
+          "y": 101.81849901673493
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 162,
+          "minX": 44,
+          "minY": 36
+        },
+        "paste": {
+          "x": 129,
+          "y": 110
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          836,
+          705,
+          1039,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 110,
+        "frame": 29
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.80757022710097,
+          "y": 319.90500944600615
+        },
+        "afterBounds": {
+          "maxX": 480,
+          "maxY": 514,
+          "minX": 129,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 84.13555908833683,
+          "y": 101.08923270971691
+        },
+        "beforeBounds": {
+          "maxX": 156,
+          "maxY": 162,
+          "minX": 46,
+          "minY": 35
+        },
+        "paste": {
+          "x": 129,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1043,
+          705,
+          1245,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 30
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 250.54844912407515,
+          "y": 319.94993164906236
+        },
+        "afterBounds": {
+          "maxX": 480,
+          "maxY": 514,
+          "minX": 129,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 86.06679348323966,
+          "y": 101.0755449045373
+        },
+        "beforeBounds": {
+          "maxX": 158,
+          "maxY": 162,
+          "minX": 48,
+          "minY": 35
+        },
+        "paste": {
+          "x": 129,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1249,
+          705,
+          1451,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 31
+      },
+      {
+        "afterBodyAnchor": {
+          "x": 251.27296960699024,
+          "y": 320.94940451588303
+        },
+        "afterBounds": {
+          "maxX": 480,
+          "maxY": 514,
+          "minX": 129,
+          "minY": 109
+        },
+        "beforeBodyAnchor": {
+          "x": 83.29683456101931,
+          "y": 100.37806091976907
+        },
+        "beforeBounds": {
+          "maxX": 155,
+          "maxY": 161,
+          "minX": 45,
+          "minY": 34
+        },
+        "paste": {
+          "x": 129,
+          "y": 109
+        },
+        "scale": 3.1750375939849627,
+        "sourceCell": [
+          1455,
+          705,
+          1657,
+          911
+        ],
+        "targetAnchor": {
+          "x": 250.3281451940437,
+          "y": 319.2786216503939
+        },
+        "visibleMargin": 109,
+        "frame": 32
+      }
+    ]
+  }
+}
