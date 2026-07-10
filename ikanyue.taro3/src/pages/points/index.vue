@@ -56,8 +56,7 @@ import { UserManager } from '../../../utils/usermanager';
 import {
     formatPoints,
     getRewardStateText,
-    normalizePointSummary,
-    splitRewardsByBalance,
+    normalizeRewardAvailability,
 } from './pageLogic';
 import './index.scss';
 
@@ -96,13 +95,9 @@ export default {
             this.loading = true;
             this.errorMessage = '';
             try {
-                const [summaryPayload, rewardsPayload] = await Promise.all([
-                    Api.getMyPointSummary(),
-                    Api.listRewardItems({ status: 'active' }),
-                ]);
-                const summary = normalizePointSummary(summaryPayload);
-                const rewards = splitRewardsByBalance(rewardsPayload.items || [], summary.balance);
-                this.balance = summary.balance;
+                const rewardsPayload = await Api.listRewardItems();
+                const rewards = normalizeRewardAvailability(rewardsPayload);
+                this.balance = rewards.currentPoints;
                 this.redeemableRewards = rewards.redeemable;
                 this.lockedRewards = rewards.locked;
             } catch (error) {

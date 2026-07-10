@@ -13,12 +13,10 @@ export default defineConfig({
                 'utils/request.js',
                 'utils/usermanager.js',
             ],
-            thresholds: {
-                statements: 95,
-                branches: 95,
-                functions: 95,
-                lines: 95,
-            },
+            statements: 95,
+            branches: 95,
+            functions: 95,
+            lines: 95,
         },
     },
 });

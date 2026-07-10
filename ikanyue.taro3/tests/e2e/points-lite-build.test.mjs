@@ -11,6 +11,14 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['积分', '我
 assert.match(commonBundle, /\/v1\/points\/me/);
 assert.match(commonBundle, /\/v1\/reward-items/);
 
+if (process.env.EXPECTED_SERVICE_URL) {
+    assert.equal(
+        commonBundle.includes(process.env.EXPECTED_SERVICE_URL),
+        true,
+        `expected service URL missing from bundle: ${process.env.EXPECTED_SERVICE_URL}`,
+    );
+}
+
 [
     '/v1/activity',
     '/v1/audioMaterial',

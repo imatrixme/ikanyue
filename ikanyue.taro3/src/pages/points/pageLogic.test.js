@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     formatPoints,
     getRewardStateText,
+    normalizeRewardAvailability,
     normalizePointSummary,
     normalizeRewardItem,
     splitRewardsByBalance,
@@ -43,6 +44,47 @@ describe('points page logic', () => {
         expect(result.redeemable.map((item) => item.id)).toEqual(['badge', 'sticker']);
         expect(result.locked.map((item) => item.id)).toEqual(['book']);
         expect(splitRewardsByBalance().redeemable).toEqual([]);
+    });
+
+    it('normalizes backend reward availability response', () => {
+        const result = normalizeRewardAvailability({
+            currentPoints: 120,
+            redeemableItems: [
+                { id: 'sticker', name: '贴纸', pointsPrice: 50, status: 'active' },
+            ],
+            lockedItems: [
+                { id: 'book', name: '练习册', pointsPrice: 200, status: 'active' },
+                { id: 'hidden', name: '下线', pointsPrice: 10, status: 'inactive' },
+            ],
+        }, 120);
+
+        expect(result.currentPoints).toBe(120);
+        expect(result.redeemable.map((item) => item.id)).toEqual(['sticker']);
+        expect(result.locked.map((item) => item.id)).toEqual(['book']);
+
+        expect(normalizeRewardAvailability({
+            currentPoints: 'invalid',
+            lockedItems: [{ id: 'book', pointsPrice: 200 }],
+        }, 25)).toMatchObject({
+            currentPoints: 25,
+            redeemable: [],
+        });
+        expect(normalizeRewardAvailability({
+            redeemableItems: [{ id: 'sticker', pointsPrice: 50 }],
+        }).locked).toEqual([]);
+    });
+
+    it('keeps a fallback for flat reward item payloads', () => {
+        const result = normalizeRewardAvailability({
+            items: [
+                { id: 'book', name: '练习册', pointsPrice: 200, status: 'active' },
+                { id: 'sticker', name: '贴纸', pointsPrice: 50, status: 'active' },
+            ],
+        }, 120);
+
+        expect(result.currentPoints).toBe(120);
+        expect(result.redeemable.map((item) => item.id)).toEqual(['sticker']);
+        expect(result.locked.map((item) => item.id)).toEqual(['book']);
     });
 
     it('formats point and reward state copy', () => {

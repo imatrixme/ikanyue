@@ -80,6 +80,9 @@ describe('UserManager', () => {
         const updated = UserManager.updateUserInfoCache({ token: 'new-token' });
 
         expect(updated.token).toBe('new-token');
+
+        const preserved = UserManager.updateUserInfoCache({ token: '' });
+        expect(preserved.token).toBe('old-token');
     });
 
     it('returns the original user data when cache writing fails', () => {

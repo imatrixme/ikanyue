@@ -14,15 +14,33 @@ const normalizePointSummary = (payload = {}) => ({
     studentId: payload.studentId || '',
 });
 
-const splitRewardsByBalance = (items = [], balance = 0) => {
-    const activeItems = items
+const normalizeRewardList = (items = []) => {
+    return items
         .map(normalizeRewardItem)
         .filter((item) => item.status === 'active')
         .sort((left, right) => left.pointsPrice - right.pointsPrice || left.sortOrder - right.sortOrder);
+};
 
+const splitRewardsByBalance = (items = [], balance = 0) => {
+    const activeItems = normalizeRewardList(items);
     return {
         redeemable: activeItems.filter((item) => item.pointsPrice <= balance),
         locked: activeItems.filter((item) => item.pointsPrice > balance),
+    };
+};
+
+const normalizeRewardAvailability = (payload = {}, balance = 0) => {
+    const currentPoints = toNumber(payload.currentPoints, balance);
+    if (Array.isArray(payload.redeemableItems) || Array.isArray(payload.lockedItems)) {
+        return {
+            currentPoints,
+            redeemable: normalizeRewardList(payload.redeemableItems || []),
+            locked: normalizeRewardList(payload.lockedItems || []),
+        };
+    }
+    return {
+        currentPoints,
+        ...splitRewardsByBalance(payload.items || [], currentPoints),
     };
 };
 
@@ -33,9 +51,15 @@ const getRewardStateText = (item, balance) => {
     return missing <= 0 ? '可兑换' : `还差 ${missing} 分`;
 };
 
+const toNumber = (value, fallback = 0) => {
+    const number = Number(value ?? fallback);
+    return Number.isFinite(number) ? number : Number(fallback || 0);
+};
+
 export {
     formatPoints,
     getRewardStateText,
+    normalizeRewardAvailability,
     normalizePointSummary,
     normalizeRewardItem,
     splitRewardsByBalance,
