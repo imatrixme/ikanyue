@@ -43,17 +43,35 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
         },
 
         async listRewards(c) {
-            return safe(c, () => services.rewardService.listForAdmin(c.req.query()));
+            return safe(c, () => services.rewardService.listForAdmin(c.get('user'), c.req.query()));
         },
 
         async createReward(c) {
             const body = await readRequestBody(c);
-            return safe(c, () => services.rewardService.create(body));
+            return safe(c, () => services.rewardService.create(c.get('user'), body));
         },
 
         async updateReward(c) {
             const body = await readRequestBody(c);
-            return safe(c, () => services.rewardService.update(c.req.param('id'), body));
+            return safe(c, () => services.rewardService.update(c.get('user'), c.req.param('id'), body));
+        },
+
+        async uploadRewardImage(c) {
+            return safe(c, async () => {
+                let body;
+                try {
+                    body = await c.req.parseBody();
+                } catch {
+                    const error = new Error('图片上传请求解析失败');
+                    error.code = 400;
+                    throw error;
+                }
+                return services.rewardService.uploadImage(
+                    c.get('user'),
+                    c.req.param('id'),
+                    body.imageFile || body.image || body.file
+                );
+            });
         },
     };
 }

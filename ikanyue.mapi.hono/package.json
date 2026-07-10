@@ -15,6 +15,8 @@
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/routes/ops/*.js' --test-coverage-include='src/routes/points/*.js' --test-coverage-include='src/services/points/*.js' --test-coverage-include='src/middleware/opsAuth.js' --test-coverage-include='src/middleware/auth.js' --test-coverage-include='src/services/ops/authService.js' --test-coverage-include='src/services/ops/auditService.js' --test-coverage-include='src/services/ops/opsUtils.js' --test-coverage-include='src/services/ops/schema.js' --test-coverage-exclude='src/services/ops/pocketbaseTeacherAuth.js' --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-functions=95",
     "ops:schema:check": "node scripts/check-ops-schema.js",
     "ops:schema:apply": "node scripts/pb-ensure-ops-schema.js",
+    "ops:seed:local": "node scripts/pb-seed-points-lite-local.js",
+    "ops:smoke:local": "node scripts/smoke-points-lite-local.js",
     "check-docs": "./scripts/check-docs.sh",
     "swagger:collect": "node scripts/collect-swagger.js",
     "swagger:serve": "node scripts/serve-swagger.js",

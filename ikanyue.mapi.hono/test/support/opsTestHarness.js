@@ -69,7 +69,7 @@ class InMemoryOpsRepository {
             collectionId: name,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
-            ...clone(data),
+            ...cloneRecordData(data),
         };
         this.ensure(name).push(record);
         return clone(record);
@@ -83,7 +83,7 @@ class InMemoryOpsRepository {
             error.status = 404;
             throw error;
         }
-        records[index] = { ...records[index], ...clone(data), updated: new Date().toISOString() };
+        records[index] = { ...records[index], ...cloneRecordData(data), updated: new Date().toISOString() };
         return clone(records[index]);
     }
 
@@ -362,6 +362,15 @@ function stripOuter(value) {
 
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
+}
+
+function cloneRecordData(value = {}) {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => {
+        if (item && typeof item === 'object' && typeof item.name === 'string' && typeof item.arrayBuffer === 'function') {
+            return [key, item.name];
+        }
+        return [key, clone(item)];
+    }));
 }
 
 module.exports = {

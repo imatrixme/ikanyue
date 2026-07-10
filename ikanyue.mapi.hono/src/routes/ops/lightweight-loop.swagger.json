@@ -189,6 +189,40 @@
         }
       }
     },
+    "/ops/reward-items/{id}/image": {
+      "post": {
+        "summary": "上传或替换实物图片",
+        "tags": ["OpsRewards"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["imageFile"],
+                "properties": {
+                  "imageFile": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功后返回带公开预览 URL 的实物。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/points/me": {
       "get": {
         "summary": "学员查看自己的积分",
@@ -258,6 +292,7 @@
         "properties": {
           "name": { "type": "string", "example": "文具礼包" },
           "description": { "type": "string", "example": "线下领取" },
+          "image": { "type": "string", "format": "uri", "description": "兼容旧数据的外部图片 URL" },
           "pointsPrice": { "type": "integer", "minimum": 1, "example": 80 },
           "status": { "type": "string", "enum": ["active", "inactive"], "example": "active" }
         }
@@ -268,6 +303,7 @@
           "id": { "type": "string" },
           "name": { "type": "string" },
           "description": { "type": "string" },
+          "image": { "type": "string", "format": "uri" },
           "pointsPrice": { "type": "integer" },
           "status": { "type": "string" }
         }
@@ -331,8 +367,9 @@
           "data": {
             "type": "object",
             "properties": {
-              "available": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } },
-              "locked": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } }
+              "currentPoints": { "type": "integer" },
+              "redeemableItems": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } },
+              "lockedItems": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } }
             }
           }
         }

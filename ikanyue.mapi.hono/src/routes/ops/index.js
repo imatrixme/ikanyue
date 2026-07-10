@@ -19,6 +19,7 @@ function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.get('/ops/reward-items').use(...opsAuth).handler(handlers.listRewards);
     routes.post('/ops/reward-items').use(...opsAuth).handler(handlers.createReward);
     routes.post('/ops/reward-items/:id').use(...opsAuth).handler(handlers.updateReward);
+    routes.post('/ops/reward-items/:id/image').use(...opsAuth).handler(handlers.uploadRewardImage);
 }
 
 module.exports = opsRoutes;

@@ -18,6 +18,7 @@ registerRoutes(app);
 
 // 端口配置
 const port = process.env.PORT || 1337;
+const hostname = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 
 // 检测运行环境
 const isBun = typeof Bun !== 'undefined';
@@ -31,6 +32,7 @@ if (isBun) {
     // 导出 Bun 服务器配置
     module.exports = {
         port: port,
+        hostname,
         fetch: app.fetch.bind(app),
     };
 } else {
@@ -41,10 +43,11 @@ if (isBun) {
         {
             fetch: app.fetch,
             port: port,
+            hostname,
         },
         (info) => {
             console.log('🚀 API 服务已启动 (Node.js 环境)');
-            console.log(`📍 服务地址: http://localhost:${info.port}`);
+            console.log(`📍 服务地址: http://${hostname}:${info.port}`);
             console.log(`🕐 启动时间: ${new Date().toLocaleString('zh-CN')}`);
         }
     );

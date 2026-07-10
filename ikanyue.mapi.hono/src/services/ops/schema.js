@@ -3,6 +3,7 @@ const OPS_COLLECTION_SCHEMAS = [
         textField('name', { required: true }),
         textField('description'),
         urlField('image'),
+        fileField('imageFile'),
         numberField('pointsPrice'),
         selectField('status', ['active', 'inactive'], { required: true }),
         numberField('sortOrder'),
@@ -68,6 +69,19 @@ function textField(name, options = {}) {
 
 function urlField(name) {
     return { name, type: 'url', required: false };
+}
+
+function fileField(name) {
+    return {
+        name,
+        type: 'file',
+        required: false,
+        maxSelect: 1,
+        maxSize: 5 * 1024 * 1024,
+        mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'],
+        protected: false,
+        thumbs: [],
+    };
 }
 
 function numberField(name) {

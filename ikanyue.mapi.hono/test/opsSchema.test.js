@@ -22,9 +22,14 @@ test('ops schema defines only the light branch point and reward collections', ()
 
     const rewards = fieldNames(schemas.get('reward_items'));
     assert.ok(rewards.has('name'));
+    assert.ok(rewards.has('imageFile'));
     assert.ok(rewards.has('pointsPrice'));
     assert.ok(rewards.has('status'));
     assert.ok(schemas.get('reward_items').indexes.some((index) => index.includes('idx_reward_items_status_sort')));
+    const imageField = schemas.get('reward_items').fields.find((field) => field.name === 'imageFile');
+    assert.equal(imageField.type, 'file');
+    assert.equal(imageField.maxSelect, 1);
+    assert.ok(imageField.mimeTypes.includes('image/webp'));
 
     const accounts = fieldNames(schemas.get('student_points'));
     assert.ok(accounts.has('studentId'));

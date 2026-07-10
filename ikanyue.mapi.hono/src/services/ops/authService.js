@@ -4,7 +4,6 @@ const { normalizeBoolean, normalizeString } = require('./opsUtils');
 const { authenticatePocketBaseTeacher } = require('./pocketbaseTeacherAuth');
 
 const TEACHER_FIELDS = 'id,sn,username,email,cellphone,nickname,nickName,avatar,realname,realName,blocked,verified,isAdmin,idAdmin,opsPasswordChangeRequired,lastLoginAt,created,updated';
-const DEFAULT_ADMIN_PASSWORD = '1loveU_shaoyi';
 const MIN_PASSWORD_LENGTH = 8;
 
 class OpsAuthService {
@@ -70,8 +69,8 @@ class OpsAuthService {
         if (newPassword.length < MIN_PASSWORD_LENGTH) {
             return { ok: false, code: 400, message: `新密码至少需要 ${MIN_PASSWORD_LENGTH} 位` };
         }
-        if (newPassword === DEFAULT_ADMIN_PASSWORD) {
-            return { ok: false, code: 400, message: '新密码不能继续使用默认密码' };
+        if (newPassword === currentPassword) {
+            return { ok: false, code: 400, message: '新密码不能与当前密码相同' };
         }
         if (newPassword !== confirmPassword) {
             return { ok: false, code: 400, message: '两次输入的新密码不一致' };

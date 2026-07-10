@@ -14,7 +14,13 @@ const { OpsAuthService, projectOpsProfile } = require('../src/services/ops/authS
 const { hashToken, createShareToken } = require('../src/services/ops/opsUtils');
 const { validateOpsSchemas } = require('../src/services/ops/schema');
 const { PointService } = require('../src/services/points/pointService');
-const { RewardService, publicReward } = require('../src/services/points/rewardService');
+const {
+    MAX_REWARD_IMAGE_SIZE,
+    RewardService,
+    adminReward,
+    publicReward,
+    validateRewardImage,
+} = require('../src/services/points/rewardService');
 const { jwtAuth } = require('../src/utils/jwtAuth');
 const { createRouteBuilder } = require('../src/utils/routeBuilder');
 const {
@@ -147,17 +153,71 @@ test('reward service covers invalid ids, inactive and invalid active rewards, an
     ];
     const repository = createOpsTestRepository(seed);
     const service = new RewardService(repository);
+    const admin = { id: 'admin_1', isAdmin: true };
 
-    await assert.rejects(() => service.create({ name: '', pointsPrice: 1 }), /实物名称不能为空/);
-    await assert.rejects(() => service.update('', { name: 'x', pointsPrice: 1 }), /实物不能为空/);
+    await assert.rejects(() => service.create({}, { name: 'x', pointsPrice: 1 }), /需要管理员权限/);
+    await assert.rejects(() => service.create(admin, { name: '', pointsPrice: 1 }), /实物名称不能为空/);
+    await assert.rejects(() => service.update(admin, '', { name: 'x', pointsPrice: 1 }), /实物不能为空/);
+    await assert.rejects(() => service.uploadImage(admin, '', { size: 1, type: 'image/png' }), /实物不能为空/);
     await assert.rejects(() => service.getActiveReward(''), /实物不能为空/);
     await assert.rejects(() => service.getActiveReward('inactive_reward'), /实物已下线/);
     await assert.rejects(() => service.getActiveReward('free_reward'), /实物积分价格无效/);
 
-    const created = await service.create({ title: '徽章', pointsPrice: 20, status: 'inactive' });
+    const created = await service.create(admin, { title: '徽章', pointsPrice: 20, status: 'inactive' });
     assert.equal(created.name, '徽章');
     assert.equal(created.status, 'inactive');
     assert.deepEqual(publicReward({}), { description: '', id: undefined, image: '', name: '', pointsPrice: 0 });
+    assert.equal(adminReward({}).status, 'active');
+
+    const previousPublicBase = process.env.PUBLIC_ASSET_BASE_URL;
+    const previousPocketBase = process.env.PB_PUBLIC_URL;
+    delete process.env.PUBLIC_ASSET_BASE_URL;
+    process.env.PB_PUBLIC_URL = 'https://pb.example.test/';
+    try {
+        assert.equal(publicReward({
+            collectionId: 'rewards_collection',
+            id: 'reward_1',
+            imageFile: ['photo.webp'],
+        }).image, 'https://pb.example.test/api/files/rewards_collection/reward_1/photo.webp');
+        assert.equal(publicReward({
+            collectionId: 'rewards_collection',
+            id: 'reward_2',
+            imageFile: { name: 'object-file.webp' },
+        }).image, 'https://pb.example.test/api/files/rewards_collection/reward_2/object-file.webp');
+        assert.equal(publicReward({ image: 'https://legacy.example.test/reward.jpg' }).image, 'https://legacy.example.test/reward.jpg');
+    } finally {
+        if (previousPublicBase === undefined) delete process.env.PUBLIC_ASSET_BASE_URL;
+        else process.env.PUBLIC_ASSET_BASE_URL = previousPublicBase;
+        if (previousPocketBase === undefined) delete process.env.PB_PUBLIC_URL;
+        else process.env.PB_PUBLIC_URL = previousPocketBase;
+    }
+
+    assert.throws(() => validateRewardImage(null), /请选择实物图片/);
+    assert.throws(() => validateRewardImage({ size: 0, type: 'image/png' }), /不能为空/);
+    assert.throws(() => validateRewardImage({ size: MAX_REWARD_IMAGE_SIZE + 1, type: 'image/png' }), /不能超过 5MB/);
+    assert.throws(() => validateRewardImage({ size: 10, type: 'text/plain' }), /仅支持/);
+    assert.equal(validateRewardImage({ size: 10, type: 'image/webp' }).size, 10);
+});
+
+test('reward image handler converts malformed multipart requests into a business error', async () => {
+    const handlers = createOpsHandlers({
+        rewardService: {
+            uploadImage() {
+                assert.fail('upload service should not run for malformed multipart data');
+            },
+        },
+    });
+    const result = await handlers.uploadRewardImage({
+        req: {
+            parseBody: async () => {
+                throw new Error('malformed multipart');
+            },
+        },
+        data: (data) => ({ code: 10000, data }),
+        error: (code, message) => ({ code, message }),
+    });
+
+    assert.deepEqual(result, { code: 400, message: '图片上传请求解析失败' });
 });
 
 test('ops auth direct service branches cover registration validation, duplicate create, blocked password changes, and profile fallbacks', async () => {
@@ -208,10 +268,10 @@ test('ops auth direct service branches cover registration validation, duplicate 
             confirmPassword: 'newSecret123',
         })).message, '教师账号不可用');
         assert.equal((await service.changePassword({ id: 'teacher_1', role: 'teacher' }, {
-            currentPassword: 'secret',
-            newPassword: '1loveU_shaoyi',
-            confirmPassword: '1loveU_shaoyi',
-        })).message, '新密码不能继续使用默认密码');
+            currentPassword: 'secret123',
+            newPassword: 'secret123',
+            confirmPassword: 'secret123',
+        })).message, '新密码不能与当前密码相同');
         seed.teachers[0].cellphone = '';
         seed.teachers[0].username = 'teacher_username';
         assert.equal((await service.changePassword({ id: 'teacher_1', role: 'teacher' }, {

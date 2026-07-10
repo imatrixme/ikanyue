@@ -129,6 +129,88 @@ test('admin manages reward item catalog for the light branch', async () => {
     assert.equal(updated.code, 10000);
     assert.equal(updated.data.status, 'inactive');
     assert.equal(updated.data.pointsPrice, 100);
+
+    const teacherToken = createToken(seed.teachers[0]);
+    const denied = await jsonRequest(app, '/ops/reward-items', {
+        method: 'POST',
+        token: teacherToken,
+        body: { name: '越权实物', pointsPrice: 10 },
+    });
+    assert.equal(denied.code, 403);
+    assert.equal(denied.message, '需要管理员权限');
+});
+
+test('admin uploads reward images and receives the public object-storage URL', async () => {
+    const previousBase = process.env.PUBLIC_ASSET_BASE_URL;
+    process.env.PUBLIC_ASSET_BASE_URL = 'https://assets.example.test/rewards';
+    try {
+        const seed = createPointsSeed();
+        const repository = createOpsTestRepository(seed);
+        const app = createOpsApp(repository);
+        const adminToken = createToken(seed.teachers[1]);
+        const form = new FormData();
+        form.set('imageFile', new File(['image-bytes'], 'sticker.png', { type: 'image/png' }));
+
+        const response = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${adminToken}` },
+            body: form,
+        });
+        const payload = await response.json();
+
+        assert.equal(payload.code, 10000);
+        assert.equal(payload.data.image, 'https://assets.example.test/rewards/reward_items/reward_sticker/sticker.png');
+        assert.equal(repository.data.reward_items[0].imageFile, 'sticker.png');
+
+        const legacyImageField = new FormData();
+        legacyImageField.set('image', new File(['image'], 'legacy.png', { type: 'image/png' }));
+        const legacyImageResponse = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${adminToken}` },
+            body: legacyImageField,
+        });
+        assert.equal((await legacyImageResponse.json()).data.image, 'https://assets.example.test/rewards/reward_items/reward_sticker/legacy.png');
+
+        const fallbackFileField = new FormData();
+        fallbackFileField.set('file', new File(['image'], 'fallback.png', { type: 'image/png' }));
+        const fallbackFileResponse = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${adminToken}` },
+            body: fallbackFileField,
+        });
+        assert.equal((await fallbackFileResponse.json()).data.image, 'https://assets.example.test/rewards/reward_items/reward_sticker/fallback.png');
+
+        const missingFileResponse = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${adminToken}` },
+            body: new FormData(),
+        });
+        assert.equal((await missingFileResponse.json()).message, '请选择实物图片');
+
+        const invalid = new FormData();
+        invalid.set('imageFile', new File(['text'], 'notes.txt', { type: 'text/plain' }));
+        const invalidResponse = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${adminToken}` },
+            body: invalid,
+        });
+        assert.equal((await invalidResponse.json()).code, 400);
+
+        const teacherForm = new FormData();
+        teacherForm.set('imageFile', new File(['image'], 'teacher.png', { type: 'image/png' }));
+        const teacherResponse = await app.request('/ops/reward-items/reward_sticker/image', {
+            method: 'POST',
+            headers: { authorization: `Bearer ${createToken(seed.teachers[0])}` },
+            body: teacherForm,
+        });
+        assert.equal((await teacherResponse.json()).code, 403);
+    } finally {
+        if (previousBase === undefined) {
+            delete process.env.PUBLIC_ASSET_BASE_URL;
+        } else {
+            process.env.PUBLIC_ASSET_BASE_URL = previousBase;
+        }
+    }
 });
 
 test('lite admin point routes return business errors for missing resource params', async () => {
@@ -257,6 +339,8 @@ function createPointsSeed() {
 
 function reward(id, overrides) {
     return {
+        collection: 'reward_items',
+        collectionId: 'reward_items',
         description: '',
         id,
         image: '',
