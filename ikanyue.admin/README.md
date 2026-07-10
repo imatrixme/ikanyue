@@ -12,6 +12,15 @@ This branch intentionally keeps only:
 
 It does not ship the older teaching operations, assessment, report, resource, shipping, or refund workflows.
 
+## Local real-backend testing
+
+The Vite development server proxies `/ops` to `KANYUE_LOCAL_API_ORIGIN` (default `http://127.0.0.1:1337`). The normal E2E suite keeps using the in-memory API; the live suite requires the parent local environment and seeded PocketBase data. Reward images are uploaded as multipart data through Hono; the browser never receives PocketBase superuser or MinIO credentials. Returned image URLs point at the configured public asset base in production and PocketBase `/api/files` in the local environment.
+
+```bash
+npm run dev -- --port 4173
+PLAYWRIGHT_LIVE=true npm run test:e2e:live
+```
+
 ## Docker
 
 The production image serves the built admin app with Nginx. `/ops/*` is proxied to the Hono service name used by the parent Compose stack.

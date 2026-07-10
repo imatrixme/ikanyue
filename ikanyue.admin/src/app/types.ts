@@ -92,6 +92,8 @@ export interface RewardItemInput {
   status?: 'active' | 'inactive'
 }
 
+export type UploadProgressHandler = (percent: number) => void
+
 export interface AddPointsInput {
   studentId: string
   amount: number

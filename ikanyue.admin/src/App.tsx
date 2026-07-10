@@ -3,7 +3,7 @@ import { ShieldAlert } from 'lucide-react'
 
 import { createOpsApi, type OpsApi } from './app/api'
 import { appReducer, canAccessView, initialState } from './app/state'
-import type { AppView, LoginResult, RewardItemInput } from './app/types'
+import type { AppView, LoginResult, RewardItem, RewardItemInput, UploadProgressHandler } from './app/types'
 import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
 import { LoginView } from './components/ops/LoginView'
 import { PointsWorkspace } from './components/ops/PointsWorkspace'
@@ -142,6 +142,19 @@ export default function App({ api: injectedApi }: AppProps) {
     }
   }
 
+  async function uploadRewardImage(id: string, file: File, onProgress?: UploadProgressHandler): Promise<RewardItem | null> {
+    dispatch({ type: 'loading:set', payload: true })
+    try {
+      const reward = await api.uploadRewardImage(state.token, id, file, onProgress)
+      await loadRewards()
+      dispatch({ type: 'toast:set', payload: { type: 'info', message: '实物图片已上传' } })
+      return reward
+    } catch (error) {
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: errorMessage(error, '上传实物图片失败') } })
+      return null
+    }
+  }
+
   if (!state.profile) {
     return (
       <LoginView
@@ -215,6 +228,7 @@ export default function App({ api: injectedApi }: AppProps) {
           loading={state.loading}
           rewards={state.rewards?.items || []}
           onSave={saveReward}
+          onUploadImage={uploadRewardImage}
         />
       ) : null}
     </Shell>

@@ -90,7 +90,7 @@ describe('points lite app edge flows', () => {
     expect(screen.getAllByRole('row')[1]).toHaveTextContent('默认排序奖品')
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
     expect(screen.getByLabelText('说明')).toHaveValue('')
-    expect(screen.getByLabelText('图片 URL')).toHaveValue('')
+    expect(screen.getByLabelText('兼容图片 URL')).toHaveValue('')
     expect(screen.getByLabelText('排序')).toHaveValue(0)
     await user.click(screen.getByRole('button', { name: '保存实物' }))
     expect(onSave).toHaveBeenCalledWith('fallback', expect.objectContaining({

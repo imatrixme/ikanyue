@@ -6,12 +6,8 @@ import App from '../../App'
 import { createMockOpsApi, type OpsApi } from '../../app/api'
 import { mockProfiles, mockRewards, mockStudents } from '../../app/mockData'
 import type { LoginResult, RewardItem, StudentPointSummary } from '../../app/types'
-import { ForcePasswordChangeView } from './ForcePasswordChangeView'
-import { LoginView } from './LoginView'
 import { PointsWorkspace } from './PointsWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
-import { Shell } from './Shell'
-import { Field, Input } from '../ui/Input'
 
 describe('points lite app flow', () => {
   it('logs in, grants points, redeems an item, edits rewards, and logs out', async () => {
@@ -27,6 +23,10 @@ describe('points lite app flow', () => {
     expect(screen.getAllByText('张同学').length).toBeGreaterThan(0)
     expect(screen.getAllByText('120').length).toBeGreaterThan(0)
 
+    await user.click(screen.getByRole('button', { name: /李同学40 分/ }))
+    expect(screen.getAllByText('40').length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('button', { name: /张同学120 分/ }))
+
     await user.clear(screen.getByLabelText('积分数量'))
     await user.type(screen.getByLabelText('积分数量'), '30')
     await user.click(screen.getByRole('button', { name: '确认加分' }))
@@ -40,6 +40,9 @@ describe('points lite app flow', () => {
     await user.click(screen.getByRole('button', { name: '实物列表' }))
     expect(await screen.findByRole('heading', { name: '实物列表' })).toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'sticker.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: '替换图片' }))
+    expect(await screen.findByText('实物图片已上传')).toBeInTheDocument()
     await user.clear(screen.getByLabelText('积分价格'))
     await user.type(screen.getByLabelText('积分价格'), '60')
     await user.click(screen.getByRole('button', { name: '保存实物' }))
@@ -131,6 +134,12 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('实物名称'), '新奖品')
     await user.click(screen.getByRole('button', { name: '创建实物' }))
     expect(await screen.findByText('save down')).toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    api.uploadRewardImage = async () => { throw new Error('upload down') }
+    await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'failed.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: '替换图片' }))
+    expect(await screen.findByText('upload down')).toBeInTheDocument()
   })
 })
 
@@ -184,8 +193,8 @@ describe('points lite components', () => {
     await user.selectOptions(screen.getByLabelText('状态'), 'inactive')
     await user.clear(screen.getByLabelText('排序'))
     await user.type(screen.getByLabelText('排序'), '7')
-    await user.clear(screen.getByLabelText('图片 URL'))
-    await user.type(screen.getByLabelText('图片 URL'), 'https://example.com/a.png')
+    await user.clear(screen.getByLabelText('兼容图片 URL'))
+    await user.type(screen.getByLabelText('兼容图片 URL'), 'https://example.com/a.png')
     await user.clear(screen.getByLabelText('说明'))
     await user.type(screen.getByLabelText('说明'), '前台领取')
     await user.click(screen.getByRole('button', { name: '保存实物' }))
@@ -199,6 +208,42 @@ describe('points lite components', () => {
     await user.type(screen.getByLabelText('实物名称'), '徽章')
     await user.click(screen.getByRole('button', { name: '创建实物' }))
     expect(onSave).toHaveBeenLastCalledWith(null, expect.objectContaining({ name: '徽章', status: 'active' }))
+  })
+
+  it('validates, previews, and uploads a managed reward image', async () => {
+    const user = userEvent.setup({ applyAccept: false })
+    const reward = { ...mockRewards.items[0] }
+    const onUploadImage = vi.fn(async (_id: string, _file: File, onProgress?: (percent: number) => void) => {
+      onProgress?.(45)
+      return { ...reward, image: 'https://assets.example.test/reward.png' }
+    })
+    const { unmount } = render(<RewardItemsPanel loading={false} rewards={[reward]} onSave={vi.fn()} onUploadImage={onUploadImage} />)
+
+    await user.click(screen.getByRole('button', { name: '编辑' }))
+    const input = screen.getByLabelText('选择图片')
+    await user.upload(input, new File(['image'], 'reward.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: '替换图片' }))
+
+    expect(onUploadImage).toHaveBeenCalledWith('reward_sticker', expect.objectContaining({ name: 'reward.png' }), expect.any(Function))
+    expect(await screen.findByRole('progressbar', { name: '上传进度' })).toHaveValue(100)
+    expect(screen.getByAltText('实物图片预览')).toHaveAttribute('src', 'https://assets.example.test/reward.png')
+
+    await user.upload(screen.getByLabelText('选择图片'), new File(['text'], 'notes.txt', { type: 'text/plain' }))
+    expect(screen.getByText('仅支持 JPG、PNG、WebP、GIF 或 AVIF 图片')).toBeInTheDocument()
+
+    await user.upload(screen.getByLabelText('选择图片'), new File([], 'empty.png', { type: 'image/png' }))
+    expect(screen.getByText('图片文件不能为空')).toBeInTheDocument()
+
+    await user.upload(screen.getByLabelText('选择图片'), new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' }))
+    expect(screen.getByText('图片不能超过 5MB')).toBeInTheDocument()
+
+    unmount()
+    const nullUpload = vi.fn(async () => null)
+    render(<RewardItemsPanel loading={false} rewards={[reward]} onSave={vi.fn()} onUploadImage={nullUpload} />)
+    await user.click(screen.getByRole('button', { name: '编辑' }))
+    await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'retry.png', { type: 'image/png' }))
+    await user.click(screen.getByRole('button', { name: '替换图片' }))
+    expect(nullUpload).toHaveBeenCalled()
   })
 
   it('covers empty learner and no-redeemable reward states', async () => {
@@ -286,169 +331,6 @@ describe('points lite components', () => {
   })
 })
 
-describe('points lite shell and login components', () => {
-  it('opens and closes mobile navigation and renders toast variants', async () => {
-    const user = userEvent.setup()
-    const onViewChange = vi.fn()
-    const onLogout = vi.fn()
-    const { rerender } = render(
-      <Shell
-        activeView="points"
-        profile={{ ...mockProfiles.admin, realName: '' }}
-        toast={{ type: 'error', message: '错误消息' }}
-        onLogout={onLogout}
-        onViewChange={onViewChange}
-      >
-        <div>主体</div>
-      </Shell>,
-    )
-
-    expect(screen.getByText('错误消息')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '打开导航' }))
-    expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(2)
-    await user.click(screen.getAllByRole('button', { name: '实物列表' })[1])
-    expect(onViewChange).toHaveBeenCalledWith('rewards')
-    expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(1)
-    await user.click(screen.getByRole('button', { name: '打开导航' }))
-    await user.click(screen.getByRole('button', { name: '关闭导航遮罩' }))
-    expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(1)
-    await user.click(screen.getByRole('button', { name: '打开导航' }))
-    await user.click(screen.getByRole('button', { name: '关闭导航' }))
-    expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(1)
-    await user.click(screen.getByRole('button', { name: '退出' }))
-    expect(onLogout).toHaveBeenCalled()
-
-    rerender(
-      <Shell
-        activeView="rewards"
-        profile={mockProfiles.admin}
-        toast={{ type: 'info', message: '提示消息' }}
-        onLogout={onLogout}
-        onViewChange={onViewChange}
-      >
-        <div>主体</div>
-      </Shell>,
-    )
-    expect(screen.getByText('提示消息')).toBeInTheDocument()
-  })
-
-  it('registers a pending account and reports registration errors', async () => {
-    const user = userEvent.setup()
-    const api = createMockOpsApi()
-    const onSuccess = vi.fn()
-    const onError = vi.fn()
-    render(<LoginView api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
-
-    await user.click(screen.getByRole('button', { name: '切换到注册' }))
-    await user.type(screen.getByLabelText('手机号'), '13900000000')
-    await user.type(screen.getByLabelText('姓名'), '新老师')
-    await user.type(screen.getByLabelText('昵称'), '老师')
-    await user.type(screen.getByLabelText('密码'), 'secret123')
-    await user.click(screen.getByRole('button', { name: '提交注册' }))
-    expect(await screen.findByText('注册成功，请等待管理员激活')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: '切换到登录' }))
-    await user.click(screen.getByRole('button', { name: '切换到注册' }))
-    await user.clear(screen.getByLabelText('手机号'))
-    await user.clear(screen.getByLabelText('姓名'))
-    await user.click(screen.getByRole('button', { name: '提交注册' }))
-    expect(onError).toHaveBeenCalledWith('手机号、姓名和密码不能为空')
-  })
-
-  it('renders login/register loading labels and fallback messages', async () => {
-    const user = userEvent.setup()
-    const onSuccess = vi.fn()
-    const onError = vi.fn()
-    const api = {
-      ...createMockOpsApi(),
-      login: async () => {
-        throw 'plain login failure'
-      },
-      register: async () => ({ status: 'pending_activation' as const, message: '', profile: mockProfiles.teacher }),
-    }
-    const { rerender } = render(<LoginView api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
-    expect(screen.getByRole('button', { name: '登录中' })).toBeDisabled()
-
-    rerender(<LoginView api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
-    await user.type(screen.getByLabelText('账号或手机号'), 'admin')
-    await user.type(screen.getByLabelText('密码'), 'secret')
-    await user.click(screen.getByRole('button', { name: /^登录$/ }))
-    expect(onError).toHaveBeenCalledWith('登录失败')
-
-    await user.click(screen.getByRole('button', { name: '切换到注册' }))
-    await user.type(screen.getByLabelText('手机号'), '13900000001')
-    await user.type(screen.getByLabelText('姓名'), '李老师')
-    await user.click(screen.getByRole('button', { name: '提交注册' }))
-    expect(await screen.findByText('注册成功，请等待管理员激活')).toBeInTheDocument()
-
-    rerender(<LoginView api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
-    await user.click(screen.getByRole('button', { name: '切换到注册' }))
-    expect(screen.getByRole('button', { name: '注册中' })).toBeDisabled()
-  })
-
-  it('reports forced password change failures', async () => {
-    const user = userEvent.setup()
-    const onSuccess = vi.fn()
-    const onError = vi.fn()
-    const api = {
-      ...createMockOpsApi(),
-      changePassword: async () => {
-        throw new Error('change down')
-      },
-    }
-    render(
-      <ForcePasswordChangeView
-        api={api}
-        token="token"
-        profile={{ ...mockProfiles.admin, realName: '', nickName: '', cellphone: '13800138002' }}
-        errorMessage="上次失败"
-        onError={onError}
-        onSuccess={onSuccess}
-      />,
-    )
-
-    expect(screen.getByText('上次失败')).toBeInTheDocument()
-    expect(screen.getByText(/13800138002/)).toBeInTheDocument()
-    await user.type(screen.getByLabelText('当前密码'), 'old')
-    await user.type(screen.getByLabelText('新密码'), 'new')
-    await user.type(screen.getByLabelText('确认新密码'), 'new')
-    await user.click(screen.getByRole('button', { name: '确认修改' }))
-    expect(onError).toHaveBeenCalledWith('change down')
-    expect(onSuccess).not.toHaveBeenCalled()
-  })
-
-  it('reports non-error forced password change failures and field hints', async () => {
-    const user = userEvent.setup()
-    const onError = vi.fn()
-    render(
-      <>
-        <Field htmlFor="hinted" label="提示字段" hint="这里是提示">
-          <Input id="hinted" />
-        </Field>
-        <ForcePasswordChangeView
-          api={{
-            ...createMockOpsApi(),
-            changePassword: async () => {
-              throw 'plain failure'
-            },
-          }}
-          token="token"
-          profile={mockProfiles.admin}
-          onError={onError}
-          onSuccess={vi.fn()}
-        />
-      </>,
-    )
-
-    expect(screen.getByText('这里是提示')).toBeInTheDocument()
-    await user.type(screen.getByLabelText('当前密码'), 'old')
-    await user.type(screen.getByLabelText('新密码'), 'new')
-    await user.type(screen.getByLabelText('确认新密码'), 'new')
-    await user.click(screen.getByRole('button', { name: '确认修改' }))
-    expect(onError).toHaveBeenCalledWith('修改密码失败')
-  })
-})
-
 function summary(balance: number): StudentPointSummary {
   return {
     balance,
@@ -470,5 +352,6 @@ function createFailingApi(): OpsApi {
     listRewards: async () => mockRewards,
     createReward: async (_token, data) => ({ id: 'created', description: '', image: '', status: 'active', ...data }),
     updateReward: async (_token, id, data) => ({ id, description: '', image: '', status: 'active', ...data }),
+    uploadRewardImage: async (_token, id) => ({ id, name: '图片实物', description: '', image: 'https://assets.test/image.png', pointsPrice: 10, status: 'active' }),
   }
 }

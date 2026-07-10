@@ -9,6 +9,7 @@ import type {
   RewardItemInput,
   StudentPointSummary,
   StudentPointsRow,
+  UploadProgressHandler,
 } from './types'
 
 export interface OpsApi {
@@ -22,6 +23,7 @@ export interface OpsApi {
   listRewards(token: string, query?: ListQuery): Promise<ListResult<RewardItem>>
   createReward(token: string, data: RewardItemInput): Promise<RewardItem>
   updateReward(token: string, id: string, data: RewardItemInput): Promise<RewardItem>
+  uploadRewardImage(token: string, id: string, file: File, onProgress?: UploadProgressHandler): Promise<RewardItem>
 }
 
 export interface ListQuery {
@@ -173,6 +175,15 @@ export function createMockOpsApi(): OpsApi {
       Object.assign(reward, normalizeRewardInput({ ...reward, ...data }, id))
       return reward
     },
+    async uploadRewardImage(_token, id, file, onProgress) {
+      const reward = rewards.items.find((item) => item.id === id)
+      if (!reward) {
+        throw new Error('实物不存在')
+      }
+      onProgress?.(100)
+      reward.image = `https://mock-assets.test/${encodeURIComponent(id)}/${encodeURIComponent(file.name)}`
+      return clone(reward)
+    },
   }
 }
 
@@ -215,7 +226,44 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     updateReward(token, id, data) {
       return request<RewardItem>(`${baseUrl}/reward-items/${encodeURIComponent(id)}`, { method: 'POST', token, body: data })
     },
+    uploadRewardImage(token, id, file, onProgress) {
+      return uploadRequest<RewardItem>(`${baseUrl}/reward-items/${encodeURIComponent(id)}/image`, token, file, onProgress)
+    },
   }
+}
+
+function uploadRequest<T>(url: string, token: string, file: File, onProgress?: UploadProgressHandler): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    xhr.setRequestHeader('authorization', `Bearer ${token}`)
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        onProgress?.(Math.round((event.loaded / event.total) * 100))
+      }
+    }
+    xhr.onerror = () => reject(new Error('图片上传失败，请检查网络后重试'))
+    xhr.onload = () => {
+      let payload: { code?: number; data?: T; message?: string }
+      try {
+        payload = JSON.parse(xhr.responseText) as { code?: number; data?: T; message?: string }
+      } catch {
+        reject(new Error('图片上传返回了无效响应'))
+        return
+      }
+      if (xhr.status < 200 || xhr.status >= 300 || payload.code !== 10000 || payload.data === undefined) {
+        reject(new Error(payload.message || '图片上传失败'))
+        return
+      }
+      onProgress?.(100)
+      resolve(payload.data)
+    }
+
+    const body = new FormData()
+    body.set('imageFile', file)
+    onProgress?.(0)
+    xhr.send(body)
+  })
 }
 
 async function request<T>(url: string, options: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {

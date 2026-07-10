@@ -50,6 +50,11 @@ describe('points lite api', () => {
     expect(created).toMatchObject({ name: '帆布袋', pointsPrice: 90 })
     const updated = await api.updateReward('token', created.id, { ...created, status: 'inactive', pointsPrice: 100 })
     expect(updated.status).toBe('inactive')
+    const progress: number[] = []
+    const uploaded = await api.uploadRewardImage('token', created.id, new File(['image'], 'bag.png', { type: 'image/png' }), (value) => progress.push(value))
+    expect(uploaded.image).toContain('bag.png')
+    expect(progress).toEqual([100])
+    await expect(api.uploadRewardImage('token', 'missing', new File(['image'], 'missing.png', { type: 'image/png' }))).rejects.toThrow('实物不存在')
     await expect(api.createReward('token', { name: '', pointsPrice: 1 })).rejects.toThrow('实物名称不能为空')
     await expect(api.createReward('token', { name: '无效', pointsPrice: 0 })).rejects.toThrow('实物积分价格必须为正整数')
     await expect(api.updateReward('token', 'missing', { name: '缺失', pointsPrice: 1 })).rejects.toThrow('实物不存在')
@@ -103,6 +108,66 @@ describe('points lite api', () => {
     const api = createOpsApi({ baseUrl: '/ops', mock: false })
 
     await expect(api.listRewards('token')).rejects.toThrow('运营后台请求失败')
+  })
+
+  it('uploads images with progress and reports upload transport failures', async () => {
+    const scenarios = [
+      { status: 200, body: JSON.stringify({ code: 10000, data: { id: 'reward_1', image: 'https://assets.test/reward.png' } }) },
+      { status: 400, body: JSON.stringify({ code: 400, message: '图片格式错误' }) },
+      { status: 200, body: 'not-json' },
+      { networkError: true },
+    ]
+    const requests: FakeXhr[] = []
+    class FakeXhr {
+      upload = { onprogress: null as ((event: ProgressEvent) => void) | null }
+      onerror: (() => void) | null = null
+      onload: (() => void) | null = null
+      responseText = ''
+      status = 0
+      url = ''
+      headers: Record<string, string> = {}
+      body: FormData | null = null
+
+      constructor() {
+        requests.push(this)
+      }
+
+      open(_method: string, url: string) {
+        this.url = url
+      }
+
+      setRequestHeader(name: string, value: string) {
+        this.headers[name] = value
+      }
+
+      send(body: FormData) {
+        this.body = body
+        const scenario = scenarios.shift()
+        if (scenario?.networkError) {
+          this.onerror?.()
+          return
+        }
+        this.status = scenario?.status || 500
+        this.responseText = scenario?.body || ''
+        this.upload.onprogress?.({ lengthComputable: true, loaded: 5, total: 10 } as ProgressEvent)
+        this.onload?.()
+      }
+    }
+    vi.stubGlobal('XMLHttpRequest', FakeXhr)
+    const api = createOpsApi({ baseUrl: '/ops', mock: false })
+    const file = new File(['image'], 'reward.png', { type: 'image/png' })
+    const progress: number[] = []
+
+    await expect(api.uploadRewardImage('token', 'reward_1', file, (value) => progress.push(value))).resolves.toMatchObject({ image: 'https://assets.test/reward.png' })
+    expect(progress).toEqual([0, 50, 100])
+    expect(requests[0].url).toBe('/ops/reward-items/reward_1/image')
+    expect(requests[0].headers.authorization).toBe('Bearer token')
+    expect(requests[0].body?.get('imageFile')).toBe(file)
+
+    await expect(api.uploadRewardImage('token', 'reward_1', file)).rejects.toThrow('图片格式错误')
+    await expect(api.uploadRewardImage('token', 'reward_1', file)).rejects.toThrow('无效响应')
+    await expect(api.uploadRewardImage('token', 'reward_1', file)).rejects.toThrow('检查网络')
+    vi.unstubAllGlobals()
   })
 
   it('uses the mock api when explicitly requested', async () => {
