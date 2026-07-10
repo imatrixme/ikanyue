@@ -64,11 +64,36 @@ Development uses local commands. Docker compose is run only before release to pr
 Alternatives considered:
 - Continuous Docker verification: rejected by user because it wastes resources before release certainty.
 
+### Local three-client environment without Docker
+
+The shared test environment is the developer workstation: PocketBase runs from a local binary, Hono listens on port 1337, the admin Vite server proxies `/ops` to Hono, and the Taro development build targets the same local API. A root shell launcher coordinates processes without adding a root JavaScript workspace.
+
+Local bootstrap is explicit and guarded. It may create missing lightweight core collections and deterministic fixtures only against localhost. Schema application never embeds or resets an administrator password; optional administrator creation requires environment-provided credentials and is create-only.
+
+The local PocketBase process disables automatic migration generation and uses an isolated empty migration directory. The ordered, idempotent bootstrap script owns local schema creation; this avoids same-timestamp API migrations replaying relation collections before their dependencies. The Taro watcher explicitly builds with `NODE_ENV=development` so `KANYUE_LOCAL_API_URL` is compiled into local artifacts without changing production builds.
+
+Alternatives considered:
+- Cloud staging: rejected for the current lightweight release because the user wants the test environment to point directly at the workstation.
+- Development Docker compose: rejected because Docker remains a final release verification tool.
+- Cross-origin admin API calls: rejected in favor of a Vite `/ops` proxy so local and production use the same frontend API path.
+
+### Reward images owned by PocketBase storage
+
+Reward records retain the legacy `image` URL field and add a single-file `imageFile` field. Admin uploads use an authenticated Hono multipart endpoint; Hono forwards the file to PocketBase, and PocketBase owns S3/MinIO persistence and replacement cleanup. Admin never receives PocketBase superuser credentials or MinIO write credentials.
+
+API projections expose one `image` URL. When `PUBLIC_ASSET_BASE_URL` is configured, Hono maps the PocketBase file key to `{base}/{collectionId}/{recordId}/{filename}` so mini program and admin reads go directly to the public MinIO bucket or CDN. Without that setting, local development falls back to the PocketBase `/api/files` URL. Existing absolute `image` URLs remain valid until records are replaced with uploaded files.
+
+Alternatives considered:
+- Browser-to-PocketBase upload: rejected because the admin uses a Hono JWT and direct upload would require a second browser-visible PocketBase authorization boundary.
+- Browser-to-MinIO presigned upload: rejected for this release because it bypasses PocketBase file ownership and adds signing/lifecycle code that is unnecessary for low-volume admin uploads.
+
 ## Risks / Trade-offs
 
 - Hard-fork drift → Keep branch-specific changes focused and preserve project skeletons so future full-admin merge conflicts stay localized.
 - PocketBase multi-collection consistency limits → Keep each mutation inside the backend service, add idempotent tests where practical, and write ledger/snapshot updates in a single service path.
 - Balance snapshot drift → Validate event totals against snapshot in tests and provide a repair/recompute helper if drift is later found.
+- Local bootstrap misuse → Refuse local fixture resets for non-loopback PocketBase hosts and require explicit bootstrap flags.
+- Split student snapshots → Use reward availability's `currentPoints` and reward groups as one student-page snapshot instead of parallel balance requests.
 - Admin accidental overreach → Remove or stop registering unrelated lite-branch UI/API routes instead of relying on hidden navigation.
 - Coverage target pressure → Scope tests to affected logic and split large test files so no production, test, or helper file exceeds the 500-line preference.
 

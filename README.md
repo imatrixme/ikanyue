@@ -46,9 +46,9 @@ flutter run
 
 | Path | Remote | Branch |
 | --- | --- | --- |
-| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `2604/jieshao` |
-| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `2605/newop` |
-| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `2605/newop` |
+| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `release/wechat-points-lite` |
+| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `release/wechat-points-lite` |
+| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `release/wechat-points-lite` |
 | `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
 | `ikanyue.flutter` | `git@github.com:imatrixme/ikanyue.flutter.git` | `douyin` |
 
@@ -81,7 +81,7 @@ git submodule update --remote --merge
 
 ```bash
 cd ikanyue.taro3
-git switch 2604/jieshao
+git switch release/wechat-points-lite
 git pull
 # edit, commit, push in this submodule repository
 ```
@@ -94,6 +94,27 @@ git status
 git add ikanyue.taro3
 git commit -m "Update ikanyue.taro3 submodule"
 ```
+
+## Local points-lite environment
+
+The local test environment runs PocketBase, Hono, admin, and the Taro watcher directly on the workstation. It does not use Docker and never points at production data or asset URLs.
+
+Prerequisites:
+
+- install each subproject's dependencies
+- provide a PocketBase 0.32.x binary and set `POCKETBASE_BIN` if it is not on `PATH`
+- open the generated `ikanyue.taro3/dist` directory in WeChat DevTools after startup
+
+```bash
+cp .env.local.example .env.local
+./scripts/local-points-lite.sh up
+./scripts/local-points-lite.sh smoke
+./scripts/local-points-lite.sh down
+```
+
+The bootstrap is local-only and idempotent. It creates the minimal PocketBase collections, one local admin, two local students, reward fixtures, and point balances. Existing admin credentials are never reset by schema application.
+
+The default mini program API is `http://127.0.0.1:1337`, which works in WeChat DevTools. For a phone on the same LAN, set `HOST=0.0.0.0` and `KANYUE_LOCAL_API_URL=http://<workstation-lan-ip>:1337` in `.env.local` before restarting. Do not expose the local service outside a trusted LAN.
 
 ## 1Panel / OpenResty deploy
 
@@ -114,7 +135,11 @@ docker compose --env-file .env.deploy up -d --build
 | Hono API | `http://127.0.0.1:1337` |
 | PocketBase | `http://127.0.0.1:8090` |
 
-admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase；返回文件 URL 时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接公开对象存储地址，业务代码不持有 S3/MinIO key。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`。
+admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase。
+
+实物图片采用 PocketBase 托管写入、MinIO 公开读取：Admin 把 multipart 文件上传到 Hono，Hono 完成管理员鉴权和文件校验后写入 PocketBase 的 `reward_items.imageFile` 文件字段；PocketBase 再通过自身的 S3 存储配置写入 MinIO。Hono 返回记录时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接 `{collectionId}/{recordId}/{filename}`，Admin 和小程序直接访问公开 bucket URL，不经过 PocketBase 域名。`PUBLIC_ASSET_BASE_URL` 为空时仅用于本地开发，回退到 `${PB_PUBLIC_URL:-$PB_URL}/api/files/...`。
+
+S3 endpoint、bucket、access key 和 secret key 只在 PocketBase 管理配置中维护，Admin、Hono 和小程序都不持有这些凭据。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`，并确认公开 bucket 的只读访问策略及 `PUBLIC_ASSET_BASE_URL` 与实际对象路径一致。
 
 旁路验证 Docker 版本时使用高位端口，并默认只绑定 `127.0.0.1`，不切换线上域名：
 

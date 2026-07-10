@@ -7,6 +7,7 @@ The WeChat mini program needs a small production-ready points feature that can l
 - **BREAKING**: Create a hard fork release branch for this launch where `ikanyue.taro3` is based on the current WeChat online branch and the admin/API surfaces are cut down to the lite points workflow instead of exposing the full ops system.
 - Add a lightweight points ledger for students with accumulation events, balance snapshots, admin-created point additions, and audited offline reward deductions.
 - Add a physical reward catalog with active/inactive rewards and point prices.
+- Add authenticated reward image upload through Hono into PocketBase file storage, with production reads served from the public MinIO bucket URL.
 - Add mini program views/APIs for students to see current points, redeemable rewards, and locked rewards.
 - Add lite admin views/APIs for login, student lookup, point balance/history, adding points, reward catalog management, and offline reward deduction.
 - Add local non-Docker verification during development; reserve Docker compose validation for final release verification only.

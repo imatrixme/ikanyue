@@ -1,11 +1,11 @@
 [submodule "ikanyue.taro3"]
 	path = ikanyue.taro3
 	url = git@github.com:imatrixme/ikanyue.taro3.git
-	branch = 2604/jieshao
+	branch = release/wechat-points-lite
 [submodule "ikanyue.mapi.hono"]
 	path = ikanyue.mapi.hono
 	url = git@github.com:imatrixme/ikanyue.mapi.hono.git
-	branch = 2605/newop
+	branch = release/wechat-points-lite
 [submodule "ikanyue.flutter"]
 	path = ikanyue.flutter
 	url = git@github.com:imatrixme/ikanyue.flutter.git
@@ -17,4 +17,4 @@
 [submodule "ikanyue.admin"]
 	path = ikanyue.admin
 	url = git@github.com:imatrixme/ikanyue.admin.git
-	branch = 2605/newop
+	branch = release/wechat-points-lite

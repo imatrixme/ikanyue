@@ -37,3 +37,21 @@
 - [x] 5.4 Run local build/test/schema/E2E gates without Docker.
 - [x] 5.5 Run `openspec validate launch-wechat-points-lite --strict --no-interactive`.
 - [ ] 5.6 Before release only, run Docker compose verification and smoke-test login, student reward listing, admin add-points, and offline redemption.
+
+## 6. Local Three-Client Environment Hardening
+
+- [x] 6.1 Remove hard-coded administrator bootstrap credentials and make schema application create-only when explicitly enabled.
+- [x] 6.2 Add localhost-only core schema and deterministic points/reward fixtures for an empty local PocketBase.
+- [x] 6.3 Add a no-Docker local launcher for PocketBase, Hono, admin, and the Taro watcher.
+- [x] 6.4 Add admin Vite proxying and a real-backend Playwright path while preserving the existing mock E2E suite.
+- [x] 6.5 Align hard-fork submodule tracking branches and local environment documentation.
+- [x] 6.6 Use a single reward-availability snapshot for miniapp balance and affordability display.
+- [x] 6.7 Run focused tests, builds, schema checks, smoke-script safety checks, and strict OpenSpec validation.
+
+## 7. Reward Image Storage
+
+- [x] 7.1 Add a backward-compatible PocketBase reward image file field and public URL projection.
+- [x] 7.2 Add an authenticated Hono multipart upload endpoint with image type and size validation.
+- [x] 7.3 Add Admin file selection, upload progress state, preview, and image replacement workflow.
+- [x] 7.4 Preserve legacy absolute image URLs and local PocketBase file URL fallback.
+- [x] 7.5 Add Hono, Admin, live integration, build, coverage, and strict OpenSpec verification.

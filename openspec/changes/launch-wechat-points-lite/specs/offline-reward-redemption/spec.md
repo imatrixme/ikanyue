@@ -11,6 +11,22 @@ The system SHALL provide a lightweight catalog of physical rewards with point pr
 - **WHEN** an admin creates or updates a reward with a non-positive point price
 - **THEN** the system rejects the request
 
+#### Scenario: Admin uploads reward image
+- **WHEN** an authenticated lite admin uploads a supported image within the configured size limit for an existing reward
+- **THEN** the backend stores the file in the reward's PocketBase file field and returns the reward with a preview URL
+
+#### Scenario: Invalid reward image is rejected
+- **WHEN** an admin uploads an empty file, a non-image MIME type, or an oversized image
+- **THEN** the system rejects the upload without replacing the existing image
+
+#### Scenario: Reward image reads bypass PocketBase in production
+- **WHEN** a reward has a PocketBase-managed image file and `PUBLIC_ASSET_BASE_URL` is configured
+- **THEN** admin and mini program reward responses expose the public object-storage URL using the PocketBase collection, record, and filename path
+
+#### Scenario: Legacy image URL remains compatible
+- **WHEN** a reward has no managed image file but has an existing absolute image URL
+- **THEN** the system continues returning that URL
+
 #### Scenario: Inactive reward is hidden from students
 - **WHEN** a reward item is inactive
 - **THEN** the mini program reward list does not include it in redeemable or locked rewards

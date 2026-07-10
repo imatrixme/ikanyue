@@ -36,6 +36,7 @@ yarn-error.log*
 **/.rn_temp/
 
 # API local data
+.local/
 **/.tmp/
 **/database/
 **/pb_data/
