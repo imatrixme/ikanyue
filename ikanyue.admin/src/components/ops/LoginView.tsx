@@ -51,18 +51,18 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
           </div>
           <h1 className="text-3xl font-semibold leading-tight">看乐积分兑换后台</h1>
           <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--primary-foreground)]/75">
-            管理学员积分、线下实物和兑换扣分。当前轻量分叉不包含教务、报告、发货或退款流程。
+            看乐校区 · 微信轻量版
           </p>
         </div>
         <div className="mt-10 grid gap-2 text-sm text-[var(--primary-foreground)]/55">
-          <span>WeChat points lite</span>
-          <span>Admin-only redemption desk</span>
+          <span>管理员工作台</span>
+          <span>积分与线下兑换</span>
         </div>
       </aside>
       <section className="flex items-center justify-center px-5 py-10">
         <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm shadow-[var(--brand)]/8" onSubmit={submit}>
           <div className="mb-6">
-            <p className="text-xs font-medium text-[var(--muted-foreground)]">Points Admin</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
             <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '管理员登录'}</h2>
           </div>
           <div className="mb-4 grid grid-cols-2 rounded-md border border-[var(--border)] bg-[var(--muted)] p-1 text-sm font-medium">

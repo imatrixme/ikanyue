@@ -12,33 +12,38 @@ test('local admin uses the real Hono and PocketBase points flow', async ({ page 
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
 
-  await expect(page.getByRole('heading', { name: '学员积分' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '选择学员', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /本地学员一 120 分/ })).toBeVisible()
 
   await page.getByLabel('积分数量').fill('50')
   await page.getByLabel('原因').fill('local_playwright')
-  await page.getByRole('button', { name: '确认加分' }).click()
+  await page.getByRole('button', { name: '预览加分结果' }).click()
+  await page.getByRole('button', { name: '确认执行' }).click()
   await expect(page.getByText('积分已增加')).toBeVisible()
   await expect(page.getByText('170', { exact: true }).first()).toBeVisible()
 
-  await page.getByRole('button', { name: '扣除积分并确认领取' }).click()
+  await page.getByRole('tab', { name: '线下兑换' }).click()
+  await page.getByRole('button', { name: '预览兑换结果' }).click()
+  await page.getByRole('button', { name: '确认执行' }).click()
   await expect(page.getByText('已扣除积分，确认线下领取')).toBeVisible()
   await expect(page.getByText('120', { exact: true }).first()).toBeVisible()
 
   const mobileMenu = page.getByRole('button', { name: '打开导航' })
   if (await mobileMenu.isVisible()) {
     await mobileMenu.click()
-    await page.getByRole('button', { name: '实物列表' }).last().click()
+    await page.getByRole('button', { name: '实物管理' }).last().click()
   } else {
-    await page.getByRole('button', { name: '实物列表' }).click()
+    await page.getByRole('button', { name: '实物管理' }).click()
   }
-  await expect(page.getByRole('heading', { name: '实物列表' })).toBeVisible()
-  const rewardRow = page.getByRole('row').filter({ hasText: '贴纸' })
-  await rewardRow.getByRole('button', { name: '编辑' }).click()
+  await expect(page.getByRole('heading', { name: '实物管理' })).toBeVisible()
+  await page.getByRole('button', { name: '编辑贴纸' }).click()
   await page.getByLabel('选择图片').setInputFiles({
     name: 'playwright-reward.png',
     mimeType: 'image/png',
-    buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    ),
   })
   await page.getByRole('button', { name: /上传图片|替换图片/ }).click()
   await expect(page.getByText('实物图片已上传')).toBeVisible()

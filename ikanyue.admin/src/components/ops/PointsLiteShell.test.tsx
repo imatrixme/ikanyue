@@ -29,7 +29,7 @@ describe('points lite shell and login components', () => {
     expect(screen.getByText('错误消息')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '打开导航' }))
     expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(2)
-    await user.click(screen.getAllByRole('button', { name: '实物列表' })[1])
+    await user.click(screen.getAllByRole('button', { name: '实物管理' })[1])
     expect(onViewChange).toHaveBeenCalledWith('rewards')
     expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: '打开导航' }))

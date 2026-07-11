@@ -103,31 +103,35 @@ export default function App({ api: injectedApi }: AppProps) {
     await loadStudentSummary(studentId)
   }
 
-  async function addPoints(payload: { amount: number; reason?: string; remark?: string }) {
+  async function addPoints(payload: { amount: number; reason?: string; remark?: string }): Promise<boolean> {
     dispatch({ type: 'loading:set', payload: true })
     try {
       const summary = await api.addPoints(state.token, { ...payload, studentId: state.selectedStudentId })
       dispatch({ type: 'studentSummary:set', payload: summary })
       await loadStudents()
       dispatch({ type: 'toast:set', payload: { type: 'info', message: '积分已增加' } })
+      return true
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: errorMessage(error, '增加积分失败') } })
+      return false
     }
   }
 
-  async function redeem(itemId: string, remark?: string) {
+  async function redeem(itemId: string, remark?: string): Promise<boolean> {
     dispatch({ type: 'loading:set', payload: true })
     try {
       const summary = await api.offlineRedeem(state.token, { itemId, remark, studentId: state.selectedStudentId })
       dispatch({ type: 'studentSummary:set', payload: summary })
       await loadStudents()
       dispatch({ type: 'toast:set', payload: { type: 'info', message: '已扣除积分，确认线下领取' } })
+      return true
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: errorMessage(error, '兑换失败') } })
+      return false
     }
   }
 
-  async function saveReward(id: string | null, payload: RewardItemInput) {
+  async function saveReward(id: string | null, payload: RewardItemInput): Promise<boolean> {
     dispatch({ type: 'loading:set', payload: true })
     try {
       if (id) {
@@ -137,8 +141,10 @@ export default function App({ api: injectedApi }: AppProps) {
       }
       await loadRewards()
       dispatch({ type: 'toast:set', payload: { type: 'info', message: id ? '实物已更新' : '实物已创建' } })
+      return true
     } catch (error) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: errorMessage(error, '保存实物失败') } })
+      return false
     }
   }
 

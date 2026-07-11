@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -19,7 +19,7 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
 
-    expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '选择学员' })).toBeInTheDocument()
     expect(screen.getAllByText('张同学').length).toBeGreaterThan(0)
     expect(screen.getAllByText('120').length).toBeGreaterThan(0)
 
@@ -29,17 +29,23 @@ describe('points lite app flow', () => {
 
     await user.clear(screen.getByLabelText('积分数量'))
     await user.type(screen.getByLabelText('积分数量'), '30')
-    await user.click(screen.getByRole('button', { name: '确认加分' }))
+    await user.click(screen.getByRole('button', { name: '预览加分结果' }))
+    expect(screen.getByRole('dialog', { name: '确认增加积分' })).toHaveTextContent('120')
+    expect(screen.getByRole('dialog', { name: '确认增加积分' })).toHaveTextContent('150')
+    await user.click(screen.getByRole('button', { name: '确认执行' }))
     expect(await screen.findByText('积分已增加')).toBeInTheDocument()
     expect(screen.getAllByText('150').length).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole('button', { name: '扣除积分并确认领取' }))
+    await user.click(screen.getByRole('tab', { name: '线下兑换' }))
+    await user.click(screen.getByRole('button', { name: '预览兑换结果' }))
+    expect(screen.getByRole('dialog', { name: '确认线下兑换' })).toHaveTextContent('贴纸套装')
+    await user.click(screen.getByRole('button', { name: '确认执行' }))
     expect(await screen.findByText('已扣除积分，确认线下领取')).toBeInTheDocument()
     expect(screen.getAllByText('100').length).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole('button', { name: '实物列表' }))
-    expect(await screen.findByRole('heading', { name: '实物列表' })).toBeInTheDocument()
-    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    await user.click(screen.getByRole('button', { name: '实物管理' }))
+    expect(await screen.findByRole('heading', { name: '实物管理' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'sticker.png', { type: 'image/png' }))
     await user.click(screen.getByRole('button', { name: '替换图片' }))
     expect(await screen.findByText('实物图片已上传')).toBeInTheDocument()
@@ -47,8 +53,9 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('积分价格'), '60')
     await user.click(screen.getByRole('button', { name: '保存实物' }))
     expect(await screen.findByText('实物已更新')).toBeInTheDocument()
-    expect(screen.getByText('60')).toBeInTheDocument()
+    expect(screen.getByText('60 分')).toBeInTheDocument()
 
+    await user.click(screen.getByRole('button', { name: '新增实物' }))
     await user.clear(screen.getByLabelText('实物名称'))
     await user.type(screen.getByLabelText('实物名称'), '帆布袋')
     await user.clear(screen.getByLabelText('积分价格'))
@@ -94,7 +101,7 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('新密码'), 'new-secret')
     await user.type(screen.getByLabelText('确认新密码'), 'new-secret')
     await user.click(screen.getByRole('button', { name: '确认修改' }))
-    expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '选择学员' })).toBeInTheDocument()
   })
 
   it('surfaces api failures from the initial student load path', async () => {
@@ -118,24 +125,32 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('账号或手机号'), 'admin')
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
-    expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '选择学员' })).toBeInTheDocument()
 
     api.addPoints = async () => { throw new Error('grant down') }
-    await user.click(screen.getByRole('button', { name: '确认加分' }))
+    await user.click(screen.getByRole('button', { name: '预览加分结果' }))
+    await user.click(screen.getByRole('button', { name: '确认执行' }))
     expect(await screen.findByText('grant down')).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '确认增加积分' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '返回修改' }))
 
     api.offlineRedeem = async () => { throw new Error('redeem down') }
-    await user.click(screen.getByRole('button', { name: '扣除积分并确认领取' }))
+    await user.click(screen.getByRole('tab', { name: '线下兑换' }))
+    await user.click(screen.getByRole('button', { name: '预览兑换结果' }))
+    await user.click(screen.getByRole('button', { name: '确认执行' }))
     expect(await screen.findByText('redeem down')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '返回修改' }))
 
-    await user.click(screen.getByRole('button', { name: '实物列表' }))
+    await user.click(screen.getByRole('button', { name: '实物管理' }))
     api.createReward = async () => { throw new Error('save down') }
-    await user.clear(screen.getByLabelText('实物名称'))
+    await user.click(screen.getByRole('button', { name: '新增实物' }))
     await user.type(screen.getByLabelText('实物名称'), '新奖品')
     await user.click(screen.getByRole('button', { name: '创建实物' }))
     expect(await screen.findByText('save down')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '创建新的兑换实物' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '关闭实物编辑器' }))
 
-    await user.click(screen.getAllByRole('button', { name: '编辑' })[0])
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     api.uploadRewardImage = async () => { throw new Error('upload down') }
     await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'failed.png', { type: 'image/png' }))
     await user.click(screen.getByRole('button', { name: '替换图片' }))
@@ -167,17 +182,18 @@ describe('points lite components', () => {
     expect(onSearchStudents).toHaveBeenCalledWith('李')
     await user.click(screen.getByRole('button', { name: /张同学/ }))
     expect(onSelectStudent).toHaveBeenCalledWith('student_1')
+    await user.click(screen.getByRole('tab', { name: '线下兑换' }))
     expect(screen.getByText('乐理练习册')).toBeInTheDocument()
   })
 
   it('renders empty reward list and cancels reward editing', async () => {
     const user = userEvent.setup()
     render(<RewardItemsPanel loading={false} rewards={[]} onSave={vi.fn()} />)
-    expect(screen.getByText('暂无实物')).toBeInTheDocument()
+    expect(screen.getByText('还没有实物')).toBeInTheDocument()
 
     const rewards: RewardItem[] = [{ ...mockRewards.items[0] }]
     render(<RewardItemsPanel loading={false} rewards={rewards} onSave={vi.fn()} />)
-    await user.click(screen.getByRole('button', { name: '编辑' }))
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '取消' }))
     expect(screen.queryByRole('button', { name: '取消' })).not.toBeInTheDocument()
@@ -185,12 +201,13 @@ describe('points lite components', () => {
 
   it('submits inactive reward edits and full create payloads', async () => {
     const user = userEvent.setup()
-    const onSave = vi.fn().mockResolvedValue(undefined)
+    const onSave = vi.fn().mockResolvedValue(true)
     const rewards: RewardItem[] = [{ ...mockRewards.items[0] }]
     render(<RewardItemsPanel loading={false} rewards={rewards} onSave={onSave} />)
 
-    await user.click(screen.getByRole('button', { name: '编辑' }))
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     await user.selectOptions(screen.getByLabelText('状态'), 'inactive')
+    await user.click(screen.getByText('高级设置'))
     await user.clear(screen.getByLabelText('排序'))
     await user.type(screen.getByLabelText('排序'), '7')
     await user.clear(screen.getByLabelText('兼容图片 URL'))
@@ -205,6 +222,7 @@ describe('points lite components', () => {
       status: 'inactive',
     }))
 
+    await user.click(screen.getByRole('button', { name: '新增实物' }))
     await user.type(screen.getByLabelText('实物名称'), '徽章')
     await user.click(screen.getByRole('button', { name: '创建实物' }))
     expect(onSave).toHaveBeenLastCalledWith(null, expect.objectContaining({ name: '徽章', status: 'active' }))
@@ -219,7 +237,7 @@ describe('points lite components', () => {
     })
     const { unmount } = render(<RewardItemsPanel loading={false} rewards={[reward]} onSave={vi.fn()} onUploadImage={onUploadImage} />)
 
-    await user.click(screen.getByRole('button', { name: '编辑' }))
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     const input = screen.getByLabelText('选择图片')
     await user.upload(input, new File(['image'], 'reward.png', { type: 'image/png' }))
     await user.click(screen.getByRole('button', { name: '替换图片' }))
@@ -227,6 +245,8 @@ describe('points lite components', () => {
     expect(onUploadImage).toHaveBeenCalledWith('reward_sticker', expect.objectContaining({ name: 'reward.png' }), expect.any(Function))
     expect(await screen.findByRole('progressbar', { name: '上传进度' })).toHaveValue(100)
     expect(screen.getByAltText('实物图片预览')).toHaveAttribute('src', 'https://assets.example.test/reward.png')
+    fireEvent.error(screen.getByAltText('实物图片预览'))
+    expect(screen.getByText('图片不可用')).toBeInTheDocument()
 
     await user.upload(screen.getByLabelText('选择图片'), new File(['text'], 'notes.txt', { type: 'text/plain' }))
     expect(screen.getByText('仅支持 JPG、PNG、WebP、GIF 或 AVIF 图片')).toBeInTheDocument()
@@ -240,7 +260,7 @@ describe('points lite components', () => {
     unmount()
     const nullUpload = vi.fn(async () => null)
     render(<RewardItemsPanel loading={false} rewards={[reward]} onSave={vi.fn()} onUploadImage={nullUpload} />)
-    await user.click(screen.getByRole('button', { name: '编辑' }))
+    await user.click(screen.getByRole('button', { name: '编辑贴纸套装' }))
     await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'retry.png', { type: 'image/png' }))
     await user.click(screen.getByRole('button', { name: '替换图片' }))
     expect(nullUpload).toHaveBeenCalled()
@@ -265,11 +285,11 @@ describe('points lite components', () => {
 
     expect(screen.getByText('暂无匹配学员')).toBeInTheDocument()
     expect(screen.getByText('请选择学员')).toBeInTheDocument()
-    expect(screen.getByText('选择学员后可加分或线下兑换')).toBeInTheDocument()
-    expect(screen.getByText('暂无积分流水')).toBeInTheDocument()
+    expect(screen.getByText('选择后可增加积分或确认线下兑换')).toBeInTheDocument()
+    expect(screen.getByText('暂无积分记录')).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: '线下兑换' }))
     expect(screen.getByText('所有上架实物当前均可兑换。')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '扣除积分并确认领取' })).toBeDisabled()
-    await user.click(screen.getByRole('button', { name: '扣除积分并确认领取' }))
+    expect(screen.getByRole('button', { name: '预览兑换结果' })).toBeDisabled()
     expect(onRedeem).not.toHaveBeenCalled()
   })
 
@@ -295,7 +315,13 @@ describe('points lite components', () => {
     await user.clear(screen.getByLabelText('原因'))
     await user.type(screen.getByLabelText('原因'), '主动练习')
     await user.type(screen.getByLabelText('备注'), '完成两首曲目')
-    await user.click(screen.getByRole('button', { name: '确认加分' }))
+    await user.click(screen.getByRole('button', { name: '预览加分结果' }))
+    expect(onAddPoints).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: '确认增加积分' })).toHaveTextContent('135')
+    await user.click(screen.getByRole('button', { name: '返回修改' }))
+    expect(screen.getByLabelText('积分数量')).toHaveValue(15)
+    await user.click(screen.getByRole('button', { name: '预览加分结果' }))
+    await user.click(screen.getByRole('button', { name: '确认执行' }))
     expect(onAddPoints).toHaveBeenCalledWith({ amount: 15, reason: '主动练习', remark: '完成两首曲目' })
     expect(screen.getByLabelText('积分数量')).toHaveValue(20)
     expect(screen.getByLabelText('备注')).toHaveValue('')
@@ -326,8 +352,8 @@ describe('points lite components', () => {
 
     expect(screen.getByText('未填昵称 · 无手机号')).toBeInTheDocument()
     expect(screen.getAllByText('-').length).toBeGreaterThan(0)
-    expect(screen.getByText('备注原因')).toBeInTheDocument()
-    expect(screen.getByText('not-a-date')).toBeInTheDocument()
+    expect(screen.getAllByText('备注原因').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('not-a-date').length).toBeGreaterThan(0)
   })
 })
 
