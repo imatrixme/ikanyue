@@ -51,6 +51,15 @@ const getRewardStateText = (item, balance) => {
     return missing <= 0 ? '可兑换' : `还差 ${missing} 分`;
 };
 
+const getRewardProgress = (item, balance) => {
+    const price = Number(item?.pointsPrice || 0);
+    const points = Number(balance || 0);
+    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(points)) {
+        return 0;
+    }
+    return Math.max(0, Math.min(100, Math.round((points / price) * 100)));
+};
+
 const toNumber = (value, fallback = 0) => {
     const number = Number(value ?? fallback);
     return Number.isFinite(number) ? number : Number(fallback || 0);
@@ -58,6 +67,7 @@ const toNumber = (value, fallback = 0) => {
 
 export {
     formatPoints,
+    getRewardProgress,
     getRewardStateText,
     normalizeRewardAvailability,
     normalizePointSummary,

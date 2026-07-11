@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     formatPoints,
+    getRewardProgress,
     getRewardStateText,
     normalizeRewardAvailability,
     normalizePointSummary,
@@ -93,5 +94,10 @@ describe('points page logic', () => {
         expect(getRewardStateText(null, 30)).toBe('可兑换');
         expect(getRewardStateText({ pointsPrice: 20 }, 30)).toBe('可兑换');
         expect(getRewardStateText({ pointsPrice: 50 }, 30)).toBe('还差 20 分');
+        expect(getRewardProgress({ pointsPrice: 50 }, 30)).toBe(60);
+        expect(getRewardProgress({ pointsPrice: 50 }, 80)).toBe(100);
+        expect(getRewardProgress({ pointsPrice: 50 }, -5)).toBe(0);
+        expect(getRewardProgress({ pointsPrice: 0 }, 30)).toBe(0);
+        expect(getRewardProgress({ pointsPrice: 'invalid' }, 30)).toBe(0);
     });
 });
