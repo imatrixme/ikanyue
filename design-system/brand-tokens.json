@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "name": "Kanyue Brand System",
+    "version": "1.0.0",
+    "direction": "Starbucks Green inspired, adapted for Kanyue music education"
+  },
+  "color": {
+    "primary": "#00754a",
+    "primaryStrong": "#006241",
+    "primaryPressed": "#004f3d",
+    "primarySoft": "#d4e9e2",
+    "primaryLine": "#9fc9bb",
+    "onPrimary": "#ffffff",
+    "ink": "#31443e",
+    "inkStrong": "#1e3932",
+    "textSecondary": "#5f6f69",
+    "textMuted": "#87928e",
+    "canvas": "#f4f4f2",
+    "surface": "#ffffff",
+    "line": "#dededb",
+    "lineStrong": "#b9b9b5",
+    "blue": "#0079c8",
+    "bluePressed": "#005f9e",
+    "blueSoft": "#eaf5fc",
+    "blueLine": "#b8d9ef",
+    "blueLineStrong": "#9bc9e8",
+    "yellow": "#f5c400",
+    "yellowPressed": "#d9a900",
+    "yellowSoft": "#fff8d6",
+    "gold": "#7d6200",
+    "success": "#1f7a4d",
+    "successSoft": "#e8f5ed",
+    "successLine": "#b9dcc8",
+    "danger": "#b42318",
+    "dangerPressed": "#8f1c14",
+    "dangerSoft": "#fff0ee",
+    "dangerLine": "#dfbbb7",
+    "wechat": "#07c160",
+    "mediaMuted": "#eeece8",
+    "skeleton": "#e4e4e1"
+  },
+  "typography": {
+    "fontFamily": "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    "weight": {
+      "medium": 600,
+      "semibold": 700,
+      "bold": 800,
+      "black": 900
+    },
+    "lineHeight": {
+      "none": 1,
+      "tight": 1.35,
+      "compact": 1.4,
+      "title": 1.45,
+      "body": 1.5,
+      "readable": 1.55,
+      "relaxed": 1.6,
+      "prose": 1.75
+    },
+    "miniappSizePx": {
+      "2xs": 9,
+      "xs": 10,
+      "sm": 11,
+      "bodySm": 12,
+      "body": 13,
+      "bodyLg": 14,
+      "subtitle": 15,
+      "titleSm": 16,
+      "title": 17,
+      "section": 18,
+      "page": 19,
+      "heading": 20,
+      "headingLg": 21,
+      "displaySm": 22,
+      "displayMd": 24,
+      "illustration": 28,
+      "balanceSm": 36,
+      "balance": 40,
+      "calendarDisplay": 42,
+      "heroDisplay": 48
+    },
+    "admin": {
+      "caption": "0.75rem",
+      "body": "0.875rem",
+      "bodyLg": "1rem",
+      "titleSm": "1.125rem",
+      "title": "1.25rem",
+      "heading": "1.5rem",
+      "captionLine": "1rem",
+      "bodyLine": "1.5rem",
+      "bodyLgLine": "1.625rem",
+      "titleLine": 1.35,
+      "proseMeasure": "68ch"
+    }
+  },
+  "spacingPx": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 20,
+    "6": 24,
+    "8": 32
+  },
+  "radiusPx": {
+    "sm": 4,
+    "md": 6,
+    "lg": 8
+  },
+  "motionMs": {
+    "fast": 160,
+    "base": 220
+  },
+  "paragraph": {
+    "miniappSpacingToken": "space-3",
+    "miniappProseSpacingToken": "space-4",
+    "adminSpacingRem": "0.75rem"
+  }
+}
