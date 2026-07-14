@@ -1,4 +1,4 @@
-import { Gift, ListChecks, PackageOpen, X } from 'lucide-react'
+import { Gift, ListChecks, PackageOpen, Users, X } from 'lucide-react'
 
 import { canAccessView } from '../../app/state'
 import type { AppView, OpsProfile } from '../../app/types'
@@ -14,6 +14,7 @@ interface AdminSidebarProps {
 }
 
 const navItems: Array<{ view: AppView; label: string; icon: typeof ListChecks }> = [
+  { view: 'students', label: '学员管理', icon: Users },
   { view: 'points', label: '学员积分', icon: ListChecks },
   { view: 'rewards', label: '实物管理', icon: PackageOpen },
 ]
@@ -35,7 +36,7 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
           </span>
           <div className="min-w-0 flex-1 whitespace-nowrap">
             <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
-            <p className="truncate text-[13px] font-semibold text-[var(--foreground)]">线下积分服务台</p>
+            <p className="truncate text-sm font-semibold text-[var(--foreground)]">线下积分服务台</p>
           </div>
           {mode === 'drawer' ? (
             <button

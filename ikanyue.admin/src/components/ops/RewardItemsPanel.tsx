@@ -1,85 +1,61 @@
-import { Pencil, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Pencil, Plus, RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { RewardItem, RewardItemInput, UploadProgressHandler } from '../../app/types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Panel } from '../ui/Card'
-import { cn } from '../ui/utils'
+import { DialogShell } from '../ui/DialogShell'
+import { Field, Input } from '../ui/Input'
+import { Select } from '../ui/Select'
+import { FilterSummary, ListEmptyState, PaginationControls } from './ListControls'
+import { isRecord, pageItems, parseOptionalNumber, stringValue, usePersistedFilters } from './listState'
 import { RewardEditor } from './RewardEditor'
 import { RewardMedia } from './RewardMedia'
 
-interface RewardItemsPanelProps {
-  loading: boolean
-  rewards: RewardItem[]
-  onSave: (id: string | null, payload: RewardItemInput) => Promise<boolean>
-  onUploadImage?: (id: string, file: File, onProgress?: UploadProgressHandler) => Promise<RewardItem | null>
-}
+interface RewardItemsPanelProps { loading: boolean; rewards: RewardItem[]; onReloadRewards: () => Promise<void>; onSave: (id: string | null, payload: RewardItemInput) => Promise<boolean>; onUploadImage?: (id: string, file: File, onProgress?: UploadProgressHandler) => Promise<RewardItem | null> }
+interface RewardFilters { keyword: string; maxPoints: string; minPoints: string; sort: RewardSort; status: 'all' | 'active' | 'inactive' }
+type RewardSort = 'sort-asc' | 'price-asc' | 'price-desc' | 'name-asc'
+const defaults: RewardFilters = { keyword: '', maxPoints: '', minPoints: '', sort: 'sort-asc', status: 'all' }
+const pageSize = 8
 
-export function RewardItemsPanel({ loading, rewards, onSave, onUploadImage }: RewardItemsPanelProps) {
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const sortedRewards = [...rewards].sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
-  const editingReward = sortedRewards.find((reward) => reward.id === editingId) || null
+export function RewardItemsPanel({ loading, rewards, onReloadRewards, onSave, onUploadImage }: RewardItemsPanelProps) {
+  const [filters, setFilters] = usePersistedFilters('kanyue.rewards.filters.v1', defaults, sanitizeFilters)
+  const [page, setPage] = useState(1)
+  const [editor, setEditor] = useState<{ reward: RewardItem | null } | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const [discardPrompt, setDiscardPrompt] = useState(false)
+  const filtered = useMemo(() => filterRewards(rewards, filters), [filters, rewards])
+  const paged = pageItems(filtered, page, pageSize)
+  const activeCount = [filters.keyword, filters.minPoints, filters.maxPoints].filter(Boolean).length + (filters.status === 'all' ? 0 : 1) + (filters.sort === defaults.sort ? 0 : 1)
 
-  function edit(reward: RewardItem) {
-    setEditingId(reward.id)
-    setEditorOpen(true)
-  }
-
-  function create() {
-    setEditingId(null)
-    setEditorOpen(true)
-  }
-
-  function close() {
-    setEditorOpen(false)
-    setEditingId(null)
-  }
+  function updateFilter<K extends keyof RewardFilters>(key: K, value: RewardFilters[K]) { setFilters((current) => ({ ...current, [key]: value })); setPage(1) }
+  function resetFilters() { setFilters(defaults); setPage(1) }
+  function forceClose() { setEditor(null); setDirty(false); setDiscardPrompt(false) }
+  function requestClose() { if (dirty) setDiscardPrompt(true); else forceClose() }
 
   return (
-    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
-      <Panel className="min-w-0 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold">实物管理</h2>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">维护积分价格、上下架状态和展示图片。</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge tone="blue">{rewards.filter((item) => item.status === 'active').length} 个上架</Badge>
-            <Button aria-label="新增实物" className="h-9 w-9 px-0" icon={<Plus className="h-4 w-4" />} onClick={create} type="button" />
-          </div>
-        </div>
-        {sortedRewards.length > 0 ? (
-          <div className="divide-y divide-[var(--border)]">
-            <div className="hidden grid-cols-[minmax(180px,1.4fr)_90px_80px_minmax(120px,1fr)_64px] gap-3 bg-[var(--muted)]/65 px-4 py-2.5 text-xs text-[var(--muted-foreground)] md:grid">
-              <span>实物</span><span>积分</span><span>状态</span><span>说明</span><span className="text-right">操作</span>
-            </div>
-            {sortedRewards.map((reward) => (
-              <div key={reward.id} className={cn('grid gap-3 px-4 py-3 transition-colors md:grid-cols-[minmax(180px,1.4fr)_90px_80px_minmax(120px,1fr)_64px] md:items-center', editingId === reward.id ? 'bg-[var(--point-soft)]/55' : 'hover:bg-[var(--muted)]/45')}>
-                <div className="flex min-w-0 items-center gap-3">
-                  <RewardMedia className="w-20 md:w-16" name={reward.name} src={reward.image} />
-                  <div className="min-w-0"><p className="truncate font-semibold">{reward.name}</p><p className="mt-1 truncate text-xs text-[var(--muted-foreground)] md:hidden">{reward.description || '暂无说明'}</p></div>
-                </div>
-                <div className="flex items-center justify-between gap-3 md:block"><span className="text-xs text-[var(--muted-foreground)] md:hidden">积分价格</span><span className="font-semibold tabular-nums text-[var(--point)]">{reward.pointsPrice} 分</span></div>
-                <div className="flex items-center justify-between gap-3 md:block"><span className="text-xs text-[var(--muted-foreground)] md:hidden">状态</span><Badge tone={reward.status === 'active' ? 'green' : 'neutral'}>{reward.status === 'active' ? '上架' : '下线'}</Badge></div>
-                <p className="hidden truncate text-sm text-[var(--muted-foreground)] md:block">{reward.description || '-'}</p>
-                <Button aria-label={`编辑${reward.name}`} className="h-9 w-full px-3 md:w-9 md:px-0" icon={<Pencil className="h-4 w-4" />} onClick={() => edit(reward)} type="button" variant="secondary"><span className="md:hidden">编辑</span></Button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid justify-items-center gap-3 px-5 py-16 text-center"><p className="font-semibold">还没有实物</p><p className="text-sm text-[var(--muted-foreground)]">创建第一个可供学员线下领取的实物。</p><Button icon={<Plus className="h-4 w-4" />} onClick={create}>新增实物</Button></div>
-        )}
-      </Panel>
-
-      <aside className={cn('z-40 overflow-y-auto bg-[var(--background)] lg:sticky lg:top-24 lg:z-auto lg:max-h-[calc(100vh-7rem)] lg:bg-transparent', editorOpen ? 'fixed inset-0 block' : 'hidden lg:block')}>
-        {editorOpen ? (
-          <RewardEditor key={editingReward?.id || 'new-reward'} loading={loading} onClose={close} onSave={onSave} onUploadImage={onUploadImage} reward={editingReward} />
-        ) : (
-          <Panel className="grid min-h-72 place-items-center p-8 text-center"><div><p className="font-semibold">选择一个实物进行编辑</p><p className="mt-2 text-sm text-[var(--muted-foreground)]">也可以从左上角新增实物。</p></div></Panel>
-        )}
-      </aside>
-    </div>
+    <Panel className="min-w-0 overflow-hidden">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] px-5 py-4"><div><h2 className="text-lg font-semibold">实物管理</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">浏览和比较实物，再进入单独的编辑流程。</p></div><div className="flex items-center gap-2"><Badge tone="blue">{rewards.filter((item) => item.status === 'active').length} 个上架</Badge><Button aria-label="重新加载实物" className="h-9 w-9 px-0" disabled={loading} icon={<RefreshCw className="h-4 w-4" />} onClick={() => void onReloadRewards()} type="button" variant="secondary" /><Button aria-label="新增实物" className="h-9 w-9 px-0" icon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ reward: null })} type="button" /></div></div>
+      <div className="grid gap-3 border-b border-[var(--border)] bg-[var(--muted)]/35 px-4 py-4 md:grid-cols-[minmax(180px,1fr)_130px_120px_120px_170px]">
+        <Field label="搜索实物" htmlFor="reward-keyword"><Input id="reward-keyword" placeholder="名称 / 说明" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>
+        <Field label="状态" htmlFor="reward-filter-status"><Select allowEmpty id="reward-filter-status" options={[{ value: 'all', label: '全部状态' }, { value: 'active', label: '上架' }, { value: 'inactive', label: '下线' }]} value={filters.status} onChange={(event) => updateFilter('status', event.target.value as RewardFilters['status'])} /></Field>
+        <Field label="最低积分" htmlFor="reward-min"><Input id="reward-min" min="0" type="number" value={filters.minPoints} onChange={(event) => updateFilter('minPoints', event.target.value)} /></Field>
+        <Field label="最高积分" htmlFor="reward-max"><Input id="reward-max" min="0" type="number" value={filters.maxPoints} onChange={(event) => updateFilter('maxPoints', event.target.value)} /></Field>
+        <Field label="排序" htmlFor="reward-filter-sort"><Select id="reward-filter-sort" options={[{ value: 'sort-asc', label: '后台排序' }, { value: 'price-asc', label: '积分从低到高' }, { value: 'price-desc', label: '积分从高到低' }, { value: 'name-asc', label: '名称升序' }]} value={filters.sort} onChange={(event) => updateFilter('sort', event.target.value as RewardSort)} /></Field>
+      </div>
+      <div className="px-4"><FilterSummary activeCount={activeCount} onReset={resetFilters} /></div>
+      {loading && rewards.length === 0 ? <div className="grid min-h-64 place-items-center text-sm text-[var(--muted-foreground)]">正在加载实物...</div> : paged.items.length > 0 ? <><div className="hidden overflow-x-auto md:block"><RewardTable onEdit={(reward) => setEditor({ reward })} rewards={paged.items} /></div><div className="grid divide-y divide-[var(--border)] md:hidden">{paged.items.map((reward) => <RewardCard key={reward.id} onEdit={() => setEditor({ reward })} reward={reward} />)}</div></> : <ListEmptyState filtered={activeCount > 0} noun="实物" onCreate={() => setEditor({ reward: null })} onReset={resetFilters} />}
+      <PaginationControls onPageChange={setPage} page={paged.page} totalItems={filtered.length} totalPages={paged.totalPages} />
+      {editor ? <DialogShell description={editor.reward ? '修改后保存会刷新实物列表' : '先创建基本信息，之后可以上传图片'} onRequestClose={discardPrompt ? () => setDiscardPrompt(false) : requestClose} size="wide" title={editor.reward ? `编辑${editor.reward.name}` : '新增实物'}>{discardPrompt ? <DiscardPrompt onContinue={() => setDiscardPrompt(false)} onDiscard={forceClose} /> : null}<RewardEditor key={editor.reward?.id || 'new-reward'} loading={loading} onCancel={requestClose} onDirtyChange={setDirty} onSave={onSave} onSaved={forceClose} onUploadImage={onUploadImage} reward={editor.reward} /></DialogShell> : null}
+    </Panel>
   )
 }
+
+function RewardTable({ onEdit, rewards }: { onEdit: (reward: RewardItem) => void; rewards: RewardItem[] }) { return <table className="w-full border-collapse text-sm"><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)]/65 text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">实物</th><th className="px-4 py-3 font-medium">积分</th><th className="px-4 py-3 font-medium">状态</th><th className="px-4 py-3 font-medium">排序</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{rewards.map((reward) => <tr className="border-b border-[var(--border)] last:border-0" key={reward.id}><td className="px-4 py-3"><div className="flex items-center gap-3"><RewardMedia className="w-16" name={reward.name} src={reward.image} /><div className="min-w-0"><p className="font-semibold">{reward.name}</p><p className="mt-1 max-w-sm truncate text-xs text-[var(--muted-foreground)]">{reward.description || '暂无说明'}</p></div></div></td><td className="px-4 py-3 font-semibold tabular-nums text-[var(--point)]">{reward.pointsPrice} 分</td><td className="px-4 py-3"><Badge tone={reward.status === 'active' ? 'green' : 'neutral'}>{reward.status === 'active' ? '上架' : '下线'}</Badge></td><td className="px-4 py-3 tabular-nums">{reward.sortOrder || 0}</td><td className="px-4 py-3 text-right"><Button aria-label={`编辑${reward.name}`} icon={<Pencil className="h-4 w-4" />} onClick={() => onEdit(reward)} type="button" variant="secondary">编辑</Button></td></tr>)}</tbody></table> }
+function RewardCard({ onEdit, reward }: { onEdit: () => void; reward: RewardItem }) { return <article className="grid gap-3 px-4 py-4"><div className="flex items-center gap-3"><RewardMedia className="w-20" name={reward.name} src={reward.image} /><div className="min-w-0"><h3 className="font-semibold">{reward.name}</h3><p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">{reward.description || '暂无说明'}</p></div></div><div className="flex items-center justify-between"><span className="text-xs text-[var(--muted-foreground)]">积分价格</span><span className="font-semibold text-[var(--point)]">{reward.pointsPrice} 分</span></div><div className="flex items-center justify-between"><span className="text-xs text-[var(--muted-foreground)]">状态 · 排序 {reward.sortOrder || 0}</span><Badge tone={reward.status === 'active' ? 'green' : 'neutral'}>{reward.status === 'active' ? '上架' : '下线'}</Badge></div><Button aria-label={`编辑${reward.name}`} icon={<Pencil className="h-4 w-4" />} onClick={onEdit} type="button" variant="secondary">编辑</Button></article> }
+
+function DiscardPrompt({ onContinue, onDiscard }: { onContinue: () => void; onDiscard: () => void }) { const continueRef = useRef<HTMLButtonElement>(null); useEffect(() => continueRef.current?.focus(), []); return <div className="border-b border-[var(--destructive)]/20 bg-[var(--danger-soft)] px-5 py-4" role="alert"><p className="font-semibold text-[var(--destructive)]">放弃未保存修改？</p><p className="mt-1 text-sm text-[var(--muted-foreground)]">当前表单内容尚未保存，关闭后无法恢复。</p><div className="mt-3 flex gap-2"><Button data-autofocus ref={continueRef} onClick={onContinue} type="button" variant="secondary">继续编辑</Button><Button onClick={onDiscard} type="button" variant="danger">放弃修改</Button></div></div> }
+
+function filterRewards(rewards: RewardItem[], filters: RewardFilters) { const keyword = filters.keyword.trim().toLocaleLowerCase('zh-CN'); const min = parseOptionalNumber(filters.minPoints); const max = parseOptionalNumber(filters.maxPoints); return rewards.filter((reward) => (!keyword || [reward.name, reward.description].some((value) => value.toLocaleLowerCase('zh-CN').includes(keyword))) && (filters.status === 'all' || reward.status === filters.status) && (min === null || reward.pointsPrice >= min) && (max === null || reward.pointsPrice <= max)).sort((a, b) => filters.sort === 'price-asc' ? a.pointsPrice - b.pointsPrice : filters.sort === 'price-desc' ? b.pointsPrice - a.pointsPrice : filters.sort === 'name-asc' ? a.name.localeCompare(b.name, 'zh-CN') : Number(a.sortOrder || 0) - Number(b.sortOrder || 0)) }
+function sanitizeFilters(value: unknown, fallback: RewardFilters): RewardFilters { if (!isRecord(value)) return fallback; const status = stringValue(value.status) as RewardFilters['status']; const sort = stringValue(value.sort) as RewardSort; return { keyword: stringValue(value.keyword), minPoints: stringValue(value.minPoints), maxPoints: stringValue(value.maxPoints), status: ['all', 'active', 'inactive'].includes(status) ? status : fallback.status, sort: ['sort-asc', 'price-asc', 'price-desc', 'name-asc'].includes(sort) ? sort : fallback.sort } }

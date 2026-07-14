@@ -27,7 +27,7 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
           <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
             <button
               aria-label="关闭导航遮罩"
-              className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+              className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px]"
               onClick={() => setMobileNavOpen(false)}
               type="button"
             />
@@ -57,7 +57,7 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
                 />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-[var(--muted-foreground)]">线下积分与实物</p>
-                  <h1 className="truncate text-base font-semibold tracking-tight">积分服务台</h1>
+                  <h1 className="truncate text-base font-semibold">积分服务台</h1>
                 </div>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">

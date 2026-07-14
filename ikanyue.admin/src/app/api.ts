@@ -7,6 +7,8 @@ import type {
   RegisterResult,
   RewardItem,
   RewardItemInput,
+  StudentInput,
+  StudentRecord,
   StudentPointSummary,
   StudentPointsRow,
   UploadProgressHandler,
@@ -16,6 +18,9 @@ export interface OpsApi {
   login(account: string, password: string): Promise<LoginResult>
   register(data: RegisterPayload): Promise<RegisterResult>
   changePassword(token: string, data: ChangePasswordPayload): Promise<LoginResult>
+  listManagedStudents(token: string, query?: ListQuery): Promise<ListResult<StudentRecord>>
+  createStudent(token: string, data: StudentInput): Promise<StudentRecord>
+  updateStudent(token: string, id: string, data: StudentInput): Promise<StudentRecord>
   listStudents(token: string, query?: ListQuery): Promise<ListResult<StudentPointsRow>>
   getStudentPoints(token: string, studentId: string, query?: ListQuery): Promise<StudentPointSummary>
   addPoints(token: string, data: AddPointsInput): Promise<StudentPointSummary>
@@ -58,6 +63,18 @@ export function createOpsApi(options: { baseUrl?: string; mock?: boolean } = {})
 
 export function createMockOpsApi(): OpsApi {
   const students = clone(mockStudents)
+  const blockedStudentIds = new Set<string>()
+  const managedStudents: StudentRecord[] = students.items.map((student, index) => ({
+    avatar: student.avatar || '',
+    blocked: false,
+    cellphone: student.cellphone,
+    created: `2026-06-0${index + 1}T08:00:00.000Z`,
+    id: student.id,
+    lastLoginAt: '',
+    nickName: student.nickName,
+    realName: student.realName,
+    updated: `2026-06-0${index + 1}T08:00:00.000Z`,
+  }))
   const rewards = clone(mockRewards)
   const events = clone(mockPointEvents)
 
@@ -96,11 +113,37 @@ export function createMockOpsApi(): OpsApi {
       }
       return { token: 'mock-token-admin_1-changed', profile: { ...mockProfiles.admin, passwordChangeRequired: false } }
     },
+    async listManagedStudents(_token, query = {}) {
+      const keyword = String(query.q || query.keyword || '').trim()
+      const status = String(query.status || '')
+      const items = managedStudents.filter((student) => (!keyword || searchableStudent(student).includes(keyword)) && (!status || status === 'all' || student.blocked === (status === 'inactive')))
+      return list(items, Number(query.page || 1), Number(query.perPage || query.limit || 100))
+    },
+    async createStudent(_token, data) {
+      validateStudent(data, managedStudents)
+      const student: StudentRecord = { avatar: '', blocked: Boolean(data.blocked), cellphone: data.cellphone.trim(), created: new Date().toISOString(), id: `student_${managedStudents.length + 1}`, lastLoginAt: '', nickName: data.nickName?.trim() || '', realName: data.realName.trim(), updated: new Date().toISOString() }
+      managedStudents.unshift(student)
+      students.items.unshift({ id: student.id, realName: student.realName, nickName: student.nickName, cellphone: student.cellphone, balance: 0 })
+      if (student.blocked) blockedStudentIds.add(student.id)
+      return clone(student)
+    },
+    async updateStudent(_token, id, data) {
+      const index = managedStudents.findIndex((student) => student.id === id)
+      if (index < 0) throw new Error('学员不存在')
+      validateStudent(data, managedStudents, id, false)
+      managedStudents[index] = { ...managedStudents[index], blocked: Boolean(data.blocked), cellphone: data.cellphone.trim(), nickName: data.nickName?.trim() || '', realName: data.realName.trim(), updated: new Date().toISOString() }
+      const pointsRow = students.items.find((student) => student.id === id)
+      if (pointsRow) Object.assign(pointsRow, { cellphone: data.cellphone.trim(), nickName: data.nickName?.trim() || '', realName: data.realName.trim() })
+      if (data.blocked) blockedStudentIds.add(id)
+      else blockedStudentIds.delete(id)
+      return clone(managedStudents[index])
+    },
     async listStudents(_token, query = {}) {
       const keyword = String(query.q || query.keyword || '').trim()
+      const activeStudents = students.items.filter((student) => !blockedStudentIds.has(student.id))
       const items = keyword
-        ? students.items.filter((student) => searchableStudent(student).includes(keyword))
-        : students.items
+        ? activeStudents.filter((student) => searchableStudent(student).includes(keyword))
+        : activeStudents
       return list(items, Number(query.page || 1), Number(query.perPage || query.limit || 20))
     },
     async getStudentPoints(_token, studentId, query = {}) {
@@ -201,21 +244,32 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     changePassword(token, data) {
       return request<LoginResult>(`${baseUrl}/auth/change-password`, { method: 'POST', token, body: data })
     },
+    listManagedStudents(token, query = {}) {
+      return request<ListResult<StudentRecord>>(`${baseUrl}/students${toQuery(query)}`, { token })
+    },
+    createStudent(token, data) {
+      return request<StudentRecord>(`${baseUrl}/students`, { method: 'POST', token, body: data })
+    },
+    updateStudent(token, id, data) {
+      return request<StudentRecord>(`${baseUrl}/students/${encodeURIComponent(id)}`, { method: 'POST', token, body: data })
+    },
     listStudents(token, query = {}) {
       return request<ListResult<StudentPointsRow>>(`${baseUrl}/points/students${toQuery(query)}`, { token })
     },
     getStudentPoints(token, studentId, query = {}) {
       return request<StudentPointSummary>(`${baseUrl}/points/students/${encodeURIComponent(studentId)}${toQuery(query)}`, { token })
     },
-    addPoints(token, data) {
-      return request<StudentPointSummary>(`${baseUrl}/points/students/${encodeURIComponent(data.studentId)}/earn`, {
+    async addPoints(token, data) {
+      await request<unknown>(`${baseUrl}/points/students/${encodeURIComponent(data.studentId)}/earn`, {
         method: 'POST',
         token,
         body: data,
       })
+      return request<StudentPointSummary>(`${baseUrl}/points/students/${encodeURIComponent(data.studentId)}`, { token })
     },
-    offlineRedeem(token, data) {
-      return request<StudentPointSummary>(`${baseUrl}/points/offline-redeem`, { method: 'POST', token, body: data })
+    async offlineRedeem(token, data) {
+      await request<unknown>(`${baseUrl}/points/offline-redeem`, { method: 'POST', token, body: data })
+      return request<StudentPointSummary>(`${baseUrl}/points/students/${encodeURIComponent(data.studentId)}`, { token })
     },
     listRewards(token, query = {}) {
       return request<ListResult<RewardItem>>(`${baseUrl}/reward-items${toQuery(query)}`, { token })
@@ -230,6 +284,13 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
       return uploadRequest<RewardItem>(`${baseUrl}/reward-items/${encodeURIComponent(id)}/image`, token, file, onProgress)
     },
   }
+}
+
+function validateStudent(data: StudentInput, students: StudentRecord[], ignoredId = '', requirePassword = true) {
+  if (!data.cellphone.trim()) throw new Error('手机号不能为空')
+  if (!data.realName.trim()) throw new Error('学员姓名不能为空')
+  if (requirePassword && !data.password?.trim()) throw new Error('初始密码不能为空')
+  if (students.some((student) => student.id !== ignoredId && student.cellphone === data.cellphone.trim())) throw new Error('手机号已注册')
 }
 
 function uploadRequest<T>(url: string, token: string, file: File, onProgress?: UploadProgressHandler): Promise<T> {
@@ -302,7 +363,7 @@ function findStudent(students: StudentPointsRow[], studentId: string) {
   return student
 }
 
-function searchableStudent(student: StudentPointsRow) {
+function searchableStudent(student: Pick<StudentPointsRow, 'realName' | 'nickName' | 'cellphone'>) {
   return `${student.realName} ${student.nickName} ${student.cellphone}`
 }
 

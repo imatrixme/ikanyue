@@ -46,7 +46,7 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
     <main className="grid min-h-screen grid-cols-1 text-[var(--foreground)] lg:grid-cols-[420px_1fr]">
       <aside className="flex flex-col justify-between border-r border-[var(--border)] bg-[var(--primary)] p-8 text-[var(--primary-foreground)]">
         <div>
-          <div className="mb-10 inline-flex h-10 w-10 items-center justify-center rounded-md bg-white/10">
+          <div className="mb-10 inline-flex h-10 w-10 items-center justify-center rounded-md bg-[var(--on-primary-overlay)]">
             <Gift className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-3xl font-semibold leading-tight">看乐积分兑换后台</h1>

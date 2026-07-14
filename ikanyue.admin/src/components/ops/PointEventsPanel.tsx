@@ -1,19 +1,8 @@
-import { History } from 'lucide-react'
-
 import type { PointEvent, StudentPointSummary } from '../../app/types'
-import { Panel } from '../ui/Card'
 import { cn } from '../ui/utils'
 
-export function PointEventsPanel({ events }: { events: StudentPointSummary['events'] }) {
-  return (
-    <Panel className="overflow-hidden">
-      <div className="border-b border-[var(--border)] px-5 py-4">
-        <h3 className="flex items-center gap-2 text-base font-semibold">
-          <History className="h-4 w-4" aria-hidden="true" />
-          积分记录
-        </h3>
-      </div>
-      {events.length > 0 ? (
+export function PointEventsView({ events = [] }: { events?: StudentPointSummary['events'] }) {
+  return events.length > 0 ? (
         <>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full border-collapse text-sm">
@@ -62,9 +51,7 @@ export function PointEventsPanel({ events }: { events: StudentPointSummary['even
         </>
       ) : (
         <div className="px-4 py-10 text-center text-sm text-[var(--muted-foreground)]">暂无积分记录</div>
-      )}
-    </Panel>
-  )
+      )
 }
 
 function eventLabel(event: PointEvent) {

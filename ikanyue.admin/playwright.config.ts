@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const live = process.env.PLAYWRIGHT_LIVE === 'true'
-const port = Number(process.env.ADMIN_PORT || 4173)
+const port = Number(process.env.ADMIN_PORT || (live ? 4173 : 4174))
 const baseURL = `http://127.0.0.1:${port}`
 
 export default defineConfig({

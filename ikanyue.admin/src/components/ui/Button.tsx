@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { forwardRef } from 'react'
 
 import { cn } from './utils'
 
@@ -16,7 +17,7 @@ const variantClass: Record<ButtonVariant, string> = {
   danger: 'border-[var(--destructive)] bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:bg-[var(--destructive-hover)]',
 }
 
-export function Button({ variant = 'primary', icon, className, children, ...props }: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ variant = 'primary', icon, className, children, ...props }, ref) {
   const classes = cn(
     'inline-flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:pointer-events-none disabled:opacity-50',
     variantClass[variant],
@@ -30,8 +31,8 @@ export function Button({ variant = 'primary', icon, className, children, ...prop
   )
 
   return (
-    <button className={classes} {...props}>
+    <button className={classes} ref={ref} {...props}>
       {content}
     </button>
   )
-}
+})

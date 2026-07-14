@@ -5,6 +5,7 @@ React + TypeScript + Vite admin for the WeChat points-lite hard fork.
 This branch intentionally keeps only:
 
 - ops login / registration / forced password change
+- admin student directory creation, editing, and enabled-status management
 - admin student point balance lookup
 - admin point grants
 - admin offline reward redemption

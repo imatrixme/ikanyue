@@ -1,6 +1,6 @@
 export type Role = 'teacher' | 'admin'
 
-export type AppView = 'points' | 'rewards'
+export type AppView = 'students' | 'points' | 'rewards'
 
 export interface OpsProfile {
   id: string
@@ -44,6 +44,26 @@ export interface StudentPointsRow {
   cellphone: string
   avatar?: string
   balance: number
+}
+
+export interface StudentRecord {
+  avatar: string
+  blocked: boolean
+  cellphone: string
+  created: string
+  id: string
+  lastLoginAt: string
+  nickName: string
+  realName: string
+  updated: string
+}
+
+export interface StudentInput {
+  blocked: boolean
+  cellphone: string
+  nickName?: string
+  password?: string
+  realName: string
 }
 
 export type PointEventType = 'earn' | 'offline_redeem'
@@ -119,6 +139,8 @@ export interface AppState {
   loading: boolean
   toast: ToastState | null
   students: ListResult<StudentPointsRow> | null
+  managedStudents: ListResult<StudentRecord> | null
+  managedStudentsError: string
   rewards: ListResult<RewardItem> | null
   selectedStudentId: string
   selectedStudentSummary: StudentPointSummary | null
@@ -132,6 +154,8 @@ export type AppAction =
   | { type: 'loading:set'; payload: boolean }
   | { type: 'toast:set'; payload: ToastState | null }
   | { type: 'students:set'; payload: ListResult<StudentPointsRow> }
+  | { type: 'managedStudents:set'; payload: ListResult<StudentRecord> }
+  | { type: 'managedStudents:error'; payload: string }
   | { type: 'rewards:set'; payload: ListResult<RewardItem> }
   | { type: 'student:select'; payload: string }
   | { type: 'studentSummary:set'; payload: StudentPointSummary | null }

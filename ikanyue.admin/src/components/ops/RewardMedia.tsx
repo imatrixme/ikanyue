@@ -49,7 +49,7 @@ export function RewardMedia({ name, src = '', alt = '', className, fit = 'cover'
           {state === 'loading' ? (
             <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
           ) : state === 'failed' ? (
-            <span className="grid justify-items-center gap-1 text-[10px]">
+            <span className="grid justify-items-center gap-1 text-xs">
               <ImageOff className="h-4 w-4" aria-hidden="true" />
               图片不可用
             </span>

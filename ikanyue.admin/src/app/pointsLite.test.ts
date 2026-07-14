@@ -67,7 +67,9 @@ describe('points lite api', () => {
       .mockResolvedValueOnce(ok({ token: 'changed', profile: mockProfiles.admin }))
       .mockResolvedValueOnce(ok(mockStudents))
       .mockResolvedValueOnce(ok({ studentId: 'student_1', balance: 120, events: [], pagination: mockStudents.pagination }))
+      .mockResolvedValueOnce(ok({ studentId: 'student_1', balance: 130, event: { id: 'event_earn' } }))
       .mockResolvedValueOnce(ok({ studentId: 'student_1', balance: 130, events: [], pagination: mockStudents.pagination }))
+      .mockResolvedValueOnce(ok({ studentId: 'student_1', balance: 80, event: { id: 'event_redeem' } }))
       .mockResolvedValueOnce(ok({ studentId: 'student_1', balance: 80, events: [], pagination: mockStudents.pagination }))
       .mockResolvedValueOnce(ok({ items: [], pagination: mockStudents.pagination }))
       .mockResolvedValueOnce(ok({ id: 'reward_1', name: '贴纸', pointsPrice: 10, status: 'active', description: '', image: '' }))
@@ -95,12 +97,54 @@ describe('points lite api', () => {
       '/ops/points/students?q=%E5%BC%A0&page=1',
       '/ops/points/students/student_1',
       '/ops/points/students/student_1/earn',
+      '/ops/points/students/student_1',
       '/ops/points/offline-redeem',
+      '/ops/points/students/student_1',
       '/ops/reward-items',
       '/ops/reward-items',
       '/ops/reward-items/reward_1',
       '/ops/reward-items',
     ])
+  })
+
+  it('http api calls the lightweight student-management endpoints', async () => {
+    const student = { id: 'student_9', realName: '新学员', nickName: '', cellphone: '13900139009', avatar: '', blocked: false, lastLoginAt: '', created: '', updated: '' }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(ok({ items: [student], pagination: mockStudents.pagination }))
+      .mockResolvedValueOnce(ok(student))
+      .mockResolvedValueOnce(ok({ ...student, blocked: true }))
+    vi.stubGlobal('fetch', fetchMock)
+    const api = createOpsApi({ baseUrl: '/ops', mock: false })
+
+    await api.listManagedStudents('token', { status: 'active', perPage: 100 })
+    await api.createStudent('token', { realName: '新学员', cellphone: '13900139009', password: 'secret', blocked: false })
+    await api.updateStudent('token', student.id, { realName: '新学员', cellphone: '13900139009', password: '', blocked: true })
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      '/ops/students?status=active&perPage=100',
+      '/ops/students',
+      '/ops/students/student_9',
+    ])
+  })
+
+  it('mock student management validates fields, filters status, and updates records', async () => {
+    const api = createMockOpsApi()
+    expect((await api.listManagedStudents('token', { q: '张', status: 'active', page: 1, limit: 10 })).items).toHaveLength(1)
+    expect((await api.listManagedStudents('token', { status: 'all' })).items).toHaveLength(2)
+    await expect(api.createStudent('token', { realName: '', cellphone: '', password: '', blocked: false })).rejects.toThrow('手机号不能为空')
+    await expect(api.createStudent('token', { realName: '', cellphone: '13900139009', password: 'secret', blocked: false })).rejects.toThrow('学员姓名不能为空')
+    await expect(api.createStudent('token', { realName: '新学员', cellphone: '13900139009', password: '', blocked: false })).rejects.toThrow('初始密码不能为空')
+    await expect(api.createStudent('token', { realName: '重复', cellphone: '13900139001', password: 'secret', blocked: false })).rejects.toThrow('手机号已注册')
+
+    const created = await api.createStudent('token', { realName: '新学员', cellphone: '13900139009', password: 'secret', blocked: false })
+    expect(created.nickName).toBe('')
+    const updated = await api.updateStudent('token', created.id, { realName: '新学员改', nickName: '新昵称', cellphone: '13900139009', password: '', blocked: true })
+    expect(updated).toMatchObject({ realName: '新学员改', blocked: true })
+    expect((await api.listManagedStudents('token', { keyword: '新昵称', status: 'inactive', perPage: 5 })).items).toHaveLength(1)
+    await api.updateStudent('token', created.id, { realName: '新学员改', nickName: '新昵称', cellphone: '13900139009', password: '', blocked: false })
+    expect((await api.listStudents('token')).items.some((student) => student.id === created.id)).toBe(true)
+    await expect(api.updateStudent('token', 'missing', { realName: '缺失', cellphone: '13900139008', password: '', blocked: false })).rejects.toThrow('学员不存在')
+    await expect(api.updateStudent('token', created.id, { realName: '重复', cellphone: '13900139001', password: '', blocked: false })).rejects.toThrow('手机号已注册')
   })
 
   it('uses the default http error when the backend does not return a message', async () => {
@@ -185,6 +229,7 @@ describe('points lite reducer', () => {
     let state = appReducer(initialState, { type: 'login:success', payload: login })
     expect(state.activeView).toBe('points')
     expect(canAccessView(mockProfiles.admin, 'rewards')).toBe(true)
+    expect(canAccessView(mockProfiles.admin, 'students')).toBe(true)
     expect(canAccessView(mockProfiles.teacher, 'points')).toBe(false)
 
     state = appReducer(state, { type: 'students:set', payload: mockStudents })
@@ -200,6 +245,10 @@ describe('points lite reducer', () => {
     expect(state.selectedStudentId).toBe('student_2')
     state = appReducer({ ...state, selectedStudentId: '' }, { type: 'students:set', payload: { ...mockStudents, items: [] } })
     expect(state.selectedStudentId).toBe('')
+    state = appReducer(state, { type: 'managedStudents:error', payload: 'load failed' })
+    expect(state.managedStudentsError).toBe('load failed')
+    state = appReducer(state, { type: 'managedStudents:set', payload: { items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } } })
+    expect(state.managedStudentsError).toBe('')
     expect(appReducer(state, { type: 'unknown' } as never)).toBe(state)
     expect(appReducer(state, { type: 'logout' })).toBe(initialState)
   })

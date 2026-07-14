@@ -7,6 +7,8 @@ export const initialState: AppState = {
   loading: false,
   toast: null,
   students: null,
+  managedStudents: null,
+  managedStudentsError: '',
   rewards: null,
   selectedStudentId: '',
   selectedStudentSummary: null,
@@ -37,6 +39,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const selectedStudentId = state.selectedStudentId || firstStudentId
       return { ...state, loading: false, students: action.payload, selectedStudentId }
     }
+    case 'managedStudents:set':
+      return { ...state, loading: false, managedStudents: action.payload, managedStudentsError: '' }
+    case 'managedStudents:error':
+      return { ...state, loading: false, managedStudentsError: action.payload }
     case 'rewards:set':
       return { ...state, loading: false, rewards: action.payload }
     case 'student:select':
@@ -49,5 +55,5 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 }
 
 export function canAccessView(profile: OpsProfile | null, view: AppView): boolean {
-  return Boolean(profile?.isAdmin && (view === 'points' || view === 'rewards'))
+  return Boolean(profile?.isAdmin && (view === 'students' || view === 'points' || view === 'rewards'))
 }

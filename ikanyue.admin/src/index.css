@@ -1,51 +1,10 @@
 @import "tailwindcss";
+@import "./styles/brand.generated.css";
 
 :root {
-  --background: oklch(98.5% 0.006 155);
-  --foreground: oklch(20% 0.012 155);
-  --card: oklch(100% 0 0);
-  --card-foreground: oklch(14.5% 0 0);
-  --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(14.5% 0 0);
-  --primary: oklch(25% 0.018 155);
-  --primary-hover: oklch(19% 0.016 155);
-  --primary-foreground: oklch(98.5% 0 0);
-  --secondary: oklch(96.8% 0 0);
-  --secondary-foreground: oklch(20.5% 0 0);
-  --muted: oklch(96.5% 0.008 155);
-  --muted-foreground: oklch(45.5% 0 0);
-  --accent: oklch(96.8% 0 0);
-  --accent-foreground: oklch(20.5% 0 0);
-  --destructive: oklch(57.7% 0.245 27.325);
-  --destructive-hover: oklch(50.5% 0.213 27.518);
-  --destructive-foreground: oklch(98.5% 0 0);
-  --border: oklch(92.2% 0 0);
-  --input: oklch(92.2% 0 0);
-  --ring: oklch(70.8% 0 0);
-  --sidebar: oklch(98% 0.007 155);
-  --sidebar-accent: oklch(96.8% 0 0);
-  --brand: oklch(25% 0.018 155);
-  --brand-foreground: oklch(98.5% 0 0);
-  --brand-soft: oklch(96.8% 0 0);
-  --brand-wash: oklch(99% 0 0);
-  --brand-border: oklch(87% 0 0);
-  --info: oklch(48.8% 0.243 264.376);
-  --info-soft: oklch(97% 0.014 254.604);
-  --info-wash: oklch(99% 0.006 254.604);
-  --success: oklch(52.7% 0.154 150.069);
-  --success-soft: oklch(96.2% 0.044 156.743);
-  --success-wash: oklch(99% 0.01 156.743);
-  --warning: oklch(64.6% 0.188 72.488);
-  --warning-soft: oklch(97.3% 0.071 103.193);
-  --warning-wash: oklch(99% 0.014 103.193);
-  --warning-foreground: oklch(26.9% 0.074 45.635);
-  --danger-soft: oklch(97.1% 0.013 17.38);
-  --point: oklch(60% 0.19 34);
-  --point-soft: oklch(97% 0.025 38);
-  --point-border: oklch(89% 0.055 38);
   color: var(--foreground);
   background: var(--background);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: var(--ky-font-sans);
   font-synthesis: none;
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
@@ -79,12 +38,23 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.ky-paragraph {
+  max-width: var(--ky-prose-measure);
+  color: var(--muted-foreground);
+  font-size: var(--ky-paragraph-size);
+  line-height: var(--ky-paragraph-line-height);
+}
+
+.ky-paragraph + .ky-paragraph {
+  margin-top: var(--ky-paragraph-spacing);
+}
+
 #root {
   min-height: 100vh;
 }
 
 ::selection {
-  background: oklch(20.5% 0 0 / 0.12);
+  background: var(--brand-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {
