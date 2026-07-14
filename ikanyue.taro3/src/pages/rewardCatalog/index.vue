@@ -19,6 +19,13 @@
         <view class="catalog-tabs">
             <view
                 class="catalog-tab"
+                :class="{ 'catalog-tab--active': activeView === 'all' }"
+                @tap="setActiveView('all')"
+            >
+                全部
+            </view>
+            <view
+                class="catalog-tab"
                 :class="{ 'catalog-tab--active': activeView === 'redeemable' }"
                 @tap="setActiveView('redeemable')"
             >
@@ -49,9 +56,9 @@
 
             <empty-state
                 v-else-if="activeItems.length === 0"
-                :description="activeView === 'redeemable' ? '继续积累积分，达到所需积分后即可线下领取。' : '当前积分已经满足所有上架实物。'"
+                :description="emptyStateDescription"
                 kind="rewards"
-                :title="activeView === 'redeemable' ? '暂无可兑换实物' : '已解锁全部实物'"
+                :title="emptyStateTitle"
             />
 
             <view v-else class="catalog-list">
@@ -71,17 +78,17 @@
                             <text class="catalog-item__name">{{ item.name }}</text>
                             <text
                                 class="catalog-item__status"
-                                :class="{ 'catalog-item__status--ready': activeView === 'redeemable' }"
+                                :class="{ 'catalog-item__status--ready': isRewardRedeemable(item) }"
                             >
-                                {{ activeView === 'redeemable' ? '可领取' : getRewardStateText(item, balance) }}
+                                {{ isRewardRedeemable(item) ? '可领取' : getRewardStateText(item, balance) }}
                             </text>
                         </view>
                         <text class="catalog-item__desc">{{ item.description || '到前台领取实物。' }}</text>
-                        <view v-if="activeView === 'locked'" class="catalog-progress">
+                        <view v-if="!isRewardRedeemable(item)" class="catalog-progress">
                             <view class="catalog-progress__bar" :style="{ width: `${getRewardProgress(item, balance)}%` }" />
                         </view>
                         <view class="catalog-item__footer">
-                            <text>{{ activeView === 'redeemable' ? '线下领取' : `当前进度 ${getRewardProgress(item, balance)}%` }}</text>
+                            <text>{{ isRewardRedeemable(item) ? '线下领取' : `当前进度 ${getRewardProgress(item, balance)}%` }}</text>
                             <text class="catalog-item__price">{{ formatPoints(item.pointsPrice) }}</text>
                         </view>
                     </view>
@@ -113,12 +120,26 @@ export default {
         };
     },
     computed: {
+        allRewards() {
+            return [...this.redeemableRewards, ...this.lockedRewards]
+                .sort((left, right) => left.pointsPrice - right.pointsPrice || left.sortOrder - right.sortOrder);
+        },
         activeItems() {
+            if (this.activeView === 'all') return this.allRewards;
             return this.activeView === 'locked' ? this.lockedRewards : this.redeemableRewards;
+        },
+        emptyStateDescription() {
+            if (this.activeView === 'all') return '实物上架后会显示在这里。';
+            if (this.activeView === 'redeemable') return '继续积累积分，达到所需积分后即可线下领取。';
+            return '当前积分已经满足所有上架实物。';
+        },
+        emptyStateTitle() {
+            if (this.activeView === 'all') return '暂无实物';
+            return this.activeView === 'redeemable' ? '暂无可兑换实物' : '已解锁全部实物';
         },
     },
     onLoad(options = {}) {
-        this.activeView = options.view === 'locked' ? 'locked' : 'redeemable';
+        this.activeView = ['all', 'locked', 'redeemable'].includes(options.view) ? options.view : 'redeemable';
         this.loadRewards();
     },
     async onPullDownRefresh() {
@@ -137,6 +158,9 @@ export default {
         },
         markImageFailed(itemId) {
             this.failedImages = { ...this.failedImages, [itemId]: true };
+        },
+        isRewardRedeemable(item) {
+            return Number(item?.pointsPrice || 0) <= Number(this.balance || 0);
         },
         setActiveView(view) {
             this.activeView = view;

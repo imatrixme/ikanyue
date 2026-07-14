@@ -19,16 +19,12 @@
 
 .points-balance,
 .points-metrics,
-.section-heading,
-.reward-card__heading,
-.reward-card__footer {
+.section-heading {
     display: flex;
     align-items: center;
 }
 
-.section-heading,
-.reward-card__heading,
-.reward-card__footer {
+.section-heading {
     justify-content: space-between;
 }
 

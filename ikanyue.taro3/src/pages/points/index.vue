@@ -56,7 +56,7 @@
             <view class="points-section points-section--ready">
                 <view class="section-heading">
                     <view class="section-heading__copy">
-                        <text class="points-section__title">现在可以领取</text>
+                        <text class="points-section__title">现在可领取</text>
                         <text class="points-section__subtitle">到前台领取时由老师确认扣分</text>
                     </view>
                     <view class="section-count section-count--action" @tap="goRewardCatalog('redeemable')">
@@ -64,25 +64,43 @@
                         <app-icon name="chevron-blue" :size="13" />
                     </view>
                 </view>
-                <view class="reward-list" v-if="redeemableRewards.length > 0">
-                    <view class="reward-card reward-card--ready" v-for="item in recentRedeemableRewards" :key="item.id">
-                        <view class="reward-card__media">
-                            <image v-if="canShowImage(item)" class="reward-card__image" :src="item.image" mode="aspectFill" @error="markImageFailed(item.id)" />
-                            <view v-else class="reward-card__placeholder">{{ item.name.slice(0, 1) }}</view>
+                <scroll-view
+                    v-if="redeemableRewards.length > 0"
+                    class="reward-strip"
+                    scroll-x
+                    enhanced
+                    enable-flex
+                    :show-scrollbar="false"
+                    aria-label="可领取实物图片"
+                >
+                    <view class="reward-strip__track">
+                        <view
+                            v-for="item in redeemablePreviewItems"
+                            :key="item.id"
+                            class="reward-tile"
+                            @tap="goRewardCatalog('redeemable')"
+                        >
+                            <view class="reward-tile__media reward-tile__media--ready">
+                                <image v-if="canShowImage(item)" class="reward-tile__image" :src="item.image" mode="aspectFill" @error="markImageFailed(item.id)" />
+                                <view v-else class="reward-tile__placeholder">{{ item.name.slice(0, 1) }}</view>
+                            </view>
+                            <text class="reward-tile__name">{{ item.name }}</text>
+                            <text class="reward-tile__meta reward-tile__meta--ready">{{ formatPoints(item.pointsPrice) }}</text>
                         </view>
-                        <view class="reward-card__body">
-                            <view class="reward-card__heading">
-                                <text class="reward-card__name">{{ item.name }}</text>
-                                <text class="reward-card__status reward-card__status--ready">可领取</text>
+                        <view
+                            v-if="redeemableHiddenCount > 0"
+                            class="reward-tile reward-tile--more"
+                            @tap="goRewardCatalog('redeemable')"
+                        >
+                            <view class="reward-tile__media reward-tile__more-media">
+                                <text class="reward-tile__more-count">+{{ redeemableHiddenCount }}</text>
+                                <text class="reward-tile__more-label">查看更多</text>
                             </view>
-                            <text class="reward-card__desc">{{ item.description || '到前台领取实物。' }}</text>
-                            <view class="reward-card__footer">
-                                <text class="reward-card__pickup">线下领取</text>
-                                <text class="reward-card__price">{{ formatPoints(item.pointsPrice) }}</text>
-                            </view>
+                            <text class="reward-tile__name">全部可领取</text>
+                            <text class="reward-tile__meta">进入完整列表</text>
                         </view>
                     </view>
-                </view>
+                </scroll-view>
                 <view v-else class="points-empty-row points-empty-row--ready">
                     <view class="points-empty-row__icon">
                         <app-icon name="empty-rewards" :size="20" />
@@ -97,43 +115,63 @@
             <view class="points-section">
                 <view class="section-heading">
                     <view class="section-heading__copy">
-                        <text class="points-section__title">继续积累</text>
-                        <text class="points-section__subtitle">查看距离所需积分还有多少</text>
+                        <text class="points-section__title">全部实物</text>
+                        <text class="points-section__subtitle">已解锁与继续积累中的实物</text>
                     </view>
-                    <view class="section-count section-count--action" @tap="goRewardCatalog('locked')">
-                        <text>全部 {{ lockedRewards.length }}</text>
+                    <view class="section-count section-count--action" @tap="goRewardCatalog('all')">
+                        <text>全部 {{ allRewards.length }}</text>
                         <app-icon name="chevron-blue" :size="13" />
                     </view>
                 </view>
-                <view class="reward-list" v-if="lockedRewards.length > 0">
-                    <view class="reward-card" v-for="item in recentLockedRewards" :key="item.id">
-                        <view class="reward-card__media">
-                            <image v-if="canShowImage(item)" class="reward-card__image" :src="item.image" mode="aspectFill" @error="markImageFailed(item.id)" />
-                            <view v-else class="reward-card__placeholder">{{ item.name.slice(0, 1) }}</view>
+                <scroll-view
+                    v-if="allRewards.length > 0"
+                    class="reward-strip"
+                    scroll-x
+                    enhanced
+                    enable-flex
+                    :show-scrollbar="false"
+                    aria-label="全部实物图片"
+                >
+                    <view class="reward-strip__track">
+                        <view
+                            v-for="item in allRewardPreviewItems"
+                            :key="item.id"
+                            class="reward-tile"
+                            @tap="goRewardCatalog('all')"
+                        >
+                            <view class="reward-tile__media" :class="{ 'reward-tile__media--ready': isRewardRedeemable(item) }">
+                                <image v-if="canShowImage(item)" class="reward-tile__image" :src="item.image" mode="aspectFill" @error="markImageFailed(item.id)" />
+                                <view v-else class="reward-tile__placeholder">{{ item.name.slice(0, 1) }}</view>
+                            </view>
+                            <text class="reward-tile__name">{{ item.name }}</text>
+                            <text
+                                class="reward-tile__meta"
+                                :class="isRewardRedeemable(item) ? 'reward-tile__meta--ready' : 'reward-tile__meta--locked'"
+                            >
+                                {{ isRewardRedeemable(item) ? '可领取' : getRewardStateText(item, balance) }}
+                            </text>
                         </view>
-                        <view class="reward-card__body">
-                            <view class="reward-card__heading">
-                                <text class="reward-card__name">{{ item.name }}</text>
-                                <text class="reward-card__status reward-card__status--locked">{{ getRewardStateText(item, balance) }}</text>
+                        <view
+                            v-if="allRewardsHiddenCount > 0"
+                            class="reward-tile reward-tile--more"
+                            @tap="goRewardCatalog('all')"
+                        >
+                            <view class="reward-tile__media reward-tile__more-media">
+                                <text class="reward-tile__more-count">+{{ allRewardsHiddenCount }}</text>
+                                <text class="reward-tile__more-label">查看更多</text>
                             </view>
-                            <text class="reward-card__desc">{{ item.description || '积分达到后可线下领取。' }}</text>
-                            <view class="reward-progress">
-                                <view class="reward-progress__bar" :style="{ width: `${getRewardProgress(item, balance)}%` }" />
-                            </view>
-                            <view class="reward-card__footer">
-                                <text class="reward-progress__text">当前进度 {{ getRewardProgress(item, balance) }}%</text>
-                                <text class="reward-card__price">{{ formatPoints(item.pointsPrice) }}</text>
-                            </view>
+                            <text class="reward-tile__name">全部实物</text>
+                            <text class="reward-tile__meta">进入完整列表</text>
                         </view>
                     </view>
-                </view>
+                </scroll-view>
                 <view v-else class="points-empty-row">
                     <view class="points-empty-row__icon">
                         <app-icon name="empty-rewards" :size="20" />
                     </view>
                     <view class="points-empty-row__copy">
-                        <text class="points-empty-row__title">已解锁全部实物</text>
-                        <text class="points-empty-row__description">当前积分已经满足所有上架实物。</text>
+                        <text class="points-empty-row__title">暂无实物</text>
+                        <text class="points-empty-row__description">实物上架后会显示在这里。</text>
                     </view>
                 </view>
             </view>
@@ -202,7 +240,6 @@ import {
     formatPointEventDelta,
     getPointEventLabel,
     getPointEventReason,
-    getRewardProgress,
     getRewardStateText,
     normalizeRewardAvailability,
     normalizePointSummary,
@@ -225,14 +262,24 @@ export default {
         };
     },
     computed: {
+        allRewardPreviewItems() {
+            return this.allRewards.slice(0, 5);
+        },
+        allRewards() {
+            return [...this.redeemableRewards, ...this.lockedRewards]
+                .sort((left, right) => left.pointsPrice - right.pointsPrice || left.sortOrder - right.sortOrder);
+        },
+        allRewardsHiddenCount() {
+            return Math.max(0, this.allRewards.length - 5);
+        },
         pointEventTotal() {
             return this.pointEventsPagination.totalItems || this.pointEvents.length;
         },
-        recentLockedRewards() {
-            return this.lockedRewards.slice(0, 2);
+        redeemableHiddenCount() {
+            return Math.max(0, this.redeemableRewards.length - 5);
         },
-        recentRedeemableRewards() {
-            return this.redeemableRewards.slice(0, 2);
+        redeemablePreviewItems() {
+            return this.redeemableRewards.slice(0, 5);
         },
     },
     mounted() {
@@ -254,13 +301,15 @@ export default {
         formatPointEventDelta,
         getPointEventLabel,
         getPointEventReason,
-        getRewardProgress,
         getRewardStateText,
         canShowImage(item) {
             return Boolean(item.image && !this.failedImages[item.id]);
         },
         markImageFailed(itemId) {
             this.failedImages = { ...this.failedImages, [itemId]: true };
+        },
+        isRewardRedeemable(item) {
+            return Number(item?.pointsPrice || 0) <= Number(this.balance || 0);
         },
         goProfile() {
             Taro.switchTab({ url: '/pages/profile/index' });
