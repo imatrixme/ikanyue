@@ -1,7 +1,7 @@
 @import '../../styles/tokens';
 
 .activity-page {
-    background: $ky-red;
+    background: $ky-primary;
     min-height: 100vh;
 }
 
@@ -14,8 +14,8 @@
 }
 
 .date-column {
-    background: $ky-surface;
-    border-right: 1px solid $ky-line;
+    background: $ky-primary-soft;
+    border-right: 1px solid $ky-primary-line;
     flex-shrink: 0;
     height: 100vh;
     position: sticky;
@@ -24,6 +24,7 @@
 }
 
 .date-scroll {
+    background: $ky-primary-soft;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -32,7 +33,8 @@
 
 .date-item {
     align-items: center;
-    border-bottom: 1px solid $ky-line;
+    background: $ky-primary-surface-overlay;
+    border-bottom: 1px solid $ky-primary-divider;
     box-sizing: border-box;
     display: flex;
     flex: 1;
@@ -40,9 +42,10 @@
     min-height: 0;
     justify-content: center;
     padding: 5px 4px;
+    transition: background-color $ky-motion-fast ease, color $ky-motion-fast ease;
 
     &.active {
-        background: $ky-red;
+        background: $ky-primary-strong;
 
         .day,
         .date {
@@ -58,19 +61,28 @@
 
     .day {
         color: $ky-ink-strong;
-        font-size: 15px;
-        font-weight: 900;
+        font-size: $ky-font-size-subtitle;
+        font-weight: $ky-font-weight-black;
     }
 
     .date {
         color: $ky-text-muted;
-        font-size: 11px;
+        font-size: $ky-font-size-sm;
         margin-top: 3px;
     }
 
     &.date-item--navigation .day {
-        font-size: 13px;
-        line-height: 1.35;
+        color: $ky-primary-strong;
+        font-size: $ky-font-size-body;
+        line-height: $ky-leading-tight;
+    }
+
+    &.date-item--navigation {
+        background: $ky-surface;
+    }
+
+    &.date-item--navigation:active {
+        background: $ky-primary-soft;
     }
 }
 
@@ -95,16 +107,16 @@
 
     .loading-text {
         color: $ky-text-muted;
-        font-size: 12px;
+        font-size: $ky-font-size-body-sm;
         margin-top: 12px;
     }
 }
 
 .loading-spinner {
     animation: activity-loading-spin 0.8s linear infinite;
-    border: 2px solid $ky-red-soft;
+    border: 2px solid $ky-primary-soft;
     border-radius: 50%;
-    border-top-color: $ky-red;
+    border-top-color: $ky-primary;
     height: 20px;
     width: 20px;
 }
@@ -145,16 +157,16 @@
 
 .activity-image-fallback {
     align-items: center;
-    background: $ky-red-soft;
-    color: $ky-red;
+    background: $ky-primary-soft;
+    color: $ky-primary-strong;
     display: flex;
     height: 100%;
     justify-content: center;
 }
 
 .activity-image-fallback__mark {
-    font-size: 42px;
-    font-weight: 900;
+    font-size: $ky-font-size-calendar-display;
+    font-weight: $ky-font-weight-black;
 }
 
 .activity-info {
@@ -164,9 +176,9 @@
 .activity-title {
     color: $ky-ink-strong;
     display: -webkit-box;
-    font-size: 17px;
-    font-weight: 900;
-    line-height: 1.4;
+    font-size: $ky-font-size-title;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-compact;
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -183,8 +195,8 @@
     align-items: center;
     color: $ky-text-secondary;
     display: flex;
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-compact;
     min-width: 0;
 
     .meta-item__icon {
@@ -220,34 +232,34 @@
 }
 
 .tag {
-    background: $ky-red-soft;
+    background: $ky-primary-soft;
     border-radius: $ky-radius-sm;
-    color: $ky-red;
-    font-size: 11px;
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-sm;
     padding: 3px 7px;
 }
 
 .price-container {
     align-items: baseline;
-    color: $ky-red;
+    color: $ky-primary-strong;
     display: flex;
     flex-shrink: 0;
 }
 
 .price-symbol {
-    font-size: 12px;
+    font-size: $ky-font-size-body-sm;
 }
 
 .price-amount {
-    font-size: 18px;
-    font-weight: 900;
+    font-size: $ky-font-size-section;
+    font-weight: $ky-font-weight-black;
 }
 
 .price-free {
-    color: $ky-green;
+    color: $ky-success;
     flex-shrink: 0;
-    font-size: 15px;
-    font-weight: 900;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-black;
 }
 
 @media (max-width: 350px) {

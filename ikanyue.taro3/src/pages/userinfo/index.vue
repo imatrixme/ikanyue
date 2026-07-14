@@ -77,7 +77,7 @@
                     >
                         <view class="userinfo-picker__value">
                             <text>{{ form.province || '请选择省份' }}</text>
-                            <app-icon class="userinfo-picker__arrow" name="chevron-red" :size="15" />
+                            <app-icon class="userinfo-picker__arrow" name="chevron-primary" :size="15" />
                         </view>
                     </picker>
                 </view>
@@ -117,6 +117,7 @@ import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
 import AppIcon from '../../components/AppIcon.vue';
+import { themeColors } from '../../styles/theme.mjs';
 import {
     GENDER_OPTIONS,
     PROVINCE_OPTIONS,
@@ -222,7 +223,7 @@ export default {
                 title: '退出登录',
                 content: '退出后需要重新使用微信手机号登录。',
                 confirmText: '退出',
-                confirmColor: '#a73b35',
+                confirmColor: themeColors.danger,
             });
             if (!result.confirm) {
                 return;

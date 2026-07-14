@@ -11,8 +11,8 @@
 }
 
 .points-masthead {
-    background: $ky-red;
-    color: $ky-surface;
+    background: $ky-primary;
+    color: $ky-on-primary;
     margin: 0 -14px;
     padding: 12px 18px 14px;
 }
@@ -34,26 +34,26 @@
 
 .points-balance__label {
     display: block;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
     opacity: 0.78;
 }
 
 .points-balance__value {
-    font-size: 40px;
-    font-weight: 900;
-    line-height: 1;
+    font-size: $ky-font-size-balance;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
     margin-top: 4px;
 }
 
 .points-balance__unit {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-bold;
     margin: 0 0 4px 7px;
 }
 
 .points-metrics {
-    border-top: 1px solid rgba(255, 255, 255, 0.34);
+    border-top: 1px solid $ky-on-primary-divider;
     gap: 0;
     margin-top: 12px;
     padding-top: 10px;
@@ -65,7 +65,7 @@
 }
 
 .points-metric + .points-metric {
-    border-left: 1px solid rgba(255, 255, 255, 0.34);
+    border-left: 1px solid $ky-on-primary-divider;
     margin-left: 16px;
     padding-left: 16px;
 }
@@ -76,12 +76,12 @@
 }
 
 .points-metric__value {
-    font-size: 17px;
-    font-weight: 900;
+    font-size: $ky-font-size-title;
+    font-weight: $ky-font-weight-black;
 }
 
 .points-metric__label {
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     margin-top: 2px;
     opacity: 0.78;
 }
@@ -100,12 +100,12 @@
 }
 
 .section-heading__copy {
-    border-left: 5px solid $ky-red;
+    border-left: 5px solid $ky-primary;
     padding-left: 10px;
 }
 
 .points-section--ready .section-heading__copy {
-    border-left-color: $ky-green;
+    border-left-color: $ky-success;
 }
 
 .points-section__title,
@@ -115,13 +115,13 @@
 
 .points-section__title {
     color: $ky-ink-strong;
-    font-size: 18px;
-    font-weight: 900;
+    font-size: $ky-font-size-section;
+    font-weight: $ky-font-weight-black;
 }
 
 .points-section__subtitle {
     color: $ky-text-secondary;
-    font-size: 12px;
+    font-size: $ky-font-size-body-sm;
     margin-top: 3px;
 }
 
@@ -129,8 +129,8 @@
     background: $ky-blue-soft;
     border-radius: $ky-radius-sm;
     color: $ky-blue;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-bold;
     padding: 5px 7px;
 }
 
@@ -159,31 +159,31 @@
 }
 
 .points-state--error {
-    border-color: #e6b5af;
+    border-color: $ky-danger-line;
     background: $ky-danger-soft;
 }
 
 .points-empty__title,
 .points-state__title {
     color: $ky-ink-strong;
-    font-size: 15px;
-    font-weight: 900;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-black;
 }
 
 .points-empty__desc,
 .points-state__desc {
     color: $ky-text-secondary;
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-body;
     margin-top: 6px;
 }
 
 .points-state__action {
-    background: $ky-red;
+    background: $ky-primary-strong;
     border-radius: $ky-radius-md;
     color: $ky-surface;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-bold;
     margin-top: 16px;
     min-width: 116px;
     padding: 10px 16px;
@@ -192,7 +192,7 @@
 .skeleton-card__media,
 .skeleton-line {
     animation: points-pulse 1.2s ease-in-out infinite;
-    background: #e4e4e1;
+    background: $ky-skeleton;
 }
 
 .skeleton-line {

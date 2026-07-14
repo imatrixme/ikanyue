@@ -9,8 +9,8 @@
 
 .profile-brand {
     align-items: center;
-    background: $ky-red;
-    color: $ky-surface;
+    background: $ky-primary;
+    color: $ky-on-primary;
     display: flex;
     gap: 14px;
     min-height: 108px;
@@ -39,13 +39,13 @@
 }
 
 .profile-brand__name {
-    font-size: 20px;
-    font-weight: 900;
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-black;
 }
 
 .profile-brand__meta {
-    font-size: 10px;
-    font-weight: 800;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
     margin-top: 4px;
     opacity: 0.76;
 }
@@ -66,14 +66,14 @@
 
 .profile-avatar {
     align-items: center;
-    background: $ky-red-soft;
-    border: 2px solid $ky-red;
+    background: $ky-primary-soft;
+    border: 2px solid $ky-primary-strong;
     border-radius: 50%;
-    color: $ky-red;
+    color: $ky-primary-strong;
     display: flex;
     flex-shrink: 0;
-    font-size: 22px;
-    font-weight: 900;
+    font-size: $ky-font-size-display-sm;
+    font-weight: $ky-font-weight-black;
     height: 58px;
     justify-content: center;
     overflow: hidden;
@@ -98,8 +98,8 @@
 
 .profile-user__name {
     color: $ky-ink-strong;
-    font-size: 18px;
-    font-weight: 900;
+    font-size: $ky-font-size-section;
+    font-weight: $ky-font-weight-black;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -107,16 +107,16 @@
 
 .profile-user__phone {
     color: $ky-text-secondary;
-    font-size: 12px;
+    font-size: $ky-font-size-body-sm;
     margin-top: 4px;
 }
 
 .profile-status {
-    background: $ky-green-soft;
+    background: $ky-success-soft;
     border-radius: $ky-radius-sm;
-    color: $ky-green;
-    font-size: 10px;
-    font-weight: 800;
+    color: $ky-success;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
     padding: 5px 7px;
 }
 
@@ -143,21 +143,21 @@
 
 .profile-section__title {
     color: $ky-ink-strong;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
 }
 
 .profile-section__hint {
     color: $ky-text-muted;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
 }
 
 .profile-section__link {
     align-items: center;
-    color: $ky-red;
+    color: $ky-primary-strong;
     display: flex;
-    font-size: 11px;
-    font-weight: 800;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-bold;
     gap: 3px;
 }
 
@@ -170,12 +170,12 @@
 
 .profile-command__icon {
     align-items: center;
-    background: $ky-red;
+    background: $ky-primary-strong;
     border-radius: $ky-radius-md;
     color: $ky-surface;
     display: flex;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
     height: 42px;
     justify-content: center;
     width: 42px;
@@ -193,13 +193,13 @@
 
 .profile-command__title {
     color: $ky-ink-strong;
-    font-size: 14px;
-    font-weight: 900;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
 }
 
 .profile-command__desc {
     color: $ky-text-secondary;
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     margin-top: 3px;
 }
 
@@ -217,13 +217,13 @@
 
 .profile-detail-row__label {
     color: $ky-text-secondary;
-    font-size: 12px;
+    font-size: $ky-font-size-body-sm;
 }
 
 .profile-detail-row__value {
     color: $ky-ink-strong;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
     max-width: 62%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -239,7 +239,7 @@
 }
 
 .profile-welcome__bar {
-    background: $ky-red;
+    background: $ky-primary;
     display: block;
     height: 5px;
     margin-bottom: 16px;
@@ -253,31 +253,31 @@
 }
 
 .profile-welcome__eyebrow {
-    color: $ky-red;
-    font-size: 10px;
-    font-weight: 900;
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-black;
 }
 
 .profile-welcome__title {
     color: $ky-ink-strong;
-    font-size: 22px;
-    font-weight: 900;
+    font-size: $ky-font-size-display-sm;
+    font-weight: $ky-font-weight-black;
     margin-top: 8px;
 }
 
 .profile-welcome__desc {
     color: $ky-text-secondary;
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-readable;
     margin-top: 8px;
 }
 
 .profile-primary-action {
-    background: $ky-red;
+    background: $ky-primary-strong;
     border-radius: $ky-radius-md;
     color: $ky-surface;
-    font-size: 14px;
-    font-weight: 900;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
     margin-top: 22px;
     padding: 13px 16px;
     text-align: center;
@@ -287,7 +287,7 @@
     align-items: center;
     color: $ky-text-secondary;
     display: flex;
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     gap: 8px;
     margin-top: 14px;
 }
@@ -309,7 +309,7 @@
     align-items: center;
     color: $ky-text-muted;
     display: flex;
-    font-size: 24px;
+    font-size: $ky-font-size-display-md;
     height: 36px;
     justify-content: center;
     position: absolute;
@@ -319,29 +319,29 @@
 }
 
 .login-popup__bar {
-    background: $ky-red;
+    background: $ky-primary;
     height: 5px;
     margin-bottom: 18px;
     width: 44px;
 }
 
 .login-eyebrow {
-    color: $ky-red;
-    font-size: 10px;
-    font-weight: 900;
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-black;
 }
 
 .login-title {
     color: $ky-ink-strong;
-    font-size: 21px;
-    font-weight: 900;
+    font-size: $ky-font-size-heading-lg;
+    font-weight: $ky-font-weight-black;
     margin-top: 6px;
 }
 
 .login-desc {
     color: $ky-text-secondary;
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-readable;
     margin-top: 10px;
 }
 
@@ -352,8 +352,8 @@
     border-radius: $ky-radius-md;
     color: $ky-surface;
     display: flex;
-    font-size: 14px;
-    font-weight: 800;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-bold;
     height: 48px;
     justify-content: center;
     margin-top: 24px;

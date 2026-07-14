@@ -67,8 +67,8 @@
 }
 
 .reward-tile__media--ready {
-    background: $ky-green-soft;
-    border-color: #b9dcc8;
+    background: $ky-success-soft;
+    border-color: $ky-success-line;
 }
 
 .reward-tile__image,
@@ -83,15 +83,15 @@
 
 .reward-tile__placeholder {
     align-items: center;
-    color: $ky-red;
+    color: $ky-primary-strong;
     display: flex;
-    font-size: 28px;
-    font-weight: 900;
+    font-size: $ky-font-size-illustration;
+    font-weight: $ky-font-weight-black;
     justify-content: center;
 }
 
 .reward-tile__media--ready .reward-tile__placeholder {
-    color: $ky-green;
+    color: $ky-success;
 }
 
 .reward-tile__name,
@@ -104,31 +104,31 @@
 
 .reward-tile__name {
     color: $ky-ink-strong;
-    font-size: 12px;
-    font-weight: 800;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-bold;
     margin-top: 7px;
 }
 
 .reward-tile__meta {
     color: $ky-text-muted;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-top: 3px;
 }
 
 .reward-tile__meta--ready {
-    color: $ky-green;
-    font-weight: 700;
+    color: $ky-success;
+    font-weight: $ky-font-weight-semibold;
 }
 
 .reward-tile__meta--locked {
-    color: #7d6200;
-    font-weight: 700;
+    color: $ky-gold;
+    font-weight: $ky-font-weight-semibold;
 }
 
 .reward-tile__more-media {
     align-items: center;
     background: $ky-blue-soft;
-    border: 1px dashed #9bc9e8;
+    border: 1px dashed $ky-blue-line-strong;
     color: $ky-blue;
     display: flex;
     flex-direction: column;
@@ -141,14 +141,14 @@
 }
 
 .reward-tile__more-count {
-    font-size: 22px;
-    font-weight: 900;
-    line-height: 1;
+    font-size: $ky-font-size-display-sm;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
 }
 
 .reward-tile__more-label {
-    font-size: 10px;
-    font-weight: 800;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
     margin-top: 5px;
 }
 
@@ -157,7 +157,7 @@
     background: $ky-surface;
     border: 1px solid $ky-line;
     border-radius: $ky-radius-lg;
-    box-shadow: 0 2px 0 rgba(17, 17, 17, 0.06);
+    box-shadow: $ky-shadow-subtle;
     box-sizing: border-box;
     display: flex;
     min-height: 82px;
@@ -167,8 +167,8 @@
 
 .points-empty-row__icon {
     align-items: center;
-    background: $ky-red-soft;
-    border: 1px solid #f0c7ca;
+    background: $ky-primary-soft;
+    border: 1px solid $ky-primary-line;
     border-radius: $ky-radius-md;
     display: flex;
     flex: 0 0 38px;
@@ -178,13 +178,13 @@
 }
 
 .points-empty-row--ready .points-empty-row__icon {
-    background: $ky-green-soft;
-    border-color: #b9dcc8;
+    background: $ky-success-soft;
+    border-color: $ky-success-line;
 }
 
 .points-empty-row--events .points-empty-row__icon {
     background: $ky-blue-soft;
-    border-color: #b8d9ef;
+    border-color: $ky-blue-line;
 }
 
 .points-empty-row__copy {
@@ -200,15 +200,15 @@
 
 .points-empty-row__title {
     color: $ky-ink-strong;
-    font-size: 14px;
-    font-weight: 900;
-    line-height: 1.35;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-tight;
 }
 
 .points-empty-row__description {
     color: $ky-text-secondary;
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: $ky-font-size-sm;
+    line-height: $ky-leading-body;
     margin-top: 4px;
 }
 

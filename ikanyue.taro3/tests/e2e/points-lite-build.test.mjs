@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 
 const appConfig = JSON.parse(await readFile(new URL('../../dist/app.json', import.meta.url), 'utf8'));
 const commonBundle = await readFile(new URL('../../dist/common.js', import.meta.url), 'utf8');
 const commonStyle = await readFile(new URL('../../dist/common.wxss', import.meta.url), 'utf8');
-const tokenSource = await readFile(new URL('../../src/styles/_tokens.scss', import.meta.url), 'utf8');
+const tokenEntrySource = await readFile(new URL('../../src/styles/_tokens.scss', import.meta.url), 'utf8');
+const tokenSource = await readFile(new URL('../../src/styles/_brand.generated.scss', import.meta.url), 'utf8');
+const themeSource = await readFile(new URL('../../src/styles/theme.mjs', import.meta.url), 'utf8');
 const emptyStateSource = await readFile(new URL('../../src/components/EmptyState.vue', import.meta.url), 'utf8');
 const profileSource = await readFile(new URL('../../src/pages/profile/index.vue', import.meta.url), 'utf8');
 const iconGeneratorSource = await readFile(new URL('../../scripts/generate-icons.mjs', import.meta.url), 'utf8');
@@ -53,6 +55,16 @@ function assertCompiledText(output, expected) {
     );
 }
 
+async function collectThemeSourceFiles(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const files = await Promise.all(entries.map(async (entry) => {
+        const target = new URL(`${entry.name}${entry.isDirectory() ? '/' : ''}`, directory);
+        if (entry.isDirectory()) return collectThemeSourceFiles(target);
+        return /\.(js|mjs|scss|vue)$/.test(entry.name) ? [target] : [];
+    }));
+    return files.flat();
+}
+
 assert.deepEqual(appConfig.pages, [
     'pages/activity/index',
     'pages/points/index',
@@ -70,8 +82,8 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.pagePath), [
     'pages/profile/index',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['活动', '积分', '我的']);
-assert.equal(appConfig.tabBar.color, '#626262');
-assert.equal(appConfig.tabBar.selectedColor, '#e60012');
+assert.equal(appConfig.tabBar.color, '#5f6f69');
+assert.equal(appConfig.tabBar.selectedColor, '#006241');
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.iconPath), [
     'imgs/icons/tab-activity.png',
     'imgs/icons/tab-points.png',
@@ -84,7 +96,7 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
 ]);
 
 [activityConfig, pointsConfig, pointsHistoryConfig, rewardCatalogConfig, profileConfig, userinfoConfig].forEach((pageConfig) => {
-    assert.equal(pageConfig.backgroundColorTop, '#e60012');
+    assert.equal(pageConfig.backgroundColorTop, '#00754a');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'light');
 });
@@ -149,7 +161,15 @@ assertCompiledText(userinfoOutput, '退出登录');
 });
 assert.equal(profileOutput.includes('退出当前账号'), false, 'logout action must remain inside the account details page');
 
-assert.match(tokenSource, /\$ky-red: #e60012;/);
+assert.match(tokenSource, /\$ky-primary: #00754a;/);
+assert.match(tokenSource, /\$ky-primary-strong: #006241;/);
+assert.match(tokenSource, /\$ky-primary-soft: #d4e9e2;/);
+assert.match(tokenSource, /\$ky-ink-strong: #1e3932;/);
+assert.equal(tokenSource.includes('$ky-red'), false);
+assert.match(tokenEntrySource, /@import '\.\/brand\.generated';/);
+assert.match(themeSource, /primary: '#00754a'/);
+assert.match(themeSource, /primaryStrong: '#006241'/);
+assert.match(themeSource, /danger: '#b42318'/);
 assert.match(tokenSource, /\$ky-canvas: #f4f4f2;/);
 assert.match(tokenSource, /\$ky-surface: #ffffff;/);
 assert.match(tokenSource, /\$ky-blue: #0079c8;/);
@@ -157,7 +177,7 @@ assert.match(tokenSource, /\$ky-radius-lg: 8px;/);
 assert.equal(activityTemplate.includes('activity-masthead'), false);
 assert.match(activityStyleSource, /\.date-scroll\s*\{[\s\S]*?flex-direction: column;/);
 assert.match(activityStyleSource, /\.date-item\s*\{[\s\S]*?flex: 1;/);
-assert.match(userinfoStyleSource, /\.userinfo-segmented__item--active\s*\{[\s\S]*?background: \$ky-red;/);
+assert.match(userinfoStyleSource, /\.userinfo-segmented__item--active\s*\{[\s\S]*?background: \$ky-primary-strong;/);
 assert.equal((pointsBundle.match(/"scroll-view"/g) || []).length, 2);
 assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 2);
 assert.equal(`${commonBundle}\n${commonStyle}\n${pointsStyle}`.includes('imgs/textures'), false);
@@ -173,6 +193,31 @@ assert.equal(commonBundle.includes('chevron-blue'), true);
 assert.match(iconGeneratorSource, /'ticket\.svg'/);
 assert.match(iconGeneratorSource, /'medal\.svg'/);
 assert.match(iconGeneratorSource, /'user-square\.svg'/);
+assert.match(iconGeneratorSource, /themeColors\.primaryStrong/);
+assert.match(iconGeneratorSource, /'chevron-primary\.png'/);
+
+const colorSourceFiles = await collectThemeSourceFiles(new URL('../../src/', import.meta.url));
+for (const sourceFile of colorSourceFiles) {
+    if (
+        sourceFile.pathname.endsWith('/styles/_tokens.scss')
+        || sourceFile.pathname.endsWith('/styles/_brand.generated.scss')
+        || sourceFile.pathname.endsWith('/styles/theme.mjs')
+    ) continue;
+    const source = await readFile(sourceFile, 'utf8');
+    assert.equal(
+        /#[0-9a-f]{3,8}\b|rgba?\(/i.test(source),
+        false,
+        `raw color must use a design token: ${sourceFile.pathname}`,
+    );
+    if (sourceFile.pathname.endsWith('.scss')) {
+        assert.equal(
+            /font-size:\s*[0-9]+px|font-weight:\s*[0-9]+|line-height:\s*[0-9.]+/i.test(source),
+            false,
+            `raw typography must use a design token: ${sourceFile.pathname}`,
+        );
+    }
+}
+assert.equal(/#[0-9a-f]{3,8}\b|rgba?\(/i.test(iconGeneratorSource), false, 'icon generator must use theme colors');
 
 if (process.env.EXPECTED_SERVICE_URL) {
     assert.equal(

@@ -2,6 +2,8 @@
  * HTML处理工具函数集合
  */
 
+import { themeColors } from '../../styles/theme.mjs';
+
 /**
  * 将HTML内容转换为小程序rich-text组件可用的格式
  * @param {string} html - HTML内容
@@ -34,7 +36,7 @@ export function getSafeHtml(html) {
         content = content
             .replace(/<p([^>]*)>/gi, '<p$1 style="margin-bottom:12px;">')
             .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 style="max-width:100%;height:auto;margin:10px 0;" />')
-            .replace(/<a([^>]*)>/gi, '<a$1 style="color:#ff4949;text-decoration:underline;">')
+            .replace(/<a([^>]*)>/gi, `<a$1 style="color:${themeColors.primaryStrong};text-decoration:underline;">`)
             .replace(/<h1([^>]*)>/gi, '<h1$1 style="font-size:20px;font-weight:bold;margin:16px 0 8px 0;">')
             .replace(/<h2([^>]*)>/gi, '<h2$1 style="font-size:18px;font-weight:bold;margin:16px 0 8px 0;">')
             .replace(/<h3([^>]*)>/gi, '<h3$1 style="font-size:16px;font-weight:bold;margin:16px 0 8px 0;">')

@@ -26,8 +26,8 @@
 }
 
 .point-event__dot {
-    background: $ky-green;
-    border: 3px solid $ky-green-soft;
+    background: $ky-success;
+    border: 3px solid $ky-success-soft;
     border-radius: 50%;
     box-sizing: border-box;
     font-size: 0;
@@ -36,8 +36,8 @@
 }
 
 .point-event--spend .point-event__dot {
-    background: $ky-red;
-    border-color: $ky-red-soft;
+    background: $ky-danger;
+    border-color: $ky-danger-soft;
 }
 
 .point-event__body {
@@ -55,13 +55,13 @@
 
 .point-event__title {
     color: $ky-ink-strong;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
 }
 
 .point-event__reason {
     color: $ky-text-secondary;
-    font-size: 12px;
+    font-size: $ky-font-size-body-sm;
     margin-top: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -70,13 +70,13 @@
 
 .point-event__remark {
     color: $ky-text-muted;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-top: 3px;
 }
 
 .point-event__meta {
     color: $ky-text-muted;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-top: 8px;
 }
 
@@ -88,23 +88,23 @@
 }
 
 .point-event__delta {
-    color: $ky-green;
-    font-size: 16px;
-    font-weight: 900;
-    background: $ky-green-soft;
+    color: $ky-success;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+    background: $ky-success-soft;
     border-radius: $ky-radius-sm;
     padding: 3px 5px;
 }
 
 .point-event--spend .point-event__delta {
-    background: $ky-red-soft;
-    color: $ky-red;
+    background: $ky-danger-soft;
+    color: $ky-danger;
 }
 
 .point-event__balance {
     color: $ky-text-muted;
     display: block;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-top: 5px;
 }
 

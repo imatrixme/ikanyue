@@ -1,8 +1,7 @@
+import { canvasPageChrome } from '../../styles/theme.mjs';
+
 export default definePageConfig({
     navigationBarTitleText: '活动详情',
     enablePullDownRefresh: true,
-    backgroundColor: '#f4f4f2',
-    backgroundColorTop: '#f4f4f2',
-    backgroundColorBottom: '#f4f4f2',
-    backgroundTextStyle: 'dark',
+    ...canvasPageChrome,
 });

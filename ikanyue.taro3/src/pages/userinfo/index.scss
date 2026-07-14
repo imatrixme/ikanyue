@@ -9,9 +9,9 @@
 
 .userinfo-hero {
     align-items: center;
-    background: $ky-red;
+    background: $ky-primary;
     box-sizing: border-box;
-    color: $ky-surface;
+    color: $ky-on-primary;
     display: flex;
     min-height: 108px;
     padding: 18px 18px 22px;
@@ -20,14 +20,14 @@
 
 .userinfo-avatar {
     align-items: center;
-    background: $ky-red-soft;
-    border: 2px solid $ky-red;
+    background: $ky-primary-soft;
+    border: 2px solid $ky-primary-strong;
     border-radius: 50%;
-    color: $ky-red;
+    color: $ky-primary-strong;
     display: flex;
     flex-shrink: 0;
-    font-size: 20px;
-    font-weight: 900;
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-black;
     height: 56px;
     justify-content: center;
     overflow: hidden;
@@ -50,12 +50,12 @@
 }
 
 .userinfo-hero__title {
-    font-size: 19px;
-    font-weight: 900;
+    font-size: $ky-font-size-page;
+    font-weight: $ky-font-weight-black;
 }
 
 .userinfo-hero__meta {
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     margin-top: 4px;
     opacity: 0.78;
 }
@@ -87,13 +87,13 @@
 
 .userinfo-section__title {
     color: $ky-ink-strong;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
 }
 
 .userinfo-section__hint {
     color: $ky-text-muted;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
 }
 
 .userinfo-field {
@@ -114,16 +114,16 @@
 .userinfo-field__label {
     color: $ky-text-secondary;
     flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-medium;
     width: 76px;
 }
 
 .userinfo-field__input {
     color: $ky-ink-strong;
     flex: 1;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-medium;
     height: 42px;
     text-align: right;
 }
@@ -131,8 +131,8 @@
 .userinfo-field__value {
     color: $ky-text-muted;
     flex: 1;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
     text-align: right;
 }
 
@@ -145,8 +145,8 @@
     align-items: center;
     color: $ky-ink-strong;
     display: flex;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
     justify-content: flex-end;
 }
 
@@ -155,8 +155,8 @@
 }
 
 .userinfo-segmented {
-    background: $ky-red-soft;
-    border: 1px solid #f0c7ca;
+    background: $ky-primary-soft;
+    border: 1px solid $ky-primary-line;
     border-radius: $ky-radius-md;
     display: flex;
     flex-shrink: 0;
@@ -171,8 +171,8 @@
     color: $ky-text-secondary;
     display: flex;
     flex: 1;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-medium;
     height: 28px;
     justify-content: center;
     transition: background-color $ky-motion-fast ease, color $ky-motion-fast ease;
@@ -183,7 +183,7 @@
 }
 
 .userinfo-segmented__item--active {
-    background: $ky-red;
+    background: $ky-primary-strong;
     color: $ky-surface;
 }
 
@@ -191,9 +191,9 @@
     align-items: flex-start;
     color: $ky-text-secondary;
     display: flex;
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     gap: 8px;
-    line-height: 1.6;
+    line-height: $ky-leading-relaxed;
     margin: 2px 2px 16px;
 }
 
@@ -204,21 +204,21 @@
 
 .userinfo-save {
     align-items: center;
-    background: $ky-red;
+    background: $ky-primary-strong;
     border: none;
     border-radius: $ky-radius-md;
     color: $ky-surface;
     display: flex;
-    font-size: 14px;
-    font-weight: 900;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
     height: 48px;
     justify-content: center;
     transition: background-color $ky-motion-fast ease, transform $ky-motion-fast ease;
     width: 100%;
-    box-shadow: 0 3px 0 $ky-red-pressed;
+    box-shadow: 0 3px 0 $ky-primary-pressed;
 
     &:active {
-        background: $ky-red-pressed;
+        background: $ky-primary-pressed;
         transform: scale(0.99);
     }
 }
@@ -236,20 +236,20 @@
 .userinfo-account-actions__label {
     color: $ky-text-muted;
     display: block;
-    font-size: 10px;
-    font-weight: 600;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-medium;
     margin-bottom: 8px;
 }
 
 .userinfo-logout {
     align-items: center;
     background: $ky-surface;
-    border: 1px solid #dfbbb7;
+    border: 1px solid $ky-danger-line;
     border-radius: $ky-radius-md;
     color: $ky-danger;
     display: flex;
-    font-size: 13px;
-    font-weight: 900;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
     gap: 8px;
     height: 44px;
     justify-content: center;

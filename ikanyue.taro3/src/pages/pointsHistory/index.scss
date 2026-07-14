@@ -8,8 +8,8 @@
 }
 
 .history-hero {
-    background: $ky-red;
-    color: $ky-surface;
+    background: $ky-primary;
+    color: $ky-on-primary;
     padding: 17px 18px 16px;
 
 }
@@ -21,8 +21,8 @@
 }
 
 .history-hero__title {
-    font-size: 19px;
-    font-weight: 900;
+    font-size: $ky-font-size-page;
+    font-weight: $ky-font-weight-black;
 }
 
 .history-balance {
@@ -34,22 +34,22 @@
 
 .history-balance__value {
     color: $ky-yellow;
-    font-size: 36px;
-    font-weight: 900;
-    line-height: 1;
+    font-size: $ky-font-size-balance-sm;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
 }
 
 .history-balance__unit {
     color: $ky-yellow-soft;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     padding-bottom: 4px;
     opacity: 0.78;
 }
 
 .history-hero__footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    border-top: 1px solid $ky-on-primary-divider;
     display: flex;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     justify-content: space-between;
     margin-top: 13px;
     padding-top: 10px;
@@ -62,7 +62,7 @@
 
 .history-state {
     color: $ky-text-secondary;
-    font-size: 13px;
+    font-size: $ky-font-size-body;
     padding: 48px 18px;
     text-align: center;
 }
@@ -73,7 +73,7 @@
 
 .history-footer {
     color: $ky-text-muted;
-    font-size: 11px;
+    font-size: $ky-font-size-sm;
     padding: 18px 0 4px;
     text-align: center;
 }

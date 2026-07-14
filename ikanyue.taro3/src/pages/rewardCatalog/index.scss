@@ -7,8 +7,8 @@
 }
 
 .catalog-hero {
-    background: $ky-red;
-    color: $ky-surface;
+    background: $ky-primary;
+    color: $ky-on-primary;
     padding: 17px 18px 15px;
 
 }
@@ -34,8 +34,8 @@
 }
 
 .catalog-hero__title {
-    font-size: 19px;
-    font-weight: 900;
+    font-size: $ky-font-size-page;
+    font-weight: $ky-font-weight-black;
 }
 
 .catalog-balance {
@@ -44,23 +44,23 @@
 
 .catalog-balance__value {
     color: $ky-yellow;
-    font-size: 28px;
-    font-weight: 900;
-    line-height: 1;
+    font-size: $ky-font-size-illustration;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
 }
 
 .catalog-balance__unit {
     color: $ky-yellow-soft;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-left: 6px;
     padding-bottom: 3px;
     opacity: 0.78;
 }
 
 .catalog-hero__counts {
-    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    border-top: 1px solid $ky-on-primary-divider;
     display: flex;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     margin-top: 14px;
     padding-top: 10px;
     opacity: 0.8;
@@ -78,9 +78,9 @@
 
 .catalog-tab {
     color: $ky-text-secondary;
-    font-size: 13px;
+    font-size: $ky-font-size-body;
     flex: 1;
-    font-weight: 600;
+    font-weight: $ky-font-weight-medium;
     padding: 14px 0 12px;
     position: relative;
     text-align: center;
@@ -89,7 +89,7 @@
 
 .catalog-tab--active {
     color: $ky-blue;
-    font-weight: 900;
+    font-weight: $ky-font-weight-black;
 }
 
 .catalog-tab--active::after {
@@ -130,7 +130,7 @@
 }
 
 .catalog-item__media {
-    background: #eeece8;
+    background: $ky-media-muted;
     border-radius: $ky-radius-md;
     flex: 0 0 84px;
     height: 84px;
@@ -148,11 +148,11 @@
 
 .catalog-item__placeholder {
     align-items: center;
-    background: $ky-red-soft;
-    color: $ky-red;
+    background: $ky-primary-soft;
+    color: $ky-primary-strong;
     display: flex;
-    font-size: 28px;
-    font-weight: 900;
+    font-size: $ky-font-size-illustration;
+    font-weight: $ky-font-weight-black;
     justify-content: center;
 }
 
@@ -164,8 +164,8 @@
 .catalog-item__name {
     color: $ky-ink-strong;
     flex: 1;
-    font-size: 14px;
-    font-weight: 900;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -174,24 +174,24 @@
 .catalog-item__status {
     background: $ky-gold-soft;
     border-radius: $ky-radius-sm;
-    color: #765306;
+    color: $ky-gold;
     flex-shrink: 0;
-    font-size: 9px;
-    font-weight: 900;
+    font-size: $ky-font-size-2xs;
+    font-weight: $ky-font-weight-black;
     margin-left: 8px;
     padding: 4px 5px;
 }
 
 .catalog-item__status--ready {
-    background: $ky-green-soft;
-    color: $ky-green;
+    background: $ky-success-soft;
+    color: $ky-success;
 }
 
 .catalog-item__desc {
     color: $ky-text-secondary;
     display: -webkit-box;
-    font-size: 11px;
-    line-height: 1.5;
+    font-size: $ky-font-size-sm;
+    line-height: $ky-leading-body;
     margin-top: 7px;
     overflow: hidden;
     -webkit-box-orient: vertical;
@@ -213,19 +213,19 @@
 
 .catalog-item__footer {
     color: $ky-text-muted;
-    font-size: 9px;
+    font-size: $ky-font-size-2xs;
     margin-top: 10px;
 }
 
 .catalog-item__price {
     color: $ky-gold;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
 }
 
 .catalog-state {
     color: $ky-text-secondary;
-    font-size: 13px;
+    font-size: $ky-font-size-body;
     padding: 48px 18px;
     text-align: center;
 }

@@ -1,3 +1,5 @@
+import { themeColors } from './styles/theme.mjs';
+
 export default defineAppConfig({
     pages: [
         'pages/activity/index',
@@ -12,14 +14,14 @@ export default defineAppConfig({
     ],
     window: {
         backgroundTextStyle: 'light',
-        navigationBarBackgroundColor: '#fff',
+        navigationBarBackgroundColor: themeColors.surface,
         navigationBarTitleText: '看乐艺术',
         navigationBarTextStyle: 'black',
     },
     tabBar: {
-        color: '#626262',
-        selectedColor: '#e60012',
-        backgroundColor: '#ffffff',
+        color: themeColors.tab,
+        selectedColor: themeColors.primaryStrong,
+        backgroundColor: themeColors.surface,
         borderStyle: 'black',
         list: [
             {

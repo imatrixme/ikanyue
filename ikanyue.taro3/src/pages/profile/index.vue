@@ -22,7 +22,7 @@
                         <text class="profile-user__phone">{{ userInfo.cellphone || '已登录账号' }}</text>
                     </view>
                     <text class="profile-status">已连接</text>
-                    <app-icon class="profile-entry-arrow" name="chevron-red" :size="15" />
+                    <app-icon class="profile-entry-arrow" name="chevron-primary" :size="15" />
                 </view>
 
                 <view class="profile-section">
@@ -36,7 +36,7 @@
                             <text class="profile-command__title">查看我的积分</text>
                             <text class="profile-command__desc">查看可领取实物和解锁进度</text>
                         </view>
-                        <app-icon class="profile-command__arrow" name="chevron-red" :size="15" />
+                        <app-icon class="profile-command__arrow" name="chevron-primary" :size="15" />
                     </view>
                 </view>
 
@@ -45,7 +45,7 @@
                         <text class="profile-section__title">账号资料</text>
                         <view class="profile-section__link">
                             <text>进入修改</text>
-                            <app-icon name="chevron-red" :size="14" />
+                            <app-icon name="chevron-primary" :size="14" />
                         </view>
                     </view>
                     <view class="profile-detail-row">

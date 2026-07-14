@@ -94,7 +94,7 @@
                                     <text class="price-amount">{{ (activity.price / 100.0).toFixed(2) }}</text>
                                 </view>
                                 <view class="price-free" v-else>免费</view>
-                                <app-icon class="activity-card__arrow" name="chevron-red" :size="15" />
+                                <app-icon class="activity-card__arrow" name="chevron-primary" :size="15" />
                             </view>
                         </view>
                     </view>
