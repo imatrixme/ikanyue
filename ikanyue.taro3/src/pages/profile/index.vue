@@ -1,22 +1,77 @@
 <template>
     <view class="profile-page">
-        <view class="profile-card">
-            <image class="profile-logo" :src="images.logo" mode="widthFix" />
-            <text class="profile-title">看乐积分</text>
-            <text class="profile-desc">登录后查看积分余额和可兑换实物。</text>
+        <view class="profile-brand">
+            <view class="profile-brand__mark">
+                <image class="profile-logo" :src="logo" mode="aspectFit" />
+            </view>
+            <view class="profile-brand__copy">
+                <text class="profile-brand__name">看乐艺术</text>
+                <text class="profile-brand__meta">MUSICIAN PROFILE</text>
+            </view>
+        </view>
 
-            <view class="profile-user" v-if="isLogin()">
-                <text class="profile-user__name">{{ displayName }}</text>
-                <text class="profile-user__phone">{{ userInfo.cellphone || '已登录账号' }}</text>
-                <view class="profile-actions">
-                    <nut-button type="primary" class="profile-action" @click="goPoints">查看积分</nut-button>
-                    <nut-button type="default" class="profile-action" @click="logout">退出登录</nut-button>
+        <view class="profile-content">
+            <template v-if="isLogin()">
+                <view class="profile-identity" @tap="modifyInfo">
+                    <view class="profile-avatar">
+                        <image v-if="avatarUrl" class="profile-avatar__image" :src="avatarUrl" mode="aspectFill" />
+                        <text v-else>{{ displayInitial }}</text>
+                    </view>
+                    <view class="profile-identity__copy">
+                        <text class="profile-user__name">{{ displayName }}</text>
+                        <text class="profile-user__phone">{{ userInfo.cellphone || '已登录账号' }}</text>
+                    </view>
+                    <text class="profile-status">已连接</text>
+                    <app-icon class="profile-entry-arrow" name="chevron-red" :size="15" />
                 </view>
-            </view>
 
-            <view class="profile-login" v-else>
-                <nut-button type="primary" class="profile-login__button" @click="showLoginPopup">登录 / 注册</nut-button>
-            </view>
+                <view class="profile-section">
+                    <view class="profile-section__header">
+                        <text class="profile-section__title">积分账户</text>
+                        <text class="profile-section__hint">KANYUE POINTS</text>
+                    </view>
+                    <view class="profile-command" @tap="goPoints">
+                        <view class="profile-command__icon">PT</view>
+                        <view class="profile-command__copy">
+                            <text class="profile-command__title">查看我的积分</text>
+                            <text class="profile-command__desc">查看可领取实物和解锁进度</text>
+                        </view>
+                        <app-icon class="profile-command__arrow" name="chevron-red" :size="15" />
+                    </view>
+                </view>
+
+                <view class="profile-section" @tap="modifyInfo">
+                    <view class="profile-section__header">
+                        <text class="profile-section__title">账号资料</text>
+                        <view class="profile-section__link">
+                            <text>进入修改</text>
+                            <app-icon name="chevron-red" :size="14" />
+                        </view>
+                    </view>
+                    <view class="profile-detail-row">
+                        <text class="profile-detail-row__label">显示名称</text>
+                        <text class="profile-detail-row__value">{{ displayName }}</text>
+                    </view>
+                    <view class="profile-detail-row">
+                        <text class="profile-detail-row__label">绑定手机</text>
+                        <text class="profile-detail-row__value">{{ userInfo.cellphone || '未提供' }}</text>
+                    </view>
+                </view>
+            </template>
+
+            <template v-else>
+                <view class="profile-welcome">
+                    <view class="profile-welcome__bar" />
+                    <text class="profile-welcome__eyebrow">MUSICIAN 01</text>
+                    <text class="profile-welcome__title">登录你的看乐账户</text>
+                    <text class="profile-welcome__desc">绑定微信手机号后，即可查看活动、积分余额和当前可领取的实物。</text>
+                    <view class="profile-primary-action" @tap="showLoginPopup">登录 / 注册</view>
+                </view>
+                <view class="profile-note">
+                    <view class="profile-note__dot" />
+                    <text>账号仅用于识别学员、活动联系和同步积分。</text>
+                </view>
+            </template>
         </view>
 
         <nut-popup
@@ -24,15 +79,18 @@
             :visible="showLogin"
             @close="handleLoginPopupClose"
             :close-on-click-overlay="true"
-            closeable
-            :style="{ height: '54%', borderTopLeftRadius: '14px', borderTopRightRadius: '14px' }"
+            :style="{ height: '52%', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }"
             @click-overlay="handleLoginPopupClose"
-            @click-close-icon="handleLoginPopupClose"
         >
             <view class="login-popup">
-                <view class="login-title">微信手机号登录</view>
+                <view class="login-popup__close" aria-label="关闭登录弹窗" @tap="handleLoginPopupClose">
+                    <text>×</text>
+                </view>
+                <view class="login-popup__bar" />
+                <view class="login-eyebrow">KANYUE ACCOUNT</view>
+                <view class="login-title">绑定积分账户</view>
                 <view class="login-desc">
-                    <text>用于绑定你的积分账户，查看可兑换实物。</text>
+                    <text>授权微信头像、昵称和手机号，用于识别学员并同步积分账户。</text>
                 </view>
                 <button
                     class="wechat-login-btn"
@@ -53,14 +111,16 @@
 import Taro from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
 import { Api } from '../../../utils/apis';
+import AppIcon from '../../components/AppIcon.vue';
 import './index.scss';
 
+const logo = require('../../imgs/logo_kanyue@512.png');
+
 export default {
+    components: { AppIcon },
     data() {
         return {
-            images: {
-                logo: require('../../imgs/logo_kanyue@512.png'),
-            },
+            logo,
             showLogin: false,
             userInfo: {},
             wechatLoginLoading: false,
@@ -72,6 +132,12 @@ export default {
         displayName() {
             return this.userInfo.nickname || this.userInfo.nickName || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
         },
+        displayInitial() {
+            return this.displayName.slice(0, 1);
+        },
+        avatarUrl() {
+            return this.userInfo.avatarUrl || this.userInfo.avatar || '';
+        },
     },
     mounted() {
         this.refreshUserInfo();
@@ -79,26 +145,37 @@ export default {
     onShow() {
         this.refreshUserInfo();
     },
+    async onPullDownRefresh() {
+        try {
+            await this.refreshUserInfo();
+        } finally {
+            Taro.stopPullDownRefresh();
+        }
+    },
     methods: {
         isLogin() {
             return UserManager.isLogin();
         },
-        refreshUserInfo() {
+        async refreshUserInfo() {
             this.userInfo = UserManager.getUserInfo();
             if (!UserManager.isLogin()) {
                 return;
             }
-            Api.refreshLogin()
-                .then(() => {
-                    this.userInfo = UserManager.getUserInfo();
-                })
-                .catch(() => {
-                    UserManager.logout();
-                    this.userInfo = {};
-                });
+            try {
+                await Api.refreshLogin();
+                this.userInfo = UserManager.getUserInfo();
+            } catch {
+                this.userInfo = UserManager.getUserInfo();
+            }
         },
         goPoints() {
             Taro.switchTab({ url: '/pages/points/index' });
+        },
+        modifyInfo() {
+            if (!UserManager.isLogin()) {
+                return;
+            }
+            Taro.navigateTo({ url: '/pages/userinfo/index' });
         },
         showLoginPopup() {
             this.showLogin = true;
@@ -122,7 +199,7 @@ export default {
             }
             this.wechatProfileLoading = true;
             try {
-                const result = await Taro.getUserProfile({ desc: '用于完善积分账户资料' });
+                const result = await Taro.getUserProfile({ desc: '用于完善个人资料' });
                 this.wechatUserInfo = result.userInfo || null;
             } catch (error) {
                 Taro.showToast({ title: '已取消授权', icon: 'none' });
@@ -173,11 +250,6 @@ export default {
             } finally {
                 this.wechatLoginLoading = false;
             }
-        },
-        logout() {
-            UserManager.logout();
-            this.userInfo = {};
-            Taro.showToast({ title: '已退出', icon: 'none' });
         },
     },
 };

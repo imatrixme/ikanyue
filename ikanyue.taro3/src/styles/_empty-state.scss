@@ -1,0 +1,120 @@
+@import './tokens';
+
+.empty-state {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 280px;
+    padding: 34px 22px;
+    text-align: center;
+    width: 100%;
+}
+
+.empty-state__illustration {
+    display: block;
+    height: 138px;
+    width: 138px;
+}
+
+.empty-state__content {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+.empty-state__copy {
+    min-width: 0;
+    width: 100%;
+}
+
+.empty-state__title,
+.empty-state__description {
+    display: block;
+}
+
+.empty-state__title {
+    color: $ky-ink-strong;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-top: 16px;
+}
+
+.empty-state__description {
+    color: $ky-text-secondary;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 7px auto 0;
+    max-width: 280px;
+}
+
+.empty-state__action {
+    align-items: center;
+    background: $ky-red;
+    border: none;
+    border-radius: $ky-radius-md;
+    box-shadow: 0 2px 0 $ky-red-pressed;
+    color: $ky-surface;
+    display: flex;
+    font-size: 13px;
+    font-weight: 900;
+    height: 40px;
+    justify-content: center;
+    line-height: 1;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    min-width: 120px;
+    padding: 0 18px;
+
+    &::after {
+        border: none;
+    }
+
+    &:active {
+        background: $ky-red-pressed;
+        box-shadow: 0 1px 0 $ky-red-pressed;
+    }
+}
+
+.empty-state--compact {
+    align-items: center;
+    min-height: 220px;
+    padding: 26px 14px;
+    text-align: center;
+
+    .empty-state__illustration {
+        height: 108px;
+        width: 108px;
+    }
+
+    .empty-state__content {
+        align-items: center;
+        width: 100%;
+    }
+
+    .empty-state__title {
+        font-size: 14px;
+        line-height: 1.45;
+        margin-top: 12px;
+    }
+
+    .empty-state__description {
+        font-size: 11px;
+        line-height: 1.55;
+        margin-top: 5px;
+        max-width: 210px;
+    }
+
+    .empty-state__action {
+        height: 36px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 14px;
+        min-width: 104px;
+    }
+}

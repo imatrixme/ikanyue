@@ -1,0 +1,273 @@
+@import '../../styles/tokens';
+
+.activity-page {
+    background: $ky-red;
+    min-height: 100vh;
+}
+
+.page-wrapper {
+    align-items: flex-start;
+    background: $ky-canvas;
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.date-column {
+    background: $ky-surface;
+    border-right: 1px solid $ky-line;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    width: 80px;
+}
+
+.date-scroll {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.date-item {
+    align-items: center;
+    border-bottom: 1px solid $ky-line;
+    box-sizing: border-box;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    justify-content: center;
+    padding: 5px 4px;
+
+    &.active {
+        background: $ky-red;
+
+        .day,
+        .date {
+            color: $ky-surface;
+        }
+    }
+
+    .day,
+    .date {
+        display: block;
+        text-align: center;
+    }
+
+    .day {
+        color: $ky-ink-strong;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .date {
+        color: $ky-text-muted;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    &.date-item--navigation .day {
+        font-size: 13px;
+        line-height: 1.35;
+    }
+}
+
+.activity-column {
+    flex: 1;
+    min-height: 100vh;
+    min-width: 0;
+}
+
+.activity-state {
+    box-sizing: border-box;
+    padding: 14px 12px;
+    width: 100%;
+}
+
+.status-box {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 260px;
+
+    .loading-text {
+        color: $ky-text-muted;
+        font-size: 12px;
+        margin-top: 12px;
+    }
+}
+
+.loading-spinner {
+    animation: activity-loading-spin 0.8s linear infinite;
+    border: 2px solid $ky-red-soft;
+    border-radius: 50%;
+    border-top-color: $ky-red;
+    height: 20px;
+    width: 20px;
+}
+
+@keyframes activity-loading-spin {
+    to { transform: rotate(360deg); }
+}
+
+.activity-list {
+    padding: 15px 12px 24px;
+}
+
+.activity-card {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    margin-bottom: 15px;
+    overflow: hidden;
+
+    &:active {
+        border-color: $ky-line-strong;
+    }
+}
+
+.activity-media {
+    aspect-ratio: 4 / 3;
+    background: $ky-canvas;
+    max-height: 176px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.activity-image {
+    height: 100%;
+    width: 100%;
+}
+
+.activity-image-fallback {
+    align-items: center;
+    background: $ky-red-soft;
+    color: $ky-red;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+}
+
+.activity-image-fallback__mark {
+    font-size: 42px;
+    font-weight: 900;
+}
+
+.activity-info {
+    padding: 15px;
+}
+
+.activity-title {
+    color: $ky-ink-strong;
+    display: -webkit-box;
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1.4;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.activity-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.meta-item {
+    align-items: center;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: 13px;
+    line-height: 1.4;
+    min-width: 0;
+
+    .meta-item__icon {
+        margin-right: 6px;
+    }
+}
+
+.activity-bottom {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.activity-card__end {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 7px;
+    margin-left: 8px;
+}
+
+.activity-card__arrow {
+    margin-left: 1px;
+}
+
+.tag-list {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.tag {
+    background: $ky-red-soft;
+    border-radius: $ky-radius-sm;
+    color: $ky-red;
+    font-size: 11px;
+    padding: 3px 7px;
+}
+
+.price-container {
+    align-items: baseline;
+    color: $ky-red;
+    display: flex;
+    flex-shrink: 0;
+}
+
+.price-symbol {
+    font-size: 12px;
+}
+
+.price-amount {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.price-free {
+    color: $ky-green;
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+@media (max-width: 350px) {
+    .date-column {
+        width: 68px;
+    }
+
+    .activity-list {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .activity-info {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation: none;
+    }
+}

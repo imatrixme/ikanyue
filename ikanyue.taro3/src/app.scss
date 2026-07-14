@@ -1,4 +1,18 @@
-/* 全局样式 */
+@import './styles/tokens';
+
+page {
+    background: $ky-canvas;
+    color: $ky-ink;
+    font-family: $ky-font-sans;
+}
+
+button {
+    font-family: $ky-font-sans;
+}
+
+button::after {
+    border: none;
+}
 
 /* Rich Text 组件样式 */
 .rich-text-container {

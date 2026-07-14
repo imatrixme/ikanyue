@@ -79,6 +79,24 @@ describe('Api page-facing request wrappers', () => {
         expect(userManagerMock.updateUserInfoCache).not.toHaveBeenCalled();
     });
 
+    it('updates the lightweight account profile and caches the server result', async () => {
+        const payload = { nickName: '小陈', realName: '陈同学', gender: 2, age: 12, province: '上海市' };
+        const updated = { id: 'student_1', ...payload };
+        iNetMock.post.mockResolvedValue(updated);
+
+        await expect(Api.updateUserInfo(payload)).resolves.toBe(updated);
+        expect(iNetMock.post).toHaveBeenCalledWith('/v1/user/update', payload);
+        expect(userManagerMock.updateUserInfoCache).toHaveBeenCalledWith(updated);
+    });
+
+    it('propagates profile update errors without changing local user info', async () => {
+        const error = new Error('update failed');
+        iNetMock.post.mockRejectedValue(error);
+
+        await expect(Api.updateUserInfo({ nickName: '失败' })).rejects.toBe(error);
+        expect(userManagerMock.updateUserInfoCache).not.toHaveBeenCalled();
+    });
+
     it('refreshes login only when a local token exists', async () => {
         userManagerMock.isLogin.mockReturnValueOnce(false);
         await expect(Api.refreshLogin()).rejects.toThrow('未登录状态');
@@ -114,10 +132,18 @@ describe('Api page-facing request wrappers', () => {
     it('uses points-lite endpoints for balance and reward catalog', async () => {
         iNetMock.get.mockResolvedValue({ items: [] });
 
-        await Api.getMyPointSummary();
+        await Api.getMyPointSummary({ page: 1, perPage: 20 });
         await Api.listRewardItems({ status: 'active' });
 
-        expect(iNetMock.get).toHaveBeenNthCalledWith(1, '/v1/points/me');
+        expect(iNetMock.get).toHaveBeenNthCalledWith(1, '/v1/points/me', { page: 1, perPage: 20 });
         expect(iNetMock.get).toHaveBeenNthCalledWith(2, '/v1/reward-items', { status: 'active' });
+    });
+
+    it('loads the restored activity catalog through the public activity endpoint', async () => {
+        iNetMock.get.mockResolvedValue({ items: [] });
+
+        await Api.findActivities({ page: 1, perPage: 100 });
+
+        expect(iNetMock.get).toHaveBeenCalledWith('/v1/activity/find', { page: 1, perPage: 100 });
     });
 });

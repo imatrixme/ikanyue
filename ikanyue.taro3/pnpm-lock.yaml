@@ -72,6 +72,9 @@ importers:
       '@tarojs/plugin-doctor':
         specifier: 0.0.18
         version: 0.0.18
+      '@tarojs/plugin-platform-h5':
+        specifier: 4.1.8
+        version: 4.1.8(@tarojs/taro@4.1.8(@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(@tarojs/helper@4.1.8)(@tarojs/shared@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(react@19.2.7)(rollup@3.29.5)(solid-js@1.9.14)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))
       '@tarojs/webpack5-runner':
         specifier: 4.1.8
         version: 4.1.8(@babel/core@7.23.5)(@swc/core@1.3.96)(@tarojs/runtime@4.1.8)(less@4.2.0)(postcss@8.4.41)(sass@1.50.0)(stylus@0.55.0)(typescript@5.3.2)(webpack@5.69.0(@swc/core@1.3.96))
@@ -105,6 +108,9 @@ importers:
       eslint-plugin-vue:
         specifier: ^8.0.0
         version: 8.7.1(eslint@8.55.0)
+      lucide-static:
+        specifier: ^1.24.0
+        version: 1.24.0
       postcss:
         specifier: ^8.4.41
         version: 8.4.41
@@ -1679,6 +1685,12 @@ packages:
     engines: {node: '>= 18'}
     hasBin: true
 
+  '@tarojs/components-react@4.1.8':
+    resolution: {integrity: sha512-EaSS0hXEEafDgeAgIDiTgj25H2mtIbfj7ve0EMz/C3D5yYYn5ELSn/DqtsPi3AHQdsAkEZ8lCOEFt1cIIpnXXQ==}
+    peerDependencies:
+      react: '*'
+      solid-js: '*'
+
   '@tarojs/components@4.1.8':
     resolution: {integrity: sha512-nK46eKMjOTen9HBnXvS8b7FBx+V86jT76fwBYl3grqd0jhEzUnzp/LCGpqyRXPTl8MAzIqmeqhVM+dgSVzTkag==}
     engines: {node: '>= 18'}
@@ -1828,6 +1840,9 @@ packages:
     peerDependencies:
       '@tarojs/service': 4.1.8
       '@tarojs/shared': 4.1.8
+
+  '@tarojs/plugin-platform-h5@4.1.8':
+    resolution: {integrity: sha512-9bMJePYb+gbl9W2SDmQ+q4+uju4YmyX/hhz0cRQ987Y+4FPGeLmFXDPuRZZSyPnmvPpQC2lIppESz7bxgURPfA==}
 
   '@tarojs/plugin-platform-jd@4.1.8':
     resolution: {integrity: sha512-156AbqakRtJOsXFKhCWmzJLv8Xjtrp7DRJ5E1/Qp/WZDPpRRfYle1LynJiGQ4/refXSUq4Gg+nLGHOsJ0vjsig==}
@@ -2576,6 +2591,12 @@ packages:
   babel-plugin-transform-solid-jsx@4.1.8:
     resolution: {integrity: sha512-+4c00C6cf671KRp0gOudvQEGvm61WXfbjHTRjTguIHXNYD14UpbrNrYvTonswO9/vtMshLeXqMsfl7gvxr37nw==}
 
+  babel-plugin-transform-taroapi@4.1.8:
+    resolution: {integrity: sha512-oKbBzDXEMivZnLP8xEq12xHJ0eXgB4sddyRAl6un/ALPrYf7QL0p1PmUbqtUC5cUS9Q271RE2VBI/mOky63HbQ==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+
   babel-preset-taro@4.1.8:
     resolution: {integrity: sha512-xiIsHYa5w5+OwXJ5QHpbQ2pace0e89Jdc+57wZfeuTebHDsH9grufOXIxWasD7H17ul3cDm70uPWI5qhfHfN3Q==}
     engines: {node: '>= 18'}
@@ -2779,6 +2800,9 @@ packages:
   caniuse-lite@1.0.30001703:
     resolution: {integrity: sha512-kRlAGTRWgPsOj7oARC9m1okJEXdL/8fekFVcxA8Hl7GH4r/sN4OJn/i6Flde373T50KS7Y37oFbMwlE8+F42kQ==}
 
+  capital-case@1.0.4:
+    resolution: {integrity: sha512-ds37W8CytHgwnhGGTi88pcPyR15qoNkOpYwmMMfnWqqWgESapLqvDx6huFjQ5vqWSn2Z06173XNA7LtMOeUh1A==}
+
   caw@2.0.1:
     resolution: {integrity: sha512-Cg8/ZSBEa8ZVY9HspcGUYaK63d/bN7rqS3CYCzEGUxuYv6UlmcjzDUz2fCFFHyTvUW5Pk0I+3hkA3iXlIj6guA==}
     engines: {node: '>=4'}
@@ -2805,6 +2829,9 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
+
+  change-case@4.1.2:
+    resolution: {integrity: sha512-bSxY2ws9OtviILG1EiY5K7NNxkqg/JnRnFxLtKQ96JaviiIxi7djMrSd0ECT9AC+lttClmYwKw53BWpOMblo7A==}
 
   character-entities-html4@1.1.4:
     resolution: {integrity: sha512-HRcDxZuZqMx3/a+qrzxdBKBPUpxWEq9xw2OPZ3a/174ihfrQKVsFhqtthBInFy1zZ9GgZyFXOatNujm8M+El3g==}
@@ -2974,6 +3001,9 @@ packages:
 
   consola@2.15.3:
     resolution: {integrity: sha512-9vAdYbHj6x2fLKC4+oPH0kFzY/orMZyG2Aj+kNylHxKGJ/Ed4dpNyAQYwJOdqO4zdM7XpVHmyejQDcQHrnuXbw==}
+
+  constant-case@3.0.4:
+    resolution: {integrity: sha512-I2hSBi7Vvs7BEuJDr5dDHfzb/Ruj3FyvFyh7KLilAjNQw3Be+xgqUBA2W6scVEcL0hL1dwPRtIqEPVUCKkSsyQ==}
 
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
@@ -4112,6 +4142,9 @@ packages:
   handle-thing@2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
 
+  harmony-reflect@1.6.2:
+    resolution: {integrity: sha512-HIp/n38R9kQjDEziXyDTuW3vvoxxyxjxFzXLrBr18uB47GnSt+G9D29fqrpM5ZkspMcPICud3XsBJQ4Y2URg8g==}
+
   has-ansi@2.0.0:
     resolution: {integrity: sha512-C8vBJ8DwUCx19vhm7urhTuUsr4/IyP6l4VzNQDv+ryHQObW3TTTp9yB68WpYgRe2bbaGuZ/se74IqFeVnMnLZg==}
     engines: {node: '>=0.10.0'}
@@ -4183,6 +4216,9 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
+
+  header-case@2.0.4:
+    resolution: {integrity: sha512-H/vuk5TEEVZwrR0lp2zed9OCo1uAILMlx0JEMgC26rzyJJ3N1v6XkwHHXJQdR2doSjcGPM6OKPYoJgf0plJ11Q==}
 
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
@@ -4313,6 +4349,10 @@ packages:
     engines: {node: ^10 || ^12 || >= 14}
     peerDependencies:
       postcss: ^8.1.0
+
+  identity-obj-proxy@3.0.0:
+    resolution: {integrity: sha512-00n6YnVHKrinT9t0d9+5yZC6UBNJANpYEQvL2LlX6Ab9lnmxzIRcEmTPuyGScvl1+jKuCICX1Z0Ab1pPKKdikA==}
+    engines: {node: '>=4'}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -5065,6 +5105,9 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
+  lucide-static@1.24.0:
+    resolution: {integrity: sha512-NDSgPb/RWllI9QooPbGXfQCXQi/45oquDmtljeN3qVxqfEUf91uM2C4zijy8bs+pEWxKckA0/WZLZT43YD4Xnw==}
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -5581,6 +5624,9 @@ packages:
   pascalcase@0.1.1:
     resolution: {integrity: sha512-XHXfu/yOQRy9vYOtUDVMN60OEJjW013GoObG1o+xwQTpB9eYJX/BjXMsdW13ZDPruFhYYn0AG22w0xgQMwl3Nw==}
     engines: {node: '>=0.10.0'}
+
+  path-case@3.0.4:
+    resolution: {integrity: sha512-qO4qCFjXqVTrcbPt/hQfhTQ+VhFsqNKOPtytgNKkKxSoEp3XPUQ8ObFuePylOIok5gjn69ry8XiULxCwot3Wfg==}
 
   path-dirname@1.0.2:
     resolution: {integrity: sha512-ALzNPpyNq9AqXMBjeymIjFDAkAFH06mHJH/cSBHAgU0s4vfpBn6b2nf8tiRLvagKD8RbTpq2FKTBg7cl9l3c7Q==}
@@ -6149,6 +6195,10 @@ packages:
     resolution: {integrity: sha512-Hwln1VNuGl/6bVwnd0Xdn1e84gT/8T9aYNL+HAKDArLCS7LWjwr7StE30IEYbIkx0Vi3vs+coQxe+SQDbGbbpA==}
     engines: {node: '>=0.10.0'}
 
+  react@19.2.7:
+    resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
+    engines: {node: '>=0.10.0'}
+
   read-cache@1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
 
@@ -6459,11 +6509,24 @@ packages:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
     engines: {node: '>= 0.8.0'}
 
+  sentence-case@3.0.4:
+    resolution: {integrity: sha512-8LS0JInaQMCRoQ7YUytAo/xUu5W2XnQxV2HI/6uM6U7CITS1RqPElr30V6uIqyMKM9lJGRVFy5/4CuzcixNYSg==}
+
   serialize-javascript@6.0.1:
     resolution: {integrity: sha512-owoXEFjWRllis8/M1Q+Cw5k8ZH40e3zhp/ovX+Xr/vi1qj6QesbyXXViFbpNvWvPNAD62SutwEXavefrLJWj7w==}
 
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+
+  seroval-plugins@1.5.5:
+    resolution: {integrity: sha512-+BDhqYM6CEn3x09v44dpa9p6974FuUB2dxk+Ctn04k0cO1Zt6QODTXfmEZK0eBaTe/fJBvP4NMGuNJ+R8T+QMg==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      seroval: ^1.0
+
+  seroval@1.5.5:
+    resolution: {integrity: sha512-bSjOuPcwPKLSJNhr9+bZxA20nQxVle5J5MNsYRVE6cIg7KpRLXGupymePavu0jrxlPiPsr4xGZSB8yUY2sH2sw==}
+    engines: {node: '>=10'}
 
   serve-index@1.9.1:
     resolution: {integrity: sha512-pXHfKNP4qujrtteMrSBb0rc8HJ9Ms/GrXwcUtUtD5s4ewDJI8bT3Cz2zTVRMKtri49pLx2e0Ya8ziP5Ya2pZZw==}
@@ -6553,6 +6616,9 @@ packages:
     resolution: {integrity: sha512-POqxBK6Lb3q6s047D/XsDVNPnF9Dl8JSaqe9h9lURl0OdNqy/ujDrOiIHtsqXMGbWWTIomRzAMaTyawAU//Reg==}
     engines: {node: '>=4'}
 
+  snake-case@3.0.4:
+    resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
+
   snapdragon-node@2.1.1:
     resolution: {integrity: sha512-O27l4xaMYt/RSQ5TR3vpWCAB5Kb/czIcqUFOM/C4fYcLnbZUc1PkjTAMjof2pBWaSTwOUd6qUHcFGVGj7aIwnw==}
     engines: {node: '>=0.10.0'}
@@ -6567,6 +6633,9 @@ packages:
 
   sockjs@0.3.24:
     resolution: {integrity: sha512-GJgLTZ7vYb/JtPSSZ10hsOYIvEYsjbNU+zPdIHcUaWVNUEPivzxku31865sSSud0Da0W4lEeOPlmw93zLQchuQ==}
+
+  solid-js@1.9.14:
+    resolution: {integrity: sha512-sAEXC0Kk0S1EDg+8ysEWJDbYhA3RRoEjwuySUGlKIemeo0I5YZfOyumNjNs9Sv3y2nmhD+0rW66ag2HsMuQiGQ==}
 
   sort-keys-length@1.0.1:
     resolution: {integrity: sha512-GRbEOUqCxemTAk/b32F2xa8wDTs+Z1QHOkbhJDQTvv/6G3ZkbJ+frYWsTcc7cBB3Fu4wy4XlLCuNtJuMn7Gsvw==}
@@ -7178,8 +7247,14 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  upper-case-first@2.0.2:
+    resolution: {integrity: sha512-514ppYHBaKwfJRK/pNC6c/OxfGa0obSnAl106u97Ed0I625Nin96KAjttZF6ZL3e1XLtphxnqrOi9iWgm+u+bg==}
+
   upper-case@1.1.3:
     resolution: {integrity: sha512-WRbjgmYzgXkCV7zNVpy5YgrHgbBv126rMALQQMrmzOVC4GM2waQ9x7xtm8VU+1yF2kWyPzI9zbZ48n4vSxwfSA==}
+
+  upper-case@2.0.2:
+    resolution: {integrity: sha512-KgdgDGJt2TpuwBUIjgG6lzw2GWFRCW9Qkfkiv0DxqHHLYJHmtmdUIKcZd8rHgFSjopVTlw6ggzCm1b8MFQwikg==}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -9120,6 +9195,29 @@ snapshots:
       - debug
       - supports-color
 
+  '@tarojs/components-react@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(react@19.2.7)(rollup@3.29.5)(solid-js@1.9.14)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))':
+    dependencies:
+      '@babel/runtime': 7.26.9
+      '@tarojs/components': 4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))
+      '@tarojs/shared': 4.1.8
+      '@tarojs/taro': 4.1.8(@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(@tarojs/helper@4.1.8)(@tarojs/shared@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))
+      classnames: 2.3.2
+      identity-obj-proxy: 3.0.0
+      react: 19.2.7
+      solid-js: 1.9.14
+      swiper: 11.1.15
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@tarojs/helper'
+      - '@types/react'
+      - html-webpack-plugin
+      - postcss
+      - rollup
+      - vue
+      - webpack
+      - webpack-chain
+      - webpack-dev-server
+
   '@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))':
     dependencies:
       '@stencil/core': 2.22.3
@@ -9270,6 +9368,35 @@ snapshots:
     dependencies:
       '@tarojs/service': 4.1.8
       '@tarojs/shared': 4.1.8
+
+  '@tarojs/plugin-platform-h5@4.1.8(@tarojs/taro@4.1.8(@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(@tarojs/helper@4.1.8)(@tarojs/shared@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(react@19.2.7)(rollup@3.29.5)(solid-js@1.9.14)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))':
+    dependencies:
+      '@babel/core': 7.26.9
+      '@tarojs/components': 4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))
+      '@tarojs/components-react': 4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(react@19.2.7)(rollup@3.29.5)(solid-js@1.9.14)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96))
+      '@tarojs/helper': 4.1.8
+      '@tarojs/runtime': 4.1.8
+      '@tarojs/service': 4.1.8
+      '@tarojs/shared': 4.1.8
+      '@tarojs/taro-h5': 4.1.8(@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(@tarojs/taro@4.1.8(@tarojs/components@4.1.8(@tarojs/helper@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))(@tarojs/helper@4.1.8)(@tarojs/shared@4.1.8)(html-webpack-plugin@5.6.3(webpack@5.69.0(@swc/core@1.3.96)))(postcss@8.4.41)(rollup@3.29.5)(vue@3.3.10(typescript@5.3.2))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2(webpack@5.69.0(@swc/core@1.3.96)))(webpack@5.69.0(@swc/core@1.3.96)))
+      babel-plugin-transform-taroapi: 4.1.8(@babel/core@7.26.9)
+      change-case: 4.1.2
+      lodash-es: 4.17.21
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - '@tarojs/taro'
+      - '@types/react'
+      - html-webpack-plugin
+      - postcss
+      - react
+      - rollup
+      - solid-js
+      - supports-color
+      - vue
+      - webpack
+      - webpack-chain
+      - webpack-dev-server
 
   '@tarojs/plugin-platform-jd@4.1.8(@tarojs/service@4.1.8)(@tarojs/shared@4.1.8)':
     dependencies:
@@ -10236,6 +10363,11 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
 
+  babel-plugin-transform-taroapi@4.1.8(@babel/core@7.26.9):
+    dependencies:
+      '@babel/core': 7.26.9
+      lodash: 4.17.21
+
   babel-preset-taro@4.1.8(@babel/core@7.23.5)(@babel/plugin-transform-typescript@7.26.8(@babel/core@7.23.5))(@vue/babel-plugin-jsx@1.1.5(@babel/core@7.23.5))(metro-react-native-babel-preset@0.72.4(@babel/core@7.23.5)):
     dependencies:
       '@babel/core': 7.23.5
@@ -10496,6 +10628,12 @@ snapshots:
 
   caniuse-lite@1.0.30001703: {}
 
+  capital-case@1.0.4:
+    dependencies:
+      no-case: 3.0.4
+      tslib: 2.6.2
+      upper-case-first: 2.0.2
+
   caw@2.0.1:
     dependencies:
       get-proxy: 2.1.0
@@ -10538,6 +10676,21 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  change-case@4.1.2:
+    dependencies:
+      camel-case: 4.1.2
+      capital-case: 1.0.4
+      constant-case: 3.0.4
+      dot-case: 3.0.4
+      header-case: 2.0.4
+      no-case: 3.0.4
+      param-case: 3.0.4
+      pascal-case: 3.1.2
+      path-case: 3.0.4
+      sentence-case: 3.0.4
+      snake-case: 3.0.4
+      tslib: 2.6.2
 
   character-entities-html4@1.1.4: {}
 
@@ -10713,6 +10866,12 @@ snapshots:
   connect-history-api-fallback@2.0.0: {}
 
   consola@2.15.3: {}
+
+  constant-case@3.0.4:
+    dependencies:
+      no-case: 3.0.4
+      tslib: 2.6.2
+      upper-case: 2.0.2
 
   content-disposition@0.5.4:
     dependencies:
@@ -12194,6 +12353,8 @@ snapshots:
 
   handle-thing@2.0.1: {}
 
+  harmony-reflect@1.6.2: {}
+
   has-ansi@2.0.0:
     dependencies:
       ansi-regex: 2.1.1
@@ -12256,6 +12417,11 @@ snapshots:
       function-bind: 1.1.2
 
   he@1.2.0: {}
+
+  header-case@2.0.4:
+    dependencies:
+      capital-case: 1.0.4
+      tslib: 2.6.2
 
   highlight.js@10.7.3: {}
 
@@ -12414,6 +12580,10 @@ snapshots:
   icss-utils@5.1.0(postcss@8.4.41):
     dependencies:
       postcss: 8.4.41
+
+  identity-obj-proxy@3.0.0:
+    dependencies:
+      harmony-reflect: 1.6.2
 
   ieee754@1.2.1: {}
 
@@ -13118,6 +13288,8 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
+  lucide-static@1.24.0: {}
+
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -13717,6 +13889,11 @@ snapshots:
 
   pascalcase@0.1.1: {}
 
+  path-case@3.0.4:
+    dependencies:
+      dot-case: 3.0.4
+      tslib: 2.6.2
+
   path-dirname@1.0.2: {}
 
   path-exists@3.0.0: {}
@@ -13838,7 +14015,7 @@ snapshots:
     dependencies:
       htmlparser2: 3.10.1
       postcss: 6.0.23
-      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0)(postcss-scss@1.0.6)(postcss@6.0.23)
+      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-scss@1.0.6)(postcss@6.0.23)
 
   postcss-import@16.1.0(postcss@8.4.41):
     dependencies:
@@ -13865,7 +14042,7 @@ snapshots:
   postcss-markdown@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23):
     dependencies:
       postcss: 6.0.23
-      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0)(postcss-scss@1.0.6)(postcss@6.0.23)
+      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-scss@1.0.6)(postcss@6.0.23)
       remark: 9.0.0
       unist-util-find-all-after: 1.0.5
 
@@ -14065,7 +14242,7 @@ snapshots:
       postcss-value-parser: 4.2.0
       svgo: 3.3.2
 
-  postcss-syntax@0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0)(postcss-scss@1.0.6)(postcss@6.0.23):
+  postcss-syntax@0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-scss@1.0.6)(postcss@6.0.23):
     dependencies:
       postcss: 6.0.23
     optionalDependencies:
@@ -14230,6 +14407,8 @@ snapshots:
 
   react-refresh@0.4.3:
     optional: true
+
+  react@19.2.7: {}
 
   read-cache@1.0.0:
     dependencies:
@@ -14601,6 +14780,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  sentence-case@3.0.4:
+    dependencies:
+      no-case: 3.0.4
+      tslib: 2.6.2
+      upper-case-first: 2.0.2
+
   serialize-javascript@6.0.1:
     dependencies:
       randombytes: 2.1.0
@@ -14608,6 +14793,12 @@ snapshots:
   serialize-javascript@6.0.2:
     dependencies:
       randombytes: 2.1.0
+
+  seroval-plugins@1.5.5(seroval@1.5.5):
+    dependencies:
+      seroval: 1.5.5
+
+  seroval@1.5.5: {}
 
   serve-index@1.9.1:
     dependencies:
@@ -14719,6 +14910,11 @@ snapshots:
     dependencies:
       is-fullwidth-code-point: 2.0.0
 
+  snake-case@3.0.4:
+    dependencies:
+      dot-case: 3.0.4
+      tslib: 2.6.2
+
   snapdragon-node@2.1.1:
     dependencies:
       define-property: 1.0.0
@@ -14747,6 +14943,12 @@ snapshots:
       faye-websocket: 0.11.4
       uuid: 8.3.2
       websocket-driver: 0.7.4
+
+  solid-js@1.9.14:
+    dependencies:
+      csstype: 3.1.2
+      seroval: 1.5.5
+      seroval-plugins: 1.5.5(seroval@1.5.5)
 
   sort-keys-length@1.0.1:
     dependencies:
@@ -15004,7 +15206,7 @@ snapshots:
       postcss-sass: 0.3.5
       postcss-scss: 1.0.6
       postcss-selector-parser: 3.1.2
-      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0)(postcss-scss@1.0.6)(postcss@6.0.23)
+      postcss-syntax: 0.28.0(postcss-html@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-less@2.0.0)(postcss-markdown@0.28.0(postcss-syntax@0.28.0(postcss@8.4.41))(postcss@6.0.23))(postcss-scss@1.0.6)(postcss@6.0.23)
       postcss-value-parser: 3.3.1
       resolve-from: 4.0.0
       signal-exit: 3.0.7
@@ -15408,7 +15610,15 @@ snapshots:
       escalade: 3.2.0
       picocolors: 1.1.1
 
+  upper-case-first@2.0.2:
+    dependencies:
+      tslib: 2.6.2
+
   upper-case@1.1.3: {}
+
+  upper-case@2.0.2:
+    dependencies:
+      tslib: 2.6.2
 
   uri-js@4.4.1:
     dependencies:

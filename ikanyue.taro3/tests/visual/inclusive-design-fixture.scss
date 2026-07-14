@@ -1,0 +1,80 @@
+@import '../../src/styles/tokens';
+@import '../../src/styles/empty-state';
+@import '../../src/pages/profile/index';
+@import '../../src/pages/points/index';
+@import '../../src/pages/activity/index';
+
+* { box-sizing: border-box; }
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: #d8d8d5;
+    color: $ky-ink;
+    font-family: $ky-font-sans;
+}
+
+button { font-family: inherit; }
+
+.visual-fixture {
+    background: $ky-canvas;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.fixture-block { border-bottom: 8px solid #d8d8d5; }
+
+.fixture-block .profile-page,
+.fixture-block .points-page,
+.fixture-block .activity-page,
+.fixture-block .page-wrapper,
+.fixture-block .activity-column {
+    min-height: 0;
+}
+
+.fixture-block .date-column {
+    height: 420px;
+    position: static;
+}
+
+.fixture-block .points-page { padding-bottom: 22px; }
+.fixture-block .profile-page { padding-bottom: 20px; }
+.fixture-activity .activity-list { padding-bottom: 14px; }
+.fixture-activity .activity-card { margin-bottom: 0; }
+.fixture-empty {
+    background: $ky-canvas;
+    display: grid;
+    gap: 14px;
+    padding: 14px;
+}
+
+.fixture-tabbar {
+    background: $ky-surface;
+    border-top: 1px solid $ky-line;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 9px 0 12px;
+}
+
+.fixture-tab {
+    align-items: center;
+    color: $ky-text-secondary;
+    display: flex;
+    flex-direction: column;
+    font-size: 10px;
+    gap: 4px;
+}
+
+.fixture-tab img {
+    height: 24px;
+    width: 24px;
+}
+
+.fixture-tab--active {
+    color: $ky-red;
+    font-weight: 800;
+}

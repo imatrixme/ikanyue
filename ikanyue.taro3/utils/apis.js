@@ -53,6 +53,17 @@ const loginWithWechat = (payload) => {
     });
 };
 
+const updateUserInfo = async (userInfo) => {
+    try {
+        const result = await iNet.post('/v1/user/update', userInfo);
+        UserManager.updateUserInfoCache(result || userInfo);
+        return result;
+    } catch (error) {
+        console.error('更新用户信息API错误:', error);
+        throw error;
+    }
+};
+
 /**
  * 刷新登录状态
  * @returns {Promise} - 刷新结果Promise
@@ -85,8 +96,12 @@ const refreshLogin = () => {
     });
 };
 
-const getMyPointSummary = () => {
-    return iNet.get('/v1/points/me');
+const findActivities = (params = {}) => {
+    return iNet.get('/v1/activity/find', params);
+};
+
+const getMyPointSummary = (params = {}) => {
+    return iNet.get('/v1/points/me', params);
 };
 
 const listRewardItems = (params = {}) => {
@@ -96,7 +111,9 @@ const listRewardItems = (params = {}) => {
 const Api = {
     loginWithPassword,
     loginWithWechat,
+    updateUserInfo,
     refreshLogin,
+    findActivities,
     getMyPointSummary,
     listRewardItems,
 };

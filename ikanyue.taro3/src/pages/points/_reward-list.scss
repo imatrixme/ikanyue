@@ -1,0 +1,233 @@
+.points-loading {
+    display: flex;
+    flex-direction: column;
+    margin-top: 18px;
+}
+
+.skeleton-card + .skeleton-card {
+    margin-top: 10px;
+}
+
+.reward-list {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+.reward-card {
+    background: $ky-surface;
+    box-sizing: border-box;
+    display: flex;
+    min-height: 98px;
+    padding: 12px;
+}
+
+.reward-card + .reward-card {
+    border-top: 1px solid $ky-line;
+}
+
+.skeleton-card {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    display: flex;
+    padding: 11px;
+}
+
+.reward-card__media,
+.skeleton-card__media {
+    border-radius: $ky-radius-md;
+    flex: 0 0 72px;
+    height: 72px;
+    margin-right: 12px;
+    overflow: hidden;
+    width: 72px;
+}
+
+.reward-card__image,
+.reward-card__placeholder {
+    height: 100%;
+    width: 100%;
+}
+
+.reward-card__image {
+    background: $ky-canvas;
+    display: block;
+}
+
+.reward-card__placeholder {
+    align-items: center;
+    background: $ky-red-soft;
+    color: $ky-red;
+    display: flex;
+    font-size: 26px;
+    font-weight: 900;
+    justify-content: center;
+}
+
+.reward-card--ready .reward-card__placeholder {
+    background: $ky-green-soft;
+    color: $ky-green;
+}
+
+.reward-card__body,
+.skeleton-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-width: 0;
+}
+
+.reward-card__name {
+    color: $ky-ink-strong;
+    flex: 1;
+    font-size: 14px;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reward-card__desc {
+    color: $ky-text-secondary;
+    display: -webkit-box;
+    font-size: 11px;
+    line-height: 1.45;
+    margin-top: 5px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.reward-card__price {
+    color: $ky-red;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.reward-card__status {
+    border-radius: $ky-radius-sm;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 800;
+    margin-left: 7px;
+    padding: 4px 6px;
+}
+
+.reward-card__status--ready {
+    background: $ky-green-soft;
+    color: $ky-green;
+}
+
+.reward-card__status--locked {
+    background: $ky-yellow-soft;
+    color: #7d6200;
+}
+
+.reward-card__pickup {
+    color: $ky-green;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.reward-card__footer {
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.reward-progress {
+    background: #e6e6e3;
+    border-radius: $ky-radius-sm;
+    height: 6px;
+    margin-top: 7px;
+    overflow: hidden;
+}
+
+.reward-progress__bar {
+    background: $ky-red;
+    border-radius: $ky-radius-sm;
+    height: 100%;
+}
+
+.reward-progress__text {
+    color: $ky-text-secondary;
+    font-size: 10px;
+}
+
+.points-empty-row {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: 0 2px 0 rgba(17, 17, 17, 0.06);
+    box-sizing: border-box;
+    display: flex;
+    min-height: 82px;
+    padding: 13px 14px;
+    width: 100%;
+}
+
+.points-empty-row__icon {
+    align-items: center;
+    background: $ky-red-soft;
+    border: 1px solid #f0c7ca;
+    border-radius: $ky-radius-md;
+    display: flex;
+    flex: 0 0 38px;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+}
+
+.points-empty-row--ready .points-empty-row__icon {
+    background: $ky-green-soft;
+    border-color: #b9dcc8;
+}
+
+.points-empty-row--events .points-empty-row__icon {
+    background: $ky-blue-soft;
+    border-color: #b8d9ef;
+}
+
+.points-empty-row__copy {
+    flex: 1;
+    margin-left: 12px;
+    min-width: 0;
+}
+
+.points-empty-row__title,
+.points-empty-row__description {
+    display: block;
+}
+
+.points-empty-row__title {
+    color: $ky-ink-strong;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.points-empty-row__description {
+    color: $ky-text-secondary;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 4px;
+}
+
+@media (max-width: 350px) {
+    .reward-card__media,
+    .skeleton-card__media {
+        flex-basis: 64px;
+        height: 64px;
+        margin-right: 10px;
+        width: 64px;
+    }
+
+    .reward-card__status {
+        display: none;
+    }
+}

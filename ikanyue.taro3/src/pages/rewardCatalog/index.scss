@@ -1,0 +1,253 @@
+@import '../../styles/tokens';
+
+.catalog-page {
+    background: $ky-canvas;
+    min-height: 100vh;
+    padding-bottom: 28px;
+}
+
+.catalog-hero {
+    background: $ky-red;
+    color: $ky-surface;
+    padding: 17px 18px 15px;
+
+}
+
+.catalog-hero__heading,
+.catalog-balance,
+.catalog-item__heading,
+.catalog-item__footer {
+    align-items: center;
+    display: flex;
+}
+
+.catalog-hero__heading,
+.catalog-item__heading,
+.catalog-item__footer {
+    justify-content: space-between;
+}
+
+.catalog-hero__title,
+.catalog-balance__value,
+.catalog-balance__unit {
+    display: block;
+}
+
+.catalog-hero__title {
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.catalog-balance {
+    align-items: flex-end;
+}
+
+.catalog-balance__value {
+    color: $ky-yellow;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.catalog-balance__unit {
+    color: $ky-yellow-soft;
+    font-size: 10px;
+    margin-left: 6px;
+    padding-bottom: 3px;
+    opacity: 0.78;
+}
+
+.catalog-hero__counts {
+    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    display: flex;
+    font-size: 10px;
+    margin-top: 14px;
+    padding-top: 10px;
+    opacity: 0.8;
+}
+
+.catalog-hero__counts text + text {
+    margin-left: 20px;
+}
+
+.catalog-tabs {
+    background: $ky-surface;
+    border-bottom: 1px solid $ky-line;
+    display: flex;
+}
+
+.catalog-tab {
+    color: $ky-text-secondary;
+    font-size: 13px;
+    flex: 1;
+    font-weight: 600;
+    padding: 14px 0 12px;
+    position: relative;
+    text-align: center;
+    transition: color $ky-motion-fast ease;
+}
+
+.catalog-tab--active {
+    color: $ky-blue;
+    font-weight: 900;
+}
+
+.catalog-tab--active::after {
+    background: $ky-blue;
+    bottom: 0;
+    content: '';
+    height: 2px;
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+    width: 34px;
+}
+
+.catalog-content {
+    padding: 14px 14px 0;
+}
+
+.catalog-list {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+.catalog-item {
+    display: flex;
+    padding: 13px;
+    transition: background-color $ky-motion-fast ease;
+
+    &:active {
+        background: $ky-canvas;
+    }
+}
+
+.catalog-item + .catalog-item {
+    border-top: 1px solid $ky-line;
+}
+
+.catalog-item__media {
+    background: #eeece8;
+    border-radius: $ky-radius-md;
+    flex: 0 0 84px;
+    height: 84px;
+    margin-right: 12px;
+    overflow: hidden;
+    width: 84px;
+}
+
+.catalog-item__image,
+.catalog-item__placeholder {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.catalog-item__placeholder {
+    align-items: center;
+    background: $ky-red-soft;
+    color: $ky-red;
+    display: flex;
+    font-size: 28px;
+    font-weight: 900;
+    justify-content: center;
+}
+
+.catalog-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.catalog-item__name {
+    color: $ky-ink-strong;
+    flex: 1;
+    font-size: 14px;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.catalog-item__status {
+    background: $ky-gold-soft;
+    border-radius: $ky-radius-sm;
+    color: #765306;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 900;
+    margin-left: 8px;
+    padding: 4px 5px;
+}
+
+.catalog-item__status--ready {
+    background: $ky-green-soft;
+    color: $ky-green;
+}
+
+.catalog-item__desc {
+    color: $ky-text-secondary;
+    display: -webkit-box;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 7px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.catalog-progress {
+    background: $ky-blue-soft;
+    border-radius: $ky-radius-sm;
+    height: 5px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.catalog-progress__bar {
+    background: $ky-gold;
+    height: 100%;
+}
+
+.catalog-item__footer {
+    color: $ky-text-muted;
+    font-size: 9px;
+    margin-top: 10px;
+}
+
+.catalog-item__price {
+    color: $ky-gold;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.catalog-state {
+    color: $ky-text-secondary;
+    font-size: 13px;
+    padding: 48px 18px;
+    text-align: center;
+}
+
+.catalog-state__title {
+    display: block;
+}
+
+@media (max-width: 350px) {
+    .catalog-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .catalog-item {
+        padding: 12px;
+    }
+
+    .catalog-item__media {
+        flex-basis: 72px;
+        height: 72px;
+        margin-right: 10px;
+        width: 72px;
+    }
+}

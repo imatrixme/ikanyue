@@ -1,5 +1,6 @@
 dist/
 coverage/
+output/
 deploy_versions/
 .temp/
 .rn_temp/

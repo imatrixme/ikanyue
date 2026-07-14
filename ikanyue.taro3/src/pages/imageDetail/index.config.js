@@ -1,0 +1,8 @@
+export default definePageConfig({
+    navigationBarTitleText: '图片详情',
+    enableShareAppMessage: false,
+    backgroundColor: '#f4f4f2',
+    backgroundColorTop: '#f4f4f2',
+    backgroundColorBottom: '#f4f4f2',
+    backgroundTextStyle: 'dark',
+});

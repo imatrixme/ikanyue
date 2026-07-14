@@ -1,0 +1,86 @@
+@import '../../styles/tokens';
+@import '../../styles/point-events';
+
+.history-page {
+    background: $ky-canvas;
+    min-height: 100vh;
+    padding-bottom: 28px;
+}
+
+.history-hero {
+    background: $ky-red;
+    color: $ky-surface;
+    padding: 17px 18px 16px;
+
+}
+
+.history-hero__title,
+.history-balance__value,
+.history-balance__unit {
+    display: block;
+}
+
+.history-hero__title {
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.history-balance {
+    align-items: flex-end;
+    display: flex;
+    gap: 7px;
+    margin-top: 14px;
+}
+
+.history-balance__value {
+    color: $ky-yellow;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.history-balance__unit {
+    color: $ky-yellow-soft;
+    font-size: 10px;
+    padding-bottom: 4px;
+    opacity: 0.78;
+}
+
+.history-hero__footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    display: flex;
+    font-size: 10px;
+    justify-content: space-between;
+    margin-top: 13px;
+    padding-top: 10px;
+    opacity: 0.8;
+}
+
+.history-content {
+    padding: 16px 14px 0;
+}
+
+.history-state {
+    color: $ky-text-secondary;
+    font-size: 13px;
+    padding: 48px 18px;
+    text-align: center;
+}
+
+.history-state__title {
+    display: block;
+}
+
+.history-footer {
+    color: $ky-text-muted;
+    font-size: 11px;
+    padding: 18px 0 4px;
+    text-align: center;
+}
+
+@media (max-width: 350px) {
+    .history-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}

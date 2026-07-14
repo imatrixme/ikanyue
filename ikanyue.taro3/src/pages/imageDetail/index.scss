@@ -1,0 +1,21 @@
+@import '../../styles/tokens';
+
+.image-detail-page {
+    min-height: 100vh;
+    background: $ky-canvas;
+}
+
+.image-detail-page--status {
+    display: flex;
+    min-height: 100vh;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+
+.detail-image {
+    display: block;
+    width: 100%;
+    background: $ky-surface;
+}
