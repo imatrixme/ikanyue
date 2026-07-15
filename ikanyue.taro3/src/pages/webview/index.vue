@@ -63,10 +63,13 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
+@import '../../styles/tokens';
+
 .webview-container {
-    width: 100vw;
+    background: $ky-canvas;
     height: 100vh;
+    width: 100vw;
 }
 
 .webview-error {
@@ -76,5 +79,6 @@ export default {
     justify-content: center;
     min-height: 100vh;
     padding: 18px;
+    background: $ky-canvas;
 }
 </style>

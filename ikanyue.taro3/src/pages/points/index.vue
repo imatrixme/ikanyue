@@ -61,7 +61,7 @@
                     </view>
                     <view class="section-count section-count--action" @tap="goRewardCatalog('redeemable')">
                         <text>全部 {{ redeemableRewards.length }}</text>
-                        <app-icon name="chevron-blue" :size="13" />
+                        <app-icon name="chevron-primary" :size="13" />
                     </view>
                 </view>
                 <scroll-view
@@ -120,7 +120,7 @@
                     </view>
                     <view class="section-count section-count--action" @tap="goRewardCatalog('all')">
                         <text>全部 {{ allRewards.length }}</text>
-                        <app-icon name="chevron-blue" :size="13" />
+                        <app-icon name="chevron-primary" :size="13" />
                     </view>
                 </view>
                 <scroll-view
@@ -184,7 +184,7 @@
                     </view>
                     <view class="section-count section-count--action" @tap="goPointHistory">
                         <text>全部 {{ pointEventTotal }}</text>
-                        <app-icon name="chevron-blue" :size="13" />
+                        <app-icon name="chevron-primary" :size="13" />
                     </view>
                 </view>
 

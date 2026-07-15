@@ -1,4 +1,5 @@
 @import '../../styles/tokens';
+@import '../../styles/hero-texture';
 
 .catalog-page {
     background: $ky-canvas;
@@ -7,10 +8,10 @@
 }
 
 .catalog-hero {
-    background: $ky-primary;
+    @include ky-hero-texture;
+    background-color: $ky-primary;
     color: $ky-on-primary;
     padding: 17px 18px 15px;
-
 }
 
 .catalog-hero__heading,
@@ -88,12 +89,12 @@
 }
 
 .catalog-tab--active {
-    color: $ky-blue;
+    color: $ky-primary-strong;
     font-weight: $ky-font-weight-black;
 }
 
 .catalog-tab--active::after {
-    background: $ky-blue;
+    background: $ky-primary;
     bottom: 0;
     content: '';
     height: 2px;
@@ -199,7 +200,7 @@
 }
 
 .catalog-progress {
-    background: $ky-blue-soft;
+    background: $ky-primary-soft;
     border-radius: $ky-radius-sm;
     height: 5px;
     margin-top: 10px;

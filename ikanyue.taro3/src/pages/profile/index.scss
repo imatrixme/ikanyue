@@ -1,4 +1,5 @@
 @import '../../styles/tokens';
+@import '../../styles/hero-texture';
 
 .profile-page {
     background: $ky-canvas;
@@ -8,8 +9,9 @@
 }
 
 .profile-brand {
+    @include ky-hero-texture;
     align-items: center;
-    background: $ky-primary;
+    background-color: $ky-primary;
     color: $ky-on-primary;
     display: flex;
     gap: 14px;
@@ -293,7 +295,7 @@
 }
 
 .profile-note__dot {
-    background: $ky-blue;
+    background: $ky-primary;
     border-radius: 50%;
     height: 7px;
     width: 7px;

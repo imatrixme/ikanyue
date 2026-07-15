@@ -76,7 +76,7 @@
     position: relative;
 
     &::before {
-        background: $ky-blue;
+        background: $ky-primary;
         content: '';
         height: 4px;
         left: 0;
@@ -197,7 +197,7 @@
     position: relative;
 
     &::before {
-        background: $ky-blue;
+        background: $ky-primary;
         border-radius: 2px;
         bottom: 2px;
         content: '';
@@ -313,7 +313,7 @@
         border-radius: $ky-radius-md;
         font-size: $ky-font-size-subtitle;
         height: 46px;
-        box-shadow: 0 3px 0 $ky-primary-pressed;
+        box-shadow: $ky-shadow-button;
     }
 }
 

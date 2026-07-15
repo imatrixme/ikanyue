@@ -3,6 +3,7 @@ const themeColors = Object.freeze({
     blue: '#0079c8',
     canvas: '#f4f4f2',
     danger: '#b42318',
+    gold: '#7d6200',
     primary: '#00754a',
     primaryStrong: '#006241',
     success: '#1f7a4d',

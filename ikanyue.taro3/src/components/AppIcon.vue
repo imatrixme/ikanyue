@@ -10,7 +10,6 @@
 
 <script>
 const ICON_SOURCES = {
-    'chevron-blue': require('../imgs/icons/chevron-blue.png'),
     'chevron-primary': require('../imgs/icons/chevron-primary.png'),
     'clock-muted': require('../imgs/icons/clock-muted.png'),
     'empty-account': require('../imgs/icons/empty-account.png'),

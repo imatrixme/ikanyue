@@ -13,7 +13,7 @@ body {
 }
 
 body {
-    background: #d8d8d5;
+    background: $ky-line;
     color: $ky-ink;
     font-family: $ky-font-sans;
 }
@@ -26,7 +26,7 @@ button { font-family: inherit; }
     width: 100%;
 }
 
-.fixture-block { border-bottom: 8px solid #d8d8d5; }
+.fixture-block { border-bottom: 8px solid $ky-line; }
 
 .fixture-block .profile-page,
 .fixture-block .points-page,
@@ -43,6 +43,10 @@ button { font-family: inherit; }
 
 .fixture-block .points-page { padding-bottom: 22px; }
 .fixture-block .profile-page { padding-bottom: 20px; }
+.fixture-block .profile-brand,
+.fixture-block .points-masthead {
+    background-image: url('../../src/imgs/textures/hero-music.png');
+}
 .fixture-activity .activity-list { padding-bottom: 14px; }
 .fixture-activity .activity-card { margin-bottom: 0; }
 .fixture-empty {
@@ -65,7 +69,7 @@ button { font-family: inherit; }
     color: $ky-text-secondary;
     display: flex;
     flex-direction: column;
-    font-size: 10px;
+    font-size: $ky-font-size-xs;
     gap: 4px;
 }
 
@@ -76,5 +80,5 @@ button { font-family: inherit; }
 
 .fixture-tab--active {
     color: $ky-primary-strong;
-    font-weight: 800;
+    font-weight: $ky-font-weight-bold;
 }

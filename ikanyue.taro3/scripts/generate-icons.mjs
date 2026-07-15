@@ -5,65 +5,56 @@ import { fileURLToPath } from 'node:url';
 import { themeColors } from '../src/styles/theme.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE_DIR = path.join(ROOT, 'node_modules/lucide-static/icons');
-const OUTPUT_DIR = path.join(ROOT, 'src/imgs/icons');
+const SOURCE_DIR = path.join(ROOT, 'assets-src/imagegen/icons-v2');
+const ICON_OUTPUT_DIR = path.join(ROOT, 'src/imgs/icons');
+const TEXTURE_OUTPUT_DIR = path.join(ROOT, 'src/imgs/textures');
 const BUILD_DIR = path.join(ROOT, 'tmp/icon-build');
 
-const COLORS = {
-    blue: themeColors.blue,
-    danger: themeColors.danger,
-    primaryStrong: themeColors.primaryStrong,
-    success: themeColors.success,
-    muted: themeColors.tab,
-    tab: themeColors.tab,
-};
-
 const ICONS = [
-    ['tab-activity.png', 'ticket.svg', COLORS.tab, 1.8],
-    ['tab-activity-selected.png', 'ticket.svg', COLORS.primaryStrong, 2.4],
-    ['tab-points.png', 'medal.svg', COLORS.tab, 1.8],
-    ['tab-points-selected.png', 'medal.svg', COLORS.primaryStrong, 2.4],
-    ['tab-profile.png', 'user-square.svg', COLORS.tab, 1.8],
-    ['tab-profile-selected.png', 'user-square.svg', COLORS.primaryStrong, 2.4],
-    ['chevron-blue.png', 'chevron-right.svg', COLORS.blue, 1.8],
-    ['chevron-primary.png', 'chevron-right.svg', COLORS.primaryStrong, 1.8],
-    ['clock-muted.png', 'clock.svg', COLORS.muted, 1.8],
-    ['empty-account.png', 'user-square.svg', COLORS.primaryStrong, 2],
-    ['empty-activities.png', 'ticket.svg', COLORS.primaryStrong, 2],
-    ['empty-image.png', 'image-off.svg', COLORS.blue, 2],
-    ['empty-network.png', 'wifi-off.svg', COLORS.danger, 2],
-    ['empty-points.png', 'medal.svg', COLORS.blue, 2],
-    ['empty-rewards.png', 'gift.svg', COLORS.success, 2],
-    ['info-blue.png', 'info.svg', COLORS.blue, 1.8],
-    ['location-muted.png', 'map-pin.svg', COLORS.muted, 1.8],
-    ['logout-red.png', 'log-out.svg', COLORS.danger, 1.8],
-    ['people-muted.png', 'users-round.svg', COLORS.muted, 1.8],
+    ['tab-activity.png', 'tab-activity.svg', themeColors.tab],
+    ['tab-activity-selected.png', 'tab-activity-selected.svg', themeColors.primaryStrong],
+    ['tab-points.png', 'tab-points.svg', themeColors.tab],
+    ['tab-points-selected.png', 'tab-points-selected.svg', themeColors.primaryStrong],
+    ['tab-profile.png', 'tab-profile.svg', themeColors.tab],
+    ['tab-profile-selected.png', 'tab-profile-selected.svg', themeColors.primaryStrong],
+    ['chevron-primary.png', 'chevron-primary.svg', themeColors.primaryStrong],
+    ['clock-muted.png', 'clock-muted.svg', themeColors.tab],
+    ['info-blue.png', 'info-blue.svg', themeColors.blue],
+    ['location-muted.png', 'location-muted.svg', themeColors.tab],
+    ['logout-red.png', 'logout-red.svg', themeColors.danger],
+    ['people-muted.png', 'people-muted.svg', themeColors.tab],
 ];
 
-const LEGACY_OUTPUTS = ['chevron-red.png'];
+const TEXTURES = [
+    ['hero-music.png', 'hero-music.svg', themeColors.surface, 512],
+];
 
-function prepareSvg(source, color, strokeWidth = 1.8) {
-    return source
-        .replace(/<!--.*?-->\s*/gs, '')
-        .replaceAll('currentColor', color)
-        .replace('stroke-width="2"', `stroke-width="${strokeWidth}"`);
-}
+const LEGACY_OUTPUTS = ['chevron-blue.png', 'chevron-red.png'];
 
-await mkdir(OUTPUT_DIR, { recursive: true });
-await mkdir(BUILD_DIR, { recursive: true });
-await Promise.all(LEGACY_OUTPUTS.map((outputName) => rm(path.join(OUTPUT_DIR, outputName), { force: true })));
+async function renderAsset(sourceName, outputPath, color, size) {
+    const source = await readFile(path.join(SOURCE_DIR, sourceName), 'utf8');
+    const buildPath = path.join(BUILD_DIR, sourceName);
 
-for (const [outputName, sourceName, color, strokeWidth] of ICONS) {
-    const sourcePath = path.join(SOURCE_DIR, sourceName);
-    const buildPath = path.join(BUILD_DIR, `${outputName}.svg`);
-    const outputPath = path.join(OUTPUT_DIR, outputName);
-    const source = await readFile(sourcePath, 'utf8');
-
-    await writeFile(buildPath, prepareSvg(source, color, strokeWidth));
-    execFileSync('sips', ['-s', 'format', 'png', '-z', '96', '96', buildPath, '--out', outputPath], {
+    await writeFile(buildPath, source.replaceAll('currentColor', color));
+    execFileSync('sips', ['-s', 'format', 'png', '-z', `${size}`, `${size}`, buildPath, '--out', outputPath], {
         stdio: 'ignore',
     });
 }
 
+await Promise.all([
+    mkdir(ICON_OUTPUT_DIR, { recursive: true }),
+    mkdir(TEXTURE_OUTPUT_DIR, { recursive: true }),
+    mkdir(BUILD_DIR, { recursive: true }),
+]);
+await Promise.all(LEGACY_OUTPUTS.map((outputName) => rm(path.join(ICON_OUTPUT_DIR, outputName), { force: true })));
+
+for (const [outputName, sourceName, color] of ICONS) {
+    await renderAsset(sourceName, path.join(ICON_OUTPUT_DIR, outputName), color, 96);
+}
+
+for (const [outputName, sourceName, color, size] of TEXTURES) {
+    await renderAsset(sourceName, path.join(TEXTURE_OUTPUT_DIR, outputName), color, size);
+}
+
 await rm(BUILD_DIR, { force: true, recursive: true });
-console.log(`Generated ${ICONS.length} icons in ${path.relative(ROOT, OUTPUT_DIR)}`);
+console.log(`Generated ${ICONS.length} icons and ${TEXTURES.length} texture from imagegen art direction`);

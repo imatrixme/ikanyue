@@ -127,9 +127,9 @@
 
 .reward-tile__more-media {
     align-items: center;
-    background: $ky-blue-soft;
-    border: 1px dashed $ky-blue-line-strong;
-    color: $ky-blue;
+    background: $ky-primary-soft;
+    border: 1px dashed $ky-primary-line;
+    color: $ky-primary-strong;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -183,8 +183,8 @@
 }
 
 .points-empty-row--events .points-empty-row__icon {
-    background: $ky-blue-soft;
-    border-color: $ky-blue-line;
+    background: $ky-primary-soft;
+    border-color: $ky-primary-line;
 }
 
 .points-empty-row__copy {

@@ -6,16 +6,42 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 280px;
-    padding: 34px 22px;
+    min-height: 250px;
+    padding: 30px 22px;
     text-align: center;
     width: 100%;
 }
 
-.empty-state__illustration {
-    display: block;
-    height: 138px;
-    width: 138px;
+.empty-state__visual {
+    align-items: center;
+    background: $ky-primary-soft;
+    border: 1px solid $ky-primary-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    height: 72px;
+    justify-content: center;
+    width: 72px;
+}
+
+.empty-state--error .empty-state__visual,
+.empty-state--network .empty-state__visual {
+    background: $ky-danger-soft;
+    border-color: $ky-danger-line;
+}
+
+.empty-state--image .empty-state__visual {
+    background: $ky-blue-soft;
+    border-color: $ky-blue-line;
+}
+
+.empty-state--points .empty-state__visual {
+    background: $ky-yellow-soft;
+    border-color: $ky-gold-line;
+}
+
+.empty-state--rewards .empty-state__visual {
+    background: $ky-success-soft;
+    border-color: $ky-success-line;
 }
 
 .empty-state__content {
@@ -57,7 +83,7 @@
     background: $ky-primary-strong;
     border: none;
     border-radius: $ky-radius-md;
-    box-shadow: 0 2px 0 $ky-primary-pressed;
+    box-shadow: $ky-shadow-button;
     color: $ky-surface;
     display: flex;
     font-size: $ky-font-size-body;
@@ -77,19 +103,19 @@
 
     &:active {
         background: $ky-primary-pressed;
-        box-shadow: 0 1px 0 $ky-primary-pressed;
+        box-shadow: $ky-shadow-button-pressed;
     }
 }
 
 .empty-state--compact {
     align-items: center;
-    min-height: 220px;
-    padding: 26px 14px;
+    min-height: 210px;
+    padding: 24px 14px;
     text-align: center;
 
-    .empty-state__illustration {
-        height: 108px;
-        width: 108px;
+    .empty-state__visual {
+        height: 58px;
+        width: 58px;
     }
 
     .empty-state__content {

@@ -1,5 +1,6 @@
 @import '../../styles/tokens';
 @import '../../styles/point-events';
+@import '../../styles/hero-texture';
 @import './reward-list';
 
 .points-page {
@@ -11,7 +12,8 @@
 }
 
 .points-masthead {
-    background: $ky-primary;
+    @include ky-hero-texture;
+    background-color: $ky-primary;
     color: $ky-on-primary;
     margin: 0 -14px;
     padding: 12px 18px 14px;
@@ -40,6 +42,7 @@
 }
 
 .points-balance__value {
+    color: $ky-yellow;
     font-size: $ky-font-size-balance;
     font-weight: $ky-font-weight-black;
     line-height: $ky-leading-none;
@@ -47,6 +50,7 @@
 }
 
 .points-balance__unit {
+    color: $ky-yellow-soft;
     font-size: $ky-font-size-body-sm;
     font-weight: $ky-font-weight-bold;
     margin: 0 0 4px 7px;
@@ -126,9 +130,9 @@
 }
 
 .section-count {
-    background: $ky-blue-soft;
+    background: $ky-primary-soft;
     border-radius: $ky-radius-sm;
-    color: $ky-blue;
+    color: $ky-primary-strong;
     font-size: $ky-font-size-sm;
     font-weight: $ky-font-weight-bold;
     padding: 5px 7px;

@@ -1,5 +1,6 @@
 @import '../../styles/tokens';
 @import '../../styles/point-events';
+@import '../../styles/hero-texture';
 
 .history-page {
     background: $ky-canvas;
@@ -8,10 +9,10 @@
 }
 
 .history-hero {
-    background: $ky-primary;
+    @include ky-hero-texture;
+    background-color: $ky-primary;
     color: $ky-on-primary;
     padding: 17px 18px 16px;
-
 }
 
 .history-hero__title,

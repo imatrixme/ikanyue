@@ -13,6 +13,16 @@
     width: 100%;
 }
 
+.taro-tabbar__panel .activity-page,
+.taro-tabbar__panel .page-wrapper {
+    height: 100%;
+    min-height: 0;
+}
+
+.taro-tabbar__panel .date-column {
+    height: 100%;
+}
+
 .date-column {
     background: $ky-primary-soft;
     border-right: 1px solid $ky-primary-line;

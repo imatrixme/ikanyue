@@ -1,4 +1,5 @@
 @import '../../styles/tokens';
+@import '../../styles/hero-texture';
 
 .userinfo-page {
     background: $ky-canvas;
@@ -8,14 +9,14 @@
 }
 
 .userinfo-hero {
+    @include ky-hero-texture;
     align-items: center;
-    background: $ky-primary;
+    background-color: $ky-primary;
     box-sizing: border-box;
     color: $ky-on-primary;
     display: flex;
     min-height: 108px;
     padding: 18px 18px 22px;
-
 }
 
 .userinfo-avatar {
