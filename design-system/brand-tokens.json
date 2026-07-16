@@ -10,31 +10,49 @@
     "primaryPressed": "#004f3d",
     "primarySoft": "#d4e9e2",
     "primaryLine": "#9fc9bb",
+    "primaryWash": "#f6faf8",
+    "primarySurfaceOverlay": "rgba(255, 255, 255, 0.34)",
+    "primaryDivider": "rgba(0, 98, 65, 0.14)",
     "onPrimary": "#ffffff",
+    "onPrimaryMuted": "rgb(255 255 255 / 75%)",
+    "onPrimaryFaint": "rgb(255 255 255 / 55%)",
+    "onPrimaryDivider": "rgba(255, 255, 255, 0.3)",
+    "onPrimaryOverlay": "rgb(255 255 255 / 12%)",
     "ink": "#31443e",
     "inkStrong": "#1e3932",
     "textSecondary": "#5f6f69",
     "textMuted": "#87928e",
     "canvas": "#f4f4f2",
     "surface": "#ffffff",
+    "secondarySurface": "#edf4f1",
+    "mutedSurface": "#eef3f1",
+    "sidebarSurface": "#f0f6f3",
     "line": "#dededb",
     "lineStrong": "#b9b9b5",
+    "lineTinted": "#d8e2de",
+    "inputLine": "#c8d6d1",
     "blue": "#0079c8",
     "bluePressed": "#005f9e",
     "blueSoft": "#eaf5fc",
     "blueLine": "#b8d9ef",
     "blueLineStrong": "#9bc9e8",
+    "blueWash": "#f7fbfe",
     "yellow": "#f5c400",
     "yellowPressed": "#d9a900",
     "yellowSoft": "#fff8d6",
     "gold": "#7d6200",
+    "goldForeground": "#5f4a00",
+    "goldLine": "#e4cf70",
+    "goldWash": "#fffdf3",
     "success": "#1f7a4d",
     "successSoft": "#e8f5ed",
     "successLine": "#b9dcc8",
+    "successWash": "#f7fbf8",
     "danger": "#b42318",
     "dangerPressed": "#8f1c14",
     "dangerSoft": "#fff0ee",
     "dangerLine": "#dfbbb7",
+    "overlay": "rgb(30 57 50 / 45%)",
     "wechat": "#07c160",
     "mediaMuted": "#eeece8",
     "skeleton": "#e4e4e1"
@@ -42,10 +60,10 @@
   "typography": {
     "fontFamily": "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
     "weight": {
-      "medium": 600,
-      "semibold": 700,
-      "bold": 800,
-      "black": 900
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700,
+      "black": 800
     },
     "lineHeight": {
       "none": 1,
@@ -106,6 +124,19 @@
     "sm": 4,
     "md": 6,
     "lg": 8
+  },
+  "shadow": {
+    "miniapp": {
+      "card": "0 3px 0 rgba(30, 57, 50, 0.08)",
+      "subtle": "0 2px 0 rgba(30, 57, 50, 0.06)",
+      "raised": "0 8px 20px rgba(30, 57, 50, 0.1)",
+      "button": "0 2px 0 #004f3d",
+      "buttonPressed": "0 1px 0 #004f3d"
+    },
+    "admin": {
+      "sm": "0 1px 2px rgb(30 57 50 / 8%)",
+      "lg": "0 12px 28px rgb(30 57 50 / 14%)"
+    }
   },
   "motionMs": {
     "fast": 160,

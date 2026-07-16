@@ -130,7 +130,7 @@ up() {
   wait_for_url hono "$LOCAL_HONO_URL/"
   start_process admin "$ROOT_DIR/ikanyue.admin" ./node_modules/.bin/vite --host 127.0.0.1 --port "$ADMIN_PORT"
   wait_for_url admin "http://127.0.0.1:$ADMIN_PORT/"
-  start_process miniapp "$ROOT_DIR/ikanyue.taro3" ./node_modules/.bin/taro build \
+  start_process miniapp "$ROOT_DIR/ikanyue.taro3" env NODE_ENV=development ./node_modules/.bin/taro build \
     --type weapp \
     --watch \
     --env development
