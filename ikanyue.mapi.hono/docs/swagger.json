@@ -5439,21 +5439,44 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": {
+                  "nickName": {
                     "type": "string",
-                    "description": "用户姓名",
-                    "maxLength": 255
+                    "description": "昵称；兼容旧字段 nickname",
+                    "maxLength": 24
+                  },
+                  "realName": {
+                    "type": "string",
+                    "description": "真实姓名；兼容旧字段 realname",
+                    "maxLength": 24
                   },
                   "avatar": {
                     "type": "string",
-                    "description": "头像文件",
-                    "format": "binary"
+                    "description": "头像 URL"
+                  },
+                  "gender": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ]
+                  },
+                  "age": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 120
+                  },
+                  "province": {
+                    "type": "string"
                   }
                 }
               },
               "example": {
-                "name": "张三丰",
-                "avatar": "https://example.com/avatar.jpg"
+                "nickName": "小张",
+                "realName": "张三",
+                "gender": 1,
+                "age": 18,
+                "province": "广东省"
               }
             }
           }
@@ -5482,30 +5505,38 @@
                           "type": "string",
                           "description": "用户ID"
                         },
-                        "email": {
+                        "cellphone": {
                           "type": "string",
-                          "description": "用户邮箱"
+                          "description": "绑定手机号"
                         },
-                        "name": {
+                        "nickName": {
                           "type": "string",
-                          "description": "用户姓名"
+                          "description": "规范昵称字段"
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "description": "兼容旧昵称字段，与 nickName 一致"
+                        },
+                        "realName": {
+                          "type": "string",
+                          "description": "规范真实姓名字段"
+                        },
+                        "realname": {
+                          "type": "string",
+                          "description": "兼容旧真实姓名字段，与 realName 一致"
                         },
                         "avatar": {
                           "type": "string",
                           "description": "用户头像URL"
                         },
-                        "emailVisibility": {
-                          "type": "boolean",
-                          "description": "邮箱可见性"
+                        "gender": {
+                          "type": "integer"
                         },
-                        "verified": {
-                          "type": "boolean",
-                          "description": "邮箱验证状态"
+                        "age": {
+                          "type": "integer"
                         },
-                        "created": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "创建时间"
+                        "province": {
+                          "type": "string"
                         },
                         "updated": {
                           "type": "string",
@@ -5521,12 +5552,15 @@
                   "message": null,
                   "data": {
                     "id": "u7c3q8yq1wksd3z",
-                    "email": "test@example.com",
-                    "name": "张三丰",
+                    "cellphone": "13800138000",
+                    "nickName": "小张",
+                    "nickname": "小张",
+                    "realName": "张三",
+                    "realname": "张三",
                     "avatar": "https://example.com/avatar.jpg",
-                    "emailVisibility": true,
-                    "verified": true,
-                    "created": "2024-12-26T10:00:00.000Z",
+                    "gender": 1,
+                    "age": 18,
+                    "province": "广东省",
                     "updated": "2024-12-26T10:08:12.000Z"
                   }
                 }

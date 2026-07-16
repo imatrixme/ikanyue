@@ -102,16 +102,23 @@ function createStudentsCollection(studentUpdateCalls) {
             if (['student_update_error', 'student_refresh_update_throw', 'student_update_throw'].includes(id)) {
                 throw new Error('student update failed');
             }
+            if (id === 'student_update_silent_ignore') {
+                return studentRecord(id, { nickname: '旧昵称', realname: '旧姓名' });
+            }
             if (id === 'student_avatar_number') {
                 return studentRecord(id, { avatar: 7, ...data });
             }
             if (id === 'student_1') {
+                const legacySchemaData = { ...data };
+                delete legacySchemaData.nickName;
+                delete legacySchemaData.realName;
                 return studentRecord(id, {
                     avatar: data.avatar || '',
                     avatarFile: 'avatar.jpg',
                     idAdmin: true,
                     nickname: data.nickname || '小王',
-                    ...data,
+                    realname: data.realname || '王同学',
+                    ...legacySchemaData,
                 });
             }
             return studentRecord(id, {

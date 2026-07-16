@@ -14,9 +14,6 @@
  *   "gender": 1,               // 性别 (0:未知，1:男，2:女)
  *   "age": 20,                 // 年龄
  *   "province": "广东省",       // 省份
- *   "city": "深圳市",           // 城市
- *   "address": "南山区科技园",   // 地址
- *   // 其他可更新字段...
  * }
  *
  * 成功响应:
@@ -48,23 +45,28 @@ async function userUpdateHandler(c) {
     const body = contentType.includes('application/json') ? await c.req.json() : await c.req.parseBody();
     const updateData = {};
     const allowedFields = [
-        'realname',
-        'nickname',
+        'realName',
+        'nickName',
         'avatar',
         'gender',
         'age',
         'province',
-        'city',
-        'address',
-        'email',
-        'bio',
     ];
+
+    const legacyAliases = {
+        realName: 'realname',
+        nickName: 'nickname',
+    };
 
     // 检查并添加允许更新的字段
     allowedFields.forEach((field) => {
-        const value = body[field];
+        const legacyField = legacyAliases[field];
+        const value = body[field] !== undefined ? body[field] : body[legacyField];
         if (value !== undefined) {
             updateData[field] = value;
+            if (legacyField) {
+                updateData[legacyField] = value;
+            }
         }
     });
 
@@ -121,6 +123,18 @@ async function userUpdateHandler(c) {
         // 检查更新后的用户头像是否为空，如果为空则设置默认头像（仅用于返回给前端）
         if (!updatedUser.avatar || updatedUser.avatar.trim() === '') {
             updatedUser.avatar = process.env.DEFAULT_AVATAR || '';
+        }
+
+        for (const [canonicalField, legacyField] of Object.entries(legacyAliases)) {
+            if (updateData[canonicalField] === undefined) {
+                continue;
+            }
+            const persistedValue = updatedUser[canonicalField] ?? updatedUser[legacyField];
+            if (String(persistedValue ?? '') !== String(updateData[canonicalField])) {
+                return c.error(500, `${canonicalField === 'nickName' ? '昵称' : '姓名'}更新未生效`);
+            }
+            updatedUser[canonicalField] = persistedValue;
+            updatedUser[legacyField] = persistedValue;
         }
 
         return c.data(updatedUser);

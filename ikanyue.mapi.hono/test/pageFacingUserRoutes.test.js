@@ -32,12 +32,17 @@ test('user routes cover miniapp profile login, refresh, and update flow', async 
             ignored: 'field',
         });
         assert.equal(updatePayload.code, 10000);
+        assert.equal(updatePayload.data.nickName, '新昵称');
         assert.equal(updatePayload.data.nickname, '新昵称');
+        assert.equal(updatePayload.data.realName, '王同学');
+        assert.equal(updatePayload.data.realname, '王同学');
         assert.equal(updatePayload.data.gender, 2);
         assert.equal(updatePayload.data.ignored, undefined);
         assert.equal(updatePayload.data.avatar, '');
         assert.deepEqual(studentUpdateCalls[2].data, {
+            nickName: '新昵称',
             nickname: '新昵称',
+            realName: '王同学',
             realname: '王同学',
             gender: 2,
             age: 12,
@@ -132,6 +137,7 @@ test('user update route covers field filtering, role routing, and update failure
         assert.equal((await jsonPost(app, '/v1/user/update/student/student_sn', { ignored: 'field' })).code, 400);
         assert.equal((await jsonPost(app, '/v1/user/update/student/student_update_missing', { nickname: '新昵称' })).code, 404);
         assert.equal((await jsonPost(app, '/v1/user/update/student/student_update_throw', { nickname: '新昵称' })).code, 500);
+        assert.equal((await jsonPost(app, '/v1/user/update/student/student_update_silent_ignore', { nickname: '新昵称' })).code, 500);
         assert.equal((await jsonPost(app, '/v1/user/update/student/student_avatar_number', { nickname: '新昵称' })).code, 500);
 
         const teacherPayload = await formPost(app, '/v1/user/update/teacher/teacher_ok', {
@@ -139,6 +145,7 @@ test('user update route covers field filtering, role routing, and update failure
             avatar: 'https://example.com/avatar.jpg',
         });
         assert.equal(teacherPayload.code, 10000);
+        assert.equal(teacherPayload.data.nickName, '老师');
         assert.equal(teacherPayload.data.nickname, '老师');
 
         assert.equal((await jsonPost(app, '/v1/user/update/teacher/teacher_update_missing', { nickname: '老师' })).code, 404);
