@@ -16,8 +16,15 @@ interface ShellProps {
   children: React.ReactNode
 }
 
+const viewEyebrow: Record<AppView, string> = {
+  points: '积分与线下兑换',
+  rewards: '实物目录与价格',
+  students: '账号与基础资料',
+}
+
 export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const currentViewEyebrow = viewEyebrow[activeView]
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -56,8 +63,8 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
                   variant="secondary"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-[var(--muted-foreground)]">线下积分与实物</p>
-                  <h1 className="truncate text-base font-semibold">积分服务台</h1>
+                  <p className="text-xs font-medium text-[var(--muted-foreground)]">{currentViewEyebrow}</p>
+                  <p className="truncate text-base font-semibold">线下积分服务台</p>
                 </div>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
@@ -71,7 +78,7 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
           </header>
           <main className="mx-auto min-w-0 max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6">
             {toast ? (
-              <div className={cn('mb-4 rounded-md border px-4 py-3 text-sm shadow-sm', toast.type === 'error' ? 'border-[var(--destructive)]/25 bg-[var(--danger-soft)] text-[var(--destructive)]' : 'border-[var(--info)]/25 bg-[var(--info-soft)] text-[var(--info)]')}>
+              <div className={cn('mb-4 rounded-md border px-4 py-3 text-sm shadow-sm', toast.type === 'error' ? 'border-[var(--danger-border)] bg-[var(--danger-soft)] text-[var(--destructive)]' : 'border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--info)]')}>
                 {toast.message}
               </div>
             ) : null}

@@ -107,7 +107,7 @@ export function DialogShell({ children, description, dismissible = true, onReque
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold" id={titleId}>{title}</h2>
-            {description ? <p className="mt-1 text-sm text-[var(--muted-foreground)]" id={descriptionId}>{description}</p> : null}
+            {description ? <p className="ky-paragraph mt-1" id={descriptionId}>{description}</p> : null}
           </div>
           {dismissible ? (
             <Button aria-label="关闭弹窗" className="h-9 w-9 shrink-0 px-0" icon={<X className="h-4 w-4" />} onClick={onRequestClose} type="button" variant="ghost" />

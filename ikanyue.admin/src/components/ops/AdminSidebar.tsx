@@ -30,8 +30,8 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
         : 'hidden border-r lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:overflow-hidden',
     )}>
       <div className="flex h-full w-full flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-[var(--border)] bg-[var(--brand-soft)]/45 px-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--brand)]/20">
+        <div className="flex h-16 items-center gap-3 border-b border-[var(--border)] bg-[var(--brand-wash)] px-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm">
             <Gift className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1 whitespace-nowrap">
@@ -61,7 +61,7 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                   className={cn(
                     'relative flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium transition-colors',
                     active
-                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm shadow-[var(--brand)]/20'
+                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
                       : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]',
                   )}
                   onClick={() => {

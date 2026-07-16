@@ -50,17 +50,17 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
             <Gift className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-3xl font-semibold leading-tight">看乐积分兑换后台</h1>
-          <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--primary-foreground)]/75">
+          <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--on-primary-muted)]">
             看乐校区 · 微信轻量版
           </p>
         </div>
-        <div className="mt-10 grid gap-2 text-sm text-[var(--primary-foreground)]/55">
+        <div className="mt-10 grid gap-2 text-sm text-[var(--on-primary-faint)]">
           <span>管理员工作台</span>
           <span>积分与线下兑换</span>
         </div>
       </aside>
       <section className="flex items-center justify-center px-5 py-10">
-        <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm shadow-[var(--brand)]/8" onSubmit={submit}>
+        <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm" onSubmit={submit}>
           <div className="mb-6">
             <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
             <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '管理员登录'}</h2>
@@ -83,8 +83,8 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
               注册
             </button>
           </div>
-          {errorMessage ? <div className="mb-4 rounded-md border border-[var(--destructive)]/25 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
-          {successMessage ? <div className="mb-4 rounded-md border border-[var(--info)]/25 bg-[var(--info-soft)] px-3 py-2 text-sm text-[var(--info)]">{successMessage}</div> : null}
+          {errorMessage ? <div className="mb-4 rounded-md border border-[var(--danger-border)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
+          {successMessage ? <div className="mb-4 rounded-md border border-[var(--info-border)] bg-[var(--info-soft)] px-3 py-2 text-sm text-[var(--info)]">{successMessage}</div> : null}
           <div className="grid gap-4">
             <Field label={mode === 'register' ? '手机号' : '账号或手机号'} htmlFor="ops-account">
               <Input

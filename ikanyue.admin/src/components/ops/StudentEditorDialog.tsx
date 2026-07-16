@@ -58,7 +58,7 @@ export function StudentEditorDialog({ loading, onClose, onSave, student }: Stude
       title={student ? `编辑${studentName(student)}` : '新增学员'}
     >
       {discardPrompt ? (
-        <div className="border-b border-[var(--destructive)]/20 bg-[var(--danger-soft)] px-5 py-4" role="alert">
+        <div className="border-b border-[var(--danger-border)] bg-[var(--danger-soft)] px-5 py-4" role="alert">
           <p className="font-semibold text-[var(--destructive)]">放弃未保存修改？</p>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">当前学员信息尚未保存。</p>
           <div className="mt-3 flex gap-2">

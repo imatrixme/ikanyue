@@ -42,11 +42,11 @@ export function ForcePasswordChangeView({ api, token, profile, errorMessage, onS
             <KeyRound className="h-5 w-5" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-semibold">修改初始密码</h1>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
+          <p className="ky-paragraph mt-2">
             {profile.realName || profile.nickName || profile.cellphone} 首次登录后台前需要设置新的管理员密码。
           </p>
         </div>
-        {errorMessage ? <div className="mb-4 rounded-md border border-[var(--destructive)]/25 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
+        {errorMessage ? <div className="mb-4 rounded-md border border-[var(--danger-border)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
         <form className="grid gap-4" onSubmit={submit}>
           <Field label="当前密码" htmlFor="current-password">
             <Input id="current-password" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />

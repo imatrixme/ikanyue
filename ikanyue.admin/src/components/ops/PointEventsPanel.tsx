@@ -7,7 +7,7 @@ export function PointEventsView({ events = [] }: { events?: StudentPointSummary[
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-[var(--border)] bg-[var(--muted)]/70 text-left text-xs text-[var(--muted-foreground)]">
+                <tr className="border-b border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]">
                   <th className="px-4 py-3 font-medium">操作</th>
                   <th className="px-4 py-3 font-medium">变化</th>
                   <th className="px-4 py-3 font-medium">余额</th>
@@ -17,7 +17,7 @@ export function PointEventsView({ events = [] }: { events?: StudentPointSummary[
               </thead>
               <tbody>
                 {events.map((event) => (
-                  <tr key={event.id} className="border-b border-[var(--border)] last:border-0">
+                  <tr key={event.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0">
                     <td className="px-4 py-3">{eventLabel(event)}</td>
                     <td className={deltaClass(event)}>{formatDelta(event.delta)}</td>
                     <td className="px-4 py-3 tabular-nums">{event.balanceAfter}</td>

@@ -15,7 +15,7 @@ export function Field({ label, children, htmlFor, hint, className }: FieldProps)
     <div className={cn('grid gap-1.5', className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint ? <p className="min-h-4 text-xs text-[var(--muted-foreground)]">{hint}</p> : <span aria-hidden="true" className="min-h-4" />}
+      {hint ? <p className="text-xs text-[var(--muted-foreground)]">{hint}</p> : null}
     </div>
   )
 }

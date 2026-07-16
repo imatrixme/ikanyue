@@ -78,7 +78,7 @@ export function PointActionDialog({ loading, mode, onAddPoints, onClose, onRedee
       ) : (
         <div className="grid gap-5 p-5">
           <LockedStudent student={student} />
-          <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/45 p-4">
+          <div className="rounded-md border border-[var(--border)] bg-[var(--brand-wash)] p-4">
             <p className="font-semibold">{mode === 'grant' ? `${reason || '未填写原因'} · 增加 ${amount} 分` : `${selectedReward?.name} · 扣除 ${selectedReward?.pointsPrice} 分`}</p>
             <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
               <BalanceValue label="当前积分" value={student.balance} />

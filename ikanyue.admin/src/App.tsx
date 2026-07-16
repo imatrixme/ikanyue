@@ -250,7 +250,7 @@ export default function App({ api: injectedApi }: AppProps) {
             <ShieldAlert className="h-5 w-5" aria-hidden="true" />
           </div>
           <h2 className="text-xl font-semibold">需要管理员权限</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
+          <p className="ky-paragraph mt-2">
             积分加分和线下兑换会修改学员积分流水，当前账号没有访问权限。
           </p>
         </Panel>

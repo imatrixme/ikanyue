@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Inbox, RotateCcw, SearchX } from 'lucide-react'
 
 import { Button } from '../ui/Button'
 
@@ -27,12 +27,18 @@ export function PaginationControls({ page, totalItems, totalPages, onPageChange 
 }
 
 export function ListEmptyState({ filtered, noun, onReset, onCreate }: { filtered: boolean; noun: string; onReset?: () => void; onCreate?: () => void }) {
+  const EmptyIcon = filtered ? SearchX : Inbox
   return (
-    <div className="grid justify-items-center gap-3 px-5 py-16 text-center">
+    <div className="grid justify-items-center px-5 py-14 text-center">
+      <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--brand-border)] bg-[var(--brand-soft)] text-[var(--primary)]">
+        <EmptyIcon className="h-5 w-5" aria-hidden="true" />
+      </span>
       <p className="font-semibold">{filtered ? `没有匹配的${noun}` : `还没有${noun}`}</p>
-      <p className="text-sm text-[var(--muted-foreground)]">{filtered ? '调整筛选条件后重试。' : `创建或同步第一条${noun}记录后会显示在这里。`}</p>
+      <p className="ky-paragraph mt-2">{filtered ? '调整筛选条件后重试。' : `创建或同步第一条${noun}记录后会显示在这里。`}</p>
+      <div className="mt-4">
       {filtered && onReset ? <Button onClick={onReset} type="button" variant="secondary">重置筛选</Button> : null}
       {!filtered && onCreate ? <Button onClick={onCreate} type="button">新增{noun}</Button> : null}
+      </div>
     </div>
   )
 }
