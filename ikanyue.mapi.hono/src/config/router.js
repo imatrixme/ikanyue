@@ -2,9 +2,11 @@
 const userRoutes = require('../routes/user');
 const opsRoutes = require('../routes/ops');
 const pointsRoutes = require('../routes/points');
+const { activityFindHandler } = require('../routes/activity/find');
 
 const registerBizRoutes = function (routes) {
-    // WeChat points lite release surface: login/profile, learner points, reward catalog, and the lite ops console.
+    // WeChat release surface: public activities, login/profile, learner points, rewards, and the lite ops console.
+    routes.get('/v1/activity/find').handler(activityFindHandler);
     userRoutes(routes);
     pointsRoutes(routes);
     opsRoutes(routes);

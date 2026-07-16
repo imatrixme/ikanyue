@@ -114,8 +114,8 @@ function createOpsSeed() {
             teacher('pending_1', { cellphone: '13800138004', verified: false }),
         ],
         students: [
-            { id: 'student_1', cellphone: '13900139001', nickName: '小张', realName: '张同学', wechatId: 'openid_secret' },
-            { id: 'student_2', cellphone: '13900139002', nickName: '小李', realName: '李同学' },
+            { id: 'student_1', blocked: false, cellphone: '13900139001', nickName: '小张', realName: '张同学', wechatId: 'openid_secret' },
+            { id: 'student_2', blocked: false, cellphone: '13900139002', nickName: '小李', realName: '李同学' },
         ],
         teacher_student_relations: [
             { id: 'rel_1', teacherId: 'teacher_1', studentId: 'student_1', status: 'active' },
@@ -326,6 +326,10 @@ function matchExpression(record, expression) {
     const equals = expr.match(/^(\w+)\s*=\s*"([^"]*)"$/);
     if (equals) {
         return String(record[equals[1]] ?? '') === equals[2];
+    }
+    const booleanEquals = expr.match(/^(\w+)\s*=\s*(true|false)$/);
+    if (booleanEquals) {
+        return Boolean(record[booleanEquals[1]]) === (booleanEquals[2] === 'true');
     }
     const contains = expr.match(/^(\w+)\s*~\s*"([^"]*)"$/);
     if (contains) {

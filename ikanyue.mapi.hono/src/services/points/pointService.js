@@ -33,7 +33,7 @@ class PointService {
             : '';
         const students = await this.repository.list('students', page, perPage, {
             fields: 'id,realName,nickName,cellphone,avatar,created,updated',
-            filter,
+            filter: [filter, 'blocked = false'].filter(Boolean).join(' && '),
             sort: '-updated',
         });
         const items = await Promise.all((students.items || []).map(async (student) => {

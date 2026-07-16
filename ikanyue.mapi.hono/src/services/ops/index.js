@@ -1,5 +1,6 @@
 const { AuditService } = require('./auditService');
 const { OpsAuthService } = require('./authService');
+const { StudentAdminService } = require('./studentAdminService');
 const { createPointServices } = require('../points');
 
 function createOpsServices(repository = createDefaultRepository()) {
@@ -8,6 +9,7 @@ function createOpsServices(repository = createDefaultRepository()) {
     return {
         auditService,
         authService: new OpsAuthService(repository, auditService),
+        studentAdminService: new StudentAdminService(repository, auditService),
         ...pointServices,
         repository,
     };

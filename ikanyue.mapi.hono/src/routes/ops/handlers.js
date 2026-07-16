@@ -25,6 +25,20 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return safe(c, () => services.pointService.listStudentBalances(c.req.query()));
         },
 
+        async listManagedStudents(c) {
+            return safe(c, () => services.studentAdminService.list(c.get('user'), c.req.query()));
+        },
+
+        async createManagedStudent(c) {
+            const body = await readRequestBody(c);
+            return safe(c, () => services.studentAdminService.create(c.get('user'), body));
+        },
+
+        async updateManagedStudent(c) {
+            const body = await readRequestBody(c);
+            return safe(c, () => services.studentAdminService.update(c.get('user'), c.req.param('id'), body));
+        },
+
         async studentPoints(c) {
             return safe(c, () => services.pointService.getStudentSummary(c.req.param('studentId'), c.req.query()));
         },

@@ -289,7 +289,7 @@ test('light branch does not expose removed full-admin operation routes', async (
     assert.equal((await app.request('/ops/assessment-templates', { headers })).status, 404);
 });
 
-test('biz route registry exposes only login, points, and light ops routes', async () => {
+test('biz route registry restores public activities without reopening removed full-product routes', async () => {
     const { Hono } = require('hono');
     const { responseMiddleware } = require('../src/middleware/response');
     const { registerBizRoutes } = require('../src/config/router');
@@ -301,7 +301,9 @@ test('biz route registry exposes only login, points, and light ops routes', asyn
     registerBizRoutes(routes);
     routes.finalize();
 
-    assert.equal((await app.request('/v1/activity/find')).status, 404);
+    const activityResponse = await app.request('/v1/activity/find?page=0');
+    assert.equal(activityResponse.status, 200);
+    assert.equal((await activityResponse.json()).code, 400);
     assert.equal((await app.request('/v1/student/reports')).status, 404);
     assert.equal((await app.request('/ops/dashboard')).status, 404);
 });

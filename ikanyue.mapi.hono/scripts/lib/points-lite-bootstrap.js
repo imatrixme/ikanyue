@@ -17,6 +17,8 @@ const LOCAL_CORE_COLLECTIONS = [
             textField('avatar'),
             boolField('blocked'),
             numberField('gender'),
+            numberField('age'),
+            textField('province'),
             dateField('lastLoginAt'),
             textField('lastLoginIp'),
             textField('lastLoginMethod'),
@@ -42,6 +44,9 @@ const LOCAL_CORE_COLLECTIONS = [
             textField('realName'),
             textField('avatar'),
             boolField('blocked'),
+            numberField('gender'),
+            numberField('age'),
+            textField('province'),
             boolField('idAdmin'),
             boolField('isAdmin'),
             ...TEACHER_OPS_FIELDS,
@@ -55,6 +60,33 @@ const LOCAL_CORE_COLLECTIONS = [
             'CREATE UNIQUE INDEX idx_teachers_sn ON teachers (sn)',
             'CREATE UNIQUE INDEX idx_teachers_username ON teachers (username)',
             'CREATE UNIQUE INDEX idx_teachers_cellphone ON teachers (cellphone)',
+        ],
+    },
+    {
+        name: 'activities',
+        type: 'base',
+        fields: [
+            textField('title'),
+            textField('description'),
+            dateField('startTime'),
+            dateField('endTime'),
+            textField('location'),
+            numberField('price'),
+            fileField('coverImage'),
+            fileField('images', 10),
+            textField('externalLink'),
+            textField('tags'),
+            numberField('sequence'),
+            numberField('maxParticipants'),
+            numberField('currentParticipants'),
+            textField('status'),
+            textField('type'),
+            textField('creator'),
+            autoDateField('created', true),
+            autoDateField('updated', true),
+        ],
+        indexes: [
+            'CREATE INDEX idx_activities_status_start ON activities (status, startTime)',
         ],
     },
 ];
@@ -227,6 +259,19 @@ function dateField(name) {
 
 function jsonField(name) {
     return { name, type: 'json', required: false };
+}
+
+function fileField(name, maxSelect = 1) {
+    return {
+        name,
+        type: 'file',
+        required: false,
+        maxSelect,
+        maxSize: 5 * 1024 * 1024,
+        mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'],
+        protected: false,
+        thumbs: [],
+    };
 }
 
 function autoDateField(name, onUpdate) {

@@ -28,6 +28,35 @@ const LOCAL_REWARDS = [
     { id: 'localreward0003', name: '下线徽章', description: '本地测试下线实物', pointsPrice: 10, sortOrder: 30, status: 'inactive' },
 ];
 
+const LOCAL_MANAGED_TEST_CELLPHONES = ['13900009991', '13900009992'];
+
+function createLocalActivities(baseDate = new Date()) {
+    const startTime = new Date(baseDate);
+    startTime.setDate(startTime.getDate() + 1);
+    startTime.setHours(10, 0, 0, 0);
+    const endTime = new Date(startTime.getTime() + 90 * 60 * 1000);
+
+    return [
+        {
+            id: 'localactivity01',
+            title: '本地声乐体验活动',
+            description: '<p>用于局域网联调的活动样例。</p>',
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
+            location: '看乐艺术教室',
+            price: 0,
+            externalLink: '',
+            tags: '声乐,体验',
+            sequence: 10,
+            maxParticipants: 20,
+            currentParticipants: 0,
+            status: 'active',
+            type: 'experience',
+            creator: 'local-seed',
+        },
+    ];
+}
+
 async function main() {
     const url = process.env.PB_URL || 'http://127.0.0.1:8090';
     assertLocalPocketBase(url);
@@ -39,6 +68,8 @@ async function main() {
     const PocketBase = await import('pocketbase');
     const pb = new PocketBase.default(url);
     await pb.collection('_superusers').authWithPassword(requiredEnv('PB_EMAIL'), requiredEnv('PB_PASSWORD'));
+
+    await cleanupManagedStudentFixtures(pb);
 
     for (const student of LOCAL_STUDENTS) {
         await upsertById(pb.collection('students'), student.id, {
@@ -56,6 +87,11 @@ async function main() {
 
     for (const reward of LOCAL_REWARDS) {
         await upsertById(pb.collection('reward_items'), reward.id, reward);
+    }
+
+    const activities = createLocalActivities();
+    for (const activity of activities) {
+        await upsertById(pb.collection('activities'), activity.id, activity);
     }
 
     await resetLocalPointEvents(pb);
@@ -78,7 +114,27 @@ async function main() {
         });
     }
 
-    console.log(`seeded ${LOCAL_STUDENTS.length} local students and ${LOCAL_REWARDS.length} local rewards`);
+    console.log(
+        `seeded ${LOCAL_STUDENTS.length} local students, ${LOCAL_REWARDS.length} local rewards, and ${activities.length} local activity`
+    );
+}
+
+async function cleanupManagedStudentFixtures(pb) {
+    for (const cellphone of LOCAL_MANAGED_TEST_CELLPHONES) {
+        const students = await pb.collection('students').getFullList({ filter: `cellphone="${cellphone}"` });
+        for (const student of students) {
+            await deleteByFilter(pb.collection('point_events'), `studentId="${student.id}"`);
+            await deleteByFilter(pb.collection('student_points'), `studentId="${student.id}"`);
+            await pb.collection('students').delete(student.id);
+        }
+    }
+}
+
+async function deleteByFilter(collection, filter) {
+    const records = await collection.getFullList({ filter });
+    for (const record of records) {
+        await collection.delete(record.id);
+    }
 }
 
 async function resetLocalPointEvents(pb) {
@@ -144,4 +200,11 @@ if (require.main === module) {
     });
 }
 
-module.exports = { LOCAL_REWARDS, LOCAL_STUDENTS, assertLocalPocketBase, main };
+module.exports = {
+    LOCAL_MANAGED_TEST_CELLPHONES,
+    LOCAL_REWARDS,
+    LOCAL_STUDENTS,
+    assertLocalPocketBase,
+    createLocalActivities,
+    main,
+};

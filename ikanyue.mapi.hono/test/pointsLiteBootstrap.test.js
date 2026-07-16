@@ -2,10 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+    LOCAL_CORE_COLLECTIONS,
     ensureBootstrapAdmin,
     ensureLocalCoreCollections,
 } = require('../scripts/lib/points-lite-bootstrap');
-const { assertLocalPocketBase } = require('../scripts/pb-seed-points-lite-local');
+const { assertLocalPocketBase, createLocalActivities } = require('../scripts/pb-seed-points-lite-local');
 
 test('bootstrap admin is explicit, create-only, and never resets existing credentials', async () => {
     const calls = [];
@@ -72,7 +73,7 @@ test('bootstrap admin requires explicit credentials and creates a new local admi
     assert.equal(calls[0].opsPasswordChangeRequired, false);
 });
 
-test('local core bootstrap creates missing student and teacher collections only when enabled', async () => {
+test('local core bootstrap creates the release collections only when enabled', async () => {
     const records = [];
     const pb = {
         collections: {
@@ -98,7 +99,22 @@ test('local core bootstrap creates missing student and teacher collections only 
 
     assert.equal(collections.has('students'), true);
     assert.equal(collections.has('teachers'), true);
+    assert.equal(collections.has('activities'), true);
     assert.deepEqual(collections.get('teachers').passwordAuth.identityFields, ['email']);
+    const studentDefinition = LOCAL_CORE_COLLECTIONS.find((collection) => collection.name === 'students');
+    assert.ok(studentDefinition.fields.some((field) => field.name === 'age'));
+    assert.ok(studentDefinition.fields.some((field) => field.name === 'province'));
+    const activityDefinition = LOCAL_CORE_COLLECTIONS.find((collection) => collection.name === 'activities');
+    assert.equal(activityDefinition.fields.find((field) => field.name === 'images').maxSelect, 10);
+});
+
+test('local activity fixture remains visible in the restored seven-day activity window', () => {
+    const baseDate = new Date('2026-07-13T12:00:00+08:00');
+    const [activity] = createLocalActivities(baseDate);
+
+    assert.equal(activity.status, 'active');
+    assert.equal(activity.tags, '声乐,体验');
+    assert.equal(activity.startTime, '2026-07-14T02:00:00.000Z');
 });
 
 test('local seed guard rejects non-local PocketBase hosts', () => {

@@ -10,6 +10,10 @@ function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.get('/ops/auth/me').use(opsAuthMiddleware).handler(handlers.me);
     routes.post('/ops/auth/change-password').use(opsAuthMiddleware).handler(handlers.changePassword);
 
+    routes.get('/ops/students').use(...opsAuth).handler(handlers.listManagedStudents);
+    routes.post('/ops/students').use(...opsAuth).handler(handlers.createManagedStudent);
+    routes.post('/ops/students/:id').use(...opsAuth).handler(handlers.updateManagedStudent);
+
     routes.get('/ops/points/students').use(...opsAuth).handler(handlers.listStudents);
     routes.get('/ops/points/students/:studentId').use(...opsAuth).handler(handlers.studentPoints);
     routes.get('/ops/points/students/:studentId/events').use(...opsAuth).handler(handlers.studentPoints);
