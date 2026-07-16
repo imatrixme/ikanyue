@@ -16,6 +16,12 @@ set -a
 source "$ENV_FILE"
 set +a
 
+for optional_var in WECHAT_APPID WECHAT_SECRET; do
+  if [[ -z "${!optional_var:-}" ]]; then
+    unset "$optional_var"
+  fi
+done
+
 PB_HOST="${PB_HOST:-127.0.0.1}"
 PB_PORT="${PB_PORT:-8090}"
 PB_URL="${PB_URL:-http://$PB_HOST:$PB_PORT}"
