@@ -129,6 +129,16 @@ describe('Api page-facing request wrappers', () => {
         expect(userManagerMock.logout).toHaveBeenCalled();
     });
 
+    it('clears a stale login when the user does not exist in the active environment', async () => {
+        const missingUserError = new Error('用户不存在或已被删除');
+        missingUserError.code = 404;
+        userManagerMock.isLogin.mockReturnValue(true);
+        iNetMock.post.mockRejectedValue(missingUserError);
+
+        await expect(Api.refreshLogin()).rejects.toBe(missingUserError);
+        expect(userManagerMock.logout).toHaveBeenCalled();
+    });
+
     it('uses points-lite endpoints for balance and reward catalog', async () => {
         iNetMock.get.mockResolvedValue({ items: [] });
 

@@ -130,7 +130,7 @@ export default {
     },
     computed: {
         displayName() {
-            return this.userInfo.nickname || this.userInfo.nickName || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
+            return this.userInfo.nickName || this.userInfo.nickname || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
         },
         displayInitial() {
             return this.displayName.slice(0, 1);

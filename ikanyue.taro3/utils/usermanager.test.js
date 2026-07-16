@@ -69,9 +69,36 @@ describe('UserManager', () => {
             id: 'student_1',
             token: 'token-1234567890',
             nickName: '新昵称',
+            nickname: '新昵称',
             avatar: 'https://example.com/avatar.png',
         });
         expect(taroMock.setStorageSync).toHaveBeenCalledWith(storageKey, JSON.stringify(updated));
+    });
+
+    it('keeps legacy profile aliases aligned with the updated canonical fields', () => {
+        taroMock.getStorageSync.mockReturnValue(
+            JSON.stringify({
+                id: 'student_1',
+                nickName: '旧昵称',
+                nickname: '旧昵称',
+                realName: '旧姓名',
+                realname: '旧姓名',
+            })
+        );
+
+        const updated = UserManager.updateUserInfoCache({
+            nickName: '新昵称',
+            nickname: '旧昵称',
+            realName: '新姓名',
+            realname: '旧姓名',
+        });
+
+        expect(updated).toMatchObject({
+            nickName: '新昵称',
+            nickname: '新昵称',
+            realName: '新姓名',
+            realname: '新姓名',
+        });
     });
 
     it('keeps an explicitly refreshed token when cache already has one', () => {

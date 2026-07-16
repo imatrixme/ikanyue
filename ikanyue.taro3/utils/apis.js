@@ -87,7 +87,7 @@ const refreshLogin = () => {
             .catch((err) => {
                 console.error('刷新登录API错误:', err);
                 // 如果刷新失败，清除登录状态
-                if (err.code === 10401 || err.code === 10403) {
+                if ([401, 403, 404, 10401, 10403, 10404].includes(Number(err.code))) {
                     console.log('Token无效，清除登录状态');
                     UserManager.logout();
                 }

@@ -3,6 +3,23 @@ import Taro from '@tarojs/taro';
 
 const kUserInfo = 'com.ikanyue.cache.userinfo';
 
+const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+
+const normalizeUserInfoAliases = (userInfo = {}) => {
+    const normalized = { ...userInfo };
+    [
+        ['nickName', 'nickname'],
+        ['realName', 'realname'],
+    ].forEach(([canonicalField, legacyField]) => {
+        if (hasOwn(userInfo, canonicalField)) {
+            normalized[legacyField] = userInfo[canonicalField];
+        } else if (hasOwn(userInfo, legacyField)) {
+            normalized[canonicalField] = userInfo[legacyField];
+        }
+    });
+    return normalized;
+};
+
 // 获取用户信息
 const getUserInfo = () => {
     try {
@@ -14,7 +31,7 @@ const getUserInfo = () => {
 
         const parsedData = JSON.parse(data);
         console.log('从缓存获取用户数据:', parsedData);
-        return parsedData;
+        return normalizeUserInfoAliases(parsedData);
     } catch (err) {
         console.error('解析用户数据出错:', err);
         // 如果解析出错，返回空对象并清除可能损坏的数据
@@ -32,7 +49,10 @@ const updateUserInfoCache = (userInfo) => {
 
     try {
         const currentUserInfo = getUserInfo();
-        const updatedUserInfo = { ...currentUserInfo, ...userInfo };
+        const updatedUserInfo = {
+            ...currentUserInfo,
+            ...normalizeUserInfoAliases(userInfo),
+        };
 
         // 确保token存在
         if (!updatedUserInfo.token && currentUserInfo.token) {
