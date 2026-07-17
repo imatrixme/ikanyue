@@ -66,6 +66,20 @@
                     <text>账号仅用于识别学员、活动联系和同步积分。</text>
                 </view>
             </template>
+
+            <ticket-section class="profile-info-section" subtitle="课程介绍与品牌信息" title="了解看乐">
+                <view class="profile-row-group">
+                    <account-row
+                        v-for="link in kanyueInfoLinks"
+                        :key="link.id"
+                        :description="link.description"
+                        :icon-text="link.iconText"
+                        interactive
+                        :title="link.title"
+                        @select="openKanyueInfo(link)"
+                    />
+                </view>
+            </ticket-section>
         </view>
 
         <nut-popup
@@ -108,6 +122,7 @@ import { Api } from '../../../utils/apis';
 import AccountRow from '../../components/AccountRow.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import TicketSection from '../../components/TicketSection.vue';
+import { KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import './index.scss';
 
 export default {
@@ -115,6 +130,7 @@ export default {
     data() {
         return {
             showLogin: false,
+            kanyueInfoLinks: KANYUE_INFO_LINKS,
             userInfo: {},
             wechatLoginLoading: false,
             wechatProfileLoading: false,
@@ -162,6 +178,12 @@ export default {
         },
         goPoints() {
             Taro.switchTab({ url: '/pages/points/index' });
+        },
+        openKanyueInfo(link) {
+            const url = buildImageDetailUrl(link);
+            if (url) {
+                Taro.navigateTo({ url });
+            }
         },
         modifyInfo() {
             if (!UserManager.isLogin()) {

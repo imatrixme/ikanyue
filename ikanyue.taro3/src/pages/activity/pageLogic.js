@@ -1,7 +1,4 @@
-const IMAGE_DETAIL_URLS = {
-    about: 'https://kyoss.abcmem.com/ikanyue-public/guanyu-kanyue.JPG',
-    learnWhat: 'https://kyoss.abcmem.com/ikanyue-public/zai-kanyue-xue-shenme.JPG',
-};
+import { IMAGE_DETAIL_URLS, KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 
 const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -35,23 +32,14 @@ const createDateGroups = (baseDate = new Date()) => {
         });
     }
 
-    groups.push({
+    groups.push(...KANYUE_INFO_LINKS.map((link) => ({
         title: '',
-        dateText: '看乐教学',
+        dateText: link.title,
         type: 'navigation',
         action: 'navigate-image',
-        imageUrl: IMAGE_DETAIL_URLS.learnWhat,
-        detailTitle: '看乐教学',
-    });
-
-    groups.push({
-        title: '',
-        dateText: '关于看乐',
-        type: 'navigation',
-        action: 'navigate-image',
-        imageUrl: IMAGE_DETAIL_URLS.about,
-        detailTitle: '关于看乐',
-    });
+        imageUrl: link.imageUrl,
+        detailTitle: link.detailTitle,
+    })));
 
     return groups;
 };
@@ -142,18 +130,6 @@ const mapActivityDetail = (currentActivity, response) => {
         maxParticipants: response.max_participants || response.maxParticipants || 0,
         currentParticipants: response.current_participants || response.currentParticipants || 0,
     };
-};
-
-const buildImageDetailUrl = (group) => {
-    if (!group?.imageUrl) {
-        return '';
-    }
-
-    const params = [`imageUrl=${encodeURIComponent(group.imageUrl)}`];
-    if (group.detailTitle) {
-        params.push(`title=${encodeURIComponent(group.detailTitle)}`);
-    }
-    return `/pages/imageDetail/index?${params.join('&')}`;
 };
 
 export {
