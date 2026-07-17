@@ -1,7 +1,7 @@
 <template>
     <view class="empty-state" :class="[`empty-state--${kind}`, { 'empty-state--compact': compact }]">
         <view class="empty-state__visual" aria-hidden="true">
-            <app-icon :name="iconName" :size="iconSize" />
+            <image class="empty-state__art" :src="artSource" mode="aspectFit" />
         </view>
         <view class="empty-state__content">
             <view class="empty-state__copy">
@@ -16,22 +16,19 @@
 </template>
 
 <script>
-import AppIcon from './AppIcon.vue';
-
-const EMPTY_ICONS = {
-    account: 'empty-account',
-    activities: 'empty-activities',
-    default: 'empty-activities',
-    error: 'empty-network',
-    image: 'empty-image',
-    network: 'empty-network',
-    points: 'empty-points',
-    rewards: 'empty-rewards',
+const EMPTY_ART = {
+    account: require('../imgs/empty/default-brand.png'),
+    activities: require('../imgs/empty/default-brand.png'),
+    default: require('../imgs/empty/default-brand.png'),
+    error: require('../imgs/empty/error-brand.png'),
+    image: require('../imgs/empty/error-brand.png'),
+    network: require('../imgs/empty/network-brand.png'),
+    points: require('../imgs/empty/default-brand.png'),
+    rewards: require('../imgs/empty/default-brand.png'),
 };
 
 export default {
     name: 'EmptyState',
-    components: { AppIcon },
     emits: ['action'],
     props: {
         actionLabel: {
@@ -56,11 +53,8 @@ export default {
         },
     },
     computed: {
-        iconName() {
-            return EMPTY_ICONS[this.kind] || EMPTY_ICONS.default;
-        },
-        iconSize() {
-            return this.compact ? 34 : 42;
+        artSource() {
+            return EMPTY_ART[this.kind] || EMPTY_ART.default;
         },
     },
 };

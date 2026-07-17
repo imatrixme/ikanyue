@@ -62,12 +62,12 @@
                         @tap="goRewardCatalog('redeemable')"
                     >
                         <text>查看更多 · 另有 {{ redeemableHiddenCount }} 件可领取实物</text>
-                        <app-icon name="chevron-primary" :size="13" />
+                        <app-icon name="chevron-primary" size="sm" />
                     </view>
                 </view>
                 <view v-else class="points-empty-row points-empty-row--ready">
                     <view class="points-empty-row__icon">
-                        <app-icon name="empty-rewards" :size="20" />
+                        <app-icon name="empty-rewards" size="lg" />
                     </view>
                     <view class="points-empty-row__copy">
                         <text class="points-empty-row__title">暂无可兑换实物</text>
@@ -114,7 +114,7 @@
                 </view>
                 <view v-else class="points-empty-row points-empty-row--events">
                     <view class="points-empty-row__icon">
-                        <app-icon name="empty-points" :size="20" />
+                        <app-icon name="empty-points" size="lg" />
                     </view>
                     <view class="points-empty-row__copy">
                         <text class="points-empty-row__title">暂无积分记录</text>

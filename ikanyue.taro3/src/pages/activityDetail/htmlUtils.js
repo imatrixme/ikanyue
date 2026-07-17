@@ -2,7 +2,7 @@
  * HTML处理工具函数集合
  */
 
-import { themeColors } from '../../styles/theme.mjs';
+import { richTextStyles } from '../../styles/theme.mjs';
 
 /**
  * 将HTML内容转换为小程序rich-text组件可用的格式
@@ -28,24 +28,25 @@ export function getSafeHtml(html) {
         content = content
             .replace(/onclick=/gi, 'data-click=')
             .replace(/onerror=/gi, 'data-error=')
+            .replace(/\sstyle=(["']).*?\1/gi, '')
             .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
             .replace(/<audio[^>]*>.*?<\/audio>/gi, '')
             .replace(/<video[^>]*>.*?<\/video>/gi, '');
 
-        // 添加样式
+        // rich-text 需要内联样式，所有值由设计 token 生成。
         content = content
-            .replace(/<p([^>]*)>/gi, '<p$1 style="margin-bottom:12px;">')
-            .replace(/<img([^>]*?)(?:\s*\/)?>/gi, '<img$1 style="max-width:100%;height:auto;margin:10px 0;" />')
-            .replace(/<a([^>]*)>/gi, `<a$1 style="color:${themeColors.primaryStrong};text-decoration:underline;">`)
-            .replace(/<h1([^>]*)>/gi, '<h1$1 style="font-size:20px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<h2([^>]*)>/gi, '<h2$1 style="font-size:18px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<h3([^>]*)>/gi, '<h3$1 style="font-size:16px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<h4([^>]*)>/gi, '<h4$1 style="font-size:16px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<h5([^>]*)>/gi, '<h5$1 style="font-size:16px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<h6([^>]*)>/gi, '<h6$1 style="font-size:16px;font-weight:bold;margin:16px 0 8px 0;">')
-            .replace(/<ul([^>]*)>/gi, '<ul$1 style="padding-left:20px;margin-bottom:16px;">')
-            .replace(/<ol([^>]*)>/gi, '<ol$1 style="padding-left:20px;margin-bottom:16px;">')
-            .replace(/<li([^>]*)>/gi, '<li$1 style="margin-bottom:6px;">');
+            .replace(/<p([^>]*)>/gi, `<p$1 style="${richTextStyles.paragraph}">`)
+            .replace(/<img([^>]*?)(?:\s*\/)?>/gi, `<img$1 style="${richTextStyles.image}" />`)
+            .replace(/<a([^>]*)>/gi, `<a$1 style="${richTextStyles.link}">`)
+            .replace(/<h1([^>]*)>/gi, `<h1$1 style="${richTextStyles.heading1}">`)
+            .replace(/<h2([^>]*)>/gi, `<h2$1 style="${richTextStyles.heading2}">`)
+            .replace(/<h3([^>]*)>/gi, `<h3$1 style="${richTextStyles.heading3}">`)
+            .replace(/<h4([^>]*)>/gi, `<h4$1 style="${richTextStyles.heading4}">`)
+            .replace(/<h5([^>]*)>/gi, `<h5$1 style="${richTextStyles.heading5}">`)
+            .replace(/<h6([^>]*)>/gi, `<h6$1 style="${richTextStyles.heading6}">`)
+            .replace(/<ul([^>]*)>/gi, `<ul$1 style="${richTextStyles.list}">`)
+            .replace(/<ol([^>]*)>/gi, `<ol$1 style="${richTextStyles.list}">`)
+            .replace(/<li([^>]*)>/gi, `<li$1 style="${richTextStyles.listItem}">`);
 
         // 修复未闭合标签
         const openTagsCount = {

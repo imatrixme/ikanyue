@@ -9,6 +9,8 @@
 </template>
 
 <script>
+import { iconSizes } from '../styles/theme.mjs';
+
 const ICON_SOURCES = {
     'chevron-primary': require('../imgs/icons/chevron-primary.png'),
     'clock-muted': require('../imgs/icons/clock-muted.png'),
@@ -32,8 +34,9 @@ export default {
             required: true,
         },
         size: {
-            type: Number,
-            default: 20,
+            type: String,
+            default: 'lg',
+            validator: (value) => Object.prototype.hasOwnProperty.call(iconSizes, value),
         },
     },
     computed: {
@@ -41,7 +44,7 @@ export default {
             return ICON_SOURCES[this.name] || '';
         },
         iconStyle() {
-            const size = `${this.size}px`;
+            const size = `${iconSizes[this.size] || iconSizes.lg}px`;
             return { height: size, width: size };
         },
     },

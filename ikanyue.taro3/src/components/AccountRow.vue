@@ -1,7 +1,7 @@
 <template>
     <view class="account-row" :class="{ 'account-row--interactive': interactive }" @tap="handleTap">
         <view v-if="icon || iconText" class="account-row__leading">
-            <app-icon v-if="icon" :name="icon" :size="18" />
+            <app-icon v-if="icon" :name="icon" size="md" />
             <text v-else>{{ iconText }}</text>
         </view>
         <view class="account-row__copy">
@@ -9,7 +9,7 @@
             <text v-if="description" class="account-row__description">{{ description }}</text>
         </view>
         <text v-if="value" class="account-row__value">{{ value }}</text>
-        <app-icon v-if="interactive" class="account-row__arrow" name="chevron-primary" :size="14" />
+        <app-icon v-if="interactive" class="account-row__arrow" name="chevron-primary" size="sm" />
     </view>
 </template>
 

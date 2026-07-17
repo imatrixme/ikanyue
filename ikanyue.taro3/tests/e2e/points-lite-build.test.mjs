@@ -8,6 +8,7 @@ const tokenEntrySource = await readFile(new URL('../../src/styles/_tokens.scss',
 const tokenSource = await readFile(new URL('../../src/styles/_brand.generated.scss', import.meta.url), 'utf8');
 const themeSource = await readFile(new URL('../../src/styles/theme.mjs', import.meta.url), 'utf8');
 const emptyStateSource = await readFile(new URL('../../src/components/EmptyState.vue', import.meta.url), 'utf8');
+const appIconSource = await readFile(new URL('../../src/components/AppIcon.vue', import.meta.url), 'utf8');
 const activityTicketSource = await readFile(new URL('../../src/components/ActivityTicket.vue', import.meta.url), 'utf8');
 const accountRowSource = await readFile(new URL('../../src/components/AccountRow.vue', import.meta.url), 'utf8');
 const pointsPassSource = await readFile(new URL('../../src/components/PointsPass.vue', import.meta.url), 'utf8');
@@ -32,6 +33,7 @@ const activityBundle = await readFile(new URL('../../dist/pages/activity/index.j
 const activityTemplate = await readFile(new URL('../../dist/pages/activity/index.wxml', import.meta.url), 'utf8');
 const activityStyleSource = await readFile(new URL('../../src/pages/activity/index.scss', import.meta.url), 'utf8');
 const activityDetailBundle = await readFile(new URL('../../dist/pages/activityDetail/index.js', import.meta.url), 'utf8');
+const activityDetailHtmlSource = await readFile(new URL('../../src/pages/activityDetail/htmlUtils.js', import.meta.url), 'utf8');
 const imageDetailBundle = await readFile(new URL('../../dist/pages/imageDetail/index.js', import.meta.url), 'utf8');
 const pointsBundle = await readFile(new URL('../../dist/pages/points/index.js', import.meta.url), 'utf8');
 const pointsStyle = await readFile(new URL('../../dist/pages/points/index.wxss', import.meta.url), 'utf8');
@@ -199,6 +201,11 @@ assert.match(themeSource, /primary: '#00754a'/);
 assert.match(themeSource, /primaryStrong: '#006241'/);
 assert.match(themeSource, /immersiveSurface: '#006241'/);
 assert.match(themeSource, /navigationBarBackgroundColor: themeColors\.immersiveSurface/);
+assert.match(themeSource, /const richTextStyles = Object\.freeze/);
+assert.match(themeSource, /const iconSizes = Object\.freeze/);
+assert.match(themeSource, /"emptyCompact": 34/);
+assert.match(themeSource, /paragraph: 'margin-bottom:12px;line-height:1\.75;'/);
+assert.match(themeSource, /heading2: 'font-size:18px;font-weight:800;line-height:1\.35;margin:16px 0 8px;'/);
 assert.match(themeSource, /danger: '#b42318'/);
 assert.match(themeSource, /gold: '#7d6200'/);
 assert.match(tokenSource, /\$ky-canvas: #f4f4f2;/);
@@ -224,12 +231,21 @@ assert.match(heroTextureSource, /background-repeat: repeat;/);
 assert.match(heroTextureArtworkSource, /opacity="0\.075"/);
 assert.equal(`${commonBundle}\n${pointsOutput}\n${profileOutput}`.includes('empty-states'), false);
 assert.equal(commonBundle.includes('empty-state__visual'), true);
-assert.equal(emptyStateSource.includes('imgs/empty/'), false);
+assert.equal(emptyStateSource.includes('imgs/empty/'), true);
 assert.match(emptyStateSource, /empty-state__visual/);
-assert.match(emptyStateSource, /empty-account/);
-assert.match(emptyStateSource, /empty-activities/);
-assert.match(emptyStateSource, /empty-network/);
+assert.match(emptyStateSource, /default-brand\.png/);
+assert.match(emptyStateSource, /error-brand\.png/);
+assert.match(emptyStateSource, /network-brand\.png/);
+assert.match(appIconSource, /import \{ iconSizes \} from/);
+assert.match(appIconSource, /type: String/);
+assert.equal(/<app-icon[^>]*(?::size="[0-9]+"|size="[0-9]+")/.test(`${emptyStateSource}\n${accountRowSource}\n${activityTicketSource}\n${sectionHeaderSource}\n${pointsBundle}\n${profileBundle}`), false);
 assert.match(profileSource, /profile-member-pass/);
+assert.match(profileSource, /class="login-popup-shell"/);
+assert.equal(profileSource.includes('borderTopLeftRadius'), false);
+assert.match(activityDetailHtmlSource, /import \{ richTextStyles \} from/);
+assert.equal(activityDetailHtmlSource.includes('font-weight:bold'), false);
+assert.equal(activityDetailHtmlSource.includes('font-size:20px'), false);
+assert.equal(`${sharedOutput}\n${activityDetailBundle}`.includes('margin-bottom:12px;line-height:1.75;'), true);
 assert.match(activityTicketSource, /ADMIT ONE/);
 assert.match(activityTicketSource, /activity-ticket__stub/);
 assert.match(pointsPassSource, /points-pass__seal/);
@@ -281,6 +297,11 @@ for (const sourceFile of colorSourceFiles) {
             `raw typography must use a design token: ${sourceFile.pathname}`,
         );
     }
+    assert.equal(
+        /<app-icon[^>]*(?::size="[0-9]+"|size="[0-9]+")/.test(source),
+        false,
+        `app icon size must use a named token: ${sourceFile.pathname}`,
+    );
 }
 assert.equal(/#[0-9a-f]{3,8}\b|rgba?\(/i.test(iconGeneratorSource), false, 'icon generator must use theme colors');
 

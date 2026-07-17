@@ -16,7 +16,7 @@
                 <text v-if="timeText">{{ timeText }}</text>
             </view>
             <view v-if="location" class="activity-ticket__location">
-                <app-icon name="location-muted" :size="13" />
+                <app-icon name="location-muted" size="sm" />
                 <text>{{ location }}</text>
             </view>
             <view class="activity-ticket__footer">

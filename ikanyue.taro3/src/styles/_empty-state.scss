@@ -6,42 +6,24 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 250px;
-    padding: 30px 22px;
+    min-height: 300px;
+    padding: 24px 22px 32px;
     text-align: center;
     width: 100%;
 }
 
 .empty-state__visual {
     align-items: center;
-    background: $ky-primary-soft;
-    border: 1px solid $ky-primary-line;
-    border-radius: $ky-radius-lg;
     display: flex;
-    height: 72px;
+    height: 176px;
     justify-content: center;
-    width: 72px;
+    width: 220px;
 }
 
-.empty-state--error .empty-state__visual,
-.empty-state--network .empty-state__visual {
-    background: $ky-danger-soft;
-    border-color: $ky-danger-line;
-}
-
-.empty-state--image .empty-state__visual {
-    background: $ky-blue-soft;
-    border-color: $ky-blue-line;
-}
-
-.empty-state--points .empty-state__visual {
-    background: $ky-yellow-soft;
-    border-color: $ky-gold-line;
-}
-
-.empty-state--rewards .empty-state__visual {
-    background: $ky-success-soft;
-    border-color: $ky-success-line;
+.empty-state__art {
+    display: block;
+    height: 100%;
+    width: 100%;
 }
 
 .empty-state__content {
@@ -67,7 +49,7 @@
     font-size: $ky-font-size-subtitle;
     font-weight: $ky-font-weight-semibold;
     line-height: $ky-leading-title;
-    margin-top: 16px;
+    margin-top: 8px;
 }
 
 .empty-state__description {
@@ -109,13 +91,13 @@
 
 .empty-state--compact {
     align-items: center;
-    min-height: 210px;
-    padding: 24px 14px;
+    min-height: 250px;
+    padding: 20px 14px 24px;
     text-align: center;
 
     .empty-state__visual {
-        height: 58px;
-        width: 58px;
+        height: 142px;
+        width: 176px;
     }
 
     .empty-state__content {
@@ -126,7 +108,7 @@
     .empty-state__title {
         font-size: $ky-font-size-body-lg;
         line-height: $ky-leading-title;
-        margin-top: 12px;
+        margin-top: 6px;
     }
 
     .empty-state__description {

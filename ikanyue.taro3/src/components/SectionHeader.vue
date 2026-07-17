@@ -6,7 +6,7 @@
         </view>
         <view v-if="actionLabel" class="section-header__action" @tap="$emit('action')">
             <text>{{ actionLabel }}</text>
-            <app-icon name="chevron-primary" :size="13" />
+            <app-icon name="chevron-primary" size="sm" />
         </view>
     </view>
 </template>

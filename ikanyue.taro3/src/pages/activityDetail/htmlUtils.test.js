@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { richTextStyles } from '../../styles/theme.mjs';
 import { getSafeHtml, htmlToText } from './htmlUtils';
 
 describe('htmlToText', () => {
@@ -52,7 +53,7 @@ describe('getSafeHtml', () => {
         const safeHtml = getSafeHtml(html);
 
         expect(safeHtml).toContain('data-click="alert(1)"');
-        expect(safeHtml).toContain('style="margin-bottom:12px;"');
+        expect(safeHtml).toContain(`style="${richTextStyles.paragraph}"`);
         expect(safeHtml).not.toContain('<script');
         expect(safeHtml).not.toContain('<style');
         expect(safeHtml).not.toContain('<iframe');
@@ -62,11 +63,19 @@ describe('getSafeHtml', () => {
     it('normalizes void tags and adds rich-text friendly styles', () => {
         const safeHtml = getSafeHtml('<h2>标题</h2><img src="cover.jpg"><br><hr>');
 
-        expect(safeHtml).toContain('<h2 style="font-size:18px;font-weight:bold;margin:16px 0 8px 0;">');
-        expect(safeHtml).toContain('<img src="cover.jpg" style="max-width:100%;height:auto;margin:10px 0;" />');
+        expect(safeHtml).toContain(`<h2 style="${richTextStyles.heading2}">`);
+        expect(safeHtml).toContain(`<img src="cover.jpg" style="${richTextStyles.image}" />`);
         expect(safeHtml).toContain('<br />');
         expect(safeHtml).toContain('<hr />');
         expect(safeHtml).not.toContain('/ style=');
+    });
+
+    it('removes source styling before applying the generated rich-text contract', () => {
+        const safeHtml = getSafeHtml('<h2 style="font-size:64px;color:red">标题</h2>');
+
+        expect(safeHtml).toContain(`<h2 style="${richTextStyles.heading2}">`);
+        expect(safeHtml).not.toContain('64px');
+        expect(safeHtml).not.toContain('color:red');
     });
 
     it('adds closing tags for simple unclosed containers', () => {

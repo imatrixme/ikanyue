@@ -58,7 +58,7 @@
                     >
                         <view class="userinfo-picker__value">
                             <text>{{ form.province || '请选择省份' }}</text>
-                            <app-icon class="userinfo-picker__arrow" name="chevron-primary" :size="15" />
+                            <app-icon class="userinfo-picker__arrow" name="chevron-primary" size="sm" />
                         </view>
                     </picker>
                 </form-row>
@@ -72,7 +72,7 @@
             </ticket-section>
 
             <view class="userinfo-note">
-                <app-icon class="userinfo-note__marker" name="info-blue" :size="16" />
+                <app-icon class="userinfo-note__marker" name="info-blue" size="sm" />
                 <text>档案资料仅用于学员身份识别、活动联系和线下服务，不会在积分商品列表中公开。</text>
             </view>
 
@@ -81,7 +81,7 @@
             <view class="userinfo-account-actions">
                 <text class="userinfo-account-actions__label">账号操作</text>
                 <button class="userinfo-logout" @tap="confirmLogout">
-                    <app-icon name="logout-red" :size="17" />
+                    <app-icon name="logout-red" size="md" />
                     <text>退出登录</text>
                 </button>
             </view>

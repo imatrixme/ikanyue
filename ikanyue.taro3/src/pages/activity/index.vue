@@ -68,7 +68,7 @@
                 @tap="goToImageDetail(group)"
             >
                 <text>{{ group.dateText }}</text>
-                <app-icon name="chevron-primary" :size="13" />
+                <app-icon name="chevron-primary" size="sm" />
             </view>
         </view>
     </page-chrome>

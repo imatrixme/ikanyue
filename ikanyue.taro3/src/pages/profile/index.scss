@@ -217,6 +217,11 @@
     width: 7px;
 }
 
+.login-popup-shell {
+    border-radius: $ky-radius-lg $ky-radius-lg 0 0;
+    height: 52%;
+}
+
 .login-popup {
     box-sizing: border-box;
     padding: $ky-space-5 $ky-space-5 $ky-space-8;

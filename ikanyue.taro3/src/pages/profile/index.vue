@@ -73,7 +73,7 @@
             :visible="showLogin"
             @close="handleLoginPopupClose"
             :close-on-click-overlay="true"
-            :style="{ height: '52%', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }"
+            class="login-popup-shell"
             @click-overlay="handleLoginPopupClose"
         >
             <view class="login-popup">
