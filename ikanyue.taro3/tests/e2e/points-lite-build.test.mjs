@@ -8,6 +8,21 @@ const tokenEntrySource = await readFile(new URL('../../src/styles/_tokens.scss',
 const tokenSource = await readFile(new URL('../../src/styles/_brand.generated.scss', import.meta.url), 'utf8');
 const themeSource = await readFile(new URL('../../src/styles/theme.mjs', import.meta.url), 'utf8');
 const emptyStateSource = await readFile(new URL('../../src/components/EmptyState.vue', import.meta.url), 'utf8');
+const activityTicketSource = await readFile(new URL('../../src/components/ActivityTicket.vue', import.meta.url), 'utf8');
+const accountRowSource = await readFile(new URL('../../src/components/AccountRow.vue', import.meta.url), 'utf8');
+const pointsPassSource = await readFile(new URL('../../src/components/PointsPass.vue', import.meta.url), 'utf8');
+const rewardVoucherSource = await readFile(new URL('../../src/components/RewardVoucher.vue', import.meta.url), 'utf8');
+const ticketSectionSource = await readFile(new URL('../../src/components/TicketSection.vue', import.meta.url), 'utf8');
+const asyncStateSource = await readFile(new URL('../../src/components/AsyncState.vue', import.meta.url), 'utf8');
+const formRowSource = await readFile(new URL('../../src/components/FormRow.vue', import.meta.url), 'utf8');
+const mediaThumbSource = await readFile(new URL('../../src/components/MediaThumb.vue', import.meta.url), 'utf8');
+const pageChromeSource = await readFile(new URL('../../src/components/PageChrome.vue', import.meta.url), 'utf8');
+const pageHeaderSource = await readFile(new URL('../../src/components/PageHeader.vue', import.meta.url), 'utf8');
+const paginationStateSource = await readFile(new URL('../../src/components/PaginationState.vue', import.meta.url), 'utf8');
+const pointEventRowSource = await readFile(new URL('../../src/components/PointEventRow.vue', import.meta.url), 'utf8');
+const sectionHeaderSource = await readFile(new URL('../../src/components/SectionHeader.vue', import.meta.url), 'utf8');
+const segmentedControlSource = await readFile(new URL('../../src/components/SegmentedControl.vue', import.meta.url), 'utf8');
+const stickyActionBarSource = await readFile(new URL('../../src/components/StickyActionBar.vue', import.meta.url), 'utf8');
 const profileSource = await readFile(new URL('../../src/pages/profile/index.vue', import.meta.url), 'utf8');
 const iconGeneratorSource = await readFile(new URL('../../scripts/generate-icons.mjs', import.meta.url), 'utf8');
 const heroTextureSource = await readFile(new URL('../../src/styles/_hero-texture.scss', import.meta.url), 'utf8');
@@ -34,6 +49,7 @@ const userinfoBundle = await readFile(new URL('../../dist/pages/userinfo/index.j
 const userinfoStyle = await readFile(new URL('../../dist/pages/userinfo/index.wxss', import.meta.url), 'utf8');
 const userinfoTemplate = await readFile(new URL('../../dist/pages/userinfo/index.wxml', import.meta.url), 'utf8');
 const userinfoStyleSource = await readFile(new URL('../../src/pages/userinfo/index.scss', import.meta.url), 'utf8');
+const userinfoSource = await readFile(new URL('../../src/pages/userinfo/index.vue', import.meta.url), 'utf8');
 const activityConfig = JSON.parse(await readFile(new URL('../../dist/pages/activity/index.json', import.meta.url), 'utf8'));
 const activityDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/activityDetail/index.json', import.meta.url), 'utf8'));
 const pointsConfig = JSON.parse(await readFile(new URL('../../dist/pages/points/index.json', import.meta.url), 'utf8'));
@@ -101,7 +117,12 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     'imgs/icons/tab-profile-selected.png',
 ]);
 
-[activityConfig, pointsConfig, pointsHistoryConfig, rewardCatalogConfig, profileConfig, userinfoConfig].forEach((pageConfig) => {
+[activityConfig, pointsConfig, pointsHistoryConfig, rewardCatalogConfig].forEach((pageConfig) => {
+    assert.equal(pageConfig.backgroundColorTop, '#f4f4f2');
+    assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
+    assert.equal(pageConfig.backgroundTextStyle, 'dark');
+});
+[profileConfig, userinfoConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.backgroundColorTop, '#00754a');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'light');
@@ -182,13 +203,18 @@ assert.match(tokenSource, /\$ky-surface: #ffffff;/);
 assert.match(tokenSource, /\$ky-blue: #0079c8;/);
 assert.match(tokenSource, /\$ky-radius-lg: 8px;/);
 assert.equal(activityTemplate.includes('activity-masthead'), false);
-assert.match(activityStyleSource, /\.date-scroll\s*\{[\s\S]*?flex-direction: column;/);
-assert.match(activityStyleSource, /\.date-item\s*\{[\s\S]*?flex: 1;/);
-assert.match(userinfoStyleSource, /\.userinfo-segmented__item--active\s*\{[\s\S]*?background: \$ky-primary-strong;/);
-assert.equal((pointsBundle.match(/"scroll-view"/g) || []).length, 2);
-assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 2);
-[pointsStyle, pointsHistoryStyle, rewardCatalogStyle, profileStyle, userinfoStyle].forEach((pageStyle) => {
+assert.match(activityStyleSource, /\.activity-calendar__days\s*\{[\s\S]*?grid-template-columns: repeat\(7,/);
+assert.match(activityStyleSource, /\.activity-day--active \.activity-day__number\s*\{[\s\S]*?border-radius: 50%;/);
+assert.match(userinfoSource, /<segmented-control/);
+assert.match(segmentedControlSource, /segmented-control__item--active/);
+assert.match(segmentedControlSource, /background: \$ky-primary-strong;/);
+assert.equal((pointsBundle.match(/"scroll-view"/g) || []).length, 0);
+assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 0);
+[profileStyle, userinfoStyle].forEach((pageStyle) => {
     assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), true);
+});
+[pointsStyle, pointsHistoryStyle, rewardCatalogStyle].forEach((pageStyle) => {
+    assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), false);
 });
 assert.match(heroTextureSource, /hero-music\.png/);
 assert.match(heroTextureSource, /background-repeat: repeat;/);
@@ -200,7 +226,24 @@ assert.match(emptyStateSource, /empty-state__visual/);
 assert.match(emptyStateSource, /empty-account/);
 assert.match(emptyStateSource, /empty-activities/);
 assert.match(emptyStateSource, /empty-network/);
-assert.match(profileSource, /profile-entry-arrow/);
+assert.match(profileSource, /profile-member-pass/);
+assert.match(activityTicketSource, /ADMIT ONE/);
+assert.match(activityTicketSource, /activity-ticket__stub/);
+assert.match(pointsPassSource, /points-pass__seal/);
+assert.match(rewardVoucherSource, /reward-voucher__status/);
+assert.match(rewardVoucherSource, /<media-thumb/);
+assert.match(activityTicketSource, /<media-thumb/);
+assert.match(accountRowSource, /chevron-primary/);
+assert.match(ticketSectionSource, /<section-header/);
+assert.match(sectionHeaderSource, /section-header__action/);
+assert.match(asyncStateSource, /<empty-state/);
+assert.match(formRowSource, /form-row__control/);
+assert.match(mediaThumbSource, /media-thumb__image/);
+assert.match(pageChromeSource, /page-chrome--immersive/);
+assert.match(pageHeaderSource, /page-header__title/);
+assert.match(paginationStateSource, /已加载/);
+assert.match(pointEventRowSource, /point-event-row--spend/);
+assert.match(stickyActionBarSource, /safe-area-inset-bottom/);
 assert.equal(commonBundle.includes('chevron-blue'), false);
 assert.match(iconGeneratorSource, /assets-src\/imagegen\/icons-v2/);
 assert.match(iconGeneratorSource, /'tab-activity-selected\.svg'/);

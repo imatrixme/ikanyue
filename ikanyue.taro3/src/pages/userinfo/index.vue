@@ -1,25 +1,20 @@
 <template>
-    <view class="userinfo-page">
-        <view class="userinfo-hero">
-            <view class="userinfo-avatar">
-                <image v-if="avatarUrl" class="userinfo-avatar__image" :src="avatarUrl" mode="aspectFill" />
-                <text v-else>{{ displayInitial }}</text>
-            </view>
-            <view class="userinfo-hero__copy">
-                <text class="userinfo-hero__title">个人资料</text>
-                <text class="userinfo-hero__meta">{{ form.cellphone || '已登录账号' }}</text>
-            </view>
-        </view>
+    <page-chrome class="userinfo-page">
+        <page-header centered class="userinfo-hero" subtitle="完善资料，便于我们提供更好的服务" title="编辑个人资料">
+            <template #leading>
+                <view class="userinfo-avatar">
+                    <image v-if="avatarUrl" class="userinfo-avatar__image" :src="avatarUrl" mode="aspectFill" />
+                    <text v-else>{{ displayInitial }}</text>
+                    <view class="userinfo-avatar__camera">+</view>
+                </view>
+            </template>
+        </page-header>
 
         <view class="userinfo-content">
-            <view class="userinfo-section">
-                <view class="userinfo-section__header">
-                    <text class="userinfo-section__title">基本资料</text>
-                    <text class="userinfo-section__hint">用于学员识别</text>
-                </view>
+            <ticket-section subtitle="用于学员识别" title="基本资料">
+                <view class="userinfo-form-sheet">
 
-                <label class="userinfo-field">
-                    <text class="userinfo-field__label">昵称</text>
+                <form-row label="昵称">
                     <input
                         v-model="form.nickName"
                         class="userinfo-field__input"
@@ -27,10 +22,9 @@
                         placeholder="请输入昵称"
                         type="text"
                     />
-                </label>
+                </form-row>
 
-                <label class="userinfo-field">
-                    <text class="userinfo-field__label">姓名</text>
+                <form-row label="姓名">
                     <input
                         v-model="form.realName"
                         class="userinfo-field__input"
@@ -38,25 +32,13 @@
                         placeholder="请输入姓名"
                         type="text"
                     />
-                </label>
+                </form-row>
 
-                <view class="userinfo-field">
-                    <text class="userinfo-field__label">性别</text>
-                    <view class="userinfo-segmented">
-                        <view
-                            v-for="option in genderOptions"
-                            :key="option.value"
-                            class="userinfo-segmented__item"
-                            :class="{ 'userinfo-segmented__item--active': form.gender === option.value }"
-                            @tap="form.gender = option.value"
-                        >
-                            {{ option.label }}
-                        </view>
-                    </view>
-                </view>
+                <form-row label="性别">
+                    <segmented-control v-model="form.gender" class="userinfo-segmented" :options="genderOptions" />
+                </form-row>
 
-                <label class="userinfo-field">
-                    <text class="userinfo-field__label">年龄</text>
+                <form-row label="年龄">
                     <input
                         v-model="form.age"
                         class="userinfo-field__input"
@@ -64,10 +46,9 @@
                         placeholder="请输入年龄"
                         type="number"
                     />
-                </label>
+                </form-row>
 
-                <view class="userinfo-field">
-                    <text class="userinfo-field__label">省份</text>
+                <form-row label="省份">
                     <picker
                         class="userinfo-picker"
                         mode="selector"
@@ -80,19 +61,15 @@
                             <app-icon class="userinfo-picker__arrow" name="chevron-primary" :size="15" />
                         </view>
                     </picker>
+                </form-row>
                 </view>
-            </view>
+            </ticket-section>
 
-            <view class="userinfo-section">
-                <view class="userinfo-section__header">
-                    <text class="userinfo-section__title">登录账号</text>
-                    <text class="userinfo-section__hint">不可修改</text>
+            <ticket-section subtitle="微信登录凭证不可在这里修改" title="登录账号">
+                <view class="userinfo-form-sheet">
+                    <account-row icon-text="机" title="绑定手机" :value="maskedPhone" />
                 </view>
-                <view class="userinfo-field userinfo-field--readonly">
-                    <text class="userinfo-field__label">绑定手机</text>
-                    <text class="userinfo-field__value">{{ form.cellphone || '未提供' }}</text>
-                </view>
-            </view>
+            </ticket-section>
 
             <view class="userinfo-note">
                 <app-icon class="userinfo-note__marker" name="info-blue" :size="16" />
@@ -109,14 +86,20 @@
                 </button>
             </view>
         </view>
-    </view>
+    </page-chrome>
 </template>
 
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
+import AccountRow from '../../components/AccountRow.vue';
 import AppIcon from '../../components/AppIcon.vue';
+import FormRow from '../../components/FormRow.vue';
+import PageChrome from '../../components/PageChrome.vue';
+import PageHeader from '../../components/PageHeader.vue';
+import SegmentedControl from '../../components/SegmentedControl.vue';
+import TicketSection from '../../components/TicketSection.vue';
 import { themeColors } from '../../styles/theme.mjs';
 import {
     GENDER_OPTIONS,
@@ -129,7 +112,7 @@ import {
 import './index.scss';
 
 export default {
-    components: { AppIcon },
+    components: { AccountRow, AppIcon, FormRow, PageChrome, PageHeader, SegmentedControl, TicketSection },
     data() {
         return {
             avatarUrl: '',
@@ -146,6 +129,11 @@ export default {
         provinceIndex() {
             const index = this.provinceOptions.indexOf(this.form.province || '未设置');
             return index >= 0 ? index : 0;
+        },
+        maskedPhone() {
+            const cellphone = String(this.form.cellphone || '');
+            if (cellphone.length < 7) return cellphone || '未提供';
+            return `${cellphone.slice(0, 3)}****${cellphone.slice(-4)}`;
         },
     },
     mounted() {

@@ -1,87 +1,42 @@
 @import '../../styles/tokens';
 @import '../../styles/point-events';
-@import '../../styles/hero-texture';
 
 .history-page {
     background: $ky-canvas;
+    box-sizing: border-box;
     min-height: 100vh;
-    padding-bottom: 28px;
-}
-
-.history-hero {
-    @include ky-hero-texture;
-    background-color: $ky-primary;
-    color: $ky-on-primary;
-    padding: 17px 18px 16px;
-}
-
-.history-hero__title,
-.history-balance__value,
-.history-balance__unit {
-    display: block;
-}
-
-.history-hero__title {
-    font-size: $ky-font-size-page;
-    font-weight: $ky-font-weight-black;
-}
-
-.history-balance {
-    align-items: flex-end;
-    display: flex;
-    gap: 7px;
-    margin-top: 14px;
-}
-
-.history-balance__value {
-    color: $ky-yellow;
-    font-size: $ky-font-size-balance-sm;
-    font-weight: $ky-font-weight-black;
-    line-height: $ky-leading-none;
-}
-
-.history-balance__unit {
-    color: $ky-yellow-soft;
-    font-size: $ky-font-size-xs;
-    padding-bottom: 4px;
-    opacity: 0.78;
-}
-
-.history-hero__footer {
-    border-top: 1px solid $ky-on-primary-divider;
-    display: flex;
-    font-size: $ky-font-size-xs;
-    justify-content: space-between;
-    margin-top: 13px;
-    padding-top: 10px;
-    opacity: 0.8;
-}
-
-.history-content {
-    padding: 16px 14px 0;
+    padding: $ky-space-4 $ky-space-3 $ky-space-8;
 }
 
 .history-state {
-    color: $ky-text-secondary;
-    font-size: $ky-font-size-body;
-    padding: 48px 18px;
-    text-align: center;
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    color: $ky-text-muted;
+    display: flex;
+    justify-content: center;
+    min-height: 140px;
 }
 
-.history-state__title {
-    display: block;
+.history-state__title,
+.history-footer {
+    font-size: $ky-font-size-body-sm;
+}
+
+.history-page .point-events {
+    box-shadow: none;
 }
 
 .history-footer {
     color: $ky-text-muted;
-    font-size: $ky-font-size-sm;
-    padding: 18px 0 4px;
+    padding: $ky-space-5 0 0;
     text-align: center;
 }
 
 @media (max-width: 350px) {
-    .history-content {
-        padding-left: 12px;
-        padding-right: 12px;
+    .history-page {
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
     }
 }

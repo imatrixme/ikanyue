@@ -1,115 +1,86 @@
 <template>
-    <view class="activity-page">
-        <view class="page-wrapper">
-        <!-- 左侧日期列表 -->
-        <view class="date-column">
-            <view class="date-scroll">
+    <page-chrome class="activity-page">
+        <view class="activity-calendar">
+            <view class="activity-calendar__month">{{ calendarMonth }}</view>
+            <view class="activity-calendar__days">
                 <view
-                    v-for="(group, index) in dateGroups"
+                    v-for="(group, index) in dayGroups"
                     :key="index"
-                    class="date-item"
-                    :class="{
-                        active: selectedGroupIndex === index,
-                        'date-item--navigation': group.action === 'navigate-image',
-                    }"
+                    class="activity-day"
+                    :class="{ 'activity-day--active': selectedGroupIndex === index }"
                     @tap="selectDateGroup(index)"
                 >
-                    <text class="day">{{ group.dateText }}</text>
-                    <text v-if="group.title" class="date">{{ group.title }}</text>
+                    <text class="activity-day__weekday">{{ group.title }}</text>
+                    <text class="activity-day__number">{{ getCalendarDay(group) }}</text>
                 </view>
             </view>
         </view>
 
-        <!-- 右侧活动列表 -->
-        <view class="activity-column">
-            <view v-if="loading" class="status-box">
-                <view class="loading-spinner" />
-                <text class="loading-text">加载中...</text>
-            </view>
+        <view class="activity-content">
+            <async-state v-if="loading" compact state="loading" title="正在加载活动" />
 
             <view v-else-if="networkError" class="activity-state">
-                <empty-state
+                <async-state
                     action-label="重新加载"
                     compact
                     description="请检查网络连接后重试。"
                     kind="network"
+                    state="error"
                     title="活动暂时无法加载"
                     @action="loadAllActivities"
                 />
             </view>
 
             <view v-else-if="!activities.length" class="activity-state">
-                <empty-state
+                <async-state
                     compact
                     description="新的活动发布后会显示在这里。"
                     kind="activities"
+                    state="empty"
                     title="暂无近期活动"
                 />
             </view>
 
             <view v-else class="activity-list">
-                <view
-                    v-for="activity in activities"
+                <activity-ticket
+                    v-for="(activity, index) in activities"
                     :key="activity.id"
-                    class="activity-card"
-                    @tap="goToDetail(activity.id)"
-                >
-                    <view class="activity-media">
-                        <image
-                            v-if="canShowCover(activity)"
-                            :src="activity.coverImageUrl"
-                            class="activity-image"
-                            mode="aspectFill"
-                            @error="markCoverFailed(activity.id)"
-                        />
-                        <view v-else class="activity-image-fallback">
-                            <text class="activity-image-fallback__mark">{{ activity.title.slice(0, 1) }}</text>
-                        </view>
-                    </view>
-                    <view class="activity-info">
-                        <text class="activity-title">{{ activity.title }}</text>
-                        <view class="activity-meta">
-                            <view class="meta-item">
-                                <app-icon class="meta-item__icon" name="clock-muted" :size="14" />
-                                <text>{{ formatDateOnly(activity.startTime) }}</text>
-                                <text style="margin-left: 8px">{{ formatTimeOnly(activity.startTime) }}</text>
-                                <text v-if="activity.endTime" style="margin-left: 4px">
-                                    - {{ formatTimeOnly(activity.endTime) }}
-                                </text>
-                            </view>
-                            <view class="meta-item">
-                                <app-icon class="meta-item__icon" name="location-muted" :size="14" />
-                                <text>{{ activity.location }}</text>
-                            </view>
-                        </view>
-                        <view class="activity-bottom">
-                            <view class="tag-list">
-                                <text v-for="(tag, idx) in activity.tags.split(',').slice(0, 2)" :key="idx" class="tag">
-                                    {{ tag.trim() }}
-                                </text>
-                            </view>
-                            <view class="activity-card__end">
-                                <view class="price-container" v-if="activity.price > 0">
-                                    <text class="price-symbol">¥</text>
-                                    <text class="price-amount">{{ (activity.price / 100.0).toFixed(2) }}</text>
-                                </view>
-                                <view class="price-free" v-else>免费</view>
-                                <app-icon class="activity-card__arrow" name="chevron-primary" :size="15" />
-                            </view>
-                        </view>
-                    </view>
-                </view>
+                    :cover-url="activity.coverImageUrl"
+                    :date-text="formatDateOnly(activity.startTime)"
+                    :featured="index === 0"
+                    :location="activity.location"
+                    :price-label="formatPriceLabel(activity.price)"
+                    :show-image="canShowCover(activity)"
+                    :tags="getActivityTags(activity)"
+                    :time-text="formatActivityTimeRange(activity)"
+                    :title="activity.title"
+                    @image-error="markCoverFailed(activity.id)"
+                    @select="goToDetail(activity.id)"
+                />
             </view>
         </view>
-    </view>
-</view>
+
+        <view class="activity-links">
+            <view
+                v-for="group in navigationGroups"
+                :key="group.dateText"
+                class="activity-link"
+                @tap="goToImageDetail(group)"
+            >
+                <text>{{ group.dateText }}</text>
+                <app-icon name="chevron-primary" :size="13" />
+            </view>
+        </view>
+    </page-chrome>
 </template>
 
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+import ActivityTicket from '../../components/ActivityTicket.vue';
 import AppIcon from '../../components/AppIcon.vue';
-import EmptyState from '../../components/EmptyState.vue';
+import AsyncState from '../../components/AsyncState.vue';
+import PageChrome from '../../components/PageChrome.vue';
 import {
     buildImageDetailUrl,
     createActivityQueryParams,
@@ -120,7 +91,7 @@ import {
 } from './pageLogic';
 
 export default {
-    components: { AppIcon, EmptyState },
+    components: { ActivityTicket, AppIcon, AsyncState, PageChrome },
     data() {
         return {
             // 原始活动数据
@@ -137,6 +108,18 @@ export default {
             networkError: false,
             failedCoverIds: {},
         };
+    },
+    computed: {
+        calendarMonth() {
+            const date = this.dayGroups[0]?.date;
+            return date ? `${String(date.getMonth() + 1).padStart(2, '0')}月` : '';
+        },
+        dayGroups() {
+            return this.dateGroups.filter((group) => group.type === 'day');
+        },
+        navigationGroups() {
+            return this.dateGroups.filter((group) => group.action === 'navigate-image');
+        },
     },
     onLoad() {
         this.generateDateGroups();
@@ -259,6 +242,27 @@ export default {
         // 只格式化时间部分 (时分)
         formatTimeOnly(timestamp) {
             return formatActivityTimeOnly(timestamp);
+        },
+
+        formatActivityTimeRange(activity) {
+            const start = this.formatTimeOnly(activity.startTime);
+            const end = this.formatTimeOnly(activity.endTime);
+            return end ? `${start} - ${end}` : start;
+        },
+
+        formatPriceLabel(price) {
+            return Number(price || 0) > 0 ? `¥${(price / 100).toFixed(2)}` : '免费';
+        },
+
+        getActivityTags(activity) {
+            return String(activity?.tags || '')
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean);
+        },
+
+        getCalendarDay(group) {
+            return group?.date ? String(group.date.getDate()).padStart(2, '0') : '';
         },
 
         // 选择日期组

@@ -1,8 +1,8 @@
-import { immersivePageChrome } from '../../styles/theme.mjs';
+import { canvasPageChrome } from '../../styles/theme.mjs';
 
 export default definePageConfig({
     navigationBarTitleText: '积分明细',
     enablePullDownRefresh: true,
-    ...immersivePageChrome,
+    ...canvasPageChrome,
     onReachBottomDistance: 120,
 });

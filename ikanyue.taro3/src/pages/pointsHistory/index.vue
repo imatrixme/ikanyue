@@ -1,80 +1,64 @@
 <template>
-    <view class="history-page">
-        <view class="history-hero">
-            <view>
-                <text class="history-hero__title">积分明细</text>
-            </view>
-            <view class="history-balance">
-                <text class="history-balance__value">{{ balance }}</text>
-                <text class="history-balance__unit">PT</text>
-            </view>
-            <view class="history-hero__footer">
-                <text>当前可用积分</text>
-                <text>{{ pagination.totalItems }} 条记录</text>
-            </view>
-        </view>
+    <page-chrome class="history-page">
+        <points-pass :balance="balance" :caption="`${pagination.totalItems} 条积分记录`" compact />
 
-        <view class="history-content">
-            <view v-if="loading" class="history-state">
-                <text class="history-state__title">正在加载积分记录</text>
-            </view>
+        <ticket-section subtitle="按时间倒序展示" title="积分明细">
+            <async-state v-if="loading" state="loading" title="正在加载积分记录" />
 
-            <empty-state
+            <async-state
                 v-else-if="errorMessage"
                 action-label="重新加载"
                 :description="errorMessage"
                 kind="network"
+                state="error"
                 title="积分记录暂时无法加载"
                 @action="refreshEvents"
             />
 
-            <empty-state
+            <async-state
                 v-else-if="events.length === 0"
                 description="参加活动或由老师添加积分后，记录会显示在这里。"
                 kind="points"
+                state="empty"
                 title="暂无积分记录"
             />
 
             <view v-else class="point-events">
-                <view
+                <point-event-row
                     v-for="event in events"
                     :key="event.id"
-                    class="point-event"
-                    :class="{ 'point-event--spend': event.delta < 0 }"
-                >
-                    <view class="point-event__rail"><view class="point-event__dot" /></view>
-                    <view class="point-event__body">
-                        <text class="point-event__title">{{ getPointEventLabel(event) }}</text>
-                        <text class="point-event__reason">{{ getPointEventReason(event) }}</text>
-                        <text
-                            v-if="event.remark && event.remark !== getPointEventReason(event)"
-                            class="point-event__remark"
-                        >
-                            {{ event.remark }}
-                        </text>
-                        <text class="point-event__meta">{{ formatPointEventDate(event.created) }}</text>
-                    </view>
-                    <view class="point-event__amount">
-                        <text class="point-event__delta">{{ formatPointEventDelta(event.delta) }}</text>
-                        <text class="point-event__balance">余额 {{ event.balanceAfter }}</text>
-                    </view>
-                </view>
+                    :balance="event.balanceAfter"
+                    :delta="formatPointEventDelta(event.delta)"
+                    :meta="formatPointEventDate(event.created)"
+                    :reason="getPointEventReason(event)"
+                    :remark="event.remark"
+                    :spending="event.delta < 0"
+                    :title="getPointEventLabel(event)"
+                />
             </view>
 
-            <view v-if="events.length > 0" class="history-footer">
-                <text v-if="loadingMore">正在加载更多</text>
-                <text v-else-if="hasMore">已加载 {{ events.length }} / {{ pagination.totalItems }}</text>
-                <text v-else>已显示全部记录</text>
-            </view>
-        </view>
-    </view>
+            <pagination-state
+                complete-label="已显示全部记录"
+                :has-more="hasMore"
+                :loaded="events.length"
+                :loading="loadingMore"
+                :total="pagination.totalItems"
+                :visible="events.length > 0"
+            />
+        </ticket-section>
+    </page-chrome>
 </template>
 
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
-import EmptyState from '../../components/EmptyState.vue';
+import AsyncState from '../../components/AsyncState.vue';
+import PageChrome from '../../components/PageChrome.vue';
+import PaginationState from '../../components/PaginationState.vue';
+import PointEventRow from '../../components/PointEventRow.vue';
+import PointsPass from '../../components/PointsPass.vue';
+import TicketSection from '../../components/TicketSection.vue';
 import {
     formatPointEventDate,
     formatPointEventDelta,
@@ -88,7 +72,7 @@ import './index.scss';
 const EMPTY_PAGINATION = { page: 1, perPage: 20, totalItems: 0, totalPages: 1 };
 
 export default {
-    components: { EmptyState },
+    components: { AsyncState, PageChrome, PaginationState, PointEventRow, PointsPass, TicketSection },
     data() {
         return {
             balance: 0,

@@ -5,135 +5,68 @@
     background: $ky-canvas;
     box-sizing: border-box;
     min-height: 100vh;
-    padding-bottom: 36px;
+    padding-bottom: $ky-space-8;
 }
 
 .userinfo-hero {
-    @include ky-hero-texture;
-    align-items: center;
-    background-color: $ky-primary;
-    box-sizing: border-box;
-    color: $ky-on-primary;
-    display: flex;
-    min-height: 108px;
-    padding: 18px 18px 22px;
+    min-height: 220px;
 }
 
 .userinfo-avatar {
     align-items: center;
     background: $ky-primary-soft;
-    border: 2px solid $ky-primary-strong;
+    border: 3px solid $ky-on-primary;
     border-radius: 50%;
     color: $ky-primary-strong;
     display: flex;
-    flex-shrink: 0;
-    font-size: $ky-font-size-heading;
+    font-size: $ky-font-size-display-md;
     font-weight: $ky-font-weight-black;
-    height: 56px;
+    height: 82px;
     justify-content: center;
-    overflow: hidden;
-    width: 56px;
+    position: relative;
+    width: 82px;
 }
 
 .userinfo-avatar__image {
+    border-radius: 50%;
     height: 100%;
     width: 100%;
 }
 
-.userinfo-hero__copy {
-    min-width: 0;
-    padding-left: 14px;
-}
-
-.userinfo-hero__title,
-.userinfo-hero__meta {
-    display: block;
-}
-
-.userinfo-hero__title {
-    font-size: $ky-font-size-page;
+.userinfo-avatar__camera {
+    align-items: center;
+    background: $ky-primary;
+    border: 2px solid $ky-on-primary;
+    border-radius: 50%;
+    bottom: -2px;
+    color: $ky-on-primary;
+    display: flex;
+    font-size: $ky-font-size-title-sm;
     font-weight: $ky-font-weight-black;
-}
-
-.userinfo-hero__meta {
-    font-size: $ky-font-size-sm;
-    margin-top: 4px;
-    opacity: 0.78;
+    height: 24px;
+    justify-content: center;
+    position: absolute;
+    right: -2px;
+    width: 24px;
 }
 
 .userinfo-content {
-    margin-top: -10px;
-    padding: 0 14px;
-    position: relative;
-    z-index: 2;
+    box-sizing: border-box;
+    padding: 0 $ky-space-3;
 }
 
-.userinfo-section {
+.userinfo-form-sheet {
     background: $ky-surface;
     border: 1px solid $ky-line;
     border-radius: $ky-radius-lg;
-    margin-bottom: 14px;
     overflow: hidden;
-    box-shadow: $ky-shadow-card;
-}
-
-.userinfo-section__header {
-    align-items: center;
-    background: $ky-surface;
-    border-bottom: 1px solid $ky-line;
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 14px;
-}
-
-.userinfo-section__title {
-    color: $ky-ink-strong;
-    font-size: $ky-font-size-body;
-    font-weight: $ky-font-weight-black;
-}
-
-.userinfo-section__hint {
-    color: $ky-text-muted;
-    font-size: $ky-font-size-xs;
-}
-
-.userinfo-field {
-    align-items: center;
-    display: flex;
-    min-height: 56px;
-    padding: 0 14px;
-}
-
-.userinfo-field + .userinfo-field {
-    border-top: 1px solid $ky-line;
-}
-
-.userinfo-field--readonly {
-    background: $ky-canvas;
-}
-
-.userinfo-field__label {
-    color: $ky-text-secondary;
-    flex-shrink: 0;
-    font-size: $ky-font-size-body-sm;
-    font-weight: $ky-font-weight-medium;
-    width: 76px;
 }
 
 .userinfo-field__input {
-    color: $ky-ink-strong;
-    flex: 1;
-    font-size: $ky-font-size-body-lg;
-    font-weight: $ky-font-weight-medium;
-    height: 42px;
-    text-align: right;
-}
-
-.userinfo-field__value {
-    color: $ky-text-muted;
+    color: $ky-text-secondary;
     flex: 1;
     font-size: $ky-font-size-body;
-    font-weight: $ky-font-weight-medium;
+    height: 42px;
     text-align: right;
 }
 
@@ -144,48 +77,19 @@
 
 .userinfo-picker__value {
     align-items: center;
-    color: $ky-ink-strong;
+    color: $ky-text-secondary;
     display: flex;
     font-size: $ky-font-size-body;
-    font-weight: $ky-font-weight-medium;
     justify-content: flex-end;
 }
 
 .userinfo-picker__arrow {
-    margin-left: 8px;
+    margin-left: $ky-space-2;
 }
 
 .userinfo-segmented {
-    background: $ky-primary-soft;
-    border: 1px solid $ky-primary-line;
-    border-radius: $ky-radius-md;
-    display: flex;
-    flex-shrink: 0;
     margin-left: auto;
-    padding: 2px;
-    width: 156px;
-}
-
-.userinfo-segmented__item {
-    align-items: center;
-    border-radius: $ky-radius-sm;
-    color: $ky-text-secondary;
-    display: flex;
-    flex: 1;
-    font-size: $ky-font-size-sm;
-    font-weight: $ky-font-weight-medium;
-    height: 28px;
-    justify-content: center;
-    transition: background-color $ky-motion-fast ease, color $ky-motion-fast ease;
-}
-
-.userinfo-segmented__item + .userinfo-segmented__item {
-    margin-left: 2px;
-}
-
-.userinfo-segmented__item--active {
-    background: $ky-primary-strong;
-    color: $ky-surface;
+    width: 124px;
 }
 
 .userinfo-note {
@@ -193,9 +97,9 @@
     color: $ky-text-secondary;
     display: flex;
     font-size: $ky-font-size-sm;
-    gap: 8px;
+    gap: $ky-space-2;
     line-height: $ky-leading-relaxed;
-    margin: 2px 2px 16px;
+    margin: $ky-space-5 $ky-space-1 $ky-space-4;
 }
 
 .userinfo-note__marker {
@@ -208,6 +112,7 @@
     background: $ky-primary-strong;
     border: none;
     border-radius: $ky-radius-md;
+    box-shadow: $ky-shadow-button;
     color: $ky-surface;
     display: flex;
     font-size: $ky-font-size-body-lg;
@@ -216,12 +121,11 @@
     justify-content: center;
     transition: background-color $ky-motion-fast ease, transform $ky-motion-fast ease;
     width: 100%;
-    box-shadow: 0 3px 0 $ky-primary-pressed;
+}
 
-    &:active {
-        background: $ky-primary-pressed;
-        transform: scale(0.99);
-    }
+.userinfo-save:active {
+    background: $ky-primary-pressed;
+    transform: scale(0.99);
 }
 
 .userinfo-save[disabled='true'],
@@ -231,15 +135,14 @@
 }
 
 .userinfo-account-actions {
-    margin-top: 28px;
+    margin-top: $ky-space-8;
 }
 
 .userinfo-account-actions__label {
     color: $ky-text-muted;
     display: block;
     font-size: $ky-font-size-xs;
-    font-weight: $ky-font-weight-medium;
-    margin-bottom: 8px;
+    margin-bottom: $ky-space-2;
 }
 
 .userinfo-logout {
@@ -251,30 +154,28 @@
     display: flex;
     font-size: $ky-font-size-body;
     font-weight: $ky-font-weight-black;
-    gap: 8px;
+    gap: $ky-space-2;
     height: 44px;
     justify-content: center;
-    transition: background-color $ky-motion-fast ease, transform $ky-motion-fast ease;
     width: 100%;
+}
 
-    &:active {
-        background: $ky-danger-soft;
-        transform: scale(0.99);
-    }
+.userinfo-logout:active {
+    background: $ky-danger-soft;
 }
 
 @media (max-width: 350px) {
     .userinfo-content {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
     }
 
     .userinfo-hero {
-        padding-left: 14px;
-        padding-right: 14px;
+        padding-left: $ky-space-3;
+        padding-right: $ky-space-3;
     }
 
     .userinfo-segmented {
-        width: 146px;
+        width: 112px;
     }
 }

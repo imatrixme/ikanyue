@@ -1,123 +1,76 @@
 <template>
-    <view class="activity-detail">
-        <view v-if="loading" class="detail-loading">
-            <view class="detail-loading__spinner" />
-            <text>正在准备活动内容</text>
-        </view>
+    <page-chrome class="activity-detail">
+        <async-state v-if="loading" state="loading" title="正在准备活动内容" />
 
         <view v-else-if="errorMessage" class="detail-empty">
-            <empty-state
+            <async-state
                 action-label="返回活动"
                 :description="errorMessage"
                 kind="error"
+                state="error"
                 title="活动暂时无法显示"
                 @action="goBack"
             />
         </view>
 
         <template v-else>
-        <view class="cover-media">
-            <image
-                v-if="canShowCover"
-                :src="activity.coverImage"
-                class="cover-image"
-                mode="aspectFill"
-                @error="coverError = true"
+        <view class="detail-content">
+            <activity-ticket
+                :cover-url="activity.coverImage"
+                :date-text="formatDateOnly(activity.startTime)"
+                featured
+                :location="activity.location"
+                :price-label="formatPriceLabel(activity.price)"
+                :show-image="canShowCover"
+                :tags="getActivityTags(activity)"
+                :time-text="formatActivityTimeRange(activity)"
+                :title="activity.title"
+                @image-error="coverError = true"
             />
-            <view v-else class="cover-fallback">
-                <text class="cover-fallback__mark">{{ activity.title.slice(0, 1) || '乐' }}</text>
-            </view>
-        </view>
 
-        <!-- 活动信息 -->
-        <view class="info-section">
-            <view class="title">{{ activity.title }}</view>
-
-            <!-- 价格信息 -->
-            <view class="price-section">
-                <view v-if="activity.price > 0" class="price-container">
-                    <text class="price-symbol">¥</text>
-                    <text class="price-amount">{{ (activity.price / 100.0).toFixed(2) }}</text>
+            <ticket-section v-if="activity.maxParticipants" subtitle="报名信息实时更新" title="参与名额">
+                <view class="detail-seat-row">
+                    <text>{{ activity.maxParticipants }} 人</text>
+                    <text v-if="activity.currentParticipants">已报名 {{ activity.currentParticipants }} 人</text>
+                    <text v-if="hasLimitedSeats" class="remaining-few">仅剩 {{ remainingSeats }} 个名额</text>
                 </view>
-                <view v-else class="price-free">免费活动</view>
-            </view>
+            </ticket-section>
 
-            <view class="meta-list">
-                <view class="meta-item">
-                    <app-icon class="meta-item__icon" name="clock-muted" :size="18" />
-                    <view class="meta-content">
-                        <text class="meta-label">活动时间</text>
-                        <view>
-                            <text>{{ formatDateOnly(activity.startTime) }} </text>
-                            <text>{{ formatTimeOnly(activity.startTime) }}</text>
-                            <text v-if="activity.endTime"> - {{ formatTimeOnly(activity.endTime) }}</text>
-                        </view>
-                    </view>
+            <ticket-section title="活动详情">
+                <view class="desc-section">
+                    <rich-text class="description" :nodes="safeHtmlContent" user-select></rich-text>
                 </view>
-                <view class="meta-item">
-                    <app-icon class="meta-item__icon" name="location-muted" :size="18" />
-                    <view class="meta-content">
-                        <text class="meta-label">活动地点</text>
-                        <text>{{ activity.location }}</text>
-                    </view>
-                </view>
-                <view class="meta-item" v-if="activity.maxParticipants">
-                    <app-icon class="meta-item__icon" name="people-muted" :size="18" />
-                    <view class="meta-content">
-                        <text class="meta-label">参与名额</text>
-                        <view>
-                            <text>{{ activity.maxParticipants }}人</text>
-                            <text v-if="activity.currentParticipants">
-                                (已报名: {{ activity.currentParticipants }}人)</text
-                            >
-                            <text v-if="hasLimitedSeats" class="remaining-few">仅剩{{ remainingSeats }}个名额</text>
-                        </view>
-                    </view>
-                </view>
+            </ticket-section>
+
+            <ticket-section v-if="activity.images && activity.images.length" title="活动图集">
+                <scroll-view
+                    class="image-scroll"
+                    scroll-x
+                    enhanced
+                    bounces
+                    enable-passive
+                    show-scrollbar="false"
+                >
+                    <image
+                        v-for="(img, index) in activity.images"
+                        :key="index"
+                        :src="img"
+                        class="activity-image"
+                        mode="aspectFill"
+                        @tap="previewImage(img, activity.images)"
+                    />
+                </scroll-view>
+            </ticket-section>
+
+            <view class="disclaimer-section">
+                <text class="disclaimer-text">
+                    活动开始前24小时可申请全额退款；活动开始前12小时可申请50%退款；活动开始前12小时内不予退款。活动最终解释权归主办方所有。
+                </text>
             </view>
-
-            <view class="tag-list" v-if="activity.tags && activity.tags.length">
-                <text v-for="(tag, index) in activity.tags.split(',').slice(0, 3)" :key="index" class="tag">{{ tag.trim() }}</text>
-            </view>
-        </view>
-
-        <!-- 活动描述 -->
-        <view class="desc-section">
-            <view class="section-title">活动详情</view>
-            <rich-text class="description" :nodes="safeHtmlContent" user-select></rich-text>
-        </view>
-
-        <!-- 活动图片 -->
-        <view class="image-section" v-if="activity.images && activity.images.length">
-            <view class="section-title">活动图集</view>
-            <scroll-view
-                class="image-scroll"
-                scroll-x
-                enhanced
-                bounces
-                enable-passive
-                show-scrollbar="false"
-            >
-                <image
-                    v-for="(img, index) in activity.images"
-                    :key="index"
-                    :src="img"
-                    class="activity-image"
-                    mode="aspectFill"
-                    @tap="previewImage(img, activity.images)"
-                />
-            </scroll-view>
-        </view>
-
-        <!-- 退款政策说明 -->
-        <view class="disclaimer-section">
-            <text class="disclaimer-text">
-                活动开始前24小时可申请全额退款；活动开始前12小时可申请50%退款；活动开始前12小时内不予退款。活动最终解释权归主办方所有。
-            </text>
         </view>
 
         <!-- 底部操作栏 -->
-        <view class="bottom-bar">
+        <sticky-action-bar class="bottom-bar">
             <nut-button
                 block
                 type="primary"
@@ -128,16 +81,19 @@
                 立即报名
             </nut-button>
             <nut-button block type="primary" class="register-btn" disabled v-else> 暂未开放报名 </nut-button>
-        </view>
+        </sticky-action-bar>
         </template>
-    </view>
+    </page-chrome>
 </template>
 
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
-import AppIcon from '../../components/AppIcon.vue';
-import EmptyState from '../../components/EmptyState.vue';
+import ActivityTicket from '../../components/ActivityTicket.vue';
+import AsyncState from '../../components/AsyncState.vue';
+import PageChrome from '../../components/PageChrome.vue';
+import StickyActionBar from '../../components/StickyActionBar.vue';
+import TicketSection from '../../components/TicketSection.vue';
 import { getSafeHtml, htmlToText } from './htmlUtils';
 import {
     formatDateOnly as formatActivityDateOnly,
@@ -146,7 +102,7 @@ import {
 } from '../activity/pageLogic';
 
 export default {
-    components: { AppIcon, EmptyState },
+    components: { ActivityTicket, AsyncState, PageChrome, StickyActionBar, TicketSection },
     data() {
         return {
             activityId: '',
@@ -256,6 +212,23 @@ export default {
         // 只格式化时间部分 (时分)
         formatTimeOnly(timestamp) {
             return formatActivityTimeOnly(timestamp);
+        },
+
+        formatActivityTimeRange(activity) {
+            const start = this.formatTimeOnly(activity.startTime);
+            const end = this.formatTimeOnly(activity.endTime);
+            return end ? `${start} - ${end}` : start;
+        },
+
+        formatPriceLabel(price) {
+            return Number(price || 0) > 0 ? `¥${(price / 100).toFixed(2)}` : '免费活动';
+        },
+
+        getActivityTags(activity) {
+            return String(activity?.tags || '')
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean);
         },
 
         // 格式化日期时间

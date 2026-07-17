@@ -1,62 +1,56 @@
 <template>
-    <view class="profile-page">
-        <view class="profile-brand">
-            <view class="profile-brand__mark">
-                <image class="profile-logo" :src="logo" mode="aspectFit" />
-            </view>
-            <view class="profile-brand__copy">
+    <page-chrome class="profile-page">
+        <view class="profile-hero">
+            <view class="profile-brand">
+                <text class="profile-brand__eyebrow">KANYUE MUSIC ACADEMY</text>
                 <text class="profile-brand__name">看乐艺术</text>
                 <text class="profile-brand__meta">MUSICIAN PROFILE</text>
+            </view>
+
+            <view v-if="isLogin()" class="profile-member-pass" @tap="modifyInfo">
+                <view class="profile-member-pass__copy">
+                    <text class="profile-member-pass__eyebrow">KANYUE MUSIC ACADEMY</text>
+                    <text class="profile-member-pass__name">{{ displayName }}</text>
+                    <text class="profile-member-pass__meta">学员账号 {{ maskedPhone }}</text>
+                    <text class="profile-member-pass__meta">会员状态 已连接</text>
+                </view>
+                <view class="profile-member-pass__seal">
+                    <text>K</text>
+                    <text>MEMBER</text>
+                </view>
+                <view class="profile-member-pass__barcode" aria-hidden="true">
+                    <view v-for="line in 14" :key="line" class="profile-member-pass__barcode-line" />
+                </view>
             </view>
         </view>
 
         <view class="profile-content">
             <template v-if="isLogin()">
-                <view class="profile-identity" @tap="modifyInfo">
-                    <view class="profile-avatar">
-                        <image v-if="avatarUrl" class="profile-avatar__image" :src="avatarUrl" mode="aspectFill" />
-                        <text v-else>{{ displayInitial }}</text>
+                <ticket-section subtitle="查看余额、可领取实物和积分记录" title="积分账户">
+                    <view class="profile-row-group">
+                        <account-row
+                            description="查看可领取实物和解锁进度"
+                            icon-text="PT"
+                            interactive
+                            title="查看我的积分"
+                            @select="goPoints"
+                        />
                     </view>
-                    <view class="profile-identity__copy">
-                        <text class="profile-user__name">{{ displayName }}</text>
-                        <text class="profile-user__phone">{{ userInfo.cellphone || '已登录账号' }}</text>
-                    </view>
-                    <text class="profile-status">已连接</text>
-                    <app-icon class="profile-entry-arrow" name="chevron-primary" :size="15" />
-                </view>
+                </ticket-section>
 
-                <view class="profile-section">
-                    <view class="profile-section__header">
-                        <text class="profile-section__title">积分账户</text>
-                        <text class="profile-section__hint">KANYUE POINTS</text>
+                <ticket-section action-label="进入修改" subtitle="用于身份识别与活动联系" title="账号资料" @action="modifyInfo">
+                    <view class="profile-row-group">
+                        <account-row icon-text="名" title="显示名称" :value="displayName" />
+                        <account-row icon-text="机" title="绑定手机" :value="maskedPhone" />
+                        <account-row
+                            description="昵称、姓名、性别、年龄与地区"
+                            icon-text="档"
+                            interactive
+                            title="个人资料"
+                            @select="modifyInfo"
+                        />
                     </view>
-                    <view class="profile-command" @tap="goPoints">
-                        <view class="profile-command__icon">PT</view>
-                        <view class="profile-command__copy">
-                            <text class="profile-command__title">查看我的积分</text>
-                            <text class="profile-command__desc">查看可领取实物和解锁进度</text>
-                        </view>
-                        <app-icon class="profile-command__arrow" name="chevron-primary" :size="15" />
-                    </view>
-                </view>
-
-                <view class="profile-section" @tap="modifyInfo">
-                    <view class="profile-section__header">
-                        <text class="profile-section__title">账号资料</text>
-                        <view class="profile-section__link">
-                            <text>进入修改</text>
-                            <app-icon name="chevron-primary" :size="14" />
-                        </view>
-                    </view>
-                    <view class="profile-detail-row">
-                        <text class="profile-detail-row__label">显示名称</text>
-                        <text class="profile-detail-row__value">{{ displayName }}</text>
-                    </view>
-                    <view class="profile-detail-row">
-                        <text class="profile-detail-row__label">绑定手机</text>
-                        <text class="profile-detail-row__value">{{ userInfo.cellphone || '未提供' }}</text>
-                    </view>
-                </view>
+                </ticket-section>
             </template>
 
             <template v-else>
@@ -104,23 +98,22 @@
                 </button>
             </view>
         </nut-popup>
-    </view>
+    </page-chrome>
 </template>
 
 <script>
 import Taro from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
 import { Api } from '../../../utils/apis';
-import AppIcon from '../../components/AppIcon.vue';
+import AccountRow from '../../components/AccountRow.vue';
+import PageChrome from '../../components/PageChrome.vue';
+import TicketSection from '../../components/TicketSection.vue';
 import './index.scss';
 
-const logo = require('../../imgs/logo_kanyue@512.png');
-
 export default {
-    components: { AppIcon },
+    components: { AccountRow, PageChrome, TicketSection },
     data() {
         return {
-            logo,
             showLogin: false,
             userInfo: {},
             wechatLoginLoading: false,
@@ -132,11 +125,10 @@ export default {
         displayName() {
             return this.userInfo.nickName || this.userInfo.nickname || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
         },
-        displayInitial() {
-            return this.displayName.slice(0, 1);
-        },
-        avatarUrl() {
-            return this.userInfo.avatarUrl || this.userInfo.avatar || '';
+        maskedPhone() {
+            const cellphone = String(this.userInfo.cellphone || '');
+            if (cellphone.length < 7) return cellphone || '已登录账号';
+            return `${cellphone.slice(0, 3)}****${cellphone.slice(-4)}`;
         },
     },
     mounted() {

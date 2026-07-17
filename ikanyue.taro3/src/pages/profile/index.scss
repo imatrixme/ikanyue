@@ -5,231 +5,146 @@
     background: $ky-canvas;
     box-sizing: border-box;
     min-height: 100vh;
-    padding-bottom: 36px;
+    padding-bottom: $ky-space-8;
+}
+
+.profile-hero {
+    @include ky-hero-texture;
+    background-color: $ky-primary-strong;
+    box-sizing: border-box;
+    color: $ky-on-primary;
+    min-height: 220px;
+    padding: $ky-space-5 $ky-space-4 $ky-space-6;
 }
 
 .profile-brand {
-    @include ky-hero-texture;
     align-items: center;
-    background-color: $ky-primary;
-    color: $ky-on-primary;
     display: flex;
-    gap: 14px;
-    min-height: 108px;
-    padding: 18px 18px 20px;
+    flex-direction: column;
+    text-align: center;
 }
 
-.profile-brand__mark {
-    align-items: center;
-    background: $ky-surface;
-    border-radius: $ky-radius-lg;
-    display: flex;
-    flex-shrink: 0;
-    height: 58px;
-    justify-content: center;
-    width: 82px;
-}
-
-.profile-logo {
-    height: 38px;
-    width: 74px;
-}
-
+.profile-brand__eyebrow,
 .profile-brand__name,
 .profile-brand__meta {
     display: block;
 }
 
+.profile-brand__eyebrow {
+    border: 1px solid $ky-on-primary-divider;
+    border-radius: $ky-radius-sm;
+    font-size: $ky-font-size-2xs;
+    font-weight: $ky-font-weight-bold;
+    padding: $ky-space-1 $ky-space-2;
+}
+
 .profile-brand__name {
-    font-size: $ky-font-size-heading;
+    font-size: $ky-font-size-heading-lg;
     font-weight: $ky-font-weight-black;
+    margin-top: $ky-space-3;
 }
 
 .profile-brand__meta {
-    font-size: $ky-font-size-xs;
+    font-size: $ky-font-size-2xs;
     font-weight: $ky-font-weight-bold;
-    margin-top: 4px;
-    opacity: 0.76;
+    margin-top: 3px;
+    opacity: 0.74;
 }
 
-.profile-content {
-    padding: 18px 14px 0;
-}
-
-.profile-identity {
-    align-items: center;
+.profile-member-pass {
     background: $ky-surface;
-    border: 1px solid $ky-line;
+    border: 1px solid $ky-on-primary-divider;
     border-radius: $ky-radius-lg;
-    box-shadow: $ky-shadow-card;
-    display: flex;
-    padding: 14px;
+    box-shadow: $ky-shadow-raised;
+    box-sizing: border-box;
+    color: $ky-ink-strong;
+    margin-top: $ky-space-4;
+    min-height: 130px;
+    overflow: hidden;
+    padding: $ky-space-4;
+    position: relative;
 }
 
-.profile-avatar {
+.profile-member-pass__copy {
+    max-width: 68%;
+    position: relative;
+    z-index: 2;
+}
+
+.profile-member-pass__eyebrow,
+.profile-member-pass__name,
+.profile-member-pass__meta {
+    display: block;
+}
+
+.profile-member-pass__eyebrow {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-2xs;
+    font-weight: $ky-font-weight-black;
+}
+
+.profile-member-pass__name {
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-black;
+    margin-top: $ky-space-2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-member-pass__meta {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-xs;
+    margin-top: $ky-space-1;
+}
+
+.profile-member-pass__seal {
     align-items: center;
-    background: $ky-primary-soft;
-    border: 2px solid $ky-primary-strong;
+    border: 1px solid $ky-primary-line;
     border-radius: 50%;
     color: $ky-primary-strong;
     display: flex;
-    flex-shrink: 0;
+    flex-direction: column;
+    height: 66px;
+    justify-content: center;
+    position: absolute;
+    right: $ky-space-4;
+    top: $ky-space-4;
+    transform: rotate(-8deg);
+    width: 66px;
+}
+
+.profile-member-pass__seal text:first-child {
     font-size: $ky-font-size-display-sm;
     font-weight: $ky-font-weight-black;
-    height: 58px;
-    justify-content: center;
-    overflow: hidden;
-    width: 58px;
 }
 
-.profile-avatar__image {
-    height: 100%;
-    width: 100%;
-}
-
-.profile-identity__copy {
-    flex: 1;
-    min-width: 0;
-    padding-left: 12px;
-}
-
-.profile-user__name,
-.profile-user__phone {
-    display: block;
-}
-
-.profile-user__name {
-    color: $ky-ink-strong;
-    font-size: $ky-font-size-section;
-    font-weight: $ky-font-weight-black;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.profile-user__phone {
-    color: $ky-text-secondary;
-    font-size: $ky-font-size-body-sm;
-    margin-top: 4px;
-}
-
-.profile-status {
-    background: $ky-success-soft;
-    border-radius: $ky-radius-sm;
-    color: $ky-success;
-    font-size: $ky-font-size-xs;
+.profile-member-pass__seal text:last-child {
+    font-size: $ky-font-size-2xs;
     font-weight: $ky-font-weight-bold;
-    padding: 5px 7px;
 }
 
-.profile-entry-arrow,
-.profile-command__arrow {
-    margin-left: 8px;
+.profile-member-pass__barcode {
+    bottom: $ky-space-3;
+    display: flex;
+    gap: 3px;
+    height: 15px;
+    position: absolute;
+    right: $ky-space-4;
 }
 
-.profile-section {
-    background: $ky-surface;
+.profile-member-pass__barcode-line {
+    border-left: 1px solid $ky-text-muted;
+}
+
+.profile-content {
+    padding: 0 $ky-space-3;
+}
+
+.profile-row-group {
     border: 1px solid $ky-line;
     border-radius: $ky-radius-lg;
-    margin-top: 14px;
     overflow: hidden;
-}
-
-.profile-section__header {
-    align-items: center;
-    border-bottom: 1px solid $ky-line;
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 14px;
-}
-
-.profile-section__title {
-    color: $ky-ink-strong;
-    font-size: $ky-font-size-body;
-    font-weight: $ky-font-weight-black;
-}
-
-.profile-section__hint {
-    color: $ky-text-muted;
-    font-size: $ky-font-size-xs;
-}
-
-.profile-section__link {
-    align-items: center;
-    color: $ky-primary-strong;
-    display: flex;
-    font-size: $ky-font-size-sm;
-    font-weight: $ky-font-weight-bold;
-    gap: 3px;
-}
-
-.profile-command {
-    align-items: center;
-    display: flex;
-    min-height: 74px;
-    padding: 12px 14px;
-}
-
-.profile-command__icon {
-    align-items: center;
-    background: $ky-primary-strong;
-    border-radius: $ky-radius-md;
-    color: $ky-surface;
-    display: flex;
-    font-size: $ky-font-size-body;
-    font-weight: $ky-font-weight-black;
-    height: 42px;
-    justify-content: center;
-    width: 42px;
-}
-
-.profile-command__copy {
-    flex: 1;
-    padding-left: 12px;
-}
-
-.profile-command__title,
-.profile-command__desc {
-    display: block;
-}
-
-.profile-command__title {
-    color: $ky-ink-strong;
-    font-size: $ky-font-size-body-lg;
-    font-weight: $ky-font-weight-black;
-}
-
-.profile-command__desc {
-    color: $ky-text-secondary;
-    font-size: $ky-font-size-sm;
-    margin-top: 3px;
-}
-
-.profile-detail-row {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    min-height: 48px;
-    padding: 0 14px;
-}
-
-.profile-detail-row + .profile-detail-row {
-    border-top: 1px solid $ky-line;
-}
-
-.profile-detail-row__label {
-    color: $ky-text-secondary;
-    font-size: $ky-font-size-body-sm;
-}
-
-.profile-detail-row__value {
-    color: $ky-ink-strong;
-    font-size: $ky-font-size-body-sm;
-    font-weight: $ky-font-weight-semibold;
-    max-width: 62%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .profile-welcome {
@@ -237,14 +152,15 @@
     border: 1px solid $ky-line;
     border-radius: $ky-radius-lg;
     box-shadow: $ky-shadow-card;
-    padding: 24px 18px;
+    margin-top: -$ky-space-4;
+    padding: $ky-space-6 $ky-space-5;
+    position: relative;
 }
 
 .profile-welcome__bar {
     background: $ky-primary;
-    display: block;
     height: 5px;
-    margin-bottom: 16px;
+    margin-bottom: $ky-space-4;
     width: 44px;
 }
 
@@ -264,14 +180,14 @@
     color: $ky-ink-strong;
     font-size: $ky-font-size-display-sm;
     font-weight: $ky-font-weight-black;
-    margin-top: 8px;
+    margin-top: $ky-space-2;
 }
 
 .profile-welcome__desc {
     color: $ky-text-secondary;
     font-size: $ky-font-size-body;
     line-height: $ky-leading-readable;
-    margin-top: 8px;
+    margin-top: $ky-space-2;
 }
 
 .profile-primary-action {
@@ -280,8 +196,8 @@
     color: $ky-surface;
     font-size: $ky-font-size-body-lg;
     font-weight: $ky-font-weight-black;
-    margin-top: 22px;
-    padding: 13px 16px;
+    margin-top: $ky-space-5;
+    padding: 13px $ky-space-4;
     text-align: center;
 }
 
@@ -290,8 +206,8 @@
     color: $ky-text-secondary;
     display: flex;
     font-size: $ky-font-size-sm;
-    gap: 8px;
-    margin-top: 14px;
+    gap: $ky-space-2;
+    margin-top: $ky-space-4;
 }
 
 .profile-note__dot {
@@ -303,7 +219,7 @@
 
 .login-popup {
     box-sizing: border-box;
-    padding: 18px 18px 28px;
+    padding: $ky-space-5 $ky-space-5 $ky-space-8;
     position: relative;
 }
 
@@ -315,15 +231,15 @@
     height: 36px;
     justify-content: center;
     position: absolute;
-    right: 10px;
-    top: 10px;
+    right: $ky-space-2;
+    top: $ky-space-2;
     width: 36px;
 }
 
 .login-popup__bar {
     background: $ky-primary;
     height: 5px;
-    margin-bottom: 18px;
+    margin-bottom: $ky-space-5;
     width: 44px;
 }
 
@@ -337,14 +253,14 @@
     color: $ky-ink-strong;
     font-size: $ky-font-size-heading-lg;
     font-weight: $ky-font-weight-black;
-    margin-top: 6px;
+    margin-top: $ky-space-2;
 }
 
 .login-desc {
     color: $ky-text-secondary;
     font-size: $ky-font-size-body;
     line-height: $ky-leading-readable;
-    margin-top: 10px;
+    margin-top: $ky-space-3;
 }
 
 .wechat-login-btn {
@@ -358,7 +274,7 @@
     font-weight: $ky-font-weight-bold;
     height: 48px;
     justify-content: center;
-    margin-top: 24px;
+    margin-top: $ky-space-6;
     width: 100%;
 }
 
@@ -368,18 +284,14 @@
     opacity: 0.6;
 }
 
-@media (max-width: 390px) {
-    .profile-brand {
-        padding-left: 14px;
-        padding-right: 14px;
+@media (max-width: 350px) {
+    .profile-hero {
+        padding-left: $ky-space-3;
+        padding-right: $ky-space-3;
     }
 
     .profile-content {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    .profile-status {
-        display: none;
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
     }
 }
