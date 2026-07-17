@@ -1,150 +1,290 @@
 {
   "meta": {
     "name": "Kanyue Brand System",
-    "version": "1.0.0",
-    "direction": "Starbucks Green inspired, adapted for Kanyue music education"
+    "version": "2.0.0",
+    "direction": "Contemporary music education with Kanyue green and restrained ticket motifs"
   },
-  "color": {
-    "primary": "#00754a",
-    "primaryStrong": "#006241",
-    "primaryPressed": "#004f3d",
-    "primarySoft": "#d4e9e2",
-    "primaryLine": "#9fc9bb",
-    "primaryWash": "#f6faf8",
-    "primarySurfaceOverlay": "rgba(255, 255, 255, 0.34)",
-    "primaryDivider": "rgba(0, 98, 65, 0.14)",
-    "onPrimary": "#ffffff",
-    "onPrimaryMuted": "rgb(255 255 255 / 75%)",
-    "onPrimaryFaint": "rgb(255 255 255 / 55%)",
-    "onPrimaryDivider": "rgba(255, 255, 255, 0.3)",
-    "onPrimaryOverlay": "rgb(255 255 255 / 12%)",
-    "ink": "#31443e",
-    "inkStrong": "#1e3932",
-    "textSecondary": "#5f6f69",
-    "textMuted": "#87928e",
-    "canvas": "#f4f4f2",
-    "surface": "#ffffff",
-    "secondarySurface": "#edf4f1",
-    "mutedSurface": "#eef3f1",
-    "sidebarSurface": "#f0f6f3",
-    "line": "#dededb",
-    "lineStrong": "#b9b9b5",
-    "lineTinted": "#d8e2de",
-    "inputLine": "#c8d6d1",
-    "blue": "#0079c8",
-    "bluePressed": "#005f9e",
-    "blueSoft": "#eaf5fc",
-    "blueLine": "#b8d9ef",
-    "blueLineStrong": "#9bc9e8",
-    "blueWash": "#f7fbfe",
-    "yellow": "#f5c400",
-    "yellowPressed": "#d9a900",
-    "yellowSoft": "#fff8d6",
-    "gold": "#7d6200",
-    "goldForeground": "#5f4a00",
-    "goldLine": "#e4cf70",
-    "goldWash": "#fffdf3",
-    "success": "#1f7a4d",
-    "successSoft": "#e8f5ed",
-    "successLine": "#b9dcc8",
-    "successWash": "#f7fbf8",
-    "danger": "#b42318",
-    "dangerPressed": "#8f1c14",
-    "dangerSoft": "#fff0ee",
-    "dangerLine": "#dfbbb7",
-    "overlay": "rgb(30 57 50 / 45%)",
-    "wechat": "#07c160",
-    "mediaMuted": "#eeece8",
-    "skeleton": "#e4e4e1"
-  },
-  "typography": {
-    "fontFamily": "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
-    "weight": {
-      "medium": 500,
-      "semibold": 600,
-      "bold": 700,
-      "black": 800
+  "foundation": {
+    "color": {
+      "green50": "#f6faf8",
+      "green100": "#edf4f1",
+      "green200": "#d4e9e2",
+      "green300": "#9fc9bb",
+      "green500": "#00754a",
+      "green600": "#006241",
+      "green700": "#004f3d",
+      "green900": "#1e3932",
+      "neutral0": "#ffffff",
+      "neutral50": "#f9faf9",
+      "neutral100": "#f4f4f2",
+      "neutral150": "#eef3f1",
+      "neutral200": "#eeece8",
+      "neutral300": "#dededb",
+      "neutral400": "#b9b9b5",
+      "neutral500": "#87928e",
+      "neutral600": "#5f6f69",
+      "neutral700": "#31443e",
+      "blue50": "#f7fbfe",
+      "blue100": "#eaf5fc",
+      "blue300": "#b8d9ef",
+      "blue500": "#0079c8",
+      "blue600": "#005f9e",
+      "yellow50": "#fffdf3",
+      "yellow100": "#fff8d6",
+      "yellow300": "#e4cf70",
+      "yellow500": "#f5c400",
+      "yellow600": "#d9a900",
+      "yellow800": "#7d6200",
+      "red50": "#fff0ee",
+      "red300": "#dfbbb7",
+      "red600": "#b42318",
+      "red700": "#8f1c14"
     },
-    "lineHeight": {
-      "none": 1,
-      "tight": 1.35,
-      "compact": 1.4,
-      "title": 1.45,
-      "body": 1.5,
-      "readable": 1.55,
-      "relaxed": 1.6,
-      "prose": 1.75
+    "typography": {
+      "fontFamily": "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+      "weight": {
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700,
+        "black": 800
+      },
+      "lineHeight": {
+        "none": 1,
+        "tight": 1.35,
+        "compact": 1.4,
+        "title": 1.45,
+        "body": 1.5,
+        "readable": 1.55,
+        "relaxed": 1.6,
+        "prose": 1.75
+      },
+      "miniappSizePx": {
+        "2xs": 9,
+        "xs": 10,
+        "sm": 11,
+        "bodySm": 12,
+        "body": 13,
+        "bodyLg": 14,
+        "subtitle": 15,
+        "titleSm": 16,
+        "title": 17,
+        "section": 18,
+        "page": 19,
+        "heading": 20,
+        "headingLg": 21,
+        "displaySm": 22,
+        "displayMd": 24,
+        "illustration": 28,
+        "balanceSm": 36,
+        "balance": 40,
+        "calendarDisplay": 42,
+        "heroDisplay": 48
+      },
+      "admin": {
+        "caption": "0.75rem",
+        "body": "0.875rem",
+        "bodyLg": "1rem",
+        "titleSm": "1.125rem",
+        "title": "1.25rem",
+        "heading": "1.5rem",
+        "captionLine": "1rem",
+        "bodyLine": "1.5rem",
+        "bodyLgLine": "1.625rem",
+        "titleLine": 1.35,
+        "proseMeasure": "68ch"
+      },
+      "website": {
+        "caption": "0.75rem",
+        "bodySm": "0.875rem",
+        "body": "1rem",
+        "bodyLg": "1.125rem",
+        "titleSm": "1.25rem",
+        "title": "1.5rem",
+        "heading": "2rem",
+        "display": "3.5rem",
+        "captionLine": "1rem",
+        "bodyLine": "1.625rem",
+        "bodyLgLine": "1.75rem",
+        "titleLine": 1.3,
+        "displayLine": 1.08,
+        "proseMeasure": "70ch"
+      }
     },
-    "miniappSizePx": {
-      "2xs": 9,
-      "xs": 10,
-      "sm": 11,
-      "bodySm": 12,
-      "body": 13,
-      "bodyLg": 14,
-      "subtitle": 15,
-      "titleSm": 16,
-      "title": 17,
-      "section": 18,
-      "page": 19,
-      "heading": 20,
-      "headingLg": 21,
-      "displaySm": 22,
-      "displayMd": 24,
-      "illustration": 28,
-      "balanceSm": 36,
-      "balance": 40,
-      "calendarDisplay": 42,
-      "heroDisplay": 48
+    "spacingPx": {
+      "1": 4,
+      "2": 8,
+      "3": 12,
+      "4": 16,
+      "5": 20,
+      "6": 24,
+      "8": 32,
+      "10": 40,
+      "12": 48,
+      "16": 64,
+      "20": 80,
+      "24": 96
     },
-    "admin": {
-      "caption": "0.75rem",
-      "body": "0.875rem",
-      "bodyLg": "1rem",
-      "titleSm": "1.125rem",
-      "title": "1.25rem",
-      "heading": "1.5rem",
-      "captionLine": "1rem",
-      "bodyLine": "1.5rem",
-      "bodyLgLine": "1.625rem",
-      "titleLine": 1.35,
-      "proseMeasure": "68ch"
+    "radiusPx": {
+      "sm": 4,
+      "md": 6,
+      "lg": 8,
+      "pill": 999
+    },
+    "shadow": {
+      "miniapp": {
+        "card": "0 3px 0 rgba(30, 57, 50, 0.08)",
+        "subtle": "0 2px 0 rgba(30, 57, 50, 0.06)",
+        "raised": "0 8px 20px rgba(30, 57, 50, 0.1)",
+        "button": "0 2px 0 #004f3d",
+        "buttonPressed": "0 1px 0 #004f3d"
+      },
+      "web": {
+        "sm": "0 1px 2px rgb(30 57 50 / 8%)",
+        "md": "0 8px 20px rgb(30 57 50 / 10%)",
+        "lg": "0 12px 28px rgb(30 57 50 / 14%)"
+      }
+    },
+    "motionMs": {
+      "instant": 100,
+      "fast": 160,
+      "base": 220,
+      "slow": 320
+    },
+    "breakpointPx": {
+      "xs": 320,
+      "sm": 375,
+      "md": 768,
+      "lg": 1024,
+      "xl": 1280,
+      "2xl": 1440
+    },
+    "zIndex": {
+      "base": 0,
+      "raised": 10,
+      "sticky": 20,
+      "dropdown": 30,
+      "overlay": 40,
+      "modal": 50,
+      "toast": 60
+    },
+    "containerPx": {
+      "reading": 720,
+      "content": 1180,
+      "wide": 1440
     }
   },
-  "spacingPx": {
-    "1": 4,
-    "2": 8,
-    "3": 12,
-    "4": 16,
-    "5": 20,
-    "6": 24,
-    "8": 32
-  },
-  "radiusPx": {
-    "sm": 4,
-    "md": 6,
-    "lg": 8
-  },
-  "shadow": {
-    "miniapp": {
-      "card": "0 3px 0 rgba(30, 57, 50, 0.08)",
-      "subtle": "0 2px 0 rgba(30, 57, 50, 0.06)",
-      "raised": "0 8px 20px rgba(30, 57, 50, 0.1)",
-      "button": "0 2px 0 #004f3d",
-      "buttonPressed": "0 1px 0 #004f3d"
+  "semantic": {
+    "color": {
+      "primary": "#00754a",
+      "primaryStrong": "#006241",
+      "primaryPressed": "#004f3d",
+      "primarySoft": "#d4e9e2",
+      "primaryLine": "#9fc9bb",
+      "primaryWash": "#f6faf8",
+      "primarySurfaceOverlay": "rgba(255, 255, 255, 0.34)",
+      "primaryDivider": "rgba(0, 98, 65, 0.14)",
+      "onPrimary": "#ffffff",
+      "onPrimaryMuted": "rgb(255 255 255 / 75%)",
+      "onPrimaryFaint": "rgb(255 255 255 / 55%)",
+      "onPrimaryDivider": "rgba(255, 255, 255, 0.3)",
+      "onPrimaryOverlay": "rgb(255 255 255 / 12%)",
+      "ink": "#31443e",
+      "inkStrong": "#1e3932",
+      "textSecondary": "#5f6f69",
+      "textMuted": "#87928e",
+      "canvas": "#f4f4f2",
+      "surface": "#ffffff",
+      "secondarySurface": "#edf4f1",
+      "mutedSurface": "#eef3f1",
+      "sidebarSurface": "#f0f6f3",
+      "line": "#dededb",
+      "lineStrong": "#b9b9b5",
+      "lineTinted": "#d8e2de",
+      "inputLine": "#c8d6d1",
+      "focusRing": "#00754a",
+      "blue": "#0079c8",
+      "bluePressed": "#005f9e",
+      "infoText": "#005f9e",
+      "blueSoft": "#eaf5fc",
+      "blueLine": "#b8d9ef",
+      "blueLineStrong": "#9bc9e8",
+      "blueWash": "#f7fbfe",
+      "yellow": "#f5c400",
+      "yellowPressed": "#d9a900",
+      "yellowSoft": "#fff8d6",
+      "gold": "#7d6200",
+      "goldForeground": "#5f4a00",
+      "goldLine": "#e4cf70",
+      "goldWash": "#fffdf3",
+      "success": "#1f7a4d",
+      "successSoft": "#e8f5ed",
+      "successLine": "#b9dcc8",
+      "successWash": "#f7fbf8",
+      "danger": "#b42318",
+      "dangerPressed": "#8f1c14",
+      "dangerSoft": "#fff0ee",
+      "dangerLine": "#dfbbb7",
+      "overlay": "rgb(30 57 50 / 45%)",
+      "wechat": "#07c160",
+      "mediaMuted": "#eeece8",
+      "skeleton": "#e4e4e1"
     },
-    "admin": {
-      "sm": "0 1px 2px rgb(30 57 50 / 8%)",
-      "lg": "0 12px 28px rgb(30 57 50 / 14%)"
+    "paragraph": {
+      "miniappSpacingToken": "space-3",
+      "miniappProseSpacingToken": "space-4",
+      "adminSpacingRem": "0.75rem",
+      "websiteSpacingRem": "1rem"
     }
   },
-  "motionMs": {
-    "fast": 160,
-    "base": 220
+  "component": {
+    "controlHeightPx": {
+      "compact": 32,
+      "default": 40,
+      "comfortable": 44,
+      "touch": 48
+    },
+    "iconSizePx": {
+      "sm": 16,
+      "md": 18,
+      "lg": 20,
+      "xl": 24
+    },
+    "tableRowHeightPx": {
+      "compact": 40,
+      "default": 48,
+      "comfortable": 56
+    },
+    "navigationPx": {
+      "adminSidebar": 232,
+      "adminRail": 68,
+      "websiteHeader": 72,
+      "miniappTab": 50
+    },
+    "overlayPx": {
+      "dialogSm": 420,
+      "dialogMd": 560,
+      "dialogLg": 720,
+      "drawer": 520
+    },
+    "focus": {
+      "widthPx": 3,
+      "offsetPx": 2
+    },
+    "disabledOpacity": 0.48
   },
-  "paragraph": {
-    "miniappSpacingToken": "space-3",
-    "miniappProseSpacingToken": "space-4",
-    "adminSpacingRem": "0.75rem"
+  "pattern": {
+    "musicTicketPx": {
+      "notch": 8,
+      "perforation": 4,
+      "rule": 1,
+      "dateRail": 58,
+      "stub": 72
+    },
+    "editorialPx": {
+      "mediaRadius": 6,
+      "sectionGapMobile": 64,
+      "sectionGapDesktop": 96,
+      "heroMaxHeight": 760
+    }
   }
 }

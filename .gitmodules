@@ -1,7 +1,7 @@
 [submodule "ikanyue.taro3"]
 	path = ikanyue.taro3
 	url = git@github.com:imatrixme/ikanyue.taro3.git
-	branch = release/wechat-points-lite
+	branch = feature/unified-design-platform
 [submodule "ikanyue.mapi.hono"]
 	path = ikanyue.mapi.hono
 	url = git@github.com:imatrixme/ikanyue.mapi.hono.git
@@ -18,3 +18,7 @@
 	path = ikanyue.admin
 	url = git@github.com:imatrixme/ikanyue.admin.git
 	branch = release/wechat-points-lite
+[submodule "ikanyue.website"]
+	path = ikanyue.website
+	url = git@github.com:imatrixme/ikanyue.website.git
+	branch = feature/unified-design-platform

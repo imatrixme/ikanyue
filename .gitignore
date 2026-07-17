@@ -35,6 +35,12 @@ yarn-error.log*
 **/.temp/
 **/.rn_temp/
 
+# Local high-resolution miniapp design boards
+/design-output/miniapp-hires/
+
+# Local high-resolution official website design boards
+/design-output/website-hires/
+
 # API local data
 .local/
 **/.tmp/
