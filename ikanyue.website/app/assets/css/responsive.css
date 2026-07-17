@@ -1,0 +1,274 @@
+@media (max-width: 1100px) {
+  .site-nav {
+    gap: var(--ky-space-4);
+  }
+
+  .course-card {
+    grid-template-columns: 0.72fr 1.28fr;
+  }
+
+  .course-card__media {
+    min-height: 270px;
+  }
+
+  .faculty-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .faculty-feature__intro h2 {
+    max-width: 24ch;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header__inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .site-nav,
+  .site-header__contact {
+    display: none;
+  }
+
+  .site-header__menu {
+    display: grid;
+    width: var(--ky-control-height-comfortable);
+    height: var(--ky-control-height-comfortable);
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--ky-radius-md);
+    background: var(--card);
+    cursor: pointer;
+  }
+
+  .mobile-nav {
+    display: grid;
+    padding: var(--ky-space-3) var(--ky-space-4) var(--ky-space-5);
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+
+  .mobile-nav a {
+    min-height: var(--ky-control-height-comfortable);
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-nav a:last-child {
+    color: var(--primary);
+    border-bottom: 0;
+    font-weight: var(--ky-font-weight-semibold);
+  }
+
+  .course-grid,
+  .faculty-page-grid,
+  .story-preview__grid,
+  .teaching-principles > div,
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .faculty-page-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-ticket {
+    grid-template-columns: var(--ky-ticket-stub) minmax(150px, 0.6fr) minmax(0, 1.4fr);
+  }
+
+  .learning-path,
+  .activity-detail,
+  .contact-layout,
+  .about-story {
+    grid-template-columns: 1fr;
+  }
+
+  .stories-list article {
+    grid-template-columns: var(--ky-ticket-date-rail) minmax(0, 1fr);
+  }
+
+  .stories-list footer {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .site-container,
+  .site-header__inner {
+    width: min(calc(100% - var(--ky-space-6)), var(--ky-container-content));
+  }
+
+  .section-band {
+    padding-block: var(--ky-editorial-section-gap-mobile);
+  }
+
+  .site-brand__en {
+    display: none;
+  }
+
+  .home-hero {
+    min-height: calc(100svh - 96px);
+  }
+
+  .home-hero__image {
+    object-position: 60% center;
+  }
+
+  .home-hero h1,
+  .page-hero h1,
+  .activity-detail-hero h1 {
+    font-size: var(--ky-web-heading);
+  }
+
+  .home-hero__lead,
+  .page-hero__inner > p:last-of-type,
+  .activity-detail-hero p {
+    font-size: var(--ky-web-body);
+  }
+
+  .home-hero__content {
+    padding-bottom: var(--ky-space-10);
+  }
+
+  .home-hero__actions {
+    align-items: stretch;
+    flex-direction: column;
+    max-width: 280px;
+  }
+
+  .home-hero__continue {
+    display: none;
+  }
+
+  .section-heading-row,
+  .contact-band__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-heading h2,
+  .contact-band h2,
+  .faculty-feature__intro h2 {
+    font-size: var(--ky-web-title);
+  }
+
+  .course-card {
+    grid-template-columns: 1fr;
+  }
+
+  .course-card__media {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .activity-ticket {
+    min-height: 0;
+    grid-template-columns: var(--ky-ticket-date-rail) minmax(0, 1fr);
+    grid-template-rows: 170px auto;
+  }
+
+  .activity-ticket::before,
+  .activity-ticket::after {
+    left: calc(var(--ky-ticket-date-rail) - var(--ky-ticket-notch));
+  }
+
+  .activity-ticket__date {
+    grid-row: 1 / 3;
+  }
+
+  .activity-ticket > img {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .activity-ticket__body {
+    grid-column: 2;
+    grid-row: 2;
+    padding: var(--ky-space-5);
+  }
+
+  .faculty-feature__grid,
+  .faculty-page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-hero,
+  .activity-detail-hero {
+    min-height: 420px;
+  }
+
+  .page-hero--compact {
+    min-height: 280px;
+  }
+
+  .page-hero__inner,
+  .activity-detail-hero__content {
+    padding-block: var(--ky-space-10);
+  }
+
+  .stories-list article {
+    gap: var(--ky-space-4);
+  }
+
+  .stories-list blockquote {
+    font-size: var(--ky-web-body-lg);
+  }
+
+  .inquiry-form {
+    padding: var(--ky-space-5);
+  }
+
+  .site-footer__grid {
+    grid-template-columns: 1fr;
+    gap: var(--ky-space-8);
+  }
+
+  .site-footer__legal {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--ky-space-1);
+  }
+}
+
+@media (max-width: 420px) {
+  .site-container,
+  .site-header__inner {
+    width: min(calc(100% - var(--ky-space-4)), var(--ky-container-content));
+  }
+
+  .home-hero__brand {
+    font-size: var(--ky-web-body-lg);
+  }
+
+  .activity-ticket {
+    grid-template-rows: 150px auto;
+  }
+
+  .activity-ticket__meta {
+    display: grid;
+  }
+
+  .stories-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .stories-list footer {
+    grid-column: 1;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

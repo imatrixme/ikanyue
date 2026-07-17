@@ -1,0 +1,140 @@
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--ky-space-12);
+}
+
+.contact-details {
+  display: grid;
+  align-content: start;
+  gap: var(--ky-space-5);
+}
+
+.contact-details > div {
+  display: grid;
+  grid-template-columns: var(--ky-icon-size-xl) 1fr;
+  gap: var(--ky-space-3);
+  padding-bottom: var(--ky-space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.contact-details span {
+  display: grid;
+  gap: var(--ky-space-1);
+  color: var(--muted-foreground);
+}
+
+.contact-details strong {
+  color: var(--card-foreground);
+}
+
+.inquiry-form {
+  display: grid;
+  gap: var(--ky-space-5);
+  padding: var(--ky-space-8);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--ky-radius-md);
+}
+
+.inquiry-form label,
+.inquiry-form fieldset {
+  display: grid;
+  gap: var(--ky-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.inquiry-form label > span,
+.inquiry-form legend {
+  color: var(--card-foreground);
+  font-size: var(--ky-web-body-sm);
+  font-weight: var(--ky-font-weight-semibold);
+}
+
+.inquiry-form input,
+.inquiry-form select,
+.inquiry-form textarea {
+  width: 100%;
+  min-height: var(--ky-control-height-comfortable);
+  padding: var(--ky-space-2) var(--ky-space-3);
+  border: 1px solid var(--input);
+  border-radius: var(--ky-radius-md);
+  background: var(--card);
+}
+
+.inquiry-form textarea {
+  resize: vertical;
+}
+
+.inquiry-form input:focus,
+.inquiry-form select:focus,
+.inquiry-form textarea:focus {
+  border-color: var(--ring);
+  outline: var(--ky-focus-width) solid color-mix(in srgb, var(--ring) 24%, transparent);
+  outline-offset: 0;
+}
+
+.segmented-control {
+  display: inline-grid;
+  max-width: 360px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--ky-space-1);
+  background: var(--muted);
+  border-radius: var(--ky-radius-md);
+}
+
+.segmented-control label {
+  position: relative;
+}
+
+.segmented-control input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented-control label > span {
+  display: grid;
+  min-height: var(--ky-control-height-compact);
+  place-items: center;
+  padding-inline: var(--ky-space-3);
+  border-radius: var(--ky-radius-sm);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.segmented-control input:checked + span {
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.segmented-control input:focus-visible + span {
+  outline: var(--ky-focus-width) solid var(--ring);
+  outline-offset: var(--ky-focus-offset);
+}
+
+.form-note {
+  color: var(--muted-foreground);
+  font-size: var(--ky-web-caption);
+}
+
+.form-success {
+  display: grid;
+  min-height: 320px;
+  align-content: center;
+  gap: var(--ky-space-3);
+  text-align: center;
+}
+
+.form-success h2 {
+  color: var(--card-foreground);
+  font-size: var(--ky-web-heading);
+}
+
+.form-success p {
+  max-width: 34rem;
+  margin-inline: auto;
+  color: var(--muted-foreground);
+}
