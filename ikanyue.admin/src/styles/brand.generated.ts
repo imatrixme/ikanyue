@@ -73,6 +73,7 @@ export const designTokens = Object.freeze({
   "semanticColors": {
     "primary": "#00754a",
     "primaryStrong": "#006241",
+    "immersiveSurface": "#006241",
     "primaryPressed": "#004f3d",
     "primarySoft": "#d4e9e2",
     "primaryLine": "#9fc9bb",
