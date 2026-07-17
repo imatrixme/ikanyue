@@ -18,6 +18,10 @@
   .faculty-feature__intro h2 {
     max-width: 24ch;
   }
+
+  .story-preview__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -64,6 +68,7 @@
   .course-grid,
   .faculty-page-grid,
   .story-preview__grid,
+  .consultation-process ol,
   .teaching-principles > div,
   .values-grid {
     grid-template-columns: 1fr;
@@ -84,13 +89,6 @@
     grid-template-columns: 1fr;
   }
 
-  .stories-list article {
-    grid-template-columns: var(--ky-ticket-date-rail) minmax(0, 1fr);
-  }
-
-  .stories-list footer {
-    grid-column: 2;
-  }
 }
 
 @media (max-width: 700px) {
@@ -207,16 +205,32 @@
     padding-block: var(--ky-space-10);
   }
 
-  .stories-list article {
-    gap: var(--ky-space-4);
+  .journey-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 
-  .stories-list blockquote {
-    font-size: var(--ky-web-body-lg);
+  .journey-card > img,
+  .journey-card:nth-child(even) > img {
+    grid-column: 1;
+    grid-row: 1;
+    aspect-ratio: 16 / 10;
   }
 
-  .inquiry-form {
+  .journey-card__body,
+  .journey-card:nth-child(even) .journey-card__body {
+    grid-column: 1;
+    grid-row: 2;
     padding: var(--ky-space-5);
+  }
+
+  .journey-card h2 {
+    font-size: var(--ky-web-title);
+  }
+
+  .contact-search-card {
+    min-height: 360px;
+    padding: var(--ky-space-6);
   }
 
   .site-footer__grid {
@@ -249,16 +263,9 @@
     display: grid;
   }
 
-  .stories-list article {
-    grid-template-columns: 1fr;
-  }
-
-  .stories-list footer {
-    grid-column: 1;
-  }
-
-  .segmented-control {
-    width: 100%;
+  .contact-search-card,
+  .journey-card__body {
+    padding-inline: var(--ky-space-4);
   }
 }
 

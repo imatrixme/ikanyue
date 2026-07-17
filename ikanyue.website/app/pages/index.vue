@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ArrowDown, Music2 } from '@lucide/vue'
-import { courses, faculty, learnerStories } from '~/data/site'
+import { ArrowDown, AudioLines } from '@lucide/vue'
+import { courses, learnerJourneys, teachingRoles } from '~/data/site'
 
 const { activities } = useActivities()
 
 useSeoMeta({
   title: '看乐艺术 KANYUE',
-  description: '面向儿童与成人的钢琴、吉他、声乐与音乐素养课程，以及真实的演出和艺术活动。',
+  description: '面向儿童、青少年、成人与熟龄学习者的全年龄声乐课程、合唱排练与舞台实践。',
   ogTitle: '看乐艺术 KANYUE',
-  ogDescription: '音乐课程与艺术活动，让每个学习阶段都能找到清晰、长期的成长路径。',
-  ogImage: '/images/hero-studio.webp',
+  ogDescription: '从第一次发现声音，到形成稳定表达，让每个年龄阶段都拥有清晰、长期的声乐路径。',
+  ogImage: '/images/vocal-community.webp',
 })
 
 useHead({
@@ -17,9 +17,9 @@ useHead({
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'MusicSchool',
+      '@type': 'EducationalOrganization',
       name: '看乐艺术 KANYUE',
-      description: '面向儿童与成人的音乐教育机构',
+      description: '面向全年龄学习者的声乐教育机构',
       url: useRuntimeConfig().public.siteUrl,
     }),
   }],
@@ -29,12 +29,12 @@ useHead({
 <template>
   <div>
     <section class="home-hero">
-      <img src="/images/hero-studio.webp" alt="明亮的音乐教室与吉他、键盘等乐器" class="home-hero__image" loading="eager" fetchpriority="high">
+      <img src="/images/vocal-community.webp" alt="儿童、青少年、成人与熟龄学员在老师带领下进行声音热身" class="home-hero__image" loading="eager" fetchpriority="high">
       <div class="home-hero__shade" />
       <div class="site-container home-hero__content">
-        <p class="home-hero__brand">看乐艺术 <span>KANYUE</span></p>
-        <h1>音乐课程与艺术活动</h1>
-        <p class="home-hero__lead">为儿童、家庭与成人学习者建立清晰、长期、能够走向舞台的音乐学习路径。</p>
+        <p class="home-hero__brand">看乐艺术 <span>KANYUE VOICE</span></p>
+        <h1>全年龄声乐课程</h1>
+        <p class="home-hero__lead">从儿童第一次发现声音，到成人重新建立表达，再到熟龄阶段保持声音活力，训练始终围绕真实的人和真实的成长发生。</p>
         <div class="home-hero__actions">
           <UiSiteButton to="/courses" arrow>探索课程</UiSiteButton>
           <UiSiteButton to="/activities" variant="secondary">近期活动</UiSiteButton>
@@ -49,8 +49,8 @@ useHead({
       <div class="site-container">
         <UiSectionHeading
           eyebrow="COURSE DIRECTORY"
-          title="从兴趣开始，建立可持续的学习路径"
-          description="课程按真实学习目标组织。儿童与成人使用同一套清晰标准，节奏和曲目会根据个人经验调整。"
+          title="每个年龄阶段，都有不同的声音任务"
+          description="课程按生理阶段、学习经验与表达目标组织。我们不使用一套方法覆盖所有人，也不以短期高音或音量替代长期能力。"
         />
         <div class="course-grid">
           <ContentCourseCard v-for="(course, index) in courses" :key="course.slug" :course="course" :index="index" />
@@ -61,7 +61,7 @@ useHead({
     <section class="section-band">
       <div class="site-container">
         <div class="section-heading-row">
-          <UiSectionHeading eyebrow="UPCOMING" title="近期活动" description="课堂之外，用排练、分享与舞台检验学习的真实变化。" />
+          <UiSectionHeading eyebrow="UPCOMING" title="近期声乐活动" description="开放课、工作坊、合唱排练与学员展演，让课堂中的变化被听见，也让新的目标自然出现。" />
           <UiSiteButton to="/activities" variant="quiet" arrow>全部活动</UiSiteButton>
         </div>
         <div class="activity-list">
@@ -73,26 +73,28 @@ useHead({
     <section class="section-band section-band--green">
       <div class="site-container faculty-feature">
         <div class="faculty-feature__intro">
-          <Music2 :size="28" aria-hidden="true" />
+          <AudioLines :size="28" aria-hidden="true" />
           <p>TEACHING TEAM</p>
-          <h2>教师不是课程的装饰，而是学习反馈的核心</h2>
-          <p>我们关心学员听见了什么、理解了什么，以及下一次练习能否更清楚。</p>
+          <h2>声乐教学的核心，是听见细微变化并给出可执行反馈</h2>
+          <p>教学团队按年龄与声音阶段协作，关注身体感受、听觉判断、作品理解，以及下一次练习是否足够清楚。</p>
           <UiSiteButton to="/faculty" variant="secondary" arrow>认识教师团队</UiSiteButton>
         </div>
         <div class="faculty-feature__grid">
-          <ContentFacultyCard v-for="member in faculty.slice(0, 2)" :key="member.slug" :member="member" />
+          <ContentFacultyCard v-for="member in teachingRoles.slice(0, 2)" :key="member.slug" :member="member" />
         </div>
       </div>
     </section>
 
     <section class="section-band">
       <div class="site-container story-preview">
-        <UiSectionHeading eyebrow="LEARNER STORIES" title="学习发生在每一次具体的变化里" />
+        <UiSectionHeading eyebrow="LEARNING PATHS" title="声乐成长发生在一连串可感知的变化里" description="以下路径按年龄与学习目标归纳，用于帮助你判断当前阶段，不代表固定进度。" />
         <div class="story-preview__grid">
-          <blockquote v-for="story in learnerStories" :key="story.name">
-            <p>“{{ story.quote }}”</p>
-            <footer><strong>{{ story.name }}</strong><span>{{ story.identity }}</span></footer>
-          </blockquote>
+          <article v-for="journey in learnerJourneys.slice(0, 4)" :key="journey.stage">
+            <span>{{ journey.stage }}</span>
+            <h3>{{ journey.title }}</h3>
+            <p>{{ journey.summary }}</p>
+            <footer>{{ journey.profile }}</footer>
+          </article>
         </div>
         <UiSiteButton to="/stories" variant="quiet" arrow>阅读更多故事</UiSiteButton>
       </div>

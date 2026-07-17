@@ -84,7 +84,7 @@
   padding: var(--ky-space-6);
 }
 
-.course-card__instrument {
+.course-card__focus {
   color: var(--primary);
   font-size: var(--ky-web-caption);
   font-weight: var(--ky-font-weight-bold);
@@ -100,7 +100,7 @@
   line-height: var(--ky-web-title-line);
 }
 
-.course-card__body > p:not(.course-card__instrument) {
+.course-card__body > p:not(.course-card__focus) {
   margin-top: var(--ky-space-3);
   color: var(--muted-foreground);
 }
@@ -184,7 +184,7 @@
 .activity-ticket__date strong {
   margin-block: var(--ky-space-1);
   font-size: var(--ky-web-heading);
-  line-height: 1;
+  line-height: var(--ky-web-leading-none);
 }
 
 .activity-ticket > img {
@@ -260,7 +260,7 @@
   font-weight: var(--ky-font-weight-semibold);
 }
 
-.faculty-card blockquote {
+.faculty-card__statement {
   margin-top: var(--ky-space-4);
   padding-top: var(--ky-space-4);
   border-top: 1px solid var(--border);

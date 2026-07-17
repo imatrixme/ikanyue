@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { Clock3, MapPin, MessageCircle } from '@lucide/vue'
+import { Check, Clipboard, MessageCircle, Search } from '@lucide/vue'
 
-const form = reactive({ name: '', contact: '', learner: 'adult', interest: '', note: '' })
-const submitted = ref(false)
+const searchTerm = '看乐艺术'
+const copyStatus = ref('')
 
-function submitInquiry() {
-  submitted.value = true
+async function copyWechatSearchTerm() {
+  try {
+    await navigator.clipboard.writeText(searchTerm)
+    copyStatus.value = '已复制，可前往微信搜索'
+  }
+  catch {
+    copyStatus.value = `请在微信中搜索“${searchTerm}”`
+  }
 }
 
 useSeoMeta({
-  title: '预约咨询',
-  description: '向看乐艺术咨询课程、试听与近期活动。',
+  title: '声乐课程咨询',
+  description: '通过微信联系看乐艺术，咨询儿童、青少年、成人与熟龄声乐课程、试听和近期活动。',
 })
 </script>
 
@@ -18,45 +24,45 @@ useSeoMeta({
   <div>
     <LayoutPageHero
       eyebrow="CONTACT"
-      title="先了解你想怎样学习"
-      description="填写基本信息后，我们会围绕目标、经验和可投入时间沟通，再判断适合的课程与教师。"
+      title="先了解声音与目标，再讨论适合的课程"
+      description="一次有效咨询不急于推荐课型。我们会先了解年龄、声音经验、可投入时间和最希望改善的问题。"
+      image="/images/vocal-adult.webp"
+      image-alt="成年学员与声乐老师在明亮教室中交流训练感受"
       compact
     />
     <section class="section-band section-band--paper">
       <div class="site-container contact-layout">
-        <aside class="contact-details">
-          <div><MessageCircle :size="20" aria-hidden="true" /><span><strong>课程咨询</strong>通过微信或电话确认试听与课程安排</span></div>
-          <div><Clock3 :size="20" aria-hidden="true" /><span><strong>咨询时间</strong>周二至周日 10:00 - 20:00</span></div>
-          <div><MapPin :size="20" aria-hidden="true" /><span><strong>到访方式</strong>预约确认后发送教室地址与交通信息</span></div>
-        </aside>
+        <article class="contact-search-card">
+          <MessageCircle :size="24" aria-hidden="true" />
+          <p>微信咨询</p>
+          <h2>搜索“看乐艺术”</h2>
+          <p>在微信中搜索品牌名称，进入官方账号或小程序后发送“声乐咨询”，即可开始沟通。</p>
+          <button type="button" class="site-button site-button--secondary" @click="copyWechatSearchTerm">
+            <Clipboard :size="18" aria-hidden="true" />复制微信搜索词
+          </button>
+          <p v-if="copyStatus" class="copy-status" role="status">{{ copyStatus }}</p>
+        </article>
 
-        <form class="inquiry-form" @submit.prevent="submitInquiry">
-          <template v-if="!submitted">
-            <label><span>怎么称呼你</span><input v-model="form.name" name="name" autocomplete="name" required></label>
-            <label><span>联系方式</span><input v-model="form.contact" name="contact" autocomplete="tel" required></label>
-            <fieldset>
-              <legend>学习者</legend>
-              <div class="segmented-control">
-                <label><input v-model="form.learner" type="radio" value="child"><span>儿童 / 青少年</span></label>
-                <label><input v-model="form.learner" type="radio" value="adult"><span>成人</span></label>
-              </div>
-            </fieldset>
-            <label><span>感兴趣的课程</span>
-              <select v-model="form.interest" name="interest" required>
-                <option value="" disabled>请选择</option>
-                <option>钢琴系统课程</option><option>吉他与弹唱</option><option>声乐与舞台表达</option><option>乐理与音乐素养</option>
-              </select>
-            </label>
-            <label><span>希望我们提前了解的内容</span><textarea v-model="form.note" name="note" rows="5" placeholder="例如学习经历、目标或可上课时间" /></label>
-            <button type="submit" class="site-button site-button--primary">提交咨询</button>
-            <p class="form-note">当前为官网设计预览，提交不会发送到线上服务。</p>
-          </template>
-          <div v-else class="form-success" role="status">
-            <h2>信息已记录</h2>
-            <p>正式咨询接口接入后，这里会显示联系进度。当前预览不会保存个人信息。</p>
-            <button type="button" class="text-command" @click="submitted = false">返回表单</button>
-          </div>
-        </form>
+        <div class="contact-preparation">
+          <p class="contact-preparation__eyebrow">BEFORE WE TALK</p>
+          <h2>准备三项信息，沟通会更准确</h2>
+          <ul>
+            <li><Check :size="18" aria-hidden="true" /><span><strong>学习者年龄</strong>儿童与青少年的声音阶段会直接影响训练内容。</span></li>
+            <li><Check :size="18" aria-hidden="true" /><span><strong>既往经验</strong>包括是否上过声乐课、合唱经历和当前常唱曲目。</span></li>
+            <li><Check :size="18" aria-hidden="true" /><span><strong>真实目标</strong>例如改善紧张、稳定音准、准备舞台，或长期保持声音活力。</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band">
+      <div class="site-container consultation-process">
+        <UiSectionHeading eyebrow="CONSULTATION" title="从咨询到开始学习" description="具体安排以双方沟通和实际课堂评估为准，不在咨询阶段承诺固定进度。" />
+        <ol>
+          <li><span>01</span><Search :size="22" aria-hidden="true" /><div><h3>微信说明基本情况</h3><p>发送年龄、学习经历、目标和通常可上课时间。</p></div></li>
+          <li><span>02</span><MessageCircle :size="22" aria-hidden="true" /><div><h3>确认试听或评估方式</h3><p>根据声音阶段安排适合的老师、课堂形式与观察重点。</p></div></li>
+          <li><span>03</span><Check :size="22" aria-hidden="true" /><div><h3>形成阶段训练建议</h3><p>试听后再确认课程频率、练习方式和首个阶段目标。</p></div></li>
+        </ol>
       </div>
     </section>
   </div>

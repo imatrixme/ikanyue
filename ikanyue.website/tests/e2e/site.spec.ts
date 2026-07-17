@@ -16,10 +16,17 @@ for (const route of routes) {
 
 test('homepage exposes the selected ticket archive hierarchy', async ({ page }, testInfo) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: '音乐课程与艺术活动' })).toBeVisible()
-  await expect(page.getByText('近期活动', { exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: '全年龄声乐课程' })).toBeVisible()
+  await expect(page.getByText('近期声乐活动', { exact: true }).first()).toBeVisible()
   await expect(page.locator('.activity-ticket').first()).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('homepage.png'), fullPage: true })
+})
+
+test('contact page offers a truthful WeChat search workflow', async ({ page }) => {
+  await page.goto('/contact')
+  await expect(page.getByRole('heading', { level: 2, name: '搜索“看乐艺术”' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '复制微信搜索词' })).toBeVisible()
+  await expect(page.locator('form')).toHaveCount(0)
 })
 
 test('primary pages have no serious accessibility violations', async ({ page }) => {

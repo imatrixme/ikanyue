@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import type { FacultyMember } from '~/types/content'
+import type { TeachingRole } from '~/types/content'
 
-defineProps<{ member: FacultyMember }>()
+defineProps<{ member: TeachingRole }>()
 </script>
 
 <template>
   <article class="faculty-card">
-    <img :src="member.image" :alt="member.name" loading="lazy">
+    <img :src="member.image" :alt="member.imageAlt" loading="lazy">
     <div class="faculty-card__body">
-      <p>{{ member.role }}</p>
-      <h3>{{ member.name }}</h3>
+      <p>{{ member.audience }}</p>
+      <h3>{{ member.title }}</h3>
       <ul aria-label="教学方向">
         <li v-for="specialty in member.specialties" :key="specialty">{{ specialty }}</li>
       </ul>
-      <blockquote>{{ member.statement }}</blockquote>
+      <p class="faculty-card__statement">{{ member.statement }}</p>
     </div>
   </article>
 </template>

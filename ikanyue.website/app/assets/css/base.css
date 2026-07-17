@@ -14,6 +14,7 @@ body {
   background: var(--background);
   font-family: var(--ky-font-sans);
   font-size: var(--ky-web-body);
+  letter-spacing: 0;
   line-height: var(--ky-web-body-line);
   text-rendering: optimizeLegibility;
 }
@@ -49,6 +50,17 @@ blockquote,
 dl,
 dd {
   margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 ul,
@@ -97,7 +109,7 @@ ol {
   border-radius: var(--ky-radius-md);
   font-size: var(--ky-web-body-sm);
   font-weight: var(--ky-font-weight-semibold);
-  line-height: 1;
+  line-height: var(--ky-web-leading-none);
   transition: color var(--ky-motion-fast), background var(--ky-motion-fast), border-color var(--ky-motion-fast), transform var(--ky-motion-fast);
   cursor: pointer;
 }

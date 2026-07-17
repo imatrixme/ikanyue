@@ -7,11 +7,11 @@ const { activity, pending, error, refresh } = useActivity(() => String(route.par
 const start = computed(() => activity.value ? new Date(activity.value.startTime) : null)
 const dateText = computed(() => start.value ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(start.value) : '')
 const timeText = computed(() => start.value ? new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(start.value) : '')
-const image = computed(() => activity.value?.coverImageUrl || activity.value?.coverImage || '/images/performance.webp')
+const image = computed(() => activity.value?.coverImageUrl || activity.value?.coverImage || '/images/vocal-performance.webp')
 
 useSeoMeta({
   title: () => activity.value?.title || '活动详情',
-  description: () => activity.value?.description || '查看看乐艺术活动详情。',
+  description: () => activity.value?.description || '查看看乐艺术声乐活动详情。',
   ogImage: () => image.value,
 })
 
@@ -20,7 +20,7 @@ useHead(() => activity.value ? {
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'MusicEvent',
+      '@type': 'Event',
       name: activity.value.title,
       description: activity.value.description,
       startDate: activity.value.startTime,
@@ -60,8 +60,8 @@ useHead(() => activity.value ? {
             <div><dt><MapPin :size="18" aria-hidden="true" />地点</dt><dd>{{ activity.location || '待确认' }}</dd></div>
           </dl>
           <article class="activity-detail__body">
-            <p>{{ activity.description || '活动内容与参与方式将在确认后更新。' }}</p>
-            <p>如需确认名额、适合年龄或现场安排，请在报名之前与看乐艺术联系。</p>
+            <p>{{ activity.description || '活动围绕声乐学习、排练或舞台实践展开，具体流程以发布页为准。' }}</p>
+            <p>如需确认名额、适合年龄、用声要求或现场安排，请在参与之前与看乐艺术联系。</p>
             <a v-if="activity.externalLink" :href="activity.externalLink" target="_blank" rel="noreferrer">
               前往报名 <ExternalLink :size="17" aria-hidden="true" />
             </a>

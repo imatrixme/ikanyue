@@ -22,7 +22,7 @@ watch(() => route.fullPath, () => {
         <NuxtLink v-for="item in primaryNav" :key="item.to" :to="item.to">{{ item.label }}</NuxtLink>
       </nav>
 
-      <NuxtLink to="/contact" class="site-header__contact">预约咨询</NuxtLink>
+      <NuxtLink to="/contact" class="site-header__contact">声乐咨询</NuxtLink>
       <button
         type="button"
         class="site-header__menu"
@@ -38,7 +38,7 @@ watch(() => route.fullPath, () => {
 
     <nav v-if="menuOpen" id="mobile-navigation" class="mobile-nav" aria-label="移动导航">
       <NuxtLink v-for="item in primaryNav" :key="item.to" :to="item.to">{{ item.label }}</NuxtLink>
-      <NuxtLink to="/contact">预约咨询</NuxtLink>
+      <NuxtLink to="/contact">声乐咨询</NuxtLink>
     </nav>
   </header>
 </template>

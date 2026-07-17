@@ -2,26 +2,31 @@ export interface Course {
   slug: string
   title: string
   audience: string
-  instrument: string
+  focus: string
   description: string
   image: string
+  imageAlt: string
   schedule: string
 }
 
-export interface FacultyMember {
+export interface TeachingRole {
   slug: string
-  name: string
-  role: string
+  title: string
+  audience: string
   specialties: string[]
   statement: string
   image: string
+  imageAlt: string
 }
 
-export interface LearnerStory {
-  name: string
-  identity: string
-  quote: string
-  course: string
+export interface LearnerJourney {
+  stage: string
+  title: string
+  profile: string
+  summary: string
+  milestones: string[]
+  image: string
+  imageAlt: string
 }
 
 export interface Activity {

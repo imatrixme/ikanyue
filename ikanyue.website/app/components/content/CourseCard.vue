@@ -8,11 +8,11 @@ defineProps<{ course: Course; index: number }>()
 <template>
   <article class="course-card">
     <div class="course-card__media">
-      <img :src="course.image" :alt="`${course.title}课程`" loading="lazy">
+      <img :src="course.image" :alt="course.imageAlt" loading="lazy">
       <span>{{ String(index + 1).padStart(2, '0') }}</span>
     </div>
     <div class="course-card__body">
-      <p class="course-card__instrument">{{ course.instrument }}</p>
+      <p class="course-card__focus">{{ course.focus }}</p>
       <h3>{{ course.title }}</h3>
       <p>{{ course.description }}</p>
       <dl>

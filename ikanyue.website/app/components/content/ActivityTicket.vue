@@ -9,7 +9,7 @@ const month = computed(() => new Intl.DateTimeFormat('zh-CN', { month: 'short' }
 const day = computed(() => String(start.value.getDate()).padStart(2, '0'))
 const weekday = computed(() => new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(start.value))
 const time = computed(() => new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(start.value))
-const image = computed(() => props.activity.coverImageUrl || props.activity.coverImage || '/images/performance.webp')
+const image = computed(() => props.activity.coverImageUrl || props.activity.coverImage || '/images/vocal-performance.webp')
 </script>
 
 <template>

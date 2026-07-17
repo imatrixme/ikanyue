@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
+import { designTokens } from './app/utils/brand.generated'
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-01',
@@ -19,11 +20,11 @@ export default defineNuxtConfig({
       titleTemplate: (title) => title ? `${title} | 看乐艺术` : '看乐艺术 KANYUE',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        { name: 'theme-color', content: '#00754a' },
+        { name: 'theme-color', content: designTokens.semanticColors.primary },
         { name: 'color-scheme', content: 'light' },
       ],
       link: [
-        { rel: 'preload', href: '/images/hero-studio.webp', as: 'image', type: 'image/webp' },
+        { rel: 'preload', href: '/images/vocal-community.webp', as: 'image', type: 'image/webp' },
       ],
     },
   },

@@ -11,6 +11,7 @@
     "postinstall": "nuxt prepare",
     "preview": "nuxt preview --host=127.0.0.1",
     "test": "vitest run",
+    "test:content": "node scripts/check-content.mjs",
     "test:e2e": "playwright test",
     "test:lighthouse": "lhci autorun"
   },
