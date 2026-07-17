@@ -12,20 +12,22 @@ const tokens = JSON.parse(await readFile(tokenPath, 'utf8'));
 const scanRoots = [
     'ikanyue.taro3/src/components',
     'ikanyue.taro3/src/pages',
+    'ikanyue.taro3/src/styles',
     'ikanyue.admin/src/components',
     'ikanyue.website/app/components',
     'ikanyue.website/app/pages',
+    'ikanyue.website/app/assets/css',
 ];
 
 const sourcePattern = /\.(?:css|js|mjs|scss|ts|tsx|vue)$/;
-const generatedPattern = /(?:^|\/)brand\.generated\.(?:css|scss|ts)$|(?:^|\/)theme\.mjs$/;
+const generatedPattern = /(?:^|\/)_?brand\.generated\.(?:css|scss|ts)$|(?:^|\/)theme\.mjs$/;
 
 async function collectFiles(directory) {
     const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
     const nested = await Promise.all(entries.map(async (entry) => {
         const target = path.join(directory, entry.name);
         if (entry.isDirectory()) return collectFiles(target);
-        if (!sourcePattern.test(entry.name) || generatedPattern.test(target)) return [];
+        if (!sourcePattern.test(entry.name) || generatedPattern.test(target) || /\.(?:test|spec)\./.test(entry.name)) return [];
         return [target];
     }));
     return nested.flat();
@@ -37,6 +39,16 @@ const brandValues = new Set(Object.values(tokens.semantic.color).filter((value) 
     typeof value === 'string' && /^(?:#|rgba?\()/.test(value)
 )));
 const violations = [];
+const rawVisualPatterns = [
+    {
+        label: 'raw typography value',
+        pattern: /(?:font-size|font-weight|line-height)\s*:\s*(?!0(?:[;"'])|\$|var\()[0-9]+(?:\.[0-9]+)?(?:px|rpx|rem|em)?\b|font-weight\s*:\s*(?:bold|normal)\b/gi,
+    },
+    {
+        label: 'raw radius value',
+        pattern: /border(?:-(?:top|right|bottom|left)){0,2}-radius\s*:\s*[0-9]+(?:\.[0-9]+)?(?:px|rpx|rem|em)\b/gi,
+    },
+];
 
 for (const relativeRoot of scanRoots) {
     const files = await collectFiles(path.join(ROOT, relativeRoot));
@@ -46,6 +58,10 @@ for (const relativeRoot of scanRoots) {
             if (source.includes(value)) {
                 violations.push(`${path.relative(ROOT, file)} contains raw brand value ${value}`);
             }
+        }
+        for (const { label, pattern } of rawVisualPatterns) {
+            const matches = source.match(pattern) || [];
+            for (const match of matches) violations.push(`${path.relative(ROOT, file)} contains ${label}: ${match}`);
         }
     }
 }
