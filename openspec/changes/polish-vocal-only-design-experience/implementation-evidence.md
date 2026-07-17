@@ -22,9 +22,11 @@ Evidence:
 - Mini-program unit tests pass with 50 tests.
 - WeChat production build succeeds; known pre-existing CSS order and Browserslist freshness warnings remain.
 - Build-facing mini-program E2E confirms generated rich-text styles, named icon sizes, immersive page chrome, and compiled page contracts.
+- A post-verification blank-page regression was traced to mixed `dist` output: every page waited for webpack chunk `592`, while a stale `common.js` registered the string chunk `common`. The mini-program build now clears `dist` before production/watch builds and rejects missing page files or chunk dependencies after production builds.
 - WeChat DevTools skill `0.2.7` matched the installed DevTools skill and the logged-in simulator opened the production build with AppID `wx9cd85dbfdf22c771`.
 - Visual evidence captured at `/tmp/kanyue-mini-profile-audit.png`, `/tmp/kanyue-mini-userinfo-audit.png`, `/tmp/kanyue-mini-points-audit.png`, `/tmp/kanyue-mini-activity-audit.png`, and `/tmp/kanyue-mini-activity-detail-audit.png` shows coherent chrome, tokenized controls, named icon sizing, empty states, and error states without clipping or overlap.
 - The legacy 680px empty-state illustrations were restored as the component's primary visual, recolored from generated semantic tokens by `scripts/recolor-empty-illustrations.py`, and verified in WeChat DevTools at `/tmp/kanyue-mini-empty-state.png`.
+- Clean-build screenshots at `/tmp/kanyue-mini-final-activity.png`, `/tmp/kanyue-mini-final-points.png`, and `/tmp/kanyue-mini-final-profile.png` confirm all three tab pages render after the chunk-integrity fix.
 
 ## Website audit
 
