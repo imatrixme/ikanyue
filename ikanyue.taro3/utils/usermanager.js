@@ -5,6 +5,29 @@ const kUserInfo = 'com.ikanyue.cache.userinfo';
 
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 
+const getStorageValue = (key) => {
+    if (typeof Taro.getStorageSync === 'function') {
+        return Taro.getStorageSync(key);
+    }
+    return globalThis.localStorage?.getItem(key) || '';
+};
+
+const removeStorageValue = (key) => {
+    if (typeof Taro.removeStorageSync === 'function') {
+        Taro.removeStorageSync(key);
+        return;
+    }
+    globalThis.localStorage?.removeItem(key);
+};
+
+const setStorageValue = (key, value) => {
+    if (typeof Taro.setStorageSync === 'function') {
+        Taro.setStorageSync(key, value);
+        return;
+    }
+    globalThis.localStorage?.setItem(key, value);
+};
+
 const normalizeUserInfoAliases = (userInfo = {}) => {
     const normalized = { ...userInfo };
     [
@@ -23,7 +46,7 @@ const normalizeUserInfoAliases = (userInfo = {}) => {
 // 获取用户信息
 const getUserInfo = () => {
     try {
-        const data = Taro.getStorageSync(kUserInfo);
+        const data = getStorageValue(kUserInfo);
         if (typeof data !== 'string' || data.length === 0) {
             console.log('本地无用户数据');
             return {};
@@ -35,7 +58,7 @@ const getUserInfo = () => {
     } catch (err) {
         console.error('解析用户数据出错:', err);
         // 如果解析出错，返回空对象并清除可能损坏的数据
-        Taro.removeStorageSync(kUserInfo);
+        removeStorageValue(kUserInfo);
         return {};
     }
 };
@@ -60,7 +83,7 @@ const updateUserInfoCache = (userInfo) => {
         }
 
         console.log('更新用户缓存:', updatedUserInfo);
-        Taro.setStorageSync(kUserInfo, JSON.stringify(updatedUserInfo));
+        setStorageValue(kUserInfo, JSON.stringify(updatedUserInfo));
         return updatedUserInfo;
     } catch (err) {
         console.error('缓存用户数据失败:', err);
@@ -93,7 +116,7 @@ const isLogin = () => {
 // 清空用户信息（登出）
 const logout = () => {
     console.log('执行登出，清除用户数据');
-    Taro.removeStorageSync(kUserInfo);
+    removeStorageValue(kUserInfo);
 };
 
 const UserManager = {

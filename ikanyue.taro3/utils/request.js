@@ -1,6 +1,33 @@
 import { UserManager } from './usermanager';
 import Taro from '@tarojs/taro';
 
+const requestWithFetch = ({ data, fail, header, method, success, url }) => {
+    const requestUrl = new URL(url);
+    const normalizedMethod = String(method || 'GET').toUpperCase();
+    if (normalizedMethod === 'GET') {
+        Object.entries(data || {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) requestUrl.searchParams.set(key, String(value));
+        });
+    }
+
+    globalThis.fetch(requestUrl.toString(), {
+        body: normalizedMethod === 'GET' ? undefined : JSON.stringify(data || {}),
+        headers: header,
+        method: normalizedMethod,
+    })
+        .then(async (response) => {
+            success({ data: await response.json(), statusCode: response.status });
+        })
+        .catch(fail);
+};
+
+const sendRequest = (options) => {
+    if (typeof Taro.request === 'function') {
+        return Taro.request(options);
+    }
+    return requestWithFetch(options);
+};
+
 const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) => {
     var url_ = url.indexOf('http') === -1 ? SERVICE_URL + url : url;
     var headers_ = header || {};
@@ -13,7 +40,7 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
         if (authcheck) {
             headers_.token = UserManager.getToken();
         }
-        Taro.request({
+        sendRequest({
             url: url_,
             data: data,
             header: headers_,

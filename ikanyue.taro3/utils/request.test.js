@@ -98,4 +98,22 @@ describe('iNet request wrapper', () => {
 
         await expect(iNet.get('/v1/points/me')).rejects.toBe(networkError);
     });
+
+    it('falls back to fetch when Taro.request is unavailable', async () => {
+        const originalRequest = taroMock.request;
+        const fetchMock = vi.fn().mockResolvedValue({
+            json: vi.fn().mockResolvedValue({ ready: true }),
+            status: 200,
+        });
+        taroMock.request = undefined;
+        vi.stubGlobal('fetch', fetchMock);
+
+        await expect(iNet.get('/v1/points/me', { page: 2 })).resolves.toEqual({ ready: true });
+        expect(fetchMock).toHaveBeenCalledWith(
+            'https://api.example.com/v1/points/me?page=2',
+            expect.objectContaining({ method: 'GET' })
+        );
+
+        taroMock.request = originalRequest;
+    });
 });

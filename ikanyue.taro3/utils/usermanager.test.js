@@ -139,4 +139,36 @@ describe('UserManager', () => {
         UserManager.logout();
         expect(taroMock.removeStorageSync).toHaveBeenCalledWith(storageKey);
     });
+
+    it('falls back to browser storage when Taro storage APIs are unavailable', () => {
+        const originalGet = taroMock.getStorageSync;
+        const originalSet = taroMock.setStorageSync;
+        const originalRemove = taroMock.removeStorageSync;
+        const browserStorage = new Map([[storageKey, JSON.stringify({ token: 'browser-token' })]]);
+        Object.defineProperty(globalThis, 'localStorage', {
+            configurable: true,
+            value: {
+                getItem: vi.fn((key) => browserStorage.get(key) || null),
+                removeItem: vi.fn((key) => browserStorage.delete(key)),
+                setItem: vi.fn((key, value) => browserStorage.set(key, value)),
+            },
+        });
+        taroMock.getStorageSync = undefined;
+        taroMock.setStorageSync = undefined;
+        taroMock.removeStorageSync = undefined;
+
+        expect(UserManager.getToken()).toBe('browser-token');
+        UserManager.updateUserInfoCache({ nickName: '浏览器学员' });
+        expect(JSON.parse(browserStorage.get(storageKey))).toMatchObject({
+            nickName: '浏览器学员',
+            token: 'browser-token',
+        });
+        UserManager.logout();
+        expect(browserStorage.has(storageKey)).toBe(false);
+
+        taroMock.getStorageSync = originalGet;
+        taroMock.setStorageSync = originalSet;
+        taroMock.removeStorageSync = originalRemove;
+        delete globalThis.localStorage;
+    });
 });
