@@ -4,7 +4,8 @@ import { useState } from 'react'
 import type { AppView, OpsProfile, ToastState } from '../../app/types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
-import { cn } from '../ui/utils'
+import { IconButton } from '../ui/Controls'
+import { ToastMessage } from '../ui/Feedback'
 import { AdminSidebar } from './AdminSidebar'
 
 interface ShellProps {
@@ -52,15 +53,14 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
         ) : null}
         <div className="min-w-0">
           <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--background)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--background)]/80">
-            <div className="mx-auto flex min-h-16 max-w-[1440px] items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+            <div className="flex min-h-16 items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
               <div className="flex min-w-0 items-center gap-3">
-                <Button
-                  aria-label="打开导航"
-                  className="inline-flex h-9 w-9 px-0 lg:hidden"
+                <IconButton
+                  className="inline-flex lg:hidden"
                   icon={<Menu className="h-4 w-4" aria-hidden="true" />}
+                  label="打开导航"
                   onClick={() => setMobileNavOpen(true)}
                   type="button"
-                  variant="secondary"
                 />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-[var(--muted-foreground)]">{currentViewEyebrow}</p>
@@ -76,11 +76,9 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
               </div>
             </div>
           </header>
-          <main className="mx-auto min-w-0 max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6">
+          <main className="min-w-0 px-4 py-5 sm:px-6 sm:py-6">
             {toast ? (
-              <div className={cn('mb-4 rounded-md border px-4 py-3 text-sm shadow-sm', toast.type === 'error' ? 'border-[var(--danger-border)] bg-[var(--danger-soft)] text-[var(--destructive)]' : 'border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--info)]')}>
-                {toast.message}
-              </div>
+              <div className="mb-4"><ToastMessage tone={toast.type === 'error' ? 'error' : 'info'}>{toast.message}</ToastMessage></div>
             ) : null}
             {children}
           </main>

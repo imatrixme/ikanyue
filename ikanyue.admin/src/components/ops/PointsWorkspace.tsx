@@ -2,15 +2,17 @@ import { Eye, Gift, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { RewardItem, StudentPointSummary, StudentPointsRow } from '../../app/types'
+import { FilterToolbar, PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
-import { Panel } from '../ui/Card'
+import { IconButton } from '../ui/Controls'
+import { AsyncState, DataTable, ResponsiveDataRegion } from '../ui/DataDisplay'
 import { Field, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { FilterSummary, ListEmptyState, PaginationControls } from './ListControls'
 import { isRecord, pageItems, parseOptionalNumber, stringValue, usePersistedFilters } from './listState'
 import { PointActionDialog } from './PointActionDialog'
-import { StudentDetailDialog } from './StudentDetailDialog'
+import { StudentDetailDrawer } from './StudentDetailDialog'
 
 interface PointsWorkspaceProps {
   loading: boolean
@@ -64,33 +66,26 @@ export function PointsWorkspace(props: PointsWorkspaceProps) {
   }
 
   return (
-    <Panel className="min-w-0 overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
-        <div><h2 className="text-lg font-semibold">学员积分</h2><p className="ky-paragraph mt-1">浏览积分状态，再从学员行发起操作。</p></div>
-        <div className="flex items-center gap-2"><Badge tone="blue">{props.students.length} 人</Badge><Button aria-label="重新加载学员" className="h-9 w-9 px-0" disabled={props.loading} icon={<RefreshCw className="h-4 w-4" />} onClick={() => void props.onReloadStudents()} type="button" variant="secondary" /></div>
-      </div>
-      <div className="grid gap-3 border-b border-[var(--border)] bg-[var(--brand-wash)] px-4 py-4 md:grid-cols-[minmax(180px,1fr)_140px_140px_180px]">
+    <WorkspacePanel>
+      <PageHeader actions={<IconButton disabled={props.loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员" onClick={() => void props.onReloadStudents()} type="button" />} badge={<Badge tone="blue">{props.students.length} 人</Badge>} description="先确认学员与余额，再从同一行发起加分、兑换或查看流水。" eyebrow="积分与线下兑换" title="学员积分" />
+      <SummaryBand><SummaryMetric label="学员总数" value={`${props.students.length} 人`} /><SummaryMetric label="当前积分总额" value={`${props.students.reduce((total, student) => total + student.balance, 0)} 分`} /><SummaryMetric label="上架实物" value={`${activeRewards.length} 件`} /></SummaryBand>
+      <FilterToolbar className="md:grid-cols-[minmax(180px,1fr)_140px_140px_180px]">
         <Field label="搜索学员" htmlFor="learner-keyword"><Input id="learner-keyword" placeholder="姓名 / 昵称 / 手机号" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>
         <Field label="最低积分" htmlFor="learner-min"><Input id="learner-min" min="0" type="number" value={filters.minBalance} onChange={(event) => updateFilter('minBalance', event.target.value)} /></Field>
         <Field label="最高积分" htmlFor="learner-max"><Input id="learner-max" min="0" type="number" value={filters.maxBalance} onChange={(event) => updateFilter('maxBalance', event.target.value)} /></Field>
         <Field label="排序" htmlFor="learner-sort"><Select id="learner-sort" options={[{ value: 'name-asc', label: '姓名升序' }, { value: 'balance-desc', label: '积分从高到低' }, { value: 'balance-asc', label: '积分从低到高' }]} value={filters.sort} onChange={(event) => updateFilter('sort', event.target.value as LearnerSort)} /></Field>
-      </div>
+      </FilterToolbar>
       <div className="px-4"><FilterSummary activeCount={activeCount} onReset={resetFilters} /></div>
-      {props.loading && props.students.length === 0 ? <div className="grid min-h-64 place-items-center text-sm text-[var(--muted-foreground)]">正在加载学员积分...</div> : paged.items.length > 0 ? (
-        <>
-          <div className="hidden overflow-x-auto md:block"><LearnerTable activeRewards={activeRewards} selectedId={props.selectedStudentId} summary={props.studentSummary} students={paged.items} onAction={(kind, student) => kind === 'detail' ? void openDetail(student) : setOverlay({ kind, student })} /></div>
-          <div className="grid divide-y divide-[var(--border)] md:hidden">{paged.items.map((student) => <LearnerCard activeRewards={activeRewards} key={student.id} student={student} onAction={(kind) => kind === 'detail' ? void openDetail(student) : setOverlay({ kind, student })} />)}</div>
-        </>
-      ) : <ListEmptyState filtered={activeCount > 0} noun="学员" onReset={resetFilters} />}
+      <AsyncState empty={paged.items.length === 0 ? <ListEmptyState filtered={activeCount > 0} noun="学员" onReset={resetFilters} /> : undefined} loading={props.loading && props.students.length === 0} loadingLabel="正在加载学员积分..."><ResponsiveDataRegion desktop={<LearnerTable activeRewards={activeRewards} selectedId={props.selectedStudentId} summary={props.studentSummary} students={paged.items} onAction={(kind, student) => kind === 'detail' ? void openDetail(student) : setOverlay({ kind, student })} />} mobile={paged.items.map((student) => <LearnerCard activeRewards={activeRewards} key={student.id} student={student} onAction={(kind) => kind === 'detail' ? void openDetail(student) : setOverlay({ kind, student })} />)} /></AsyncState>
       <PaginationControls onPageChange={setPage} page={paged.page} totalItems={filtered.length} totalPages={paged.totalPages} />
       {overlay?.kind === 'grant' || overlay?.kind === 'redeem' ? <PointActionDialog loading={props.loading} mode={overlay.kind} onAddPoints={props.onAddPoints} onClose={() => setOverlay(null)} onRedeem={props.onRedeem} rewards={props.rewards} student={overlay.student} /> : null}
-      {overlay?.kind === 'detail' ? <StudentDetailDialog loading={overlay.loading} onClose={() => setOverlay(null)} onRetry={() => void retryDetail()} rewards={props.rewards} student={overlay.student} summary={overlay.summary} /> : null}
-    </Panel>
+      {overlay?.kind === 'detail' ? <StudentDetailDrawer loading={overlay.loading} onClose={() => setOverlay(null)} onRetry={() => void retryDetail()} rewards={props.rewards} student={overlay.student} summary={overlay.summary} /> : null}
+    </WorkspacePanel>
   )
 }
 
 function LearnerTable({ activeRewards, selectedId, students, summary, onAction }: { activeRewards: RewardItem[]; selectedId: string; students: StudentPointsRow[]; summary: StudentPointSummary | null; onAction: (kind: 'grant' | 'redeem' | 'detail', student: StudentPointsRow) => void }) {
-  return <table className="w-full border-collapse text-sm"><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">当前积分</th><th className="px-4 py-3 font-medium">可兑换</th><th className="px-4 py-3 font-medium">最近记录</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.cellphone || '无手机号'}</p></td><td className="px-4 py-3 font-semibold tabular-nums text-[var(--point)]">{student.balance} 分</td><td className="px-4 py-3">{affordableCount(activeRewards, student.balance)} 件</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{selectedId === student.id && summary?.events?.[0] ? eventSummary(summary.events[0]) : '-'}</td><td className="px-4 py-3"><RowActions student={student} onAction={onAction} /></td></tr>)}</tbody></table>
+  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">当前积分</th><th className="px-4 py-3 font-medium">可兑换</th><th className="px-4 py-3 font-medium">最近记录</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.cellphone || '无手机号'}</p></td><td className="px-4 py-3 font-semibold tabular-nums text-[var(--point)]">{student.balance} 分</td><td className="px-4 py-3">{affordableCount(activeRewards, student.balance)} 件</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{selectedId === student.id && summary?.events?.[0] ? eventSummary(summary.events[0]) : '-'}</td><td className="px-4 py-3"><RowActions student={student} onAction={onAction} /></td></tr>)}</tbody></DataTable>
 }
 
 function LearnerCard({ activeRewards, student, onAction }: { activeRewards: RewardItem[]; student: StudentPointsRow; onAction: (kind: 'grant' | 'redeem' | 'detail') => void }) {

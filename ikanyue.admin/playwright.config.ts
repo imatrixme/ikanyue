@@ -21,7 +21,8 @@ export default defineConfig({
     timeout: 120_000,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-wide', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } } },
+    { name: 'chromium-compact', use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 900 } } },
     { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
   ],
 })

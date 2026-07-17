@@ -1,11 +1,12 @@
 import type { PointEvent, StudentPointSummary } from '../../app/types'
+import { DataTable } from '../ui/DataDisplay'
 import { cn } from '../ui/utils'
 
 export function PointEventsView({ events = [] }: { events?: StudentPointSummary['events'] }) {
   return events.length > 0 ? (
         <>
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full border-collapse text-sm">
+            <DataTable>
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]">
                   <th className="px-4 py-3 font-medium">操作</th>
@@ -26,7 +27,7 @@ export function PointEventsView({ events = [] }: { events?: StudentPointSummary[
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
           <ol className="grid gap-0 px-5 py-2 md:hidden" aria-label="积分记录时间线">
             {events.map((event) => (

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import type { OpsApi } from '../../app/api'
 import type { LoginResult } from '../../app/types'
 import { Button } from '../ui/Button'
+import { SegmentedControl } from '../ui/Controls'
+import { Alert } from '../ui/Feedback'
 import { Field, Input } from '../ui/Input'
 
 interface LoginViewProps {
@@ -65,26 +67,9 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
             <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
             <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '管理员登录'}</h2>
           </div>
-          <div className="mb-4 grid grid-cols-2 rounded-md border border-[var(--border)] bg-[var(--muted)] p-1 text-sm font-medium">
-            <button
-              aria-label="切换到登录"
-              className={`rounded px-3 py-2 ${mode === 'login' ? 'bg-[var(--card)] text-[var(--foreground)] shadow-sm' : 'text-[var(--muted-foreground)]'}`}
-              type="button"
-              onClick={() => switchMode('login')}
-            >
-              登录
-            </button>
-            <button
-              aria-label="切换到注册"
-              className={`rounded px-3 py-2 ${mode === 'register' ? 'bg-[var(--card)] text-[var(--foreground)] shadow-sm' : 'text-[var(--muted-foreground)]'}`}
-              type="button"
-              onClick={() => switchMode('register')}
-            >
-              注册
-            </button>
-          </div>
-          {errorMessage ? <div className="mb-4 rounded-md border border-[var(--danger-border)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--destructive)]">{errorMessage}</div> : null}
-          {successMessage ? <div className="mb-4 rounded-md border border-[var(--info-border)] bg-[var(--info-soft)] px-3 py-2 text-sm text-[var(--info)]">{successMessage}</div> : null}
+          <div className="mb-4"><SegmentedControl label="账号操作" onChange={switchMode} options={[{ value: 'login', label: '登录' }, { value: 'register', label: '注册' }]} value={mode} /></div>
+          {errorMessage ? <Alert className="mb-4" tone="error">{errorMessage}</Alert> : null}
+          {successMessage ? <Alert className="mb-4" tone="success">{successMessage}</Alert> : null}
           <div className="grid gap-4">
             <Field label={mode === 'register' ? '手机号' : '账号或手机号'} htmlFor="ops-account">
               <Input

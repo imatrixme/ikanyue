@@ -3,7 +3,9 @@ import { useMemo, useState } from 'react'
 
 import type { RewardItem, StudentPointsRow } from '../../app/types'
 import { Button } from '../ui/Button'
+import { Textarea } from '../ui/Controls'
 import { DialogShell } from '../ui/DialogShell'
+import { Alert } from '../ui/Feedback'
 import { Field, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { RewardMedia } from './RewardMedia'
@@ -61,7 +63,7 @@ export function PointActionDialog({ loading, mode, onAddPoints, onClose, onRedee
             <>
               <Field label="积分数量" htmlFor="points-amount"><Input data-autofocus id="points-amount" min="1" step="1" type="number" value={amount} onChange={(event) => setAmount(event.target.value)} /></Field>
               <Field label="原因" htmlFor="points-reason"><Input id="points-reason" value={reason} onChange={(event) => setReason(event.target.value)} /></Field>
-              <Field label="备注" htmlFor="points-remark"><Input id="points-remark" value={grantRemark} onChange={(event) => setGrantRemark(event.target.value)} /></Field>
+              <Field label="备注" htmlFor="points-remark"><Textarea id="points-remark" value={grantRemark} onChange={(event) => setGrantRemark(event.target.value)} /></Field>
               <Button disabled={loading || Number(amount) <= 0} icon={<Plus className="h-4 w-4" />}>复核加分结果</Button>
             </>
           ) : (
@@ -69,8 +71,8 @@ export function PointActionDialog({ loading, mode, onAddPoints, onClose, onRedee
               <Field label="可兑换实物" htmlFor="reward-item">
                 <Select data-autofocus id="reward-item" options={redeemable.map((item) => ({ value: item.id, label: `${item.name} · ${item.pointsPrice} 分` }))} placeholder="暂无可兑换实物" value={selectedId} onChange={(event) => setItemId(event.target.value)} />
               </Field>
-              {selectedReward ? <RewardChoice reward={selectedReward} /> : <p className="rounded-md bg-[var(--muted)] px-3 py-4 text-sm text-[var(--muted-foreground)]">当前积分还不能兑换任何上架实物。</p>}
-              <Field label="兑换备注" htmlFor="redeem-remark"><Input id="redeem-remark" value={redeemRemark} onChange={(event) => setRedeemRemark(event.target.value)} /></Field>
+              {selectedReward ? <RewardChoice reward={selectedReward} /> : <Alert tone="warning">当前积分还不能兑换任何上架实物。</Alert>}
+              <Field label="兑换备注" htmlFor="redeem-remark"><Textarea id="redeem-remark" value={redeemRemark} onChange={(event) => setRedeemRemark(event.target.value)} /></Field>
               <Button disabled={loading || !selectedReward} icon={<Gift className="h-4 w-4" />}>复核兑换结果</Button>
             </>
           )}

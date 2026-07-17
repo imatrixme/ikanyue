@@ -2,9 +2,11 @@ import { Pencil, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { StudentInput, StudentRecord } from '../../app/types'
+import { FilterToolbar, PageHeader, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
-import { Panel } from '../ui/Card'
+import { IconButton } from '../ui/Controls'
+import { AsyncState, DataTable, ResponsiveDataRegion } from '../ui/DataDisplay'
 import { Field, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { FilterSummary, ListEmptyState, PaginationControls } from './ListControls'
@@ -44,26 +46,23 @@ export function StudentsPanel({ errorMessage, loading, onReload, onSave, student
   }
 
   return (
-    <Panel className="min-w-0 overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
-        <div><h2 className="text-lg font-semibold">学员管理</h2><p className="ky-paragraph mt-1">维护积分系统使用的学员基本信息。</p></div>
-        <div className="flex items-center gap-2"><Badge tone="blue">{students.filter((student) => !student.blocked).length} 人启用</Badge><Button aria-label="重新加载学员管理列表" className="h-9 w-9 px-0" disabled={loading} icon={<RefreshCw className="h-4 w-4" />} onClick={() => void onReload()} type="button" variant="secondary" /><Button aria-label="新增学员" className="h-9 w-9 px-0" icon={<Plus className="h-4 w-4" />} onClick={() => setEditor(null)} type="button" /></div>
-      </div>
-      <div className="grid gap-3 border-b border-[var(--border)] bg-[var(--brand-wash)] px-4 py-4 md:grid-cols-[minmax(220px,1fr)_160px_180px]">
+    <WorkspacePanel>
+      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员管理列表" onClick={() => void onReload()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新增学员" onClick={() => setEditor(null)} type="button" variant="primary" /></>} badge={<Badge tone="blue">{students.filter((student) => !student.blocked).length} 人启用</Badge>} description="维护积分系统使用的学员基本信息。" eyebrow="账号与资料" title="学员管理" />
+      <FilterToolbar className="md:grid-cols-[minmax(220px,1fr)_160px_180px]">
         <Field label="搜索学员" htmlFor="student-directory-keyword"><Input id="student-directory-keyword" placeholder="姓名 / 昵称 / 手机号" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>
         <Field label="状态" htmlFor="student-directory-status"><Select allowEmpty id="student-directory-status" options={[{ value: 'all', label: '全部状态' }, { value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }]} value={filters.status} onChange={(event) => updateFilter('status', event.target.value as StudentFilters['status'])} /></Field>
         <Field label="排序" htmlFor="student-directory-sort"><Select id="student-directory-sort" options={[{ value: 'created-desc', label: '最近创建' }, { value: 'created-asc', label: '最早创建' }, { value: 'name-asc', label: '姓名升序' }, { value: 'name-desc', label: '姓名降序' }]} value={filters.sort} onChange={(event) => updateFilter('sort', event.target.value as StudentSort)} /></Field>
-      </div>
+      </FilterToolbar>
       <div className="px-4"><FilterSummary activeCount={activeCount} onReset={resetFilters} /></div>
-      {loading && students.length === 0 ? <div className="grid min-h-64 place-items-center text-sm text-[var(--muted-foreground)]">正在加载学员...</div> : errorMessage && students.length === 0 ? <div className="grid min-h-64 place-items-center gap-3 px-5 text-center"><div><p className="font-semibold">学员列表加载失败</p><p className="mt-2 text-sm text-[var(--muted-foreground)]">{errorMessage}</p></div><Button icon={<RefreshCw className="h-4 w-4" />} onClick={() => void onReload()} type="button">重新加载</Button></div> : paged.items.length > 0 ? <><div className="hidden overflow-x-auto md:block"><StudentTable onEdit={setEditor} students={paged.items} /></div><div className="grid divide-y divide-[var(--border)] md:hidden">{paged.items.map((student) => <StudentCard key={student.id} onEdit={() => setEditor(student)} student={student} />)}</div></> : <ListEmptyState filtered={activeCount > 0} noun="学员" onCreate={() => setEditor(null)} onReset={resetFilters} />}
+      <AsyncState empty={paged.items.length === 0 ? <ListEmptyState filtered={activeCount > 0} noun="学员" onCreate={() => setEditor(null)} onReset={resetFilters} /> : undefined} error={students.length === 0 ? errorMessage : undefined} errorTitle="学员列表加载失败" loading={loading && students.length === 0} loadingLabel="正在加载学员..." onRetry={() => void onReload()}><ResponsiveDataRegion desktop={<StudentTable onEdit={setEditor} students={paged.items} />} mobile={paged.items.map((student) => <StudentCard key={student.id} onEdit={() => setEditor(student)} student={student} />)} /></AsyncState>
       <PaginationControls onPageChange={setPage} page={paged.page} totalItems={filtered.length} totalPages={paged.totalPages} />
       {editor !== undefined ? <StudentEditorDialog loading={loading} onClose={() => setEditor(undefined)} onSave={onSave} student={editor} /> : null}
-    </Panel>
+    </WorkspacePanel>
   )
 }
 
 function StudentTable({ onEdit, students }: { onEdit: (student: StudentRecord) => void; students: StudentRecord[] }) {
-  return <table className="w-full border-collapse text-sm"><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">手机号</th><th className="px-4 py-3 font-medium">状态</th><th className="px-4 py-3 font-medium">最近登录</th><th className="px-4 py-3 font-medium">创建时间</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.nickName || '无昵称'}</p></td><td className="px-4 py-3 tabular-nums">{student.cellphone}</td><td className="px-4 py-3"><StatusBadge blocked={student.blocked} /></td><td className="px-4 py-3 text-[var(--muted-foreground)]">{formatDate(student.lastLoginAt)}</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{formatDate(student.created)}</td><td className="px-4 py-3 text-right"><Button aria-label={`编辑${studentName(student)}`} icon={<Pencil className="h-4 w-4" />} onClick={() => onEdit(student)} type="button" variant="secondary">编辑</Button></td></tr>)}</tbody></table>
+  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">手机号</th><th className="px-4 py-3 font-medium">状态</th><th className="px-4 py-3 font-medium">最近登录</th><th className="px-4 py-3 font-medium">创建时间</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.nickName || '无昵称'}</p></td><td className="px-4 py-3 tabular-nums">{student.cellphone}</td><td className="px-4 py-3"><StatusBadge blocked={student.blocked} /></td><td className="px-4 py-3 text-[var(--muted-foreground)]">{formatDate(student.lastLoginAt)}</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{formatDate(student.created)}</td><td className="px-4 py-3 text-right"><Button aria-label={`编辑${studentName(student)}`} icon={<Pencil className="h-4 w-4" />} onClick={() => onEdit(student)} type="button" variant="secondary">编辑</Button></td></tr>)}</tbody></DataTable>
 }
 
 function StudentCard({ onEdit, student }: { onEdit: () => void; student: StudentRecord }) {

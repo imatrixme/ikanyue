@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 
 async function loginAsAdmin(page: import('@playwright/test').Page) {
   await page.goto('/')
@@ -140,6 +141,22 @@ test('responsive dialogs fit the viewport without horizontal overflow', async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
 })
 
+test('representative admin workspaces have no serious accessibility violations', async ({ page }) => {
+  await loginAsAdmin(page)
+  await expectAccessible(page)
+
+  const detail = page.getByRole('button', { name: '查看张同学详情' })
+  await detail.click()
+  await expect(page.getByRole('dialog', { name: '张同学积分详情' })).toBeVisible()
+  await expectAccessible(page)
+  await page.keyboard.press('Escape')
+
+  await openView(page, '学员管理')
+  await expectAccessible(page)
+  await openRewards(page)
+  await expectAccessible(page)
+})
+
 test('admin creates, edits, and disables a learner from student management', async ({ page }) => {
   await loginAsAdmin(page)
   await openView(page, '学员管理')
@@ -185,4 +202,10 @@ async function controlsDoNotOverlap(page: import('@playwright/test').Page, ids: 
     const rects = controlIds.map((id) => document.getElementById(id)?.getBoundingClientRect()).filter(Boolean) as DOMRect[]
     return rects.length === controlIds.length && rects.every((rect, index) => index === 0 || rect.left >= rects[index - 1].right)
   }, ids)
+}
+
+async function expectAccessible(page: import('@playwright/test').Page) {
+  await page.waitForTimeout(250)
+  const results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations.filter((violation) => violation.impact === 'critical' || violation.impact === 'serious')).toEqual([])
 }

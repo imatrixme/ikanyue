@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { RewardItem, RewardItemInput, UploadProgressHandler } from '../../app/types'
 import { Button } from '../ui/Button'
+import { Textarea } from '../ui/Controls'
+import { Alert } from '../ui/Feedback'
 import { Field, Input } from '../ui/Input'
+import { FileUploader } from '../ui/Media'
 import { Select } from '../ui/Select'
 import { RewardMedia } from './RewardMedia'
 
@@ -85,14 +88,14 @@ export function RewardEditor({ loading, onCancel, onDirtyChange, onSave, onSaved
         <section className="grid gap-3 sm:grid-cols-[minmax(220px,0.9fr)_minmax(260px,1.1fr)] sm:items-start">
           <div className="grid gap-3"><div className="flex items-center gap-2 text-sm font-semibold"><ImagePlus className="h-4 w-4" aria-hidden="true" />实物图片</div><RewardMedia alt="实物图片预览" className="w-full" fit="contain" name={form.name || reward?.name || '实物'} src={previewUrl} /></div>
           <div className="grid gap-3 pt-7">
-            {reward ? <><Field label="选择图片" htmlFor="reward-image-file" hint="JPG、PNG、WebP、GIF 或 AVIF，最大 5MB"><Input key={fileInputVersion} accept="image/jpeg,image/png,image/webp,image/gif,image/avif" id="reward-image-file" type="file" onChange={(event) => selectImage(event.target.files?.[0] || null)} /></Field>{fileError ? <p className="text-xs font-medium text-[var(--destructive)]">{fileError}</p> : null}{selectedFile ? <p className="text-xs text-[var(--muted-foreground)]">{selectedFile.name}</p> : null}{uploading || uploadProgress > 0 ? <div className="grid gap-1"><div className="flex justify-between text-xs text-[var(--muted-foreground)]"><span>{uploading ? '上传中' : '上传完成'}</span><span>{uploadProgress}%</span></div><progress aria-label="上传进度" className="h-2 w-full accent-[var(--point)]" max={100} value={uploadProgress} /></div> : null}<Button disabled={loading || uploading || !selectedFile || !onUploadImage} icon={<Upload className="h-4 w-4" />} onClick={() => void uploadImage()} type="button">{uploading ? '上传中' : previewUrl ? '替换图片' : '上传图片'}</Button></> : <p className="rounded-md bg-[var(--info-soft)] px-3 py-3 text-sm text-[var(--info)]">先创建实物，再上传和管理图片。</p>}
+            {reward ? <><FileUploader accept="image/jpeg,image/png,image/webp,image/gif,image/avif" error={fileError} fileName={selectedFile?.name} hint="JPG、PNG、WebP、GIF 或 AVIF，最大 5MB" id="reward-image-file" inputKey={fileInputVersion} label="选择图片" onChange={selectImage} progress={uploadProgress} uploading={uploading} /><Button disabled={loading || uploading || !selectedFile || !onUploadImage} icon={<Upload className="h-4 w-4" />} onClick={() => void uploadImage()} type="button">{uploading ? '上传中' : previewUrl ? '替换图片' : '上传图片'}</Button></> : <Alert>先创建实物，再上传和管理图片。</Alert>}
           </div>
         </section>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field className="sm:col-span-2" label="实物名称" htmlFor="reward-name"><Input data-autofocus id="reward-name" value={form.name} onChange={(event) => update('name', event.target.value)} /></Field>
           <Field label="积分价格" htmlFor="reward-price"><Input id="reward-price" min="1" step="1" type="number" value={form.pointsPrice} onChange={(event) => update('pointsPrice', event.target.value)} /></Field>
           <Field label="状态" htmlFor="reward-status"><Select id="reward-status" options={[{ value: 'active', label: '上架' }, { value: 'inactive', label: '下线' }]} value={form.status} onChange={(event) => update('status', event.target.value as RewardFormState['status'])} /></Field>
-          <Field className="sm:col-span-2" label="说明" htmlFor="reward-description"><Input id="reward-description" value={form.description} onChange={(event) => update('description', event.target.value)} /></Field>
+          <Field className="sm:col-span-2" label="说明" htmlFor="reward-description"><Textarea id="reward-description" value={form.description} onChange={(event) => update('description', event.target.value)} /></Field>
         </div>
         <details className="rounded-md border border-[var(--border)] px-3 py-2"><summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold">高级设置<ChevronDown className="h-4 w-4" aria-hidden="true" /></summary><div className="mt-4 grid gap-4"><Field label="排序" htmlFor="reward-sort"><Input id="reward-sort" step="1" type="number" value={form.sortOrder} onChange={(event) => update('sortOrder', event.target.value)} /></Field><Field label="兼容图片 URL" htmlFor="reward-image" hint="仅用于保留旧数据；新图片请使用上方上传功能。"><Input id="reward-image" value={form.image} onChange={(event) => update('image', event.target.value)} /></Field></div></details>
       </div>

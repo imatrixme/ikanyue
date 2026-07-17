@@ -11,7 +11,7 @@ async function collectComponentFiles(directory: string): Promise<string[]> {
   const files = await Promise.all(entries.map(async (entry) => {
     const target = path.join(directory, entry.name)
     if (entry.isDirectory()) return collectComponentFiles(target)
-    if (!/\.tsx?$/.test(entry.name) || /\.test\.tsx?$/.test(entry.name)) return []
+    if (!/\.tsx?$/.test(entry.name) || /(?:\.test|\.generated)\.tsx?$/.test(entry.name)) return []
     return [target]
   }))
   return files.flat()
@@ -27,6 +27,7 @@ describe('brand design system', () => {
     expect(css).toContain('--primary-hover: #006241;')
     expect(css).toContain('--foreground: #31443e;')
     expect(css).toContain('--brand-wash: #f6faf8;')
+    expect(css).toContain('--info: #005f9e;')
     expect(css).toContain('--danger-border: #dfbbb7;')
     expect(css).toContain('--on-primary-muted: rgb(255 255 255 / 75%);')
     expect(css).toContain('--ky-font-size-body: 0.875rem;')
@@ -37,6 +38,10 @@ describe('brand design system', () => {
     expect(css).toContain('--ky-shadow-sm:')
     expect(css).toContain('--ky-font-weight-medium: 500;')
     expect(css).toContain('--ky-motion-fast: 160ms;')
+    expect(css).toContain('--ky-breakpoint-2xl: 1440px;')
+    expect(css).toContain('--ky-control-height-default: 40px;')
+    expect(css).toContain('--ky-table-row-default: 48px;')
+    expect(css).toContain('--ky-ticket-notch: 8px;')
     expect(css).toContain('@theme inline')
     expect(css).not.toMatch(/oklch\(/)
   })
