@@ -6,9 +6,10 @@
 
 | Path | Description | Runtime |
 | --- | --- | --- |
-| `ikanyue.taro3` | 微信小程序 | Taro 3 / Vue |
+| `ikanyue.taro3` | 微信小程序 | Taro / Vue |
 | `ikanyue.mapi.hono` | 后端 API | Hono / Node.js or Bun |
 | `ikanyue.admin` | 运营后台 | React / Vite |
+| `ikanyue.website` | 看乐声乐官网 | Next.js |
 | `ikanyue.m.nuxt` | 活动页网站 | Nuxt |
 | `ikanyue.flutter` | 规划中的 Flutter App | Flutter |
 
@@ -46,11 +47,24 @@ flutter run
 
 | Path | Remote | Branch |
 | --- | --- | --- |
-| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `release/wechat-points-lite` |
-| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `release/wechat-points-lite` |
-| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `release/wechat-points-lite` |
+| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `release/2.0.0` |
+| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `release/2.0.0` |
+| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `release/2.0.0` |
+| `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `release/2.0.0` |
 | `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
 | `ikanyue.flutter` | `git@github.com:imatrixme/ikanyue.flutter.git` | `douyin` |
+
+四个活跃产品项目与父仓库使用以下版本线：
+
+- 稳定基线：`release/2.0.0`
+- 课程点系统：`feature/course-credit-system`
+
+## Course credit system documents
+
+- Product requirements: [`docs/product/course-credit-system-prd.md`](docs/product/course-credit-system-prd.md)
+- Technical design: [`docs/architecture/course-credit-system-technical-design.md`](docs/architecture/course-credit-system-technical-design.md)
+- Data model: [`docs/architecture/course-credit-system-data-model.md`](docs/architecture/course-credit-system-data-model.md)
+- OpenSpec change: [`openspec/changes/add-course-credit-system/`](openspec/changes/add-course-credit-system/)
 
 首次 clone：
 
