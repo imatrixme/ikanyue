@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+
+const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
+execFileSync(process.execPath, ['scripts/check-weapp-output.mjs'], {
+    cwd: projectRoot,
+    stdio: 'pipe',
+});
 
 const appConfig = JSON.parse(await readFile(new URL('../../dist/app.json', import.meta.url), 'utf8'));
+const packageConfig = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
 const commonBundle = await readFile(new URL('../../dist/common.js', import.meta.url), 'utf8');
 const commonStyle = await readFile(new URL('../../dist/common.wxss', import.meta.url), 'utf8');
 const tokenEntrySource = await readFile(new URL('../../src/styles/_tokens.scss', import.meta.url), 'utf8');
@@ -66,6 +75,9 @@ const rewardCatalogOutput = `${sharedOutput}\n${rewardCatalogBundle}\n${rewardCa
 const activityOutput = `${sharedOutput}\n${activityBundle}\n${activityTemplate}`;
 const profileOutput = `${sharedOutput}\n${profileBundle}\n${profileTemplate}`;
 const userinfoOutput = `${sharedOutput}\n${userinfoBundle}\n${userinfoTemplate}`;
+
+assert.equal(packageConfig.scripts['prebuild:weapp'], 'node scripts/clean-weapp-output.mjs');
+assert.match(packageConfig.scripts['build:weapp'], /check-weapp-output\.mjs/);
 
 function assertCompiledText(output, expected) {
     const escaped = [...expected]
