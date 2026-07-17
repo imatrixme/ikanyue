@@ -4,6 +4,7 @@ const themeColors = Object.freeze({
     canvas: '#f4f4f2',
     danger: '#b42318',
     gold: '#7d6200',
+    immersiveSurface: '#006241',
     primary: '#00754a',
     primaryStrong: '#006241',
     success: '#1f7a4d',
@@ -13,11 +14,11 @@ const themeColors = Object.freeze({
 });
 
 const immersivePageChrome = Object.freeze({
-    backgroundColor: themeColors.primary,
+    backgroundColor: themeColors.immersiveSurface,
     backgroundColorBottom: themeColors.canvas,
-    backgroundColorTop: themeColors.primary,
+    backgroundColorTop: themeColors.immersiveSurface,
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: themeColors.primary,
+    navigationBarBackgroundColor: themeColors.immersiveSurface,
     navigationBarTextStyle: 'white',
 });
 

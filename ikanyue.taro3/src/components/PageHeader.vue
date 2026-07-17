@@ -35,7 +35,7 @@ export default {
 .page-header--immersive {
     @include ky-hero-texture;
     color: $ky-on-primary;
-    background-color: $ky-primary-strong;
+    background-color: $ky-immersive-surface;
 }
 
 .page-header--canvas {

@@ -26,6 +26,6 @@ export default {
 }
 
 .page-chrome--immersive {
-    background: $ky-primary-strong;
+    background: $ky-immersive-surface;
 }
 </style>

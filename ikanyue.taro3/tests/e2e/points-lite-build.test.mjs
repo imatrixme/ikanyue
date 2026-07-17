@@ -123,7 +123,7 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     assert.equal(pageConfig.backgroundTextStyle, 'dark');
 });
 [profileConfig, userinfoConfig].forEach((pageConfig) => {
-    assert.equal(pageConfig.backgroundColorTop, '#00754a');
+    assert.equal(pageConfig.backgroundColorTop, '#006241');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'light');
 });
@@ -190,12 +190,15 @@ assert.equal(profileOutput.includes('退出当前账号'), false, 'logout action
 
 assert.match(tokenSource, /\$ky-primary: #00754a;/);
 assert.match(tokenSource, /\$ky-primary-strong: #006241;/);
+assert.match(tokenSource, /\$ky-immersive-surface: #006241;/);
 assert.match(tokenSource, /\$ky-primary-soft: #d4e9e2;/);
 assert.match(tokenSource, /\$ky-ink-strong: #1e3932;/);
 assert.equal(tokenSource.includes('$ky-red'), false);
 assert.match(tokenEntrySource, /@import '\.\/brand\.generated';/);
 assert.match(themeSource, /primary: '#00754a'/);
 assert.match(themeSource, /primaryStrong: '#006241'/);
+assert.match(themeSource, /immersiveSurface: '#006241'/);
+assert.match(themeSource, /navigationBarBackgroundColor: themeColors\.immersiveSurface/);
 assert.match(themeSource, /danger: '#b42318'/);
 assert.match(themeSource, /gold: '#7d6200'/);
 assert.match(tokenSource, /\$ky-canvas: #f4f4f2;/);
@@ -240,7 +243,11 @@ assert.match(asyncStateSource, /<empty-state/);
 assert.match(formRowSource, /form-row__control/);
 assert.match(mediaThumbSource, /media-thumb__image/);
 assert.match(pageChromeSource, /page-chrome--immersive/);
+assert.match(pageChromeSource, /background: \$ky-immersive-surface/);
 assert.match(pageHeaderSource, /page-header__title/);
+assert.match(pageHeaderSource, /background-color: \$ky-immersive-surface/);
+assert.equal(profileConfig.navigationBarBackgroundColor, '#006241');
+assert.equal(userinfoConfig.navigationBarBackgroundColor, '#006241');
 assert.match(paginationStateSource, /已加载/);
 assert.match(pointEventRowSource, /point-event-row--spend/);
 assert.match(stickyActionBarSource, /safe-area-inset-bottom/);
