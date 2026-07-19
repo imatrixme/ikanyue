@@ -22,13 +22,17 @@ test('homepage exposes the selected ticket archive hierarchy', async ({ page }, 
   await page.screenshot({ path: testInfo.outputPath('homepage.png'), fullPage: true })
 })
 
-test('contact page offers direct WeChat contact', async ({ page }) => {
+test('contact page offers direct WeChat and phone contact', async ({ page }) => {
   await page.goto('/contact')
-  await expect(page.getByRole('heading', { level: 2, name: '搜索“看乐艺术”' })).toBeVisible()
+  await expect(page.getByText('微信/电话咨询', { exact: true })).toBeVisible()
+  const phone = page.getByRole('link', { name: '18521301857' })
+  await expect(phone).toBeVisible()
+  await expect(phone).toHaveAttribute('href', 'tel:18521301857')
   const wechatQr = page.getByRole('img', { name: '看乐艺术歌唱微信联系二维码' })
   await expect(wechatQr).toBeVisible()
   await expect(wechatQr).toHaveAttribute('src', '/images/wechat-contact-qr.jpg')
-  await expect(page.getByText('在微信中长按识别二维码，或微信扫码联系', { exact: true })).toBeVisible()
+  await expect(page.getByText('长按识别或扫码', { exact: true })).toBeVisible()
+  await expect(page.getByText('在微信中搜索品牌名称，进入官方账号或小程序后发送“声乐咨询”，即可开始沟通。', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '复制微信搜索词' })).toHaveCount(0)
   await expect(page.locator('form')).toHaveCount(0)
 })

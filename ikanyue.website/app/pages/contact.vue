@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Check, MessageCircle, Search } from '@lucide/vue'
+import { Check, MessageCircle, Phone, Search } from '@lucide/vue'
 
 useSeoMeta({
   title: '声乐课程咨询',
-  description: '通过微信联系看乐艺术，咨询儿童、青少年、成人与熟龄声乐课程、试听和近期活动。',
+  description: '通过微信或电话联系看乐艺术，咨询儿童、青少年、成人与熟龄声乐课程、试听和近期活动。',
 })
 </script>
 
@@ -21,9 +21,11 @@ useSeoMeta({
       <div class="site-container contact-layout">
         <article class="contact-search-card">
           <MessageCircle :size="24" aria-hidden="true" />
-          <p>微信咨询</p>
-          <h2>搜索“看乐艺术”</h2>
-          <p>在微信中搜索品牌名称，进入官方账号或小程序后发送“声乐咨询”，即可开始沟通。</p>
+          <p>微信/电话咨询</p>
+          <a class="contact-phone" href="tel:18521301857">
+            <Phone :size="18" :stroke-width="1.8" aria-hidden="true" />
+            <span>18521301857</span>
+          </a>
           <figure class="contact-wechat-qr">
             <img
               src="/images/wechat-contact-qr.jpg"
@@ -32,7 +34,7 @@ useSeoMeta({
               height="669"
               loading="lazy"
             >
-            <figcaption>在微信中长按识别二维码，或微信扫码联系</figcaption>
+            <figcaption>长按识别或扫码</figcaption>
           </figure>
         </article>
 

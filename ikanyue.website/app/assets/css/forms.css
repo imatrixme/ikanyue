@@ -24,16 +24,19 @@
   font-weight: var(--ky-font-weight-bold);
 }
 
-.contact-search-card h2 {
-  max-width: 14ch;
+.contact-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ky-space-2);
   margin-top: var(--ky-space-2);
-  font-size: var(--ky-web-heading);
+  color: var(--primary-foreground);
+  font-size: var(--ky-web-title-sm);
+  font-weight: var(--ky-font-weight-bold);
   line-height: var(--ky-web-title-line);
 }
 
-.contact-search-card h2 + p {
-  max-width: 34rem;
-  margin-top: var(--ky-space-4);
+.contact-phone svg {
+  flex: 0 0 auto;
   color: var(--on-primary-muted);
 }
 
