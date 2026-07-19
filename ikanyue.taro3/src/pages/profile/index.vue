@@ -1,6 +1,7 @@
 <template>
     <page-chrome class="profile-page">
         <view class="profile-hero">
+            <image class="profile-hero__texture" :src="heroTexture" mode="aspectFill" aria-hidden="true" />
             <view class="profile-brand">
                 <text class="profile-brand__eyebrow">KANYUE MUSIC ACADEMY</text>
                 <text class="profile-brand__name">看乐艺术</text>
@@ -123,12 +124,14 @@ import AccountRow from '../../components/AccountRow.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import TicketSection from '../../components/TicketSection.vue';
 import { KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
+import heroTexture from '../../imgs/textures/hero-music.png';
 import './index.scss';
 
 export default {
     components: { AccountRow, PageChrome, TicketSection },
     data() {
         return {
+            heroTexture,
             showLogin: false,
             kanyueInfoLinks: KANYUE_INFO_LINKS,
             userInfo: {},

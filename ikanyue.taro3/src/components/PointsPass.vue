@@ -1,5 +1,6 @@
 <template>
     <view class="points-pass" :class="{ 'points-pass--compact': compact }">
+        <image class="points-pass__texture" :src="heroTexture" mode="aspectFill" aria-hidden="true" />
         <view class="points-pass__content">
             <text class="points-pass__label">{{ label }}</text>
             <view class="points-pass__balance">
@@ -19,7 +20,12 @@
 </template>
 
 <script>
+import heroTexture from '../imgs/textures/hero-music.png';
+
 export default {
+    data() {
+        return { heroTexture };
+    },
     props: {
         balance: { type: [Number, String], default: 0 },
         caption: { type: String, default: '' },
@@ -31,6 +37,7 @@ export default {
 
 <style lang="scss">
 @import '../styles/tokens';
+@import '../styles/hero-texture';
 
 .points-pass {
     background: $ky-primary-strong;
@@ -43,6 +50,10 @@ export default {
     overflow: hidden;
     padding: 20px;
     position: relative;
+}
+
+.points-pass__texture {
+    @include ky-hero-texture-layer;
 }
 
 .points-pass__content,
@@ -133,6 +144,7 @@ export default {
     position: absolute;
     right: -10px;
     transform: rotate(-4deg);
+    z-index: 1;
 }
 
 .points-pass__staff-line {

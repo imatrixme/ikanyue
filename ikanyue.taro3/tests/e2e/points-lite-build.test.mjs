@@ -37,6 +37,7 @@ const profileSource = await readFile(new URL('../../src/pages/profile/index.vue'
 const iconGeneratorSource = await readFile(new URL('../../scripts/generate-icons.mjs', import.meta.url), 'utf8');
 const heroTextureSource = await readFile(new URL('../../src/styles/_hero-texture.scss', import.meta.url), 'utf8');
 const heroTextureArtworkSource = await readFile(new URL('../../assets-src/imagegen/icons-v2/hero-music.svg', import.meta.url), 'utf8');
+const heroTextureAsset = await readFile(new URL('../../dist/imgs/textures/hero-music.png', import.meta.url));
 const vendorsBundle = await readFile(new URL('../../dist/vendors.js', import.meta.url), 'utf8');
 const activityBundle = await readFile(new URL('../../dist/pages/activity/index.js', import.meta.url), 'utf8');
 const activityTemplate = await readFile(new URL('../../dist/pages/activity/index.wxml', import.meta.url), 'utf8');
@@ -237,13 +238,17 @@ assert.match(segmentedControlSource, /background: \$ky-primary-strong;/);
 assert.equal((pointsBundle.match(/"scroll-view"/g) || []).length, 0);
 assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 0);
 [profileStyle, userinfoStyle].forEach((pageStyle) => {
-    assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), true);
+    assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), false);
 });
 [pointsStyle, pointsHistoryStyle, rewardCatalogStyle].forEach((pageStyle) => {
     assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), false);
 });
-assert.match(heroTextureSource, /hero-music\.png/);
-assert.match(heroTextureSource, /background-repeat: repeat;/);
+assert.match(`${pageHeaderSource}\n${profileSource}`, /hero-music\.png/);
+assert.equal(heroTextureSource.includes('background-image'), false);
+assert.match(heroTextureSource, /ky-hero-texture-layer/);
+assert.match(pageHeaderSource, /page-header__texture/);
+assert.match(profileSource, /profile-hero__texture/);
+assert.equal(heroTextureAsset.length > 0, true);
 assert.match(heroTextureArtworkSource, /opacity="0\.075"/);
 assert.equal(`${commonBundle}\n${pointsOutput}\n${profileOutput}`.includes('empty-states'), false);
 assert.equal(commonBundle.includes('empty-state__visual'), true);
@@ -265,6 +270,8 @@ assert.equal(`${sharedOutput}\n${activityDetailBundle}`.includes('margin-bottom:
 assert.match(activityTicketSource, /ADMIT ONE/);
 assert.match(activityTicketSource, /activity-ticket__stub/);
 assert.match(pointsPassSource, /points-pass__seal/);
+assert.match(pointsPassSource, /points-pass__texture/);
+assert.match(pointsPassSource, /hero-music\.png/);
 assert.match(rewardVoucherSource, /reward-voucher__status/);
 assert.match(rewardVoucherSource, /<media-thumb/);
 assert.match(activityTicketSource, /<media-thumb/);
