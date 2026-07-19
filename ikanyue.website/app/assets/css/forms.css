@@ -37,14 +37,26 @@
   color: var(--on-primary-muted);
 }
 
-.contact-search-card .site-button {
-  margin-top: var(--ky-space-6);
+.contact-wechat-qr {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 220px);
+  margin: var(--ky-space-6) 0 0;
 }
 
-.copy-status {
-  margin-top: var(--ky-space-3);
-  color: var(--primary-foreground);
+.contact-wechat-qr img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--card);
+  border-radius: var(--ky-radius-sm);
+}
+
+.contact-wechat-qr figcaption {
+  margin-top: var(--ky-space-2);
+  color: var(--on-primary-muted);
   font-size: var(--ky-web-body-sm);
+  text-align: center;
 }
 
 .contact-preparation {

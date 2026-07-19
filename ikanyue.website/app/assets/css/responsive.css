@@ -233,6 +233,10 @@
     padding: var(--ky-space-6);
   }
 
+  .contact-wechat-qr {
+    width: min(100%, 240px);
+  }
+
   .site-footer__grid {
     grid-template-columns: 1fr;
     gap: var(--ky-space-8);

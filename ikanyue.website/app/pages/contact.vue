@@ -1,18 +1,5 @@
 <script setup lang="ts">
-import { Check, Clipboard, MessageCircle, Search } from '@lucide/vue'
-
-const searchTerm = '看乐艺术'
-const copyStatus = ref('')
-
-async function copyWechatSearchTerm() {
-  try {
-    await navigator.clipboard.writeText(searchTerm)
-    copyStatus.value = '已复制，可前往微信搜索'
-  }
-  catch {
-    copyStatus.value = `请在微信中搜索“${searchTerm}”`
-  }
-}
+import { Check, MessageCircle, Search } from '@lucide/vue'
 
 useSeoMeta({
   title: '声乐课程咨询',
@@ -37,10 +24,16 @@ useSeoMeta({
           <p>微信咨询</p>
           <h2>搜索“看乐艺术”</h2>
           <p>在微信中搜索品牌名称，进入官方账号或小程序后发送“声乐咨询”，即可开始沟通。</p>
-          <button type="button" class="site-button site-button--secondary" @click="copyWechatSearchTerm">
-            <Clipboard :size="18" aria-hidden="true" />复制微信搜索词
-          </button>
-          <p v-if="copyStatus" class="copy-status" role="status">{{ copyStatus }}</p>
+          <figure class="contact-wechat-qr">
+            <img
+              src="/images/wechat-contact-qr.jpg"
+              alt="看乐艺术歌唱微信联系二维码"
+              width="655"
+              height="669"
+              loading="lazy"
+            >
+            <figcaption>直接扫码微信联系</figcaption>
+          </figure>
         </article>
 
         <div class="contact-preparation">
