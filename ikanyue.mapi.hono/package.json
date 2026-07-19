@@ -10,11 +10,19 @@
     "dev": "node --watch src/app.js",
     "dev:bun": "bun run --watch src/app.js",
     "start:bun": "NODE_ENV=production bun run src/app.js",
-    "lint": "eslint src --max-warnings=0",
+    "lint": "node scripts/verify-no-pocketbase-hooks.js && eslint src --max-warnings=0",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/routes/ops/*.js' --test-coverage-include='src/routes/points/*.js' --test-coverage-include='src/services/points/*.js' --test-coverage-include='src/middleware/opsAuth.js' --test-coverage-include='src/middleware/auth.js' --test-coverage-include='src/services/ops/authService.js' --test-coverage-include='src/services/ops/auditService.js' --test-coverage-include='src/services/ops/opsUtils.js' --test-coverage-include='src/services/ops/schema.js' --test-coverage-include='src/services/ops/studentAdminService.js' --test-coverage-exclude='src/services/ops/pocketbaseTeacherAuth.js' --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-functions=95",
+    "course-credits:test:coverage": "c8 --all --include='src/routes/courseCredits/**/*.js' --include='src/services/courseCredits/**/*.js' --include='scripts/course-credit-pocketbase-backup.js' --include='scripts/generate-course-credit-migrations.js' --include='scripts/verify-course-credit-pocketbase.js' --include='scripts/verify-no-pocketbase-hooks.js' --reporter=text --reporter=json-summary --check-coverage --lines=95 --branches=95 --functions=95 --statements=95 node --test 'test/courseCredit*.test.js'",
+    "verify:no-pocketbase-hooks": "node scripts/verify-no-pocketbase-hooks.js",
     "ops:schema:check": "node scripts/check-ops-schema.js",
     "ops:schema:apply": "node scripts/pb-ensure-ops-schema.js",
+    "course-credits:migrations:generate": "node scripts/generate-course-credit-migrations.js",
+    "course-credits:schema:apply": "node scripts/pb-ensure-course-credit-schema.js",
+    "course-credits:verify:pocketbase": "node scripts/verify-course-credit-pocketbase.js",
+    "course-credits:test:pocketbase-business": "PB_COURSE_CREDIT_INTEGRATION=1 node --test 'test/courseCredit*Integration.test.js'",
+    "course-credits:backup": "node scripts/course-credit-pocketbase-backup.js backup",
+    "course-credits:restore": "node scripts/course-credit-pocketbase-backup.js restore",
     "ops:seed:local": "node scripts/pb-seed-points-lite-local.js",
     "ops:smoke:local": "node scripts/smoke-points-lite-local.js",
     "check-docs": "./scripts/check-docs.sh",
@@ -25,17 +33,18 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.4.1",
-    "hono": "^3.11.7",
-    "pocketbase": "^0.25.2",
     "await-to-js": "^2.1.1",
+    "dayjs": "^1.9.4",
     "dotenv": "^16.4.7",
+    "hono": "^3.11.7",
     "jsonwebtoken": "^8.5.1",
     "licia": "^1.27.0",
-    "dayjs": "^1.9.4"
+    "pocketbase": "^0.25.2"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "c8": "^12.0.0",
+    "eslint": "^8.57.0"
   },
   "repository": {
     "type": "git",

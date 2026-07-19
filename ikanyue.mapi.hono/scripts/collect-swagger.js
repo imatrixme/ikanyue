@@ -123,12 +123,21 @@ function mergeSwaggerDocs(swaggerDocs) {
     // 合并所有文档的 paths
     swaggerDocs.forEach((doc) => {
         if (doc && doc.paths) {
-            Object.assign(mergedDoc.paths, doc.paths);
+            Object.entries(doc.paths).forEach(([pathname, operations]) => {
+                mergedDoc.paths[pathname] = {
+                    ...(mergedDoc.paths[pathname] || {}),
+                    ...operations,
+                };
+            });
         }
 
-        // 合并 schemas
-        if (doc && doc.components && doc.components.schemas) {
-            Object.assign(mergedDoc.components.schemas, doc.components.schemas);
+        // 合并全部可复用 components，避免 parameters/responses 等引用丢失。
+        if (doc && doc.components) {
+            Object.entries(doc.components).forEach(([type, values]) => {
+                if (!values || typeof values !== 'object') return;
+                mergedDoc.components[type] = mergedDoc.components[type] || {};
+                Object.assign(mergedDoc.components[type], values);
+            });
         }
     });
 

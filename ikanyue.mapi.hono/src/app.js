@@ -6,6 +6,7 @@
 const { Hono } = require('hono');
 const { responseMiddleware } = require('./middleware/response');
 const { registerRoutes } = require('./bonelayer/router');
+const { verifyCourseCreditStorageAtStartup } = require('./services/courseCredits/storageStartup');
 
 // 创建 Hono 应用实例
 const app = new Hono();
@@ -20,26 +21,23 @@ registerRoutes(app);
 const port = process.env.PORT || 1337;
 const hostname = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 
-// 检测运行环境
-const isBun = typeof Bun !== 'undefined';
+async function startServer(options = {}) {
+    await (options.verifyStorage || verifyCourseCreditStorageAtStartup)();
+    const bunRuntime = options.bunRuntime ?? globalThis.Bun ?? null;
+    if (bunRuntime) {
+        const server = bunRuntime.serve({
+            fetch: app.fetch.bind(app),
+            hostname,
+            port,
+        });
+        console.log('🚀 API 服务已启动 (Bun 环境)');
+        console.log(`📍 服务地址: http://${hostname}:${server.port}`);
+        console.log(`🕐 启动时间: ${new Date().toLocaleString('zh-CN')}`);
+        return server;
+    }
 
-if (isBun) {
-    // Bun 环境
-    console.log('🚀 API 应用已准备就绪 (Bun 环境)');
-    console.log(`📍 端口: ${port}`);
-    console.log(`🕐 时间: ${new Date().toLocaleString('zh-CN')}`);
-
-    // 导出 Bun 服务器配置
-    module.exports = {
-        port: port,
-        hostname,
-        fetch: app.fetch.bind(app),
-    };
-} else {
-    // Node.js 环境
-    const { serve } = require('@hono/node-server');
-
-    serve(
+    const serve = options.serve || require('@hono/node-server').serve;
+    return serve(
         {
             fetch: app.fetch,
             port: port,
@@ -51,7 +49,14 @@ if (isBun) {
             console.log(`🕐 启动时间: ${new Date().toLocaleString('zh-CN')}`);
         }
     );
-
-    // 导出 app 实例用于测试
-    module.exports = app;
 }
+
+if (require.main === module) {
+    startServer().catch((error) => {
+        console.error('API 启动失败:', error.message);
+        process.exitCode = 1;
+    });
+}
+
+module.exports = app;
+module.exports.startServer = startServer;

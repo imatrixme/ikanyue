@@ -3095,6 +3095,1723 @@
         }
       }
     },
+    "/ops/course-credits/orders/{orderId}/grant": {
+      "post": {
+        "summary": "按已支付订单发放课程点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "发放结果或稳定业务错误。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/students/{studentId}/membership": {
+      "post": {
+        "summary": "设置学员班级成员状态",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassMembershipCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "班级成员关系变更结果，不直接改变课程点。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/students/{studentId}/transfer": {
+      "post": {
+        "summary": "将学员转入另一班级",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassTransferCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "跨班转移结果，不直接改变课程点。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/teachers/{teacherId}/assignment": {
+      "post": {
+        "summary": "设置班级教师和角色",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teacherId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassTeacherAssignmentCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "班级教师有效期关系变更结果。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/publish": {
+      "post": {
+        "summary": "发布课堂并固化去重名单及实际教师",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionPublicationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "课堂发布、名单快照和教师快照结果。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/teacher-events/{teacherCreditEventId}/confirm": {
+      "post": {
+        "summary": "确认待结算教师课堂点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "teacherCreditEventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeacherCreditConfirmationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "追加确认事件并更新课堂教师状态，原收益事件保持不变。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/outbox/dead-letters": {
+      "get": {
+        "summary": "查看通知投递死信摘要",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "不包含原始通知 payload 的死信摘要分页。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/course-credits/session-students/{sessionStudentId}/reserve": {
+      "post": {
+        "summary": "学员为自己的课堂冻结课程点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessionStudentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionReservationCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "预约结果、兑换提示、余额不足或稳定业务错误。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseCreditCommandResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/metrics": {
+      "get": {
+        "summary": "查询课程点运行指标",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/workers/expiry/run": {
+      "post": {
+        "summary": "运行课程点到期扫描",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpiryWorkerRun"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/workers/outbox/deliver": {
+      "post": {
+        "summary": "投递到期的课程点 Outbox 事件",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutboxWorkerRun"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/batches/{batchId}/extend": {
+      "post": {
+        "summary": "延期课程点批次",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BatchId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpiryExtension"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/batches/{batchId}/restore-expired": {
+      "post": {
+        "summary": "补偿已过期课程点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BatchId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpiredRestoration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/reschedule": {
+      "post": {
+        "summary": "改期并重新校验课程点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionReschedule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/settle": {
+      "post": {
+        "summary": "结算课堂课程点与教师课堂点",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditReason"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/reverse-settlement": {
+      "post": {
+        "summary": "冲正结算并重新打开课堂修正流程",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditReason"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/reconciliation/runs": {
+      "post": {
+        "summary": "运行增量或全量课程点对账",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconciliationRun"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      },
+      "get": {
+        "summary": "对账运行列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/catalog/course-specs": {
+      "get": {
+        "summary": "课程规格列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/catalog/course-specs/{id}": {
+      "get": {
+        "summary": "课程规格详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/catalog/credit-types": {
+      "get": {
+        "summary": "课程点类型列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/catalog/credit-types/{id}": {
+      "get": {
+        "summary": "课程点类型详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/packages": {
+      "get": {
+        "summary": "课包列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/packages/{id}": {
+      "get": {
+        "summary": "课包详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/price-versions": {
+      "get": {
+        "summary": "价格版本列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/price-versions/{id}": {
+      "get": {
+        "summary": "价格版本详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/orders": {
+      "get": {
+        "summary": "课程订单列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/orders/{id}": {
+      "get": {
+        "summary": "课程订单详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/accounts": {
+      "get": {
+        "summary": "学员课程点账户列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/accounts/{studentId}": {
+      "get": {
+        "summary": "学员课程点账户详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/conversion-rules": {
+      "get": {
+        "summary": "兑换规则列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/conversion-rules/{id}": {
+      "get": {
+        "summary": "兑换规则详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes": {
+      "get": {
+        "summary": "班级列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{id}": {
+      "get": {
+        "summary": "班级详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions": {
+      "get": {
+        "summary": "课堂列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{id}": {
+      "get": {
+        "summary": "课堂详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/settlement-exceptions": {
+      "get": {
+        "summary": "结算异常列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/settlement-exceptions/{id}": {
+      "get": {
+        "summary": "结算异常详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/teacher-events": {
+      "get": {
+        "summary": "教师课堂点事件列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/teacher-events/{id}": {
+      "get": {
+        "summary": "教师课堂点事件详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/reconciliation/runs/{id}": {
+      "get": {
+        "summary": "对账运行详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/reconciliation/exceptions": {
+      "get": {
+        "summary": "对账差异列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/reconciliation/exceptions/{id}": {
+      "get": {
+        "summary": "对账差异详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/summary": {
+      "get": {
+        "summary": "查询本人课程点汇总",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/batches": {
+      "get": {
+        "summary": "分页查询本人课程点批次",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "creditTypeId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/batches/{batchId}": {
+      "get": {
+        "summary": "查询本人课程点批次详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "batchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/events": {
+      "get": {
+        "summary": "分页查询本人课程点事件",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/conversion-rules": {
+      "get": {
+        "summary": "查询当前有效兑换规则",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/conversions/preview": {
+      "post": {
+        "summary": "预览本人课程点兑换",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/conversions": {
+      "post": {
+        "summary": "提交本人课程点兑换",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/conversion-authorizations": {
+      "post": {
+        "summary": "基于当前预览授权本人自动兑换",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionAuthorizationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/course-credits/sessions": {
+      "get": {
+        "summary": "分页查询本人课堂课程点状态",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
     "/ops/auth/login": {
       "post": {
         "summary": "管理员登录",
@@ -7476,6 +9193,395 @@
           }
         }
       },
+      "ClassMembershipCommand": {
+        "type": "object",
+        "required": [
+          "status",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "invited",
+              "active",
+              "paused",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sourceOrderId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ClassTransferCommand": {
+        "type": "object",
+        "required": [
+          "toClassId",
+          "effectiveAt"
+        ],
+        "properties": {
+          "toClassId": {
+            "type": "string"
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceOrderId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ClassTeacherAssignmentCommand": {
+        "type": "object",
+        "required": [
+          "role",
+          "status",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "assistant",
+              "observer",
+              "evaluator"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SessionPublicationCommand": {
+        "type": "object",
+        "required": [
+          "classIds"
+        ],
+        "properties": {
+          "classIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "teacherOverrides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "teacherId",
+                "role"
+              ],
+              "properties": {
+                "teacherId": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "lead",
+                    "assistant",
+                    "observer",
+                    "evaluator"
+                  ]
+                },
+                "assignmentSource": {
+                  "type": "string",
+                  "enum": [
+                    "session_override",
+                    "substitute"
+                  ]
+                },
+                "actualStatus": {
+                  "type": "string",
+                  "enum": [
+                    "planned",
+                    "confirmed",
+                    "absent",
+                    "cancelled"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "SessionReservationCommand": {
+        "type": "object",
+        "properties": {
+          "authorizationId": {
+            "type": "string",
+            "description": "有效的自动兑换授权；仅在精确课程点不足时使用。"
+          },
+          "targetTermEnd": {
+            "type": "string",
+            "format": "date-time",
+            "description": "仅 TARGET_TERM_END 兑换规则需要。"
+          }
+        }
+      },
+      "TeacherCreditConfirmationCommand": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 4,
+            "description": "授权确认教师课堂点的审计原因。"
+          }
+        }
+      },
+      "CourseCreditCommandResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "object",
+            "nullable": true
+          },
+          "operationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ExpiryExtension": {
+        "type": "object",
+        "required": [
+          "newExpiresAt",
+          "reason"
+        ],
+        "properties": {
+          "newExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ExpiredRestoration": {
+        "type": "object",
+        "required": [
+          "quantity",
+          "validityDurationDays",
+          "reason"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "validityDurationDays": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionReschedule": {
+        "type": "object",
+        "required": [
+          "newStartAt",
+          "newEndAt",
+          "reason"
+        ],
+        "properties": {
+          "newStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditReason": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ExpiryWorkerRun": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          }
+        }
+      },
+      "OutboxWorkerRun": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          }
+        }
+      },
+      "ReconciliationRun": {
+        "type": "object",
+        "required": [
+          "scope"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "full",
+              "incremental"
+            ]
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CourseCreditResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "object",
+            "nullable": true
+          },
+          "operationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ConversionRequest": {
+        "type": "object",
+        "required": [
+          "ruleId",
+          "sourceQuantity"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string"
+          },
+          "sourceQuantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "previewAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previewHash": {
+            "type": "string"
+          },
+          "authorizationId": {
+            "type": "string"
+          },
+          "targetTermEnd": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConversionAuthorizationRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ConversionRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "previewAt",
+              "previewHash"
+            ],
+            "properties": {
+              "validTo": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
       "OpsLoginRequest": {
         "type": "object",
         "required": [
@@ -9261,8 +11367,77 @@
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT 认证令牌"
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "BatchId": {
+        "name": "batchId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SessionId": {
+        "name": "sessionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Page": {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "PerPage": {
+        "name": "perPage",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "Status": {
+        "name": "status",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "CourseCreditResponse": {
+        "description": "成功结果或稳定业务错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CourseCreditResponse"
+            }
+          }
+        }
       }
     }
   },

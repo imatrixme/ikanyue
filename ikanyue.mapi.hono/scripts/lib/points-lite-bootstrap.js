@@ -128,11 +128,16 @@ async function ensureLocalCoreCollections(pb, enabled) {
 
 async function applyOpsSchemas(pb, schemas, initialCollections) {
     let byName = initialCollections || await listCollections(pb);
+    const deferredSchemas = [];
     for (const schema of schemas) {
         const current = byName.get(schema.name);
+        const readyFields = schema.fields.filter((field) => isResolvableField(field, byName));
+        if (readyFields.length !== schema.fields.length) {
+            deferredSchemas.push(schema);
+        }
         const payload = {
             ...schema,
-            fields: schema.fields.map((field) => normalizeFieldPayload(field, byName)),
+            fields: readyFields.map((field) => normalizeFieldPayload(field, byName)),
             indexes: [...schema.indexes],
         };
         if (current) {
@@ -143,6 +148,20 @@ async function applyOpsSchemas(pb, schemas, initialCollections) {
             console.log(`created ${schema.name}`);
             byName.set(schema.name, created);
         }
+        byName = await listCollections(pb);
+    }
+
+    for (const schema of deferredSchemas) {
+        const current = byName.get(schema.name);
+        if (!current?.id) {
+            throw new Error(`Missing deferred collection "${schema.name}"`);
+        }
+        await pb.collections.update(current.id, {
+            ...schema,
+            fields: schema.fields.map((field) => normalizeFieldPayload(field, byName)),
+            indexes: [...schema.indexes],
+        });
+        console.log(`completed deferred relations for ${schema.name}`);
         byName = await listCollections(pb);
     }
     return byName;
@@ -239,6 +258,10 @@ function normalizeFieldPayload(field, byName) {
         delete payload.collectionName;
     }
     return payload;
+}
+
+function isResolvableField(field, byName) {
+    return field.type !== 'relation' || !field.collectionName || byName.has(field.collectionName);
 }
 
 function textField(name) {

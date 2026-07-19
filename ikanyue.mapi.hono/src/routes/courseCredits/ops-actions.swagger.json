@@ -1,0 +1,153 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "课程点高风险操作接口", "version": "2.0.0" },
+  "paths": {
+    "/ops/course-credits/metrics": {
+      "get": {
+        "summary": "查询课程点运行指标",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/workers/expiry/run": {
+      "post": {
+        "summary": "运行课程点到期扫描",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExpiryWorkerRun" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/workers/outbox/deliver": {
+      "post": {
+        "summary": "投递到期的课程点 Outbox 事件",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OutboxWorkerRun" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/batches/{batchId}/extend": {
+      "post": {
+        "summary": "延期课程点批次",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/BatchId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExpiryExtension" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/batches/{batchId}/restore-expired": {
+      "post": {
+        "summary": "补偿已过期课程点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/BatchId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExpiredRestoration" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/reschedule": {
+      "post": {
+        "summary": "改期并重新校验课程点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionReschedule" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/settle": {
+      "post": {
+        "summary": "结算课堂课程点与教师课堂点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditReason" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/reverse-settlement": {
+      "post": {
+        "summary": "冲正结算并重新打开课堂修正流程",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditReason" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    },
+    "/ops/course-credits/reconciliation/runs": {
+      "post": {
+        "summary": "运行增量或全量课程点对账",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReconciliationRun" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "BatchId": { "name": "batchId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "SessionId": { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } }
+    },
+    "responses": {
+      "CourseCreditResponse": {
+        "description": "成功结果或稳定业务错误",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditResponse" } } }
+      }
+    },
+    "schemas": {
+      "ExpiryExtension": {
+        "type": "object", "required": ["newExpiresAt", "reason"],
+        "properties": { "newExpiresAt": { "type": "string", "format": "date-time" }, "reason": { "type": "string" } }
+      },
+      "ExpiredRestoration": {
+        "type": "object", "required": ["quantity", "validityDurationDays", "reason"],
+        "properties": {
+          "quantity": { "type": "integer", "minimum": 1 },
+          "validityDurationDays": { "type": "integer", "minimum": 1 },
+          "reason": { "type": "string" }
+        }
+      },
+      "SessionReschedule": {
+        "type": "object", "required": ["newStartAt", "newEndAt", "reason"],
+        "properties": {
+          "newStartAt": { "type": "string", "format": "date-time" },
+          "newEndAt": { "type": "string", "format": "date-time" },
+          "reason": { "type": "string" }
+        }
+      },
+      "AuditReason": { "type": "object", "properties": { "reason": { "type": "string" } } },
+      "ExpiryWorkerRun": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200 }
+        }
+      },
+      "OutboxWorkerRun": {
+        "type": "object",
+        "properties": { "limit": { "type": "integer", "minimum": 1, "maximum": 200 } }
+      },
+      "ReconciliationRun": {
+        "type": "object", "required": ["scope"],
+        "properties": {
+          "scope": { "type": "string", "enum": ["full", "incremental"] },
+          "since": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CourseCreditResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer" }, "message": { "type": "string", "nullable": true },
+          "data": { "type": "object", "nullable": true }, "errorCode": { "type": "string", "nullable": true },
+          "details": { "type": "object", "nullable": true }, "operationId": { "type": "string", "nullable": true },
+          "traceId": { "type": "string", "nullable": true }
+        }
+      }
+    }
+  }
+}

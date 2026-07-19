@@ -22,6 +22,8 @@ dump.rdb
 
 npm-debug.log
 lib-cov
+coverage/
+.local/
 *.seed
 *.log
 *.out

@@ -313,8 +313,9 @@ async function initPocketBase() {
     }
 }
 
-// 初始化时立即执行，但不阻止应用启动
-initPocketBase().catch((err) => {
+// 初始化时立即执行；需要强依赖 PocketBase 的启动检查可等待 ready。
+pbClient.ready = initPocketBase();
+pbClient.ready.catch((err) => {
     console.warn('PocketBase 初始化错误:', err.message);
     console.warn('应用将以离线模式运行，部分功能可能不可用');
 });
