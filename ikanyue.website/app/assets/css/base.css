@@ -272,6 +272,12 @@ ol {
   font-size: var(--ky-web-caption);
 }
 
+.site-footer__legal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ky-space-2) var(--ky-space-5);
+}
+
 .page-hero {
   position: relative;
   min-height: 420px;

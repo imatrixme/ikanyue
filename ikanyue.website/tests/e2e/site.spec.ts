@@ -28,9 +28,16 @@ test('contact page offers direct WeChat contact', async ({ page }) => {
   const wechatQr = page.getByRole('img', { name: '看乐艺术歌唱微信联系二维码' })
   await expect(wechatQr).toBeVisible()
   await expect(wechatQr).toHaveAttribute('src', '/images/wechat-contact-qr.jpg')
-  await expect(page.getByText('直接扫码微信联系', { exact: true })).toBeVisible()
+  await expect(page.getByText('在微信中长按识别二维码，或微信扫码联系', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: '复制微信搜索词' })).toHaveCount(0)
   await expect(page.locator('form')).toHaveCount(0)
+})
+
+test('footer exposes the official ICP filing', async ({ page }) => {
+  await page.goto('/')
+  const filing = page.getByRole('link', { name: '沪ICP备2024042646号-1' })
+  await expect(filing).toBeVisible()
+  await expect(filing).toHaveAttribute('href', 'https://beian.miit.gov.cn/')
 })
 
 test('primary pages have no serious accessibility violations', async ({ page }) => {

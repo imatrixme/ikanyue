@@ -32,7 +32,7 @@ useSeoMeta({
               height="669"
               loading="lazy"
             >
-            <figcaption>直接扫码微信联系</figcaption>
+            <figcaption>在微信中长按识别二维码，或微信扫码联系</figcaption>
           </figure>
         </article>
 

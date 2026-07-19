@@ -19,7 +19,10 @@ import { primaryNav } from '~/data/site'
       </div>
     </div>
     <div class="site-container site-footer__legal">
-      <span>© {{ new Date().getFullYear() }} 看乐艺术</span>
+      <div class="site-footer__legal-meta">
+        <span>© {{ new Date().getFullYear() }} 看乐艺术</span>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">沪ICP备2024042646号-1</a>
+      </div>
       <span>Voice learning for every stage.</span>
     </div>
   </footer>
