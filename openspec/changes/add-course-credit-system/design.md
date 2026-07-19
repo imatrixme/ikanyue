@@ -32,11 +32,11 @@ Stakeholders include students/guardians, teachers, academic operations, finance/
 
 ## Decisions
 
-### Execute ledger commands inside PocketBase transactions
+### Execute ledger commands in Hono through the PocketBase SDK Batch API
 
-PocketBase JS hook routes will execute grant, conversion, reservation, activation, settlement, expiry, and reversal commands with `$app.runInTransaction`. Hono will authenticate, authorize, validate, and forward commands but will not mutate ledger collections through generic REST CRUD.
+Hono owns grant, conversion, reservation, activation, settlement, expiry, and reversal logic. Its repositories use the existing authenticated PocketBase JavaScript SDK client. Multi-record writes are queued with `pb.createBatch()` and sent through the PocketBase Batch API so the storage service commits all create, update, upsert, and delete requests in one read/write transaction.
 
-This keeps the existing persistence platform while fixing the multi-record atomicity gap. Hono-side compensation was rejected because it cannot prevent concurrent overspending. A separate PostgreSQL service remains a fallback only if the production PocketBase version or write profile cannot support the required hook transaction boundary.
+PocketBase remains a storage service: it owns collections, indexes, files, access rules, and transactional batch persistence, but no backend business hooks. Record lifecycle hooks, custom PocketBase routes, scheduled hooks, and hook-side transactions are forbidden. Record rules run in Hono domain services, startup capability checks replace bootstrap hooks, explicit Hono routes replace custom serve hooks, and external scheduling invokes Hono expiry, Outbox, and reconciliation worker routes instead of PocketBase cron hooks. A repository guard rejects hook directories, hook files, hook APIs, and runtime hook configuration. Sequential SDK writes and Hono-side compensation were rejected because they cannot prevent partial ledger writes. Direct Hono access to PocketBase SQLite was also rejected because it would couple the API runtime to PocketBase's private storage layout. A separate PostgreSQL service remains a fallback only if the production write profile cannot be supported by the configured Batch API.
 
 ### Keep immutable events plus transactional batch projections
 
@@ -56,7 +56,7 @@ Universal credits are exchange value only. A session reservation must first crea
 
 ### Version package, conversion, attendance, and teacher rules
 
-Published rules are immutable. Orders snapshot price and grant lines; conversions snapshot ratio and expiry behavior; sessions snapshot credit, attendance, cancellation, and teacher rules. New versions affect only future operations.
+Versioned price, conversion, and teacher-rule records are create-only. Draft changes, publication, and deactivation produce a new version instead of updating an existing record. Orders snapshot price and grant lines; conversions snapshot ratio and expiry behavior; sessions snapshot credit, attendance, cancellation, and teacher rules. New versions affect only future operations.
 
 This prevents current configuration from changing historical value or settlement outcomes.
 
@@ -106,7 +106,7 @@ The rollout sequence is schema and transaction foundation, direct package grants
 
 ## Risks / Trade-offs
 
-- [PocketBase version or hook deployment cannot support the target transaction API] -> Add a version probe as the first backend task; stop and choose a supported upgrade or PostgreSQL before implementing ledger writes.
+- [PocketBase Batch API is disabled] -> Add a startup storage-capability check and refuse to enable course-credit writes until it is enabled.
 - [SQLite single-writer contention during bulk settlement] -> Keep transactions short, index batch selection, settle per session, and serialize hot student accounts.
 - [Rules become difficult for operators to understand] -> Provide preview, sample outcomes, graph validation, immutable publication, and explicit effective dates.
 - [First-check-in activation conflicts with advance reservations] -> Track provisional reservations, activation deadlines, and revalidate future reservations at activation.
@@ -119,14 +119,14 @@ The rollout sequence is schema and transaction foundation, direct package grants
 ## Migration Plan
 
 1. Freeze `release/2.0.0` and prohibit new writes to legacy course-hour fields.
-2. Verify production PocketBase version, hook loading, transaction behavior, backup, and restore.
+2. Verify production PocketBase version, SDK Batch API availability/configuration, transaction behavior, backup, and restore.
 3. Add new catalog, ledger, conversion, teaching, teacher-credit, outbox, and reconciliation collections with indexes and deny-by-default rules.
-4. Implement and test idempotent PocketBase command routes and Hono contracts.
+4. Implement and test idempotent Hono services and PocketBase SDK batch repositories.
 5. Add read-only Admin and mini-program projections, then import manually approved migration batches.
 6. Run shadow eligibility and settlement against real class samples without changing balances.
 7. Enable direct package grants, then reservation/settlement, then explicit conversion, then authorized implicit conversion.
 8. Run local full validation throughout development; perform migration rehearsal and Docker deployment validation only at the final release gate.
-9. Roll back by disabling command routes and rule publication while preserving all new records; never write new ledger state back into legacy `hours`.
+9. Roll back by disabling Hono command routes and rule publication while preserving all new records; never write new ledger state back into legacy `hours`.
 
 ## Open Questions
 

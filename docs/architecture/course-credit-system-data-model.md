@@ -52,10 +52,14 @@
 
 ### 4.1 `credit_operations`
 
-- `id`, `operation_no`, `student_id`, `type`, `status`
+- `id`, `operation_no`, nullable `student_id`, `type`, `status`
 - `idempotency_key`, `source_type`, `source_id`, `rule_version_id`
-- `request_snapshot`, `result_snapshot`, `actor_id`, `actor_role`, `trace_id`, `created`
+- nullable `reversal_of_operation_id`
+- `request_snapshot`, `result_snapshot`, `actor_id`, `actor_role`, `trace_id`
+- required `reason`, `outcome=committed|failed|denied`, `before_summary`, `after_summary`, `created`
+- 前后摘要只保存业务状态、数量、版本和对象标识；敏感字段被丢弃，数组只保存元素数量，长文本限制长度。
 - 唯一索引：`idempotency_key`
+- 学员级命令必须填写 `student_id`；合班课堂发布、改期、结算和冲正等聚合命令允许为空。
 
 ### 4.2 `credit_batches`
 
@@ -78,6 +82,7 @@ original = available + frozen + consumed + expired + reversed
 ### 4.3 `credit_events`
 
 - `id`, `operation_id`, `batch_id`, `student_id`, `credit_type_id`
+- nullable `reversal_of_event_id`
 - `event_type`, `quantity_delta`, `bucket_from`, `bucket_to`
 - `balance_snapshot`, `business_time`, `actor_id`, `reason`, `metadata`, `created`
 - 仅创建，不更新、不删除
@@ -97,7 +102,15 @@ original = available + frozen + consumed + expired + reversed
 - `reversible`, `reference_value_limit`, `valid_from`, `valid_to`, `version`, `status`
 - 发布后不可原地修改
 
-### 5.2 `conversion_allocations`
+### 5.2 `conversion_authorizations`
+
+- `id`, `student_id`, `rule_id`, `source_credit_type_id`, `target_credit_type_id`
+- `terms_fingerprint`, `request_fingerprint`, `status`, `consent_source`
+- `idempotency_key`, `valid_from`, `valid_to`, `created`, `updated`
+- 授权只允许在学员、规则、来源类型、目标类型、有效期和关键规则条款完全匹配时用于隐式兑换。
+- 比例、有效期策略、激活策略或可逆性变化后，旧授权立即失效并要求重新确认。
+
+### 5.3 `conversion_allocations`
 
 - `id`, `operation_id`, `source_batch_id`, `target_batch_id`
 - `source_quantity`, `target_quantity`, `expiry_policy_snapshot`, `created`
@@ -124,8 +137,13 @@ original = available + frozen + consumed + expired + reversed
 
 - `id`, `code`, `title`, `status`, `start_at`, `end_at`, `location`
 - `required_credit_type_id`, `required_quantity=1`
-- `attendance_rule_snapshot`, `settlement_rule_snapshot`, `teacher_rule_version_id`
-- `roster_version`, `settlement_operation_id`, `created`, `updated`
+- `attendance_rule_snapshot`, `settlement_rule_snapshot`, `teacher_rule_snapshot`
+- `attendance_rule_snapshot` 固定包含正整数 `version` 以及 `present`、`late`、`leave`、`absent` 的 `consume|release` 动作。
+- `settlement_rule_snapshot` 固定包含正整数 `version` 以及学员级 `cancelled` 的 `consume|release` 动作；机构取消由课堂状态强制释放，不接受规则覆盖。
+- `teacher_rule_snapshot` 固定包含正整数 `version` 和按 `lead|assistant|observer|evaluator` 分组的 `rules`。每个角色规则保存 `rule_id`、`course_spec_id`、`base_quantity`、`duration_factor`、`participant_factor`，支持一堂课中多个角色使用不同规则。
+- 角色规则可选保存 `cancellation_compensation`，其中必须显式给出正数 `quantity` 和 `eligible_actual_statuses`。未配置时机构取消不产生教师收益。
+- `roster_version`, `version`, `settlement_operation_id`, nullable `correction_base_status`, `created`, `updated`
+- 冲正后 `status=correction_pending`，`correction_base_status` 保存原始 `completed|cancelled` 事实，重结算后清空。
 
 ### 6.5 `session_classes`
 
@@ -156,13 +174,15 @@ original = available + frozen + consumed + expired + reversed
 ### 7.1 `teacher_credit_rules`
 
 - `id`, `course_spec_id`, `role`, `base_quantity`, `duration_factor`, `participant_factor`
+- nullable `cancellation_compensation`
 - `valid_from`, `valid_to`, `version`, `status`
 
 ### 7.2 `teacher_credit_events`
 
-- `id`, `session_teacher_id`, `teacher_id`, `rule_version_id`
-- `event_type(earn|confirm|reverse|adjust)`, `quantity_delta`, `status`
-- `operation_id`, `reason`, `created`
+- `id`, `session_teacher_id`, `teacher_id`, `rule_id`
+- `event_type(earn|compensate|confirm|reverse|adjust)`, `quantity_delta`, `status`
+- `operation_id`, nullable `confirmation_of_event_id`, nullable `reversal_of_event_id`, `reason`, `created`
+- `confirm` 事件保存与原 `earn|compensate` 相同的正数量，并通过 `confirmation_of_event_id` 建立唯一关联；原待确认事件不更新。
 
 教师账户总览由事件投影生成，不复用 `teachers.hours`。
 
@@ -171,11 +191,19 @@ original = available + frozen + consumed + expired + reversed
 ### 8.1 `outbox_events`
 
 - `id`, `topic`, `aggregate_type`, `aggregate_id`, `payload`
-- `status`, `attempts`, `next_attempt_at`, `sent_at`, `created`
+- `status`, `attempts`, `next_attempt_at`, `processing_started_at`, `sent_at`
+- `last_error_code`, `last_error_at`, `dead_letter_at`, `created`
 
 ### 8.2 `reconciliation_runs`
 
 - `id`, `scope`, `status`, `started_at`, `finished_at`, `difference_count`, `report`
+
+### 8.3 `reconciliation_exceptions`
+
+- `id`, `run_id`, `batch_id`, `code`, `field`
+- nullable `expected_value`, nullable `actual_value`, `details`
+- `status(open|acknowledged|resolved)`, `detected_at`, `created`
+- 对账异常只追加记录，不直接更新批次快照或历史事件。
 
 ## 9. 关系与删除策略
 

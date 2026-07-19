@@ -29,13 +29,13 @@
 
 ### Modified Capabilities
 - `ops-admin-system`: Admin 从轻量积分与内容维护扩展为课程商品、课程点、班级、课堂和异常结算的结构化运营入口。
-- `subproject-unit-test-coverage`: 将受影响项目的覆盖率发布门槛提高到四项指标分别 95% 以上，并纳入小程序、官网与 PocketBase hook 代码。
+- `subproject-unit-test-coverage`: 将受影响项目的覆盖率发布门槛提高到四项指标分别 95% 以上，并纳入小程序、官网与 Hono 事务仓储代码。
 
 ## Impact
 
-- `ikanyue.mapi.hono`: 新增课程点领域服务、事务写入边界、查询/命令 API、权限、幂等和对账任务；现有 PocketBase REST 多步写入不能直接承担结算事务。
+- `ikanyue.mapi.hono`: 新增课程点领域服务、基于 PocketBase JS SDK Batch API 的事务仓储、查询/命令 API、权限、幂等和对账任务；现有逐条 SDK 写入不能直接承担结算事务。
 - `ikanyue.admin`: 新增课程商品、点数批次、兑换规则、班级、课堂、出勤、教师结算和异常处理工作区。
 - `ikanyue.taro3`: 新增学员课程点总览、批次有效期、兑换确认、课程资格和消费记录体验。
 - `ikanyue.website`: 仅展示公开课程与套餐信息，不直接读取私有余额或承担结算。
-- PocketBase/持久化层：需要新增独立集合或事务服务，保留旧 `hours` 与轻量积分数据用于迁移核对，不作为新账本来源。
+- PocketBase/持久化层：新增独立集合、索引和受控 Batch API 配置，不承载课程点业务逻辑；保留旧 `hours` 与轻量积分数据用于迁移核对，不作为新账本来源。
 - 父仓库：新增跨端 PRD、技术设计、OpenSpec 规格和分阶段实施任务。

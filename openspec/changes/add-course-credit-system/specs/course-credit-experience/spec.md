@@ -50,6 +50,10 @@ All course-credit APIs and interfaces SHALL enforce role and ownership on the se
 - **WHEN** an authenticated student attempts to address another student id
 - **THEN** the server rejects the request and records an authorization audit event
 
+#### Scenario: Student reserves another roster entry
+- **WHEN** an authenticated student submits a reservation for a `session_student` owned by another student
+- **THEN** the Hono service rejects the command using only the authenticated student identity and does not send a PocketBase batch
+
 #### Scenario: Teacher requests unrelated financial data
 - **WHEN** a teacher without financial permission requests package cost basis or another teacher's earnings
 - **THEN** the server denies access

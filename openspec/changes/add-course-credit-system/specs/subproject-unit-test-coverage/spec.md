@@ -9,7 +9,7 @@ The Taro mini program, Hono API, standalone admin, and official website projects
 
 #### Scenario: Hono unit tests run locally
 - **WHEN** a developer runs the Hono unit test command from `ikanyue.mapi.hono`
-- **THEN** the test runner covers domain, API, PocketBase-hook contract, rollback, concurrency, idempotency, and authorization logic without a production service
+- **THEN** the test runner covers domain, API, PocketBase SDK batch repository, rollback, concurrency, idempotency, and authorization logic without a production service
 
 #### Scenario: Admin unit tests run locally
 - **WHEN** a developer runs the admin unit test command from `ikanyue.admin`
@@ -29,8 +29,8 @@ The Taro mini program, Hono API, standalone admin, and official website projects
 ### Requirement: Ninety Percent Coverage Gate
 Every affected project MUST enforce at least 95% line, branch, function, and statement coverage, and the command MUST fail when any individual metric is below 95%.
 
-#### Scenario: Hono or PocketBase hook coverage is below threshold
-- **WHEN** any Hono or version-controlled PocketBase hook coverage metric is below 95%
+#### Scenario: Hono backend coverage is below threshold
+- **WHEN** any Hono API, domain, service, or SDK batch repository coverage metric is below 95%
 - **THEN** the backend coverage command fails
 
 #### Scenario: Admin coverage is below threshold

@@ -9,104 +9,105 @@
 
 ## 2. PocketBase Transaction Foundation
 
-- [ ] 2.1 Record the production PocketBase version and verify JS hook loading and `$app.runInTransaction` support.
-- [ ] 2.2 Add a minimal transaction probe that proves multi-collection rollback on an injected failure.
-- [ ] 2.3 Define the version-controlled location for PocketBase migrations and hook routes inside `ikanyue.mapi.hono`.
-- [ ] 2.4 Add internal Hono-to-PocketBase command authentication and request signing.
-- [ ] 2.5 Deny public create, update, and delete access to all ledger and settlement collections.
-- [ ] 2.6 Add local backup and restore commands for the new PocketBase collections.
+- [x] 2.1 Record the production PocketBase version and verify the JavaScript SDK Batch API availability and configuration.
+- [x] 2.2 Add a minimal Hono-side SDK batch probe that proves multi-collection rollback on an injected failure.
+- [x] 2.3 Define the version-controlled location for PocketBase migrations and Hono transaction repositories inside `ikanyue.mapi.hono`.
+- [x] 2.4 Configure authenticated Hono SDK access and fail startup when the Batch API is not enabled.
+- [x] 2.5 Deny public create, update, and delete access to all ledger and settlement collections.
+- [x] 2.6 Add local backup and restore commands for the new PocketBase collections.
+- [x] 2.7 Move all record, bootstrap, custom-route, scheduled, and transaction behavior out of PocketBase hooks; expose Hono worker routes and reject hook source or runtime configuration.
 
 ## 3. Catalog and Commerce Schema
 
-- [ ] 3.1 Add migrations for `course_specs` and `credit_types` with exact course-SKU constraints.
-- [ ] 3.2 Add migrations for `packages`, `package_grant_lines`, and immutable `price_versions`.
-- [ ] 3.3 Add migrations for `orders` and idempotent `payment_events`.
-- [ ] 3.4 Add indexes and uniqueness constraints for course codes, package codes, versions, and provider events.
-- [ ] 3.5 Add seed fixtures for universal credits, at least three incompatible course-credit types, and discounted packages.
-- [ ] 3.6 Add catalog validation tests for changed course specification versus price-only changes.
+- [x] 3.1 Add migrations for `course_specs` and `credit_types` with exact course-SKU constraints.
+- [x] 3.2 Add migrations for `packages`, `package_grant_lines`, and immutable `price_versions`.
+- [x] 3.3 Add migrations for `orders` and idempotent `payment_events`.
+- [x] 3.4 Add indexes and uniqueness constraints for course codes, package codes, versions, and provider events.
+- [x] 3.5 Add seed fixtures for universal credits, at least three incompatible course-credit types, and discounted packages.
+- [x] 3.6 Add catalog validation tests for changed course specification versus price-only changes.
 
 ## 4. Ledger Schema and Invariants
 
-- [ ] 4.1 Add migrations for `credit_operations`, `credit_batches`, `credit_events`, and `credit_expiry_changes`.
-- [ ] 4.2 Enforce non-negative integer quantities and batch conservation in command validation.
-- [ ] 4.3 Add immutable-event guards that reject update and delete operations.
-- [ ] 4.4 Implement idempotency lookup and original-result replay by scoped `Idempotency-Key`.
-- [ ] 4.5 Implement FEFO batch querying with expiry, priority, and creation indexes.
-- [ ] 4.6 Add property tests proving quantity conservation across generated operation sequences.
+- [x] 4.1 Add migrations for `credit_operations`, `credit_batches`, `credit_events`, and `credit_expiry_changes`.
+- [x] 4.2 Enforce non-negative integer quantities and batch conservation in command validation.
+- [x] 4.3 Add immutable-event guards that reject update and delete operations.
+- [x] 4.4 Implement idempotency lookup and original-result replay by scoped `Idempotency-Key`.
+- [x] 4.5 Implement FEFO batch querying with expiry, priority, and creation indexes.
+- [x] 4.6 Add property tests proving quantity conservation across generated operation sequences.
 
 ## 5. Order Grant and Batch Lifecycle
 
-- [ ] 5.1 Implement transactional `grantOrderCredits` for direct packages and universal recharge orders.
-- [ ] 5.2 Persist list unit value, paid unit cost, currency, grant snapshot, activation, and expiry policy per batch.
-- [ ] 5.3 Implement `GRANT_TIME`, `FIRST_RESERVATION`, `FIRST_CHECK_IN`, `FIRST_COMPLETED_SESSION`, and `TERM_START` activation transitions.
-- [ ] 5.4 Implement activation deadlines and prevention of new use after missed activation.
-- [ ] 5.5 Implement batch expiry using service-time validity and protected valid reservations.
-- [ ] 5.6 Implement audited expiry extension and compensation batches for restored expired quantity.
-- [ ] 5.7 Add duplicate payment, cancelled order, activation race, and delayed settlement tests.
+- [x] 5.1 Implement transactional Hono `grantOrderCredits` for direct packages and universal recharge orders through the SDK Batch API.
+- [x] 5.2 Persist list unit value, paid unit cost, currency, grant snapshot, activation, and expiry policy per batch.
+- [x] 5.3 Implement `GRANT_TIME`, `FIRST_RESERVATION`, `FIRST_CHECK_IN`, `FIRST_COMPLETED_SESSION`, and `TERM_START` activation transitions.
+- [x] 5.4 Implement activation deadlines and prevention of new use after missed activation.
+- [x] 5.5 Implement batch expiry using service-time validity and protected valid reservations.
+- [x] 5.6 Implement audited expiry extension and compensation batches for restored expired quantity.
+- [x] 5.7 Add duplicate payment, cancelled order, activation race, and delayed settlement tests.
 
 ## 6. Conversion Engine
 
-- [ ] 6.1 Add migrations for immutable `conversion_rules` and `conversion_allocations`.
-- [ ] 6.2 Implement integer ratio, minimum step, effective period, direction, and status validation.
-- [ ] 6.3 Implement `INHERIT_SOURCE`, `RESET_ON_CONVERSION`, `RESET_ON_ACTIVATION`, `MIN_SOURCE_AND_NEW`, and `TARGET_TERM_END` expiry policies.
-- [ ] 6.4 Preserve source-batch allocation and split target output when expiry or cost outcomes differ.
-- [ ] 6.5 Implement transactional explicit conversion with immutable `CONVERT_OUT` and `CONVERT_IN` events.
-- [ ] 6.6 Implement conversion preview that returns authoritative quantities, expiry, activation, and reversibility.
-- [ ] 6.7 Implement directed-graph cycle and reference-value growth validation before rule publication.
-- [ ] 6.8 Implement scoped automatic-conversion authorization and invalidation when material rule terms change.
-- [ ] 6.9 Add conversion tests for inactive rules, fractional requests, multi-batch sources, profitable cycles, and rollback.
+- [x] 6.1 Add migrations for immutable `conversion_rules` and `conversion_allocations`.
+- [x] 6.2 Implement integer ratio, minimum step, effective period, direction, and status validation.
+- [x] 6.3 Implement `INHERIT_SOURCE`, `RESET_ON_CONVERSION`, `RESET_ON_ACTIVATION`, `MIN_SOURCE_AND_NEW`, and `TARGET_TERM_END` expiry policies.
+- [x] 6.4 Preserve source-batch allocation and split target output when expiry or cost outcomes differ.
+- [x] 6.5 Implement transactional explicit conversion with immutable `CONVERT_OUT` and `CONVERT_IN` events.
+- [x] 6.6 Implement conversion preview that returns authoritative quantities, expiry, activation, and reversibility.
+- [x] 6.7 Implement directed-graph cycle and reference-value growth validation before rule publication.
+- [x] 6.8 Implement scoped automatic-conversion authorization and invalidation when material rule terms change.
+- [x] 6.9 Add conversion tests for inactive rules, fractional requests, multi-batch sources, profitable cycles, and rollback.
 
 ## 7. Teaching Organization Schema
 
-- [ ] 7.1 Add migrations for `classes`, `class_students`, and `class_teachers` with effective dates.
-- [ ] 7.2 Add migrations for `sessions`, `session_classes`, `session_students`, and `session_teachers`.
-- [ ] 7.3 Add migrations for `session_credit_allocations` and unique session-student constraints.
-- [ ] 7.4 Implement class membership commands that never mutate course-credit balances.
-- [ ] 7.5 Implement session publication with credit, attendance, cancellation, and teacher-rule snapshots.
-- [ ] 7.6 Implement deduplicated roster materialization from one or more linked classes.
-- [ ] 7.7 Implement class teacher inheritance and explicit actual-session teacher overrides.
-- [ ] 7.8 Add tests for transfers, combined classes, duplicate students, substitute teachers, and historical snapshots.
+- [x] 7.1 Add migrations for `classes`, `class_students`, and `class_teachers` with effective dates.
+- [x] 7.2 Add migrations for `sessions`, `session_classes`, `session_students`, and `session_teachers`.
+- [x] 7.3 Add migrations for `session_credit_allocations` and unique session-student constraints.
+- [x] 7.4 Implement class membership commands that never mutate course-credit balances.
+- [x] 7.5 Implement session publication with credit, attendance, cancellation, and teacher-rule snapshots.
+- [x] 7.6 Implement deduplicated roster materialization from one or more linked classes.
+- [x] 7.7 Implement class teacher inheritance and explicit actual-session teacher overrides.
+- [x] 7.8 Add tests for transfers, combined classes, duplicate students, substitute teachers, and historical snapshots.
 
 ## 8. Reservation and Lesson Settlement
 
-- [ ] 8.1 Implement pre-class eligibility evaluation for exact credit type and session start validity.
-- [ ] 8.2 Implement idempotent FEFO reservation that moves batch quantity from available to frozen.
-- [ ] 8.3 Implement authorized implicit conversion plus target reservation in one transaction.
-- [ ] 8.4 Store attendance state separately from credit reservation and settlement state.
-- [ ] 8.5 Implement rule-based consume or release behavior for present, late, leave, absent, and cancelled states.
-- [ ] 8.6 Implement reschedule revalidation and immediate expiry when an already-expired allocation is released.
-- [ ] 8.7 Implement transactional `settleSession` across student allocations, teacher pending credits, session state, audit, and outbox.
-- [ ] 8.8 Implement settlement reversal and re-settlement without mutating original events.
-- [ ] 8.9 Add concurrency tests for two simultaneous reservations against the same final credit.
-- [ ] 8.10 Add duplicate settlement, teacher-write failure rollback, cancellation, reschedule, and correction tests.
+- [x] 8.1 Implement pre-class eligibility evaluation for exact credit type and session start validity.
+- [x] 8.2 Implement idempotent FEFO reservation that moves batch quantity from available to frozen through the SDK Batch API.
+- [x] 8.3 Implement authorized implicit conversion plus target reservation in one transaction.
+- [x] 8.4 Store attendance state separately from credit reservation and settlement state.
+- [x] 8.5 Implement rule-based consume or release behavior for present, late, leave, absent, and cancelled states.
+- [x] 8.6 Implement reschedule revalidation and immediate expiry when an already-expired allocation is released.
+- [x] 8.7 Implement transactional `settleSession` across student allocations, teacher pending credits, session state, audit, and outbox.
+- [x] 8.8 Implement settlement reversal and re-settlement without mutating original events.
+- [x] 8.9 Add concurrency tests for two simultaneous reservations against the same final credit.
+- [x] 8.10 Add duplicate settlement, teacher-write failure rollback, cancellation, reschedule, and correction tests.
 
 ## 9. Teacher Session Credits
 
-- [ ] 9.1 Add migrations for immutable `teacher_credit_rules` and `teacher_credit_events`.
-- [ ] 9.2 Implement role, course specification, duration, and participant-based pending earning calculation.
-- [ ] 9.3 Implement authorized pending-to-confirmed transition.
-- [ ] 9.4 Implement institution-cancellation compensation as an explicit versioned rule.
-- [ ] 9.5 Implement teacher earning reversal linked to the original event and corrected re-settlement.
-- [ ] 9.6 Add tests for lead/assistant, substitute, cancelled session, and non-conservation with student credits.
+- [x] 9.1 Add migrations for immutable `teacher_credit_rules` and `teacher_credit_events`.
+- [x] 9.2 Implement role, course specification, duration, and participant-based pending earning calculation.
+- [x] 9.3 Implement authorized pending-to-confirmed transition.
+- [x] 9.4 Implement institution-cancellation compensation as an explicit versioned rule.
+- [x] 9.5 Implement teacher earning reversal linked to the original event and corrected re-settlement.
+- [x] 9.6 Add tests for lead/assistant, substitute, cancelled session, and non-conservation with student credits.
 
 ## 10. Outbox, Reconciliation, and Audit
 
-- [ ] 10.1 Add migrations for `outbox_events` and `reconciliation_runs`.
-- [ ] 10.2 Implement post-commit notification delivery with retry and dead-letter visibility.
-- [ ] 10.3 Implement incremental and full batch reconstruction from events and allocations.
-- [ ] 10.4 Add reconciliation exception records without silently rewriting snapshots.
-- [ ] 10.5 Extend audit metadata with operation id, trace id, reason, outcome, and privacy-safe before/after summaries.
-- [ ] 10.6 Add metrics for command success, conflicts, insufficient credit, settlement failure, expiry, outbox lag, and reconciliation drift.
+- [x] 10.1 Add migrations for `outbox_events` and `reconciliation_runs`.
+- [x] 10.2 Implement post-commit notification delivery with retry and dead-letter visibility.
+- [x] 10.3 Implement incremental and full batch reconstruction from events and allocations.
+- [x] 10.4 Add reconciliation exception records without silently rewriting snapshots.
+- [x] 10.5 Extend audit metadata with operation id, trace id, reason, outcome, and privacy-safe before/after summaries.
+- [x] 10.6 Add metrics for command success, conflicts, insufficient credit, settlement failure, expiry, outbox lag, and reconciliation drift.
 
 ## 11. Hono API Contracts
 
-- [ ] 11.1 Add student summary, batch, event, conversion-rule, preview, conversion, and session query routes.
-- [ ] 11.2 Add student reservation command with identity derived only from authenticated context.
-- [ ] 11.3 Add Admin catalog, package, pricing, order, credit, conversion, class, session, settlement, teacher-credit, and reconciliation routes.
-- [ ] 11.4 Add explicit high-risk action routes for extension, reversal, settlement, and reopening.
-- [ ] 11.5 Add stable business error codes and operation/trace identifiers to command responses.
-- [ ] 11.6 Add RBAC capabilities for academic, finance, settlement, audit, teacher, student, and guardian scopes.
-- [ ] 11.7 Generate and verify Swagger/OpenAPI contracts for every new route.
+- [x] 11.1 Add student summary, batch, event, conversion-rule, preview, conversion, and session query routes.
+- [x] 11.2 Add student reservation command with identity derived only from authenticated context.
+- [x] 11.3 Add Admin catalog, package, pricing, order, credit, conversion, class, session, settlement, teacher-credit, and reconciliation routes.
+- [x] 11.4 Add explicit high-risk action routes for extension, reversal, settlement, and reopening.
+- [x] 11.5 Add stable business error codes and operation/trace identifiers to command responses.
+- [x] 11.6 Add RBAC capabilities for academic, finance, settlement, audit, teacher, student, and guardian scopes.
+- [x] 11.7 Generate and verify Swagger/OpenAPI contracts for every new route.
 
 ## 12. Admin Workspaces
 
@@ -156,6 +157,6 @@
 - [ ] 16.5 Enable explicit conversion, then authorized implicit conversion, after earlier stages are stable.
 - [ ] 16.6 Configure independent lines, branches, functions, and statements thresholds of at least 95% in every affected project.
 - [ ] 16.7 Before release, rehearse PocketBase migration and rollback on a production-like backup.
-- [ ] 16.8 Add explicit tests for validation failure, authorization failure, duplicate command, rollback, concurrent reservation, expiry boundary, reversal, and reconciliation drift.
+- [x] 16.8 Add explicit tests for validation failure, authorization failure, duplicate command, rollback, concurrent reservation, expiry boundary, reversal, and reconciliation drift.
 - [ ] 16.9 Run focused local tests, coverage, and runtime verification throughout implementation without Docker.
 - [ ] 16.10 At the final release gate, confirm all four coverage metrics are at least 95% in each affected project, then run Docker build/deployment validation, reconciliation, and rollback smoke tests.
