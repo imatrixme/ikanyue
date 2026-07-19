@@ -67,7 +67,7 @@
 
             <ticket-section subtitle="微信登录凭证不可在这里修改" title="登录账号">
                 <view class="userinfo-form-sheet">
-                    <account-row icon-text="机" title="绑定手机" :value="maskedPhone" />
+                    <account-row icon="account-phone" title="绑定手机" :value="maskedPhone" />
                 </view>
             </ticket-section>
 

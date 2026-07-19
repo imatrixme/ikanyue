@@ -67,7 +67,7 @@
                 </view>
                 <view v-else class="points-empty-row points-empty-row--ready">
                     <view class="points-empty-row__icon">
-                        <app-icon name="empty-rewards" size="lg" />
+                        <app-icon name="account-rewards" size="xl" />
                     </view>
                     <view class="points-empty-row__copy">
                         <text class="points-empty-row__title">暂无可兑换实物</text>
@@ -84,7 +84,7 @@
             >
                 <account-row
                     description="浏览所有实物及所需积分"
-                    icon-text="礼"
+                    icon="account-rewards"
                     interactive
                     :title="`${allRewards.length} 件实物`"
                     :value="`${balance} PT`"
@@ -114,7 +114,7 @@
                 </view>
                 <view v-else class="points-empty-row points-empty-row--events">
                     <view class="points-empty-row__icon">
-                        <app-icon name="empty-points" size="lg" />
+                        <app-icon name="account-points" size="xl" />
                     </view>
                     <view class="points-empty-row__copy">
                         <text class="points-empty-row__title">暂无积分记录</text>

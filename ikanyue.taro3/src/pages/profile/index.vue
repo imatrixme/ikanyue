@@ -31,7 +31,7 @@
                     <view class="profile-row-group">
                         <account-row
                             description="查看可领取实物和解锁进度"
-                            icon-text="PT"
+                            icon="account-points"
                             interactive
                             title="查看我的积分"
                             @select="goPoints"
@@ -41,11 +41,11 @@
 
                 <ticket-section action-label="进入修改" subtitle="用于身份识别与活动联系" title="账号资料" @action="modifyInfo">
                     <view class="profile-row-group">
-                        <account-row icon-text="名" title="显示名称" :value="displayName" />
-                        <account-row icon-text="机" title="绑定手机" :value="maskedPhone" />
+                        <account-row icon="account-name" title="显示名称" :value="displayName" />
+                        <account-row icon="account-phone" title="绑定手机" :value="maskedPhone" />
                         <account-row
                             description="昵称、姓名、性别、年龄与地区"
-                            icon-text="档"
+                            icon="account-profile"
                             interactive
                             title="个人资料"
                             @select="modifyInfo"
@@ -74,7 +74,7 @@
                         v-for="link in kanyueInfoLinks"
                         :key="link.id"
                         :description="link.description"
-                        :icon-text="link.iconText"
+                        :icon="link.icon"
                         interactive
                         :title="link.title"
                         @select="openKanyueInfo(link)"

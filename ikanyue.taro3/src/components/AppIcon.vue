@@ -12,6 +12,13 @@
 import { iconSizes } from '../styles/theme.mjs';
 
 const ICON_SOURCES = {
+    'account-about': require('../imgs/icons/account-about.png'),
+    'account-name': require('../imgs/icons/account-name.png'),
+    'account-phone': require('../imgs/icons/account-phone.png'),
+    'account-points': require('../imgs/icons/account-points.png'),
+    'account-profile': require('../imgs/icons/account-profile.png'),
+    'account-rewards': require('../imgs/icons/account-rewards.png'),
+    'account-teaching': require('../imgs/icons/account-teaching.png'),
     'chevron-primary': require('../imgs/icons/chevron-primary.png'),
     'clock-muted': require('../imgs/icons/clock-muted.png'),
     'empty-account': require('../imgs/icons/empty-account.png'),

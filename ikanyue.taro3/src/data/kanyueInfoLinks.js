@@ -7,7 +7,7 @@ const KANYUE_INFO_LINKS = Object.freeze([
     Object.freeze({
         description: '课程内容与学习方式',
         detailTitle: '看乐教学',
-        iconText: '课',
+        icon: 'account-teaching',
         id: 'teaching',
         imageUrl: IMAGE_DETAIL_URLS.learnWhat,
         title: '看乐教学',
@@ -15,7 +15,7 @@ const KANYUE_INFO_LINKS = Object.freeze([
     Object.freeze({
         description: '认识看乐艺术',
         detailTitle: '关于看乐',
-        iconText: 'K',
+        icon: 'account-about',
         id: 'about',
         imageUrl: IMAGE_DETAIL_URLS.about,
         title: '关于看乐',
