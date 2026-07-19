@@ -90,6 +90,33 @@ describe('iNet request wrapper', () => {
         });
     });
 
+    it('preserves stable course-credit error details and tracing fields', async () => {
+        taroMock.request.mockImplementation(({ success }) => {
+            success({
+                data: {
+                    code: 400,
+                    message: '课程点不足',
+                    data: null,
+                    errorCode: 'CREDIT_INSUFFICIENT',
+                    details: { missingQuantity: 1 },
+                    operationId: 'operation',
+                    traceId: 'trace',
+                },
+            });
+        });
+
+        await expect(iNet.post('/v1/course-credits/conversions', {}, true, {
+            'Idempotency-Key': 'key',
+        })).rejects.toMatchObject({
+            code: 400,
+            errorCode: 'CREDIT_INSUFFICIENT',
+            details: { missingQuantity: 1 },
+            operationId: 'operation',
+            traceId: 'trace',
+        });
+        expect(taroMock.request.mock.calls[0][0].header['Idempotency-Key']).toBe('key');
+    });
+
     it('rejects transport errors from Taro.request', async () => {
         const networkError = new Error('network failed');
         taroMock.request.mockImplementation(({ fail }) => {

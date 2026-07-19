@@ -1,0 +1,90 @@
+@import '../../styles/tokens';
+
+.course-credit-page {
+    background: $ky-immersive-surface;
+    color: $ky-ink;
+    min-height: 100vh;
+}
+
+.course-credit-content {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    min-height: 68vh;
+    padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
+}
+
+.course-credit-hero-stats {
+    border-top: 1px solid $ky-on-primary-divider;
+    display: grid;
+    gap: $ky-space-3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: $ky-space-5;
+    padding-top: $ky-space-4;
+}
+
+.course-credit-hero-stat text { display: block; }
+.course-credit-hero-stat__value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
+.course-credit-hero-stat__label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+
+.course-credit-list {
+    border: 1px solid $ky-line-tinted;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-subtle;
+    overflow: hidden;
+}
+
+.course-credit-state { min-height: 260px; padding-top: $ky-space-8; }
+
+.course-credit-facts {
+    background: $ky-surface;
+    border: 1px solid $ky-line-tinted;
+    border-radius: $ky-radius-lg;
+    overflow: hidden;
+}
+
+.course-credit-fact {
+    align-items: center;
+    border-bottom: 1px solid $ky-line-tinted;
+    display: flex;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 0 $ky-space-4;
+}
+.course-credit-fact:last-child { border-bottom: 0; }
+.course-credit-fact__label { color: $ky-text-secondary; font-size: $ky-font-size-body-sm; }
+.course-credit-fact__value { color: $ky-ink-strong; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-semibold; max-width: 62%; text-align: right; }
+
+.course-credit-primary-button,
+.course-credit-secondary-button {
+    align-items: center;
+    border-radius: $ky-radius-md;
+    display: flex;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-bold;
+    justify-content: center;
+    min-height: $ky-control-height-touch;
+}
+.course-credit-primary-button { background: $ky-primary; box-shadow: $ky-shadow-button; color: $ky-on-primary; }
+.course-credit-primary-button--disabled { opacity: $ky-disabled-opacity; }
+.course-credit-secondary-button { background: $ky-primary-soft; color: $ky-primary-strong; }
+
+.course-credit-popup {
+    background: $ky-surface;
+    border-radius: $ky-radius-lg $ky-radius-lg 0 0;
+    box-sizing: border-box;
+    padding: $ky-space-5 $ky-space-4 calc(#{$ky-space-4} + env(safe-area-inset-bottom));
+}
+.course-credit-popup__eyebrow { color: $ky-primary; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; }
+.course-credit-popup__title { color: $ky-ink-strong; display: block; font-size: $ky-font-size-section; font-weight: $ky-font-weight-black; margin-top: $ky-space-1; }
+.course-credit-popup__description { color: $ky-text-secondary; display: block; font-size: $ky-font-size-body-sm; line-height: $ky-leading-readable; margin-top: $ky-space-2; }
+.course-credit-popup__actions { display: grid; gap: $ky-space-3; grid-template-columns: 1fr 1.35fr; margin-top: $ky-space-4; }
+
+.course-credit-note {
+    background: $ky-primary-wash;
+    border: 1px solid $ky-primary-line;
+    border-radius: $ky-radius-md;
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-xs;
+    line-height: $ky-leading-readable;
+    padding: $ky-space-3;
+}

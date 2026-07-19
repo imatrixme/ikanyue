@@ -156,4 +156,42 @@ describe('Api page-facing request wrappers', () => {
 
         expect(iNetMock.get).toHaveBeenCalledWith('/v1/activity/find', { page: 1, perPage: 100 });
     });
+
+    it('wraps every student-owned course-credit query endpoint', async () => {
+        iNetMock.get.mockResolvedValue({ items: [] });
+
+        await Api.getCourseCreditSummary();
+        await Api.listCourseCreditBatches({ page: 2, status: 'active' });
+        await Api.getCourseCreditBatch('batch-1');
+        await Api.listCourseCreditEvents({ page: 3 });
+        await Api.listCourseCreditConversionRules();
+        await Api.listCourseCreditSessions({ perPage: 10 });
+
+        expect(iNetMock.get.mock.calls).toEqual([
+            ['/v1/course-credits/summary'],
+            ['/v1/course-credits/batches', { page: 2, status: 'active' }],
+            ['/v1/course-credits/batches/batch-1'],
+            ['/v1/course-credits/events', { page: 3 }],
+            ['/v1/course-credits/conversion-rules'],
+            ['/v1/course-credits/sessions', { perPage: 10 }],
+        ]);
+    });
+
+    it('sends course-credit commands with explicit idempotency keys', async () => {
+        iNetMock.post.mockResolvedValue({ operationId: 'operation' });
+        const conversion = { ruleId: 'rule', sourceQuantity: 100 };
+
+        await Api.previewCourseCreditConversion(conversion);
+        await Api.convertCourseCredits(conversion, 'convert-key');
+        await Api.authorizeCourseCreditConversion(conversion, 'authorization-key');
+        await Api.reserveCourseCredit('session-student', { authorizationId: 'authorization' }, 'reserve-key');
+
+        expect(iNetMock.post.mock.calls).toEqual([
+            ['/v1/course-credits/conversions/preview', conversion],
+            ['/v1/course-credits/conversions', conversion, true, { 'Idempotency-Key': 'convert-key' }],
+            ['/v1/course-credits/conversion-authorizations', conversion, true, { 'Idempotency-Key': 'authorization-key' }],
+            ['/v1/course-credits/session-students/session-student/reserve',
+                { authorizationId: 'authorization' }, true, { 'Idempotency-Key': 'reserve-key' }],
+        ]);
+    });
 });

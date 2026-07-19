@@ -11,6 +11,7 @@ export default defineConfig({
                 'src/pages/activity/pageLogic.js',
                 'src/pages/activityDetail/htmlUtils.js',
                 'src/pages/points/pageLogic.js',
+                'src/pages/courseCredits/pageLogic.js',
                 'utils/apis.js',
                 'utils/request.js',
                 'utils/usermanager.js',

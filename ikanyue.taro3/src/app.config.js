@@ -4,6 +4,12 @@ export default defineAppConfig({
     pages: [
         'pages/activity/index',
         'pages/points/index',
+        'pages/courseCredits/index',
+        'pages/courseCreditBatches/index',
+        'pages/courseCreditBatch/index',
+        'pages/courseCreditHistory/index',
+        'pages/courseCreditConversion/index',
+        'pages/courseCreditSessions/index',
         'pages/pointsHistory/index',
         'pages/rewardCatalog/index',
         'pages/profile/index',

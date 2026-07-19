@@ -54,6 +54,10 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
                     } else {
                         const err = new Error(res.data.message);
                         err.code = res.data.code;
+                        err.errorCode = res.data.errorCode || '';
+                        err.details = res.data.details || {};
+                        err.operationId = res.data.operationId || null;
+                        err.traceId = res.data.traceId || null;
                         reject(err);
                         return;
                     }
@@ -73,8 +77,8 @@ const get = (url, data = {}, authcheck = true) => {
     return Request('GET', url, data, null, authcheck);
 };
 
-const post = (url, data = {}, authcheck = true) => {
-    return Request('POST', url, data, null, authcheck);
+const post = (url, data = {}, authcheck = true, header = {}) => {
+    return Request('POST', url, data, header, authcheck);
 };
 
 const iNet = {

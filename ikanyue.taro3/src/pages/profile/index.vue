@@ -35,6 +35,13 @@
                             title="查看我的积分"
                             @select="goPoints"
                         />
+                        <account-row
+                            description="查看批次、兑换规则和课次预约状态"
+                            icon-text="课"
+                            interactive
+                            title="查看我的课程点"
+                            @select="goCourseCredits"
+                        />
                     </view>
                 </ticket-section>
 
@@ -178,6 +185,9 @@ export default {
         },
         goPoints() {
             Taro.switchTab({ url: '/pages/points/index' });
+        },
+        goCourseCredits() {
+            Taro.navigateTo({ url: '/pages/courseCredits/index' });
         },
         openKanyueInfo(link) {
             const url = buildImageDetailUrl(link);

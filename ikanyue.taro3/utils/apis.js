@@ -108,6 +108,33 @@ const listRewardItems = (params = {}) => {
     return iNet.get('/v1/reward-items', params);
 };
 
+const getCourseCreditSummary = () => iNet.get('/v1/course-credits/summary');
+
+const listCourseCreditBatches = (params = {}) => iNet.get('/v1/course-credits/batches', params);
+
+const getCourseCreditBatch = (batchId) => iNet.get(`/v1/course-credits/batches/${batchId}`);
+
+const listCourseCreditEvents = (params = {}) => iNet.get('/v1/course-credits/events', params);
+
+const listCourseCreditConversionRules = () => iNet.get('/v1/course-credits/conversion-rules');
+
+const previewCourseCreditConversion = (payload) => iNet.post('/v1/course-credits/conversions/preview', payload);
+
+const convertCourseCredits = (payload, idempotencyKey) => iNet.post(
+    '/v1/course-credits/conversions', payload, true, { 'Idempotency-Key': idempotencyKey }
+);
+
+const authorizeCourseCreditConversion = (payload, idempotencyKey) => iNet.post(
+    '/v1/course-credits/conversion-authorizations', payload, true, { 'Idempotency-Key': idempotencyKey }
+);
+
+const listCourseCreditSessions = (params = {}) => iNet.get('/v1/course-credits/sessions', params);
+
+const reserveCourseCredit = (sessionStudentId, payload, idempotencyKey) => iNet.post(
+    `/v1/course-credits/session-students/${sessionStudentId}/reserve`, payload, true,
+    { 'Idempotency-Key': idempotencyKey }
+);
+
 const Api = {
     loginWithPassword,
     loginWithWechat,
@@ -116,6 +143,16 @@ const Api = {
     findActivities,
     getMyPointSummary,
     listRewardItems,
+    getCourseCreditSummary,
+    listCourseCreditBatches,
+    getCourseCreditBatch,
+    listCourseCreditEvents,
+    listCourseCreditConversionRules,
+    previewCourseCreditConversion,
+    convertCourseCredits,
+    authorizeCourseCreditConversion,
+    listCourseCreditSessions,
+    reserveCourseCredit,
 };
 
 export { Api };

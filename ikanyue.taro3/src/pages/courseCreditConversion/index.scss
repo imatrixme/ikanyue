@@ -1,0 +1,13 @@
+@import '../courseCredits/shared';
+
+.conversion-rule { background: $ky-surface; border: 1px solid $ky-line-tinted; border-radius: $ky-radius-lg; box-shadow: $ky-shadow-subtle; padding: $ky-space-4; }
+.conversion-rule + .conversion-rule { margin-top: $ky-space-3; }
+.conversion-rule__header { align-items: flex-start; display: flex; justify-content: space-between; }
+.conversion-rule__title { color: $ky-ink-strong; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-bold; max-width: 72%; }
+.conversion-rule__version { background: $ky-muted-surface; border-radius: $ky-radius-sm; color: $ky-text-secondary; font-size: $ky-font-size-2xs; padding: 3px $ky-space-2; }
+.conversion-rule__meta { color: $ky-text-secondary; display: block; font-size: $ky-font-size-xs; line-height: $ky-leading-readable; margin-top: $ky-space-2; }
+.conversion-rule__controls { align-items: center; border-top: 1px solid $ky-line-tinted; display: grid; gap: $ky-space-3; grid-template-columns: 1fr 92px 88px; margin-top: $ky-space-4; padding-top: $ky-space-3; }
+.conversion-rule__balance { color: $ky-text-muted; font-size: $ky-font-size-xs; }
+.conversion-rule__input { background: $ky-canvas; border: 1px solid $ky-input-line; border-radius: $ky-radius-md; box-sizing: border-box; color: $ky-ink-strong; font-size: $ky-font-size-body; height: $ky-control-height-default; padding: 0 $ky-space-2; text-align: center; width: 100%; }
+.conversion-rule__preview { align-items: center; background: $ky-primary; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; height: $ky-control-height-default; justify-content: center; }
+.conversion-preview-facts { margin-top: $ky-space-4; }
