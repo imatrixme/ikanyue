@@ -72,9 +72,14 @@ From `ikanyue.website`:
 rtk pnpm install --frozen-lockfile
 rtk pnpm test
 rtk pnpm run lint
-rtk pnpm run build
+rtk env \
+  NUXT_PUBLIC_API_BASE=https://xapi.ikanyue.com \
+  NUXT_PUBLIC_SITE_URL=https://ikanyue.com \
+  pnpm run build
 rtk env NUXT_IGNORE_LOCK=1 pnpm test:e2e
 ```
+
+Never run the production build with the local default URLs. Prerendered routes, `robots.txt`, `sitemap.xml`, payloads, and structured data can otherwise capture localhost values or local fixture content.
 
 Package from the parent repository:
 

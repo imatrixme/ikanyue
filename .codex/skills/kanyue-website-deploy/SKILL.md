@@ -49,11 +49,14 @@ Run from `ikanyue.website`:
 ```bash
 rtk pnpm test
 rtk pnpm run lint
-rtk pnpm run build
+rtk env \
+  NUXT_PUBLIC_API_BASE=https://xapi.ikanyue.com \
+  NUXT_PUBLIC_SITE_URL=https://ikanyue.com \
+  pnpm run build
 rtk env NUXT_IGNORE_LOCK=1 pnpm test:e2e
 ```
 
-Package only after `.output/server/index.mjs` exists. Use `scripts/package-release.sh` to create a checksum-addressed archive without macOS extended attributes.
+Package only after `.output/server/index.mjs` exists. Use `scripts/package-release.sh` to reject localhost or debug fixture leakage, then create a checksum-addressed archive without macOS extended attributes.
 
 ### 3. Back Up Before Mutable Infrastructure Changes
 
