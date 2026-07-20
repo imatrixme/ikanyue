@@ -4,8 +4,8 @@ import { resolveActivityImage } from '~/utils/activity-media'
 describe('activity photography', () => {
   it('replaces the current production illustrations with website photography', () => {
     expect(resolveActivityImage({ id: '702xy10zax9yg69' })).toBe('/images/vocal-performance.webp')
-    expect(resolveActivityImage({ id: 'ck8wk6h9ks40u41' })).toBe('/images/vocal-community.webp')
-    expect(resolveActivityImage({ id: 'c3e3r8gdk5mmim7' })).toBe('/images/vocal-adult.webp')
+    expect(resolveActivityImage({ id: 'ck8wk6h9ks40u41' })).toBe('/images/activity-high-note-session-1.webp')
+    expect(resolveActivityImage({ id: 'c3e3r8gdk5mmim7' })).toBe('/images/activity-high-note-session-2.webp')
   })
 
   it('preserves uploaded photography for other activities', () => {
