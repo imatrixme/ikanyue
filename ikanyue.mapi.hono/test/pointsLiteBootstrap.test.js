@@ -113,8 +113,11 @@ test('local activity fixture remains visible in the restored seven-day activity 
     const [activity] = createLocalActivities(baseDate);
 
     assert.equal(activity.status, 'active');
+    assert.equal(activity.title, '声乐体验与声音评估');
     assert.equal(activity.tags, '声乐,体验');
     assert.equal(activity.startTime, '2026-07-14T02:00:00.000Z');
+    assert.match(activity.description, /基础声音评估、呼吸与共鸣练习/);
+    assert.doesNotMatch(activity.description, /本地|联调|样例/);
 });
 
 test('local seed guard rejects non-local PocketBase hosts', () => {

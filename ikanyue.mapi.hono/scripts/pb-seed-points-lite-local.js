@@ -39,8 +39,8 @@ function createLocalActivities(baseDate = new Date()) {
     return [
         {
             id: 'localactivity01',
-            title: '本地声乐体验活动',
-            description: '<p>用于局域网联调的活动样例。</p>',
+            title: '声乐体验与声音评估',
+            description: '<p>面向希望了解科学发声与声乐训练方式的学习者，本次活动将通过基础声音评估、呼吸与共鸣练习，帮助参与者认识当前声音状态，并获得适合自身阶段的训练建议。</p><p>活动适合儿童、青少年及成人初学者参加，无需声乐基础。老师会结合年龄、声音条件与学习目标进行现场指导，具体训练内容以实际评估为准。</p>',
             startTime: startTime.toISOString(),
             endTime: endTime.toISOString(),
             location: '看乐艺术教室',
