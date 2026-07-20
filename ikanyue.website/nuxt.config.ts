@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite'
 import { designTokens } from './app/utils/brand.generated'
+import { siteRouteRules } from './config/route-rules'
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-01',
@@ -28,17 +29,7 @@ export default defineNuxtConfig({
       ],
     },
   },
-  routeRules: {
-    '/': { prerender: true },
-    '/courses': { prerender: true },
-    '/faculty': { prerender: true },
-    '/stories': { prerender: true },
-    '/about': { prerender: true },
-    '/contact': { prerender: true },
-    '/privacy': { prerender: true },
-    '/activities': { swr: 300 },
-    '/activities/**': { swr: 300 },
-  },
+  routeRules: siteRouteRules,
   nitro: {
     prerender: {
       routes: ['/sitemap.xml', '/robots.txt'],

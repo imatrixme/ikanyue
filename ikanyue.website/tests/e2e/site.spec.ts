@@ -19,6 +19,8 @@ test('homepage exposes the selected ticket archive hierarchy', async ({ page }, 
   await expect(page.getByRole('heading', { level: 1, name: '全年龄声乐课程' })).toBeVisible()
   await expect(page.getByText('近期声乐活动', { exact: true }).first()).toBeVisible()
   await expect(page.locator('.activity-ticket').first()).toBeVisible()
+  await expect(page.getByText('用于局域网联调的活动样例。', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('本地声乐体验活动', { exact: true })).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('homepage.png'), fullPage: true })
 })
 
