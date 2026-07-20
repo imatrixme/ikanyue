@@ -1,4 +1,5 @@
 import type { Activity } from '../../../app/types/content'
+import { normalizeActivityContent } from '../../utils/activity-content'
 import { unwrapHonoData, type HonoResponse } from '../../utils/hono-response'
 
 export default defineEventHandler(async (event) => {
@@ -10,5 +11,5 @@ export default defineEventHandler(async (event) => {
   url.searchParams.set('id', id)
 
   const response = await $fetch<HonoResponse<Activity>>(url.toString(), { timeout: 5000 })
-  return unwrapHonoData(response)
+  return normalizeActivityContent(unwrapHonoData(response))
 })

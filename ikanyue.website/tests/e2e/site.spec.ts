@@ -24,6 +24,26 @@ test('homepage exposes the selected ticket archive hierarchy', async ({ page }, 
   await page.screenshot({ path: testInfo.outputPath('homepage.png'), fullPage: true })
 })
 
+test('activity cards use compact summaries and details do not repeat them below the title', async ({ page }) => {
+  await page.goto('/activities')
+  const firstTicket = page.locator('.activity-ticket').first()
+  const summary = firstTicket.locator('.activity-ticket__summary')
+  await expect(summary).toBeVisible()
+  await expect(summary).not.toContainText('<p>')
+
+  const summaryStyle = await summary.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { fontSize: style.fontSize, lineClamp: style.webkitLineClamp }
+  })
+  expect(Number.parseFloat(summaryStyle.fontSize)).toBeLessThan(16)
+  expect(summaryStyle.lineClamp).toBe('6')
+
+  await firstTicket.getByRole('link').click()
+  await expect(page.locator('.activity-detail-hero h1')).toBeVisible()
+  await expect(page.locator('.activity-detail-hero p')).toHaveCount(0)
+  await expect(page.locator('.activity-detail__body')).toBeVisible()
+})
+
 test('contact page offers direct WeChat and phone contact', async ({ page }) => {
   await page.goto('/contact')
   await expect(page.getByText('微信/电话咨询', { exact: true })).toBeVisible()
@@ -48,7 +68,7 @@ test('footer exposes the official ICP filing', async ({ page }) => {
 
 test('primary pages have no serious accessibility violations', async ({ page }) => {
   for (const route of ['/', '/courses', '/activities', '/contact']) {
-    await page.goto(route)
+    await page.goto(route, { waitUntil: 'networkidle' })
     const results = await new AxeBuilder({ page }).analyze()
     expect(results.violations.filter(item => ['critical', 'serious'].includes(item.impact || ''))).toEqual([])
   }

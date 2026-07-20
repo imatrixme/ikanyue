@@ -191,6 +191,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 15%;
 }
 
 .activity-ticket__body {
@@ -214,9 +215,15 @@
   gap: var(--ky-space-1);
 }
 
-.activity-ticket__body > p {
+.activity-ticket__summary {
+  display: -webkit-box;
+  overflow: hidden;
   margin-top: var(--ky-space-3);
   color: var(--muted-foreground);
+  font-size: var(--ky-web-body-sm);
+  line-height: 1.45rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
 }
 
 .faculty-page-grid,

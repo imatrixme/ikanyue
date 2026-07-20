@@ -1,4 +1,5 @@
 import type { Activity } from '../../../app/types/content'
+import { normalizeActivityContent } from '../../utils/activity-content'
 import { unwrapHonoData, type HonoResponse } from '../../utils/hono-response'
 
 interface ActivityResponse {
@@ -16,5 +17,7 @@ export default defineEventHandler(async () => {
   })
   const data = unwrapHonoData(response)
 
-  return { items: Array.isArray(data.items) ? data.items : [] }
+  return {
+    items: Array.isArray(data.items) ? data.items.map(normalizeActivityContent) : [],
+  }
 })

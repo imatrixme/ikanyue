@@ -33,6 +33,8 @@ export interface Activity {
   id: string
   title: string
   description?: string
+  descriptionHtml?: string
+  summary?: string
   startTime: string | number
   endTime?: string | number
   location?: string

@@ -258,6 +258,7 @@
 
 .activity-detail-hero > img {
   object-fit: cover;
+  object-position: center 15%;
 }
 
 .activity-detail-hero__shade {
@@ -280,13 +281,6 @@
   margin-top: var(--ky-space-4);
   font-size: var(--ky-web-display);
   line-height: var(--ky-web-display-line);
-}
-
-.activity-detail-hero p {
-  max-width: 44rem;
-  margin-top: var(--ky-space-4);
-  color: var(--on-primary-muted);
-  font-size: var(--ky-web-body-lg);
 }
 
 .activity-detail {
@@ -312,6 +306,12 @@
 .activity-detail__facts dd { margin-top: var(--ky-space-2); color: var(--card-foreground); font-weight: var(--ky-font-weight-semibold); }
 .activity-detail__body { max-width: var(--ky-prose-measure); }
 .activity-detail__body p + p { margin-top: var(--ky-space-4); }
+.activity-detail__rich-text > * + * { margin-top: var(--ky-space-4); }
+.activity-detail__rich-text ul,
+.activity-detail__rich-text ol { padding-left: var(--ky-space-6); }
+.activity-detail__rich-text li + li { margin-top: var(--ky-space-2); }
+.activity-detail__rich-text a { color: var(--primary-hover); text-decoration: underline; text-underline-offset: 0.18em; }
+.activity-detail__rich-text + p { margin-top: var(--ky-space-4); }
 
 .journey-list {
   display: grid;

@@ -120,8 +120,7 @@
   }
 
   .home-hero__lead,
-  .page-hero__inner > p:last-of-type,
-  .activity-detail-hero p {
+  .page-hero__inner > p:last-of-type {
     font-size: var(--ky-web-body);
   }
 
