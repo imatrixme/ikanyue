@@ -41,6 +41,9 @@ yarn-error.log*
 # Local high-resolution official website design boards
 /design-output/website-hires/
 
+# Generated poster exports
+/ikanyue.posters/**/posters/
+
 # API local data
 .local/
 **/.tmp/
