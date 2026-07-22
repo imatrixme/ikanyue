@@ -1,0 +1,4 @@
+interface:
+  display_name: "看乐官网部署"
+  short_description: "发布和迁移看乐 Nuxt 官网至 1Panel 服务器"
+  default_prompt: "Use $kanyue-website-deploy to safely publish or migrate the Kanyue Nuxt website with verified backups, bypass checks, and a tested rollback path."

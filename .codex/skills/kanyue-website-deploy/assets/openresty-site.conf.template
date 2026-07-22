@@ -1,0 +1,36 @@
+server {
+    listen 80;
+    listen 443 ssl http2;
+    server_name {{PRIMARY_DOMAIN}} {{WWW_DOMAIN}};
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $server_name;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $http_connection;
+
+    access_log /www/sites/{{PRIMARY_DOMAIN}}/log/access.log main;
+    error_log /www/sites/{{PRIMARY_DOMAIN}}/log/error.log;
+
+    location ^~ /.well-known/acme-challenge {
+        allow all;
+        root /usr/share/nginx/html;
+    }
+
+    include /www/sites/{{PRIMARY_DOMAIN}}/proxy/*.conf;
+
+    if ($scheme = http) {
+        return 301 https://$host$request_uri;
+    }
+
+    ssl_certificate /www/sites/{{PRIMARY_DOMAIN}}/ssl/fullchain.pem;
+    ssl_certificate_key /www/sites/{{PRIMARY_DOMAIN}}/ssl/privkey.pem;
+    ssl_protocols TLSv1.3 TLSv1.2;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    error_page 497 https://$host$request_uri;
+    proxy_set_header X-Forwarded-Proto https;
+    add_header Strict-Transport-Security "max-age=31536000";
+}
