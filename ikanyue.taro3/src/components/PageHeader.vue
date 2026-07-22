@@ -1,5 +1,12 @@
 <template>
     <view class="page-header" :class="[`page-header--${tone}`, { 'page-header--center': centered }]">
+        <image
+            v-if="tone === 'immersive'"
+            class="page-header__texture"
+            :src="heroTexture"
+            mode="aspectFill"
+            aria-hidden="true"
+        />
         <slot name="leading" />
         <view class="page-header__copy">
             <text v-if="eyebrow" class="page-header__eyebrow">{{ eyebrow }}</text>
@@ -11,8 +18,13 @@
 </template>
 
 <script>
+import heroTexture from '../imgs/textures/hero-music.png';
+
 export default {
     name: 'PageHeader',
+    data() {
+        return { heroTexture };
+    },
     props: {
         centered: { type: Boolean, default: false },
         eyebrow: { type: String, default: '' },
@@ -28,14 +40,23 @@ export default {
 @import '../styles/hero-texture';
 
 .page-header {
+    @include ky-hero-texture-host;
     box-sizing: border-box;
     padding: $ky-space-6 $ky-space-4;
 }
 
 .page-header--immersive {
-    @include ky-hero-texture;
     color: $ky-on-primary;
     background-color: $ky-immersive-surface;
+}
+
+.page-header__texture {
+    @include ky-hero-texture-layer;
+}
+
+.page-header > view {
+    position: relative;
+    z-index: 1;
 }
 
 .page-header--canvas {

@@ -12,7 +12,6 @@ execFileSync(process.execPath, ['scripts/check-weapp-output.mjs'], {
 const appConfig = JSON.parse(await readFile(new URL('../../dist/app.json', import.meta.url), 'utf8'));
 const packageConfig = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8'));
 const commonBundle = await readFile(new URL('../../dist/common.js', import.meta.url), 'utf8');
-const commonStyle = await readFile(new URL('../../dist/common.wxss', import.meta.url), 'utf8');
 const tokenEntrySource = await readFile(new URL('../../src/styles/_tokens.scss', import.meta.url), 'utf8');
 const tokenSource = await readFile(new URL('../../src/styles/_brand.generated.scss', import.meta.url), 'utf8');
 const themeSource = await readFile(new URL('../../src/styles/theme.mjs', import.meta.url), 'utf8');
@@ -33,10 +32,14 @@ const pointEventRowSource = await readFile(new URL('../../src/components/PointEv
 const sectionHeaderSource = await readFile(new URL('../../src/components/SectionHeader.vue', import.meta.url), 'utf8');
 const segmentedControlSource = await readFile(new URL('../../src/components/SegmentedControl.vue', import.meta.url), 'utf8');
 const stickyActionBarSource = await readFile(new URL('../../src/components/StickyActionBar.vue', import.meta.url), 'utf8');
+const pointsSource = await readFile(new URL('../../src/pages/points/index.vue', import.meta.url), 'utf8');
+const pointsRewardListSource = await readFile(new URL('../../src/pages/points/_reward-list.scss', import.meta.url), 'utf8');
 const profileSource = await readFile(new URL('../../src/pages/profile/index.vue', import.meta.url), 'utf8');
+const kanyueInfoLinksSource = await readFile(new URL('../../src/data/kanyueInfoLinks.js', import.meta.url), 'utf8');
 const iconGeneratorSource = await readFile(new URL('../../scripts/generate-icons.mjs', import.meta.url), 'utf8');
 const heroTextureSource = await readFile(new URL('../../src/styles/_hero-texture.scss', import.meta.url), 'utf8');
 const heroTextureArtworkSource = await readFile(new URL('../../assets-src/imagegen/icons-v2/hero-music.svg', import.meta.url), 'utf8');
+const heroTextureAsset = await readFile(new URL('../../dist/imgs/textures/hero-music.png', import.meta.url));
 const vendorsBundle = await readFile(new URL('../../dist/vendors.js', import.meta.url), 'utf8');
 const activityBundle = await readFile(new URL('../../dist/pages/activity/index.js', import.meta.url), 'utf8');
 const activityTemplate = await readFile(new URL('../../dist/pages/activity/index.wxml', import.meta.url), 'utf8');
@@ -73,6 +76,18 @@ const userinfoStyle = await readFile(new URL('../../dist/pages/userinfo/index.wx
 const userinfoTemplate = await readFile(new URL('../../dist/pages/userinfo/index.wxml', import.meta.url), 'utf8');
 const userinfoStyleSource = await readFile(new URL('../../src/pages/userinfo/index.scss', import.meta.url), 'utf8');
 const userinfoSource = await readFile(new URL('../../src/pages/userinfo/index.vue', import.meta.url), 'utf8');
+const accountIconNames = [
+    'account-about',
+    'account-name',
+    'account-phone',
+    'account-points',
+    'account-profile',
+    'account-rewards',
+    'account-teaching',
+];
+const accountIconAssets = await Promise.all(accountIconNames.map((name) => (
+    readFile(new URL(`../../src/imgs/icons/${name}.png`, import.meta.url))
+)));
 const activityConfig = JSON.parse(await readFile(new URL('../../dist/pages/activity/index.json', import.meta.url), 'utf8'));
 const activityDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/activityDetail/index.json', import.meta.url), 'utf8'));
 const pointsConfig = JSON.parse(await readFile(new URL('../../dist/pages/points/index.json', import.meta.url), 'utf8'));
@@ -299,13 +314,18 @@ assert.match(segmentedControlSource, /segmented-control__item--active/);
 assert.match(segmentedControlSource, /background: \$ky-primary-strong;/);
 assert.equal((pointsBundle.match(/"scroll-view"/g) || []).length, 0);
 assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 0);
-assert.equal(profileStyle.includes('/imgs/textures/hero-music.png'), true);
-assert.equal(`${commonStyle}\n${userinfoStyle}`.includes('/imgs/textures/hero-music.png'), true);
+[profileStyle, userinfoStyle].forEach((pageStyle) => {
+    assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), false);
+});
 [pointsStyle, pointsHistoryStyle, rewardCatalogStyle].forEach((pageStyle) => {
     assert.equal(pageStyle.includes('/imgs/textures/hero-music.png'), false);
 });
-assert.match(heroTextureSource, /hero-music\.png/);
-assert.match(heroTextureSource, /background-repeat: repeat;/);
+assert.match(`${pageHeaderSource}\n${profileSource}`, /hero-music\.png/);
+assert.equal(heroTextureSource.includes('background-image'), false);
+assert.match(heroTextureSource, /ky-hero-texture-layer/);
+assert.match(pageHeaderSource, /page-header__texture/);
+assert.match(profileSource, /profile-hero__texture/);
+assert.equal(heroTextureAsset.length > 0, true);
 assert.match(heroTextureArtworkSource, /opacity="0\.075"/);
 assert.equal(`${commonBundle}\n${pointsOutput}\n${profileOutput}`.includes('empty-states'), false);
 assert.equal(commonBundle.includes('empty-state__visual'), true);
@@ -316,6 +336,31 @@ assert.match(emptyStateSource, /error-brand\.png/);
 assert.match(emptyStateSource, /network-brand\.png/);
 assert.match(appIconSource, /import \{ iconSizes \} from/);
 assert.match(appIconSource, /type: String/);
+accountIconNames.forEach((name, index) => {
+    assert.match(appIconSource, new RegExp(`${name}\\.png`));
+    assert.equal(accountIconAssets[index].length > 0, true, `empty account icon asset: ${name}`);
+    assert.equal(commonBundle.includes(`${name}.png`), true, `account icon missing from bundle: ${name}`);
+});
+['PT', '礼', '名', '机', '档'].forEach((placeholder) => {
+    assert.equal(
+        `${pointsSource}\n${profileSource}\n${userinfoSource}`.includes(`icon-text="${placeholder}"`),
+        false,
+        `legacy text icon remains: ${placeholder}`,
+    );
+});
+assert.match(profileSource, /icon="account-points"/);
+assert.match(profileSource, /:icon="link\.icon"/);
+assert.match(pointsSource, /icon="account-rewards"/);
+assert.match(userinfoSource, /icon="account-phone"/);
+assert.match(kanyueInfoLinksSource, /icon: 'account-teaching'/);
+assert.match(kanyueInfoLinksSource, /icon: 'account-about'/);
+assert.match(accountRowSource, /<app-icon v-if="icon" :name="icon" size="xl"/);
+assert.match(accountRowSource, /\.account-row__leading \.app-icon\s*\{[\s\S]*?transform: scale\(1\.25\);/);
+assert.match(pointsSource, /<app-icon name="account-rewards" size="xl"/);
+assert.match(pointsSource, /<app-icon name="account-points" size="xl"/);
+assert.match(pointsRewardListSource, /\.points-empty-row__icon \.app-icon\s*\{[\s\S]*?transform: scale\(1\.25\);/);
+assert.equal(pointsSource.includes('name="empty-rewards"'), false);
+assert.equal(pointsSource.includes('name="empty-points"'), false);
 assert.equal(/<app-icon[^>]*(?::size="[0-9]+"|size="[0-9]+")/.test(`${emptyStateSource}\n${accountRowSource}\n${activityTicketSource}\n${sectionHeaderSource}\n${pointsBundle}\n${profileBundle}`), false);
 assert.match(profileSource, /profile-member-pass/);
 assert.match(profileSource, /class="login-popup-shell"/);
@@ -327,6 +372,8 @@ assert.equal(`${sharedOutput}\n${activityDetailBundle}`.includes('margin-bottom:
 assert.match(activityTicketSource, /ADMIT ONE/);
 assert.match(activityTicketSource, /activity-ticket__stub/);
 assert.match(pointsPassSource, /points-pass__seal/);
+assert.match(pointsPassSource, /points-pass__texture/);
+assert.match(pointsPassSource, /hero-music\.png/);
 assert.match(rewardVoucherSource, /reward-voucher__status/);
 assert.match(rewardVoucherSource, /<media-thumb/);
 assert.match(activityTicketSource, /<media-thumb/);

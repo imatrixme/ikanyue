@@ -9,12 +9,21 @@
 }
 
 .profile-hero {
-    @include ky-hero-texture;
+    @include ky-hero-texture-host;
     background-color: $ky-immersive-surface;
     box-sizing: border-box;
     color: $ky-on-primary;
     min-height: 220px;
     padding: $ky-space-5 $ky-space-4 $ky-space-6;
+}
+
+.profile-hero__texture {
+    @include ky-hero-texture-layer;
+}
+
+.profile-hero > view {
+    position: relative;
+    z-index: 1;
 }
 
 .profile-brand {

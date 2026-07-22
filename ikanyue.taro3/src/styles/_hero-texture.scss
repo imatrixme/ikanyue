@@ -1,6 +1,14 @@
-@mixin ky-hero-texture {
-    background-image: url('../imgs/textures/hero-music.png');
-    background-position: center;
-    background-repeat: repeat;
-    background-size: 256px 256px;
+@mixin ky-hero-texture-host {
+    overflow: hidden;
+    position: relative;
+}
+
+@mixin ky-hero-texture-layer {
+    height: 100%;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 0;
 }

@@ -1,7 +1,7 @@
 <template>
     <view class="account-row" :class="{ 'account-row--interactive': interactive }" @tap="handleTap">
         <view v-if="icon || iconText" class="account-row__leading">
-            <app-icon v-if="icon" :name="icon" size="md" />
+            <app-icon v-if="icon" :name="icon" size="xl" />
             <text v-else>{{ iconText }}</text>
         </view>
         <view class="account-row__copy">
@@ -67,6 +67,10 @@ export default {
     height: 36px;
     justify-content: center;
     width: 36px;
+}
+
+.account-row__leading .app-icon {
+    transform: scale(1.25);
 }
 
 .account-row__copy {

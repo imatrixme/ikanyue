@@ -177,6 +177,10 @@
     width: 38px;
 }
 
+.points-empty-row__icon .app-icon {
+    transform: scale(1.25);
+}
+
 .points-empty-row--ready .points-empty-row__icon {
     background: $ky-success-soft;
     border-color: $ky-success-line;
