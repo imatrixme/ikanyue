@@ -108,32 +108,15 @@ const listRewardItems = (params = {}) => {
     return iNet.get('/v1/reward-items', params);
 };
 
-const getCourseCreditSummary = () => iNet.get('/v1/course-credits/summary');
+const getLearningOverview = () => iNet.get('/v1/student/learning/overview');
 
-const listCourseCreditBatches = (params = {}) => iNet.get('/v1/course-credits/batches', params);
+const getLearningCourse = (courseId) => iNet.get(`/v1/student/learning/courses/${courseId}`);
 
-const getCourseCreditBatch = (batchId) => iNet.get(`/v1/course-credits/batches/${batchId}`);
+const listLearningLessons = (params = {}) => iNet.get('/v1/student/learning/lessons', params);
 
-const listCourseCreditEvents = (params = {}) => iNet.get('/v1/course-credits/events', params);
+const getLearningLesson = (lessonId) => iNet.get(`/v1/student/learning/lessons/${lessonId}`);
 
-const listCourseCreditConversionRules = () => iNet.get('/v1/course-credits/conversion-rules');
-
-const previewCourseCreditConversion = (payload) => iNet.post('/v1/course-credits/conversions/preview', payload);
-
-const convertCourseCredits = (payload, idempotencyKey) => iNet.post(
-    '/v1/course-credits/conversions', payload, true, { 'Idempotency-Key': idempotencyKey }
-);
-
-const authorizeCourseCreditConversion = (payload, idempotencyKey) => iNet.post(
-    '/v1/course-credits/conversion-authorizations', payload, true, { 'Idempotency-Key': idempotencyKey }
-);
-
-const listCourseCreditSessions = (params = {}) => iNet.get('/v1/course-credits/sessions', params);
-
-const reserveCourseCredit = (sessionStudentId, payload, idempotencyKey) => iNet.post(
-    `/v1/course-credits/session-students/${sessionStudentId}/reserve`, payload, true,
-    { 'Idempotency-Key': idempotencyKey }
-);
+const listLearningRecords = (params = {}) => iNet.get('/v1/student/learning/records', params);
 
 const Api = {
     loginWithPassword,
@@ -143,16 +126,11 @@ const Api = {
     findActivities,
     getMyPointSummary,
     listRewardItems,
-    getCourseCreditSummary,
-    listCourseCreditBatches,
-    getCourseCreditBatch,
-    listCourseCreditEvents,
-    listCourseCreditConversionRules,
-    previewCourseCreditConversion,
-    convertCourseCredits,
-    authorizeCourseCreditConversion,
-    listCourseCreditSessions,
-    reserveCourseCredit,
+    getLearningOverview,
+    getLearningCourse,
+    listLearningLessons,
+    getLearningLesson,
+    listLearningRecords,
 };
 
 export { Api };

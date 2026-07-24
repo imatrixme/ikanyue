@@ -37,11 +37,11 @@
                             @select="goPoints"
                         />
                         <account-row
-                            description="查看批次、兑换规则和课次预约状态"
-                            icon-text="课"
+                            description="查看剩余课时、课程日程和上课记录"
+                            icon="account-teaching"
                             interactive
-                            title="查看我的课程点"
-                            @select="goCourseCredits"
+                            title="查看我的课程"
+                            @select="goCourses"
                         />
                     </view>
                 </ticket-section>
@@ -189,8 +189,8 @@ export default {
         goPoints() {
             Taro.switchTab({ url: '/pages/points/index' });
         },
-        goCourseCredits() {
-            Taro.navigateTo({ url: '/pages/courseCredits/index' });
+        goCourses() {
+            Taro.switchTab({ url: '/pages/courses/index' });
         },
         openKanyueInfo(link) {
             const url = buildImageDetailUrl(link);

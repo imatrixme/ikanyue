@@ -59,18 +59,16 @@ const rewardCatalogTemplate = await readFile(new URL('../../dist/pages/rewardCat
 const profileBundle = await readFile(new URL('../../dist/pages/profile/index.js', import.meta.url), 'utf8');
 const profileStyle = await readFile(new URL('../../dist/pages/profile/index.wxss', import.meta.url), 'utf8');
 const profileTemplate = await readFile(new URL('../../dist/pages/profile/index.wxml', import.meta.url), 'utf8');
-const courseCreditsBundle = await readFile(new URL('../../dist/pages/courseCredits/index.js', import.meta.url), 'utf8');
-const courseCreditsTemplate = await readFile(new URL('../../dist/pages/courseCredits/index.wxml', import.meta.url), 'utf8');
-const courseCreditBatchesBundle = await readFile(new URL('../../dist/pages/courseCreditBatches/index.js', import.meta.url), 'utf8');
-const courseCreditBatchesTemplate = await readFile(new URL('../../dist/pages/courseCreditBatches/index.wxml', import.meta.url), 'utf8');
-const courseCreditBatchBundle = await readFile(new URL('../../dist/pages/courseCreditBatch/index.js', import.meta.url), 'utf8');
-const courseCreditBatchTemplate = await readFile(new URL('../../dist/pages/courseCreditBatch/index.wxml', import.meta.url), 'utf8');
-const courseCreditHistoryBundle = await readFile(new URL('../../dist/pages/courseCreditHistory/index.js', import.meta.url), 'utf8');
-const courseCreditHistoryTemplate = await readFile(new URL('../../dist/pages/courseCreditHistory/index.wxml', import.meta.url), 'utf8');
-const courseCreditConversionBundle = await readFile(new URL('../../dist/pages/courseCreditConversion/index.js', import.meta.url), 'utf8');
-const courseCreditConversionTemplate = await readFile(new URL('../../dist/pages/courseCreditConversion/index.wxml', import.meta.url), 'utf8');
-const courseCreditSessionsBundle = await readFile(new URL('../../dist/pages/courseCreditSessions/index.js', import.meta.url), 'utf8');
-const courseCreditSessionsTemplate = await readFile(new URL('../../dist/pages/courseCreditSessions/index.wxml', import.meta.url), 'utf8');
+const coursesBundle = await readFile(new URL('../../dist/pages/courses/index.js', import.meta.url), 'utf8');
+const coursesTemplate = await readFile(new URL('../../dist/pages/courses/index.wxml', import.meta.url), 'utf8');
+const courseDetailBundle = await readFile(new URL('../../dist/pages/courseDetail/index.js', import.meta.url), 'utf8');
+const courseDetailTemplate = await readFile(new URL('../../dist/pages/courseDetail/index.wxml', import.meta.url), 'utf8');
+const courseLessonsBundle = await readFile(new URL('../../dist/pages/courseLessons/index.js', import.meta.url), 'utf8');
+const courseLessonsTemplate = await readFile(new URL('../../dist/pages/courseLessons/index.wxml', import.meta.url), 'utf8');
+const courseLessonDetailBundle = await readFile(new URL('../../dist/pages/courseLessonDetail/index.js', import.meta.url), 'utf8');
+const courseLessonDetailTemplate = await readFile(new URL('../../dist/pages/courseLessonDetail/index.wxml', import.meta.url), 'utf8');
+const courseRecordsBundle = await readFile(new URL('../../dist/pages/courseRecords/index.js', import.meta.url), 'utf8');
+const courseRecordsTemplate = await readFile(new URL('../../dist/pages/courseRecords/index.wxml', import.meta.url), 'utf8');
 const userinfoBundle = await readFile(new URL('../../dist/pages/userinfo/index.js', import.meta.url), 'utf8');
 const userinfoStyle = await readFile(new URL('../../dist/pages/userinfo/index.wxss', import.meta.url), 'utf8');
 const userinfoTemplate = await readFile(new URL('../../dist/pages/userinfo/index.wxml', import.meta.url), 'utf8');
@@ -94,12 +92,11 @@ const pointsConfig = JSON.parse(await readFile(new URL('../../dist/pages/points/
 const pointsHistoryConfig = JSON.parse(await readFile(new URL('../../dist/pages/pointsHistory/index.json', import.meta.url), 'utf8'));
 const rewardCatalogConfig = JSON.parse(await readFile(new URL('../../dist/pages/rewardCatalog/index.json', import.meta.url), 'utf8'));
 const profileConfig = JSON.parse(await readFile(new URL('../../dist/pages/profile/index.json', import.meta.url), 'utf8'));
-const courseCreditsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCredits/index.json', import.meta.url), 'utf8'));
-const courseCreditBatchesConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCreditBatches/index.json', import.meta.url), 'utf8'));
-const courseCreditBatchConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCreditBatch/index.json', import.meta.url), 'utf8'));
-const courseCreditHistoryConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCreditHistory/index.json', import.meta.url), 'utf8'));
-const courseCreditConversionConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCreditConversion/index.json', import.meta.url), 'utf8'));
-const courseCreditSessionsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseCreditSessions/index.json', import.meta.url), 'utf8'));
+const coursesConfig = JSON.parse(await readFile(new URL('../../dist/pages/courses/index.json', import.meta.url), 'utf8'));
+const courseDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseDetail/index.json', import.meta.url), 'utf8'));
+const courseLessonsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseLessons/index.json', import.meta.url), 'utf8'));
+const courseLessonDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseLessonDetail/index.json', import.meta.url), 'utf8'));
+const courseRecordsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseRecords/index.json', import.meta.url), 'utf8'));
 const userinfoConfig = JSON.parse(await readFile(new URL('../../dist/pages/userinfo/index.json', import.meta.url), 'utf8'));
 const sharedOutput = `${commonBundle}\n${vendorsBundle}`;
 const pointsOutput = `${sharedOutput}\n${pointsBundle}\n${pointsTemplate}`;
@@ -107,12 +104,11 @@ const pointsHistoryOutput = `${sharedOutput}\n${pointsHistoryBundle}\n${pointsHi
 const rewardCatalogOutput = `${sharedOutput}\n${rewardCatalogBundle}\n${rewardCatalogTemplate}`;
 const activityOutput = `${sharedOutput}\n${activityBundle}\n${activityTemplate}`;
 const profileOutput = `${sharedOutput}\n${profileBundle}\n${profileTemplate}`;
-const courseCreditsOutput = `${sharedOutput}\n${courseCreditsBundle}\n${courseCreditsTemplate}`;
-const courseCreditBatchesOutput = `${sharedOutput}\n${courseCreditBatchesBundle}\n${courseCreditBatchesTemplate}`;
-const courseCreditBatchOutput = `${sharedOutput}\n${courseCreditBatchBundle}\n${courseCreditBatchTemplate}`;
-const courseCreditHistoryOutput = `${sharedOutput}\n${courseCreditHistoryBundle}\n${courseCreditHistoryTemplate}`;
-const courseCreditConversionOutput = `${sharedOutput}\n${courseCreditConversionBundle}\n${courseCreditConversionTemplate}`;
-const courseCreditSessionsOutput = `${sharedOutput}\n${courseCreditSessionsBundle}\n${courseCreditSessionsTemplate}`;
+const coursesOutput = `${sharedOutput}\n${coursesBundle}\n${coursesTemplate}`;
+const courseDetailOutput = `${sharedOutput}\n${courseDetailBundle}\n${courseDetailTemplate}`;
+const courseLessonsOutput = `${sharedOutput}\n${courseLessonsBundle}\n${courseLessonsTemplate}`;
+const courseLessonDetailOutput = `${sharedOutput}\n${courseLessonDetailBundle}\n${courseLessonDetailTemplate}`;
+const courseRecordsOutput = `${sharedOutput}\n${courseRecordsBundle}\n${courseRecordsTemplate}`;
 const userinfoOutput = `${sharedOutput}\n${userinfoBundle}\n${userinfoTemplate}`;
 
 assert.equal(packageConfig.scripts['prebuild:weapp'], 'node scripts/clean-weapp-output.mjs');
@@ -142,16 +138,15 @@ async function collectThemeSourceFiles(directory) {
 
 assert.deepEqual(appConfig.pages, [
     'pages/activity/index',
+    'pages/courses/index',
     'pages/points/index',
-    'pages/courseCredits/index',
-    'pages/courseCreditBatches/index',
-    'pages/courseCreditBatch/index',
-    'pages/courseCreditHistory/index',
-    'pages/courseCreditConversion/index',
-    'pages/courseCreditSessions/index',
+    'pages/profile/index',
+    'pages/courseDetail/index',
+    'pages/courseLessons/index',
+    'pages/courseLessonDetail/index',
+    'pages/courseRecords/index',
     'pages/pointsHistory/index',
     'pages/rewardCatalog/index',
-    'pages/profile/index',
     'pages/userinfo/index',
     'pages/activityDetail/index',
     'pages/imageDetail/index',
@@ -159,19 +154,22 @@ assert.deepEqual(appConfig.pages, [
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.pagePath), [
     'pages/activity/index',
+    'pages/courses/index',
     'pages/points/index',
     'pages/profile/index',
 ]);
-assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['活动', '积分', '我的']);
+assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['活动', '课程', '积分', '我的']);
 assert.equal(appConfig.tabBar.color, '#5f6f69');
 assert.equal(appConfig.tabBar.selectedColor, '#006241');
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.iconPath), [
     'imgs/icons/tab-activity.png',
+    'imgs/icons/account-teaching.png',
     'imgs/icons/tab-points.png',
     'imgs/icons/tab-profile.png',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     'imgs/icons/tab-activity-selected.png',
+    'imgs/icons/account-teaching.png',
     'imgs/icons/tab-points-selected.png',
     'imgs/icons/tab-profile-selected.png',
 ]);
@@ -181,8 +179,8 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'dark');
 });
-[profileConfig, userinfoConfig, courseCreditsConfig, courseCreditBatchesConfig, courseCreditBatchConfig,
-    courseCreditHistoryConfig, courseCreditConversionConfig, courseCreditSessionsConfig].forEach((pageConfig) => {
+[profileConfig, userinfoConfig, coursesConfig, courseDetailConfig, courseLessonsConfig,
+    courseLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.backgroundColorTop, '#006241');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'light');
@@ -197,14 +195,12 @@ assert.equal(pointsHistoryConfig.onReachBottomDistance, 120);
 assert.equal(rewardCatalogConfig.enablePullDownRefresh, true);
 assert.equal(profileConfig.enablePullDownRefresh, true);
 assert.equal(userinfoConfig.enablePullDownRefresh, true);
-[courseCreditsConfig, courseCreditBatchesConfig, courseCreditBatchConfig, courseCreditHistoryConfig,
-    courseCreditConversionConfig, courseCreditSessionsConfig].forEach((pageConfig) => {
+[coursesConfig, courseDetailConfig, courseLessonsConfig, courseLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.enablePullDownRefresh, true);
     assert.equal(pageConfig.navigationBarBackgroundColor, '#006241');
 });
-assert.equal(courseCreditBatchesConfig.onReachBottomDistance, 120);
-assert.equal(courseCreditHistoryConfig.onReachBottomDistance, 120);
-assert.equal(courseCreditSessionsConfig.onReachBottomDistance, 120);
+assert.equal(courseLessonsConfig.onReachBottomDistance, 120);
+assert.equal(courseRecordsConfig.onReachBottomDistance, 120);
 assert.equal((activityBundle.match(/"scroll-view"/g) || []).length, 0);
 assert.equal((activityDetailBundle.match(/"scroll-view"/g) || []).length, 1);
 assert.equal(imageDetailBundle.includes('"scroll-view"'), false);
@@ -213,12 +209,11 @@ assert.match(commonBundle, /\/v1\/activity\/find/);
 assert.match(commonBundle, /\/v1\/points\/me/);
 assert.match(commonBundle, /\/v1\/reward-items/);
 assert.match(commonBundle, /\/v1\/user\/update/);
-assert.match(commonBundle, /\/v1\/course-credits\/summary/);
-assert.match(commonBundle, /\/v1\/course-credits\/batches/);
-assert.match(commonBundle, /\/v1\/course-credits\/events/);
-assert.match(commonBundle, /\/v1\/course-credits\/conversion-rules/);
-assert.match(commonBundle, /\/v1\/course-credits\/conversion-authorizations/);
-assert.match(commonBundle, /\/v1\/course-credits\/session-students/);
+assert.match(commonBundle, /\/v1\/student\/learning\/overview/);
+assert.match(commonBundle, /\/v1\/student\/learning\/courses/);
+assert.match(commonBundle, /\/v1\/student\/learning\/lessons/);
+assert.match(commonBundle, /\/v1\/student\/learning\/records/);
+assert.equal(commonBundle.includes('/v1/course-credits'), false);
 assertCompiledText(activityOutput, '暂无近期活动');
 assertCompiledText(activityOutput, '活动暂时无法加载');
 assertCompiledText(commonBundle, '看乐教学');
@@ -257,24 +252,27 @@ assertCompiledText(profileOutput, '进入修改');
 assertCompiledText(profileOutput, '了解看乐');
 assertCompiledText(profileOutput, '看乐教学');
 assertCompiledText(profileOutput, '关于看乐');
-assertCompiledText(profileOutput, '查看我的课程点');
-assertCompiledText(courseCreditsOutput, '我的课程点');
-assertCompiledText(courseCreditsOutput, '通用课程点');
-assertCompiledText(courseCreditsOutput, '上课课程点');
-assertCompiledText(courseCreditsOutput, '课程点兑换');
-assertCompiledText(courseCreditBatchesOutput, '课程点批次');
-assertCompiledText(courseCreditBatchesOutput, '按有效期优先排列');
-assertCompiledText(courseCreditBatchOutput, '数量状态');
-assertCompiledText(courseCreditBatchOutput, '激活与有效期');
-assertCompiledText(courseCreditHistoryOutput, '课程点明细');
-assertCompiledText(courseCreditHistoryOutput, '不可变记录');
-assertCompiledText(courseCreditConversionOutput, '兑换前会显示数量');
-assertCompiledText(courseCreditConversionOutput, '确认兑换课程点');
-assertCompiledText(courseCreditSessionsOutput, '课次与预约');
-assertCompiledText(courseCreditSessionsOutput, '兑换后预约本次课程');
-assertCompiledText(courseCreditSessionsOutput, '预约只会冻结课程点');
-assert.equal(courseCreditsOutput.includes('/api/collections/'), false);
-assert.equal(courseCreditSessionsOutput.includes('studentId='), false);
+assertCompiledText(profileOutput, '查看我的课程');
+assertCompiledText(coursesOutput, '我的课程');
+assertCompiledText(coursesOutput, '即将上课');
+assertCompiledText(coursesOutput, '剩余课时');
+assertCompiledText(coursesOutput, '课时记录');
+assertCompiledText(courseDetailOutput, '课时来源');
+assertCompiledText(courseDetailOutput, '课程日程');
+assertCompiledText(courseLessonsOutput, '即将上课');
+assertCompiledText(courseLessonsOutput, '已完成');
+assertCompiledText(courseLessonDetailOutput, '课堂信息');
+assertCompiledText(courseLessonDetailOutput, '出勤结果');
+assertCompiledText(courseRecordsOutput, '课时记录');
+assert.equal(coursesOutput.includes('/api/collections/'), false);
+assert.equal(courseLessonsOutput.includes('studentId='), false);
+['课程点', '批次', '冻结', '兑换', '预约', '充值'].forEach((forbiddenTerm) => {
+    assert.equal(
+        `${coursesOutput}\n${courseDetailOutput}\n${courseLessonsOutput}\n${courseLessonDetailOutput}\n${courseRecordsOutput}`.includes(forbiddenTerm),
+        false,
+        `student course vocabulary leaked: ${forbiddenTerm}`,
+    );
+});
 assert.match(profileSource, /<\/template>\s*<ticket-section class="profile-info-section"/);
 assertCompiledText(userinfoOutput, '个人资料');
 assertCompiledText(userinfoOutput, '保存资料');
