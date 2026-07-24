@@ -18,18 +18,27 @@ const { CourseCreditSessionRescheduleService } = require('./sessionRescheduleSer
 const { CourseCreditSessionSettlementService } = require('./sessionSettlementService');
 const { CourseCreditSessionSettlementReversalService } = require('./sessionSettlementReversalService');
 const { CourseCreditTeacherCreditService } = require('./teacherCreditService');
+const { StudentLearningService } = require('./studentLearningService');
+const { AdminResourceCommandService } = require('./adminResourceCommandService');
+const { AutomaticEnrollmentService } = require('./enrollmentService');
+const { EnrollmentRosterSyncService } = require('./enrollmentRosterSyncService');
+const { ManualAttendanceService } = require('./manualAttendanceService');
 const { PocketBaseBatchRepository } = require('./repositories');
 
 function createCourseCreditServices(repository, options = {}) {
     const metrics = options.metrics || defaultCourseCreditMetrics;
     return {
+        adminResourceCommandService: new AdminResourceCommandService(repository, options.adminResources),
+        automaticEnrollmentService: new AutomaticEnrollmentService(repository, options.enrollment),
         batchLifecycleService: new CourseCreditBatchLifecycleService(repository),
         classMembershipService: new CourseCreditClassMembershipService(repository),
         conversionService: new CourseCreditConversionService(repository),
         expiryService: new CourseCreditExpiryService(repository, options.expiry),
+        enrollmentRosterSyncService: new EnrollmentRosterSyncService(repository, options.enrollmentSync),
         grantService: new CourseCreditGrantService(repository),
         metrics,
         metricsService: new CourseCreditMetricsService(repository, { metrics }),
+        manualAttendanceService: new ManualAttendanceService(repository, options.attendance),
         queryService: new CourseCreditQueryService(repository, options.query),
         outboxService: new CourseCreditOutboxService(repository, options.outbox),
         opsQueryService: new CourseCreditOpsQueryService(repository),
@@ -39,6 +48,7 @@ function createCourseCreditServices(repository, options = {}) {
         sessionRescheduleService: new CourseCreditSessionRescheduleService(repository),
         sessionSettlementService: new CourseCreditSessionSettlementService(repository),
         sessionSettlementReversalService: new CourseCreditSessionSettlementReversalService(repository),
+        studentLearningService: new StudentLearningService(repository, options.studentLearning),
         teacherCreditService: new CourseCreditTeacherCreditService(repository),
         repository,
     };

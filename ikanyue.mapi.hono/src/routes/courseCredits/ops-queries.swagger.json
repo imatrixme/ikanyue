@@ -60,6 +60,12 @@
     "/ops/course-credits/sessions/{id}": {
       "get": { "summary": "课堂详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
+    "/ops/course-credits/session-classes": {
+      "get": { "summary": "课堂班级快照列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
+    "/ops/course-credits/session-classes/{id}": {
+      "get": { "summary": "课堂班级快照详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
     "/ops/course-credits/settlement-exceptions": {
       "get": { "summary": "结算异常列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
@@ -83,6 +89,15 @@
     },
     "/ops/course-credits/reconciliation/exceptions/{id}": {
       "get": { "summary": "对账差异详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
+    "/ops/course-credits/assigned-students": {
+      "get": { "summary": "当前操作者可见学员", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/StudentId" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
+    "/ops/course-credits/assigned-classes": {
+      "get": { "summary": "当前操作者可见班级", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/ClassId" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
+    "/ops/course-credits/assigned-lessons": {
+      "get": { "summary": "当前操作者可见课堂", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/SessionId" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     }
   },
   "components": {
@@ -90,7 +105,10 @@
       "Id": { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
       "Page": { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
       "PerPage": { "name": "perPage", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } },
-      "Status": { "name": "status", "in": "query", "schema": { "type": "string" } }
+      "Status": { "name": "status", "in": "query", "schema": { "type": "string" } },
+      "StudentId": { "name": "studentId", "in": "query", "schema": { "type": "string" } },
+      "ClassId": { "name": "classId", "in": "query", "schema": { "type": "string" } },
+      "SessionId": { "name": "sessionId", "in": "query", "schema": { "type": "string" } }
     }
   }
 }

@@ -11,13 +11,17 @@ const {
     project,
     projectAccountBatch,
     relationOrValue,
+    studentFilters,
+    studentIdsFromScope,
+    uniqueIds,
 } = require('../src/services/courseCredits/opsQueryService');
 
 test('ops resource queries use allowlisted fields, status filters, and pagination', async () => {
     const repository = mockRepository({
         records: [{
             id: 'order', orderNo: 'O-1', studentId: { id: 'student' }, status: 'paid',
-            currency: 'CNY', paidAmount: 2800, grantSnapshot: { private: true },
+            currency: 'CNY', paidAmount: 2800, productSnapshot: { packageName: '声乐十课时' },
+            grantSnapshot: { lines: [{ quantity: 10 }] },
         }],
     });
     const service = new CourseCreditOpsQueryService(repository);
@@ -26,9 +30,48 @@ test('ops resource queries use allowlisted fields, status filters, and paginatio
     assert.equal(result.page, 2);
     assert.equal(result.items[0].studentId, 'student');
     assert.equal(result.items[0].paidAmount, 2800);
-    assert.equal(result.items[0].grantSnapshot, undefined);
+    assert.deepEqual(result.items[0].productSnapshot, { packageName: '声乐十课时' });
+    assert.deepEqual(result.items[0].grantSnapshot, { lines: [{ quantity: 10 }] });
     assert.equal(repository.calls[0].options.filter, 'status="paid"');
     assert.equal(repository.calls[0].options.sort, '-created');
+});
+
+test('workspace detail filters are allowlisted and audit metadata remains structured', async () => {
+    const repository = mockRepository({ records: [{
+        id: 'audit', actorId: 'teacher', resourceType: 'session', resourceId: 'lesson',
+        outcome: 'success', metadata: { attendanceStatus: 'present' },
+    }] });
+    const service = new CourseCreditOpsQueryService(repository);
+    const result = await service.listResource('auditLogs', {
+        actorId: 'teacher', resourceType: 'session', resourceId: 'lesson', outcome: 'success', ignored: 'x',
+    });
+
+    assert.deepEqual(result.items[0].metadata, { attendanceStatus: 'present' });
+    assert.equal(repository.calls[0].options.filter,
+        'actorId="teacher" && resourceType="session" && resourceId="lesson" && outcome="success"');
+
+    await service.listResource('sessionStudents', {
+        sessionId: 'lesson', studentId: 'student', attendanceStatus: 'present', creditStatus: 'reserved',
+    });
+    assert.match(repository.calls[1].options.filter, /sessionId="lesson"/);
+    assert.match(repository.calls[1].options.filter, /creditStatus="reserved"/);
+});
+
+test('enrollment projections expose immutable workflow status without unrelated operation data', async () => {
+    const repository = mockRepository({ records: [{
+        id: 'operation', studentId: 'student', sourceType: 'enrollment', sourceId: 'order',
+        status: 'committed', requestSnapshot: { packageId: 'package' },
+        resultSnapshot: { status: 'synchronizing_future_lessons', sync: { futureLessonCount: 3 } },
+    }] });
+    const result = await new CourseCreditOpsQueryService(repository).listResource('enrollments', {
+        studentId: 'student', sourceId: 'order',
+    });
+
+    assert.deepEqual(result.items[0].resultSnapshot, {
+        status: 'synchronizing_future_lessons', sync: { futureLessonCount: 3 },
+    });
+    assert.equal(repository.calls[0].options.filter,
+        'sourceType="enrollment" && studentId="student" && sourceId="order"');
 });
 
 test('every Admin workspace resource supports list and detail projections', async () => {
@@ -101,6 +144,9 @@ test('ops projection helpers normalize relations, empty accounts, and empty page
     assert.deepEqual(project({ id: 'one', tags: ['a', { id: 'b' }] }, ['id', 'tags', 'missing']), {
         id: 'one', tags: ['a', 'b'], missing: null,
     });
+    assert.deepEqual(project({ metadata: { safe: true } }, ['metadata'], new Set(['metadata'])), {
+        metadata: { safe: true },
+    });
     assert.equal(relationOrValue({ id: 'record' }), 'record');
     assert.equal(relationOrValue(null), null);
     assert.deepEqual(emptyAccount('student'), {
@@ -114,6 +160,74 @@ test('ops projection helpers normalize relations, empty accounts, and empty page
     const projected = projectAccountBatch({});
     assert.equal(projected.effectiveExpiresAt, null);
     assert.equal(projected.listUnitValue, 0);
+    assert.deepEqual(studentFilters({ q: '张', status: 'inactive' }), [
+        '(realName ~ "张" || nickName ~ "张" || cellphone ~ "张")', 'blocked = true',
+    ]);
+    assert.deepEqual(studentFilters({ studentId: 'student' }), ['id="student"']);
+    assert.deepEqual(uniqueIds([{ studentId: 'one' }, { studentId: { id: 'one' } }], 'studentId'), ['one']);
+    assert.deepEqual(studentIdsFromScope({
+        classStudents: [{ studentId: 'one' }], sessionStudents: [{ studentId: 'two' }],
+    }), ['one', 'two']);
+});
+
+test('assigned student and lesson queries scope teacher data to explicit teaching relations', async () => {
+    const repository = assignedRepository();
+    const service = new CourseCreditOpsQueryService(repository);
+    const teacher = {
+        id: 'teacher', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'],
+    };
+    const students = await service.listAssignedStudents(teacher, { status: 'active' });
+    const classes = await service.listAssignedClasses(teacher, { status: 'active' });
+    const lessons = await service.listAssignedLessons(teacher, { status: 'scheduled' });
+
+    assert.equal(students.items[0].id, 'student');
+    assert.equal(students.items[0].classAssignments[0].classId, 'class');
+    assert.equal(students.items[0].lessonAssignments[0].sessionId, 'session');
+    assert.equal(classes.items[0].id, 'class');
+    assert.equal(classes.items[0].students[0].studentId, 'student');
+    assert.equal(classes.items[0].teachers[0].teacherId, 'teacher');
+    assert.equal(lessons.items[0].id, 'session');
+    assert.equal(lessons.items[0].students[0].studentId, 'student');
+    assert.equal(lessons.items[0].teachers[0].teacherId, 'teacher');
+    assert.match(repository.pageCalls[0].options.filter, /id="student"/);
+    assert.match(repository.pageCalls[1].options.filter, /id="class"/);
+    assert.match(repository.pageCalls[2].options.filter, /id="session"/);
+    assert.match(repository.pageCalls[2].options.filter, /status="scheduled"/);
+});
+
+test('academic assigned views use global scope while unassigned teachers receive empty pages', async () => {
+    const repository = assignedRepository({ assigned: false });
+    const service = new CourseCreditOpsQueryService(repository);
+    const teacher = { id: 'teacher', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'] };
+    assert.deepEqual(await service.listAssignedStudents(teacher), arrayPage([], 1, 20));
+    assert.deepEqual(await service.listAssignedClasses(teacher), arrayPage([], 1, 20));
+    assert.deepEqual(await service.listAssignedLessons(teacher), arrayPage([], 1, 20));
+
+    const academicRepository = assignedRepository();
+    const academicService = new CourseCreditOpsQueryService(academicRepository);
+    const academic = { id: 'academic', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'] };
+    assert.equal((await academicService.listAssignedStudents(academic, { keyword: '张' })).items[0].id, 'student');
+    assert.equal((await academicService.listAssignedClasses(academic, { classId: 'class' })).items[0].id, 'class');
+    const lesson = (await academicService.listAssignedLessons(academic, { sessionId: 'session' })).items[0];
+    assert.equal(lesson.id, 'session');
+    assert.equal(lesson.students[0].studentId, 'student');
+    assert.equal(lesson.teachers[0].teacherId, 'teacher');
+    assert.equal(academicRepository.pageCalls.at(-1).options.filter, 'id="session"');
+    await assert.rejects(
+        service.listAssignedStudents({ id: 'none', role: 'teacher', courseCreditCapabilities: [] }),
+        hasCode('COURSE_CREDIT_CAPABILITY_REQUIRED')
+    );
+});
+
+test('teacher event detail is restricted to the current teacher outside admin scope', async () => {
+    const repository = mockRepository({ records: [{ id: 'event', teacherId: 'teacher' }] });
+    const service = new CourseCreditOpsQueryService(repository);
+    assert.equal((await service.getAssignedTeacherEvent({ id: 'teacher', isAdmin: false }, 'event')).id, 'event');
+    await assert.rejects(
+        service.getAssignedTeacherEvent({ id: 'other', isAdmin: false }, 'event'),
+        hasCode('TEACHER_EVENT_FORBIDDEN')
+    );
+    assert.equal((await service.getAssignedTeacherEvent({ id: 'admin', isAdmin: true }, 'event')).id, 'event');
 });
 
 function mockRepository(options = {}) {
@@ -132,6 +246,32 @@ function mockRepository(options = {}) {
         async list(collection, requestOptions) {
             this.calls.push({ method: 'list', collection, options: requestOptions });
             return options.batches || [];
+        },
+    };
+}
+
+function assignedRepository(options = {}) {
+    const assigned = options.assigned !== false;
+    return {
+        pageCalls: [],
+        async page(collection, page, perPage, requestOptions) {
+            this.pageCalls.push({ collection, page, perPage, options: requestOptions });
+            const items = collection === 'students'
+                ? [{ id: 'student', realName: '张同学', blocked: false }]
+                : collection === 'classes'
+                    ? [{ id: 'class', name: '周六声乐班', status: 'active' }]
+                    : [{ id: 'session', title: '合唱排练', status: 'scheduled' }];
+            return { page, perPage, totalItems: items.length, totalPages: 1, items };
+        },
+        async list(collection) {
+            if (!assigned && ['class_teachers', 'session_teachers'].includes(collection)) return [];
+            const records = {
+                class_teachers: [{ classId: 'class', teacherId: 'teacher', status: 'active' }],
+                session_teachers: [{ sessionId: 'session', teacherId: 'teacher', actualStatus: 'pending' }],
+                class_students: [{ id: 'class-student', classId: 'class', studentId: 'student', status: 'active' }],
+                session_students: [{ id: 'session-student', sessionId: 'session', studentId: 'student', attendanceStatus: 'scheduled' }],
+            };
+            return records[collection] || [];
         },
     };
 }

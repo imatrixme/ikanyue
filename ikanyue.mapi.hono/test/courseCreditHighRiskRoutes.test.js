@@ -9,12 +9,12 @@ const { CourseCreditMetrics } = require('../src/services/courseCredits/metricsSe
 const { createRouteBuilder } = require('../src/utils/routeBuilder');
 const { jwtAuth } = require('../src/utils/jwtAuth');
 
-test('settlement operators invoke every explicit high-risk route with authenticated metadata', async () => {
+test('authorized high-risk operators invoke every explicit route with authenticated metadata', async () => {
     const calls = [];
     const app = createApp(services(calls));
     const headers = authHeaders({
         id: 'operator', role: 'teacher',
-        courseCreditCapabilities: ['course_credit.settlement', 'course_credit.audit'],
+        courseCreditCapabilities: ['course_credit.academic', 'course_credit.settlement', 'course_credit.audit'],
     });
 
     await post(app, '/ops/course-credits/batches/batch/extend', headers, {
@@ -35,7 +35,7 @@ test('settlement operators invoke every explicit high-risk route with authentica
     await post(app, '/ops/course-credits/workers/outbox/deliver', headers, { limit: 10 });
 
     const metadata = {
-        actorId: 'operator', actorRole: 'admin', idempotencyKey: 'high-risk-key', traceId: 'trace-high-risk',
+        actorId: 'operator', actorRole: 'teacher', idempotencyKey: 'high-risk-key', traceId: 'trace-high-risk',
     };
     assert.deepEqual(calls, [
         ['extend', {
@@ -75,6 +75,28 @@ test('financial-only operators cannot invoke settlement or audit actions', async
     assert.equal(expiry.code, 403);
     assert.equal(outbox.code, 403);
     assert.equal(calls.length, 0);
+});
+
+test('academic and settlement capabilities stay separated for rescheduling and settlement', async () => {
+    const calls = [];
+    const app = createApp(services(calls));
+    const academic = authHeaders({
+        id: 'academic', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'],
+    });
+    const settlement = authHeaders({
+        id: 'settlement', role: 'teacher', courseCreditCapabilities: ['course_credit.settlement'],
+    });
+
+    assert.equal((await post(app, '/ops/course-credits/sessions/session/reschedule', academic, {
+        newStartAt: '2026-08-02T10:00:00Z', newEndAt: '2026-08-02T11:00:00Z', reason: 'academic adjustment',
+    })).code, 10000);
+    assert.equal((await post(app, '/ops/course-credits/sessions/session/settle', academic)).code, 403);
+    assert.equal((await post(app, '/ops/course-credits/sessions/session/reschedule', settlement, {
+        newStartAt: '2026-08-03T10:00:00Z', newEndAt: '2026-08-03T11:00:00Z', reason: 'forbidden adjustment',
+    })).code, 403);
+    assert.equal((await post(app, '/ops/course-credits/sessions/session/settle', settlement)).code, 10000);
+
+    assert.deepEqual(calls.map(([name]) => name), ['reschedule', 'settle']);
 });
 
 function services(calls) {

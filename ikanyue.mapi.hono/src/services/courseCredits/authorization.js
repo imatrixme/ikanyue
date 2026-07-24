@@ -24,6 +24,13 @@ function requireCourseCreditCapability(user, capability) {
     return user;
 }
 
+function requireAnyCourseCreditCapability(user, capabilities) {
+    invariant(Array.isArray(capabilities) && capabilities.some((capability) => (
+        hasCourseCreditCapability(user, capability)
+    )), 'COURSE_CREDIT_CAPABILITY_REQUIRED', '缺少课程运营权限', { capabilities });
+    return user;
+}
+
 function hasCourseCreditCapability(user = {}, capability) {
     if (!Object.values(COURSE_CREDIT_CAPABILITIES).includes(capability)) return false;
     if (user.role === 'student') return capability === COURSE_CREDIT_CAPABILITIES.STUDENT;
@@ -48,5 +55,6 @@ module.exports = {
     OPERATOR_CAPABILITIES,
     explicitCapabilities,
     hasCourseCreditCapability,
+    requireAnyCourseCreditCapability,
     requireCourseCreditCapability,
 };

@@ -6,11 +6,10 @@ const { createOpsServices } = require('../../services/ops');
 const { defaultCourseCreditMetrics } = require('../../services/courseCredits/metricsService');
 const {
     COURSE_CREDIT_CAPABILITIES: CAPABILITY,
+    requireAnyCourseCreditCapability,
     requireCourseCreditCapability,
 } = require('../../services/courseCredits/authorization');
-const { createCourseCreditOpsQueryHandlers } = require('./opsQueryHandlers');
-const { createStudentAuthorizationHandlers } = require('./studentAuthorizationHandlers');
-const { createCourseCreditWorkerHandlers } = require('./workerHandlers');
+const { createCourseCreditHandlerExtensions } = require('./handlerExtensions');
 
 const TRACE_ID = Symbol('courseCreditTraceId');
 const AUTHORIZATION_AUDIT = Symbol('courseCreditAuthorizationAudit');
@@ -19,6 +18,9 @@ const AUTHORIZATION_ERRORS = new Set([
     'COURSE_CREDIT_ADMIN_REQUIRED',
     'COURSE_CREDIT_CAPABILITY_REQUIRED',
     'COURSE_CREDIT_STUDENT_REQUIRED',
+    'STUDENT_LEARNING_STUDENT_REQUIRED',
+    'SESSION_TEACHER_FORBIDDEN',
+    'SESSION_TEACHER_TARGET_FORBIDDEN',
     'SESSION_STUDENT_FORBIDDEN',
 ]);
 
@@ -28,28 +30,19 @@ function createCourseCreditHandlers(
     authorizationAudit = createOpsServices().auditService
 ) {
     return withAuthorizationAudit({
-        ...createCourseCreditOpsQueryHandlers({
-            capability: CAPABILITY,
-            loadServices,
-            queryParams,
-            requireCapability,
-            safeQuery,
-        }),
-        ...createCourseCreditWorkerHandlers({
+        ...createCourseCreditHandlerExtensions({
             capability: CAPABILITY,
             commandMetadata,
             loadServices,
             metrics,
-            readOptionalJsonBody,
-            requireCapability,
-            safeCommand,
-        }),
-        ...createStudentAuthorizationHandlers({
-            loadServices,
-            metrics,
+            queryParams,
             readJsonBody,
+            readOptionalJsonBody,
+            requireAnyCapability: requireAnyCourseCreditCapability,
+            requireCapability,
             requireStudent,
             safeCommand,
+            safeQuery,
         }),
         async grantOrderCredits(c) {
             return safeCommand(c, 'grantOrderCredits', async () => {
@@ -209,7 +202,7 @@ function createCourseCreditHandlers(
 
         async rescheduleSession(c) {
             return safeCommand(c, 'rescheduleSession', async () => {
-                const user = requireCapability(c.get('user'), CAPABILITY.SETTLEMENT);
+                const user = requireCapability(c.get('user'), CAPABILITY.ACADEMIC);
                 const body = await readJsonBody(c);
                 const services = await loadServices();
                 return services.sessionRescheduleService.rescheduleSession({
@@ -355,7 +348,7 @@ function queryParams(c, names) {
 function commandMetadata(c, user) {
     return {
         actorId: user.id,
-        actorRole: 'admin',
+        actorRole: user.isAdmin ? 'admin' : user.role,
         idempotencyKey: c.req.header('idempotency-key') || '',
         traceId: resolveTraceId(c),
     };

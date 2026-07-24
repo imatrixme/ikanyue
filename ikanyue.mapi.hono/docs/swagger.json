@@ -3095,6 +3095,429 @@
         }
       }
     },
+    "/ops/course-operations/course-specs": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/course-specs/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/course-specs/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
+    "/ops/course-operations/packages": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/packages/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/packages/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
+    "/ops/course-operations/grant-lines": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/grant-lines/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/price-versions": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/price-versions/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/price-versions/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
+    "/ops/course-operations/classes": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/classes/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/classes/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
+    "/ops/course-operations/lessons": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/lessons/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/lessons/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
+    "/ops/course-operations/enrollments": {
+      "post": {
+        "summary": "管理员自动报课",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrollmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/enrollments/{orderId}/sync-preview": {
+      "get": {
+        "summary": "预览已发布未来课堂名单同步",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrderId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/enrollments/{orderId}/sync": {
+      "post": {
+        "summary": "确认已发布未来课堂名单同步",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrderId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RosterSyncRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/students/{sessionStudentId}/attendance": {
+      "post": {
+        "summary": "登记单名学员出勤",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/SessionStudentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/attendance/all-present": {
+      "post": {
+        "summary": "批量标记全部到课",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/teachers/{sessionTeacherId}/actual-status": {
+      "post": {
+        "summary": "确认实际授课教师",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/SessionTeacherId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActualTeacherRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/settlement-preview": {
+      "get": {
+        "summary": "预览课堂核销结果",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/package-grant-lines": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/package-grant-lines/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/enrollments": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/enrollments/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/class-students": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/class-students/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/class-teachers": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/class-teachers/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/session-students": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/session-students/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/session-classes": {
+      "get": {
+        "summary": "课堂班级快照列表",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/session-classes/{id}": {
+      "get": {
+        "summary": "课堂班级快照详情",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/session-teachers": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/session-teachers/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
+    "/ops/course-credits/audit-logs": {
+      "get": {
+        "$ref": "#/components/x-operations/ListResource"
+      }
+    },
+    "/ops/course-credits/audit-logs/{id}": {
+      "get": {
+        "$ref": "#/components/x-operations/GetResource"
+      }
+    },
     "/ops/course-credits/orders/{orderId}/grant": {
       "post": {
         "summary": "按已支付订单发放课程点",
@@ -4533,6 +4956,254 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/assigned-students": {
+      "get": {
+        "summary": "当前操作者可见学员",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          },
+          {
+            "$ref": "#/components/parameters/StudentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/assigned-classes": {
+      "get": {
+        "summary": "当前操作者可见班级",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          },
+          {
+            "$ref": "#/components/parameters/ClassId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/assigned-lessons": {
+      "get": {
+        "summary": "当前操作者可见课堂",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/Status"
+          },
+          {
+            "$ref": "#/components/parameters/SessionId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/learning/overview": {
+      "get": {
+        "summary": "查询本人课程首页",
+        "tags": [
+          "StudentLearning"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StudentLearningResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/learning/courses/{courseId}": {
+      "get": {
+        "summary": "查询本人课程详情",
+        "tags": [
+          "StudentLearning"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StudentLearningResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/learning/lessons": {
+      "get": {
+        "summary": "分页查询本人课程日程",
+        "tags": [
+          "StudentLearning"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LearningPage"
+          },
+          {
+            "$ref": "#/components/parameters/LearningPerPage"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "upcoming",
+                "completed"
+              ]
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StudentLearningResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/learning/lessons/{lessonId}": {
+      "get": {
+        "summary": "查询本人课堂详情",
+        "tags": [
+          "StudentLearning"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lessonId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StudentLearningResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/learning/records": {
+      "get": {
+        "summary": "分页查询本人课时记录",
+        "tags": [
+          "StudentLearning"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LearningPage"
+          },
+          {
+            "$ref": "#/components/parameters/LearningPerPage"
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/StudentLearningResponse"
           }
         }
       }
@@ -9193,6 +9864,110 @@
           }
         }
       },
+      "StatusRequest": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "EnrollmentRequest": {
+        "type": "object",
+        "required": [
+          "studentId",
+          "packageId",
+          "priceVersionId"
+        ],
+        "properties": {
+          "studentId": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "priceVersionId": {
+            "type": "string"
+          },
+          "classId": {
+            "type": "string"
+          },
+          "paidAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "offline"
+            ]
+          },
+          "paymentReference": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RosterSyncRequest": {
+        "type": "object",
+        "required": [
+          "previewHash"
+        ],
+        "properties": {
+          "previewHash": {
+            "type": "string"
+          },
+          "lessonIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AttendanceRequest": {
+        "type": "object",
+        "required": [
+          "attendanceStatus"
+        ],
+        "properties": {
+          "attendanceStatus": {
+            "type": "string",
+            "enum": [
+              "present",
+              "late",
+              "leave",
+              "absent",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "ActualTeacherRequest": {
+        "type": "object",
+        "required": [
+          "actualStatus"
+        ],
+        "properties": {
+          "actualStatus": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "absent",
+              "cancelled"
+            ]
+          }
+        }
+      },
       "ClassMembershipCommand": {
         "type": "object",
         "required": [
@@ -9527,6 +10302,26 @@
             "nullable": true
           },
           "traceId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "StudentLearningResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
             "type": "string",
             "nullable": true
           }
@@ -11370,9 +12165,207 @@
         "bearerFormat": "JWT"
       }
     },
+    "x-operations": {
+      "CreateResource": {
+        "summary": "创建课程运营资源",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "UpdateResource": {
+        "summary": "更新课程运营资源",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "SetStatus": {
+        "summary": "变更课程运营资源状态",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "ListResource": {
+        "summary": "分页查询课程运营明细",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teacherId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "分页结果"
+          }
+        }
+      },
+      "GetResource": {
+        "summary": "查询课程运营明细",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "详情结果"
+          }
+        }
+      }
+    },
     "parameters": {
-      "BatchId": {
-        "name": "batchId",
+      "ResourceId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "OrderId": {
+        "name": "orderId",
         "in": "path",
         "required": true,
         "schema": {
@@ -11381,6 +12374,21 @@
       },
       "SessionId": {
         "name": "sessionId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SessionStudentId": {
+        "name": "sessionStudentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SessionTeacherId": {
+        "name": "sessionTeacherId",
         "in": "path",
         "required": true,
         "schema": {
@@ -11390,6 +12398,14 @@
       "IdempotencyKey": {
         "name": "Idempotency-Key",
         "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "BatchId": {
+        "name": "batchId",
+        "in": "path",
         "required": true,
         "schema": {
           "type": "string"
@@ -11426,15 +12442,66 @@
         "schema": {
           "type": "string"
         }
+      },
+      "StudentId": {
+        "name": "studentId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ClassId": {
+        "name": "classId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "LearningPage": {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "LearningPerPage": {
+        "name": "perPage",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
       }
     },
     "responses": {
+      "CourseOperationResponse": {
+        "description": "课程运营命令结果或稳定业务错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
       "CourseCreditResponse": {
         "description": "成功结果或稳定业务错误",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/CourseCreditResponse"
+            }
+          }
+        }
+      },
+      "StudentLearningResponse": {
+        "description": "只包含课程、课时、日程和上课记录的学员视图",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/StudentLearningResponse"
             }
           }
         }

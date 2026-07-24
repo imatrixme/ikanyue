@@ -1,5 +1,11 @@
 const { invariant } = require('./domain');
+const { COURSE_CREDIT_CAPABILITIES, hasCourseCreditCapability } = require('./authorization');
 const { escapeFilter, mapPage, pagination, quantity, relationId } = require('./queryService');
+
+const STUDENT_FIELDS = [
+    'id', 'realName', 'nickName', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
+    'created', 'updated',
+];
 
 const RESOURCE_CONFIGS = Object.freeze({
     courseSpecs: resource('course_specs', 'name', [
@@ -14,6 +20,9 @@ const RESOURCE_CONFIGS = Object.freeze({
         'id', 'code', 'name', 'description', 'saleChannel', 'activationMode',
         'activationDeadlineDays', 'validityDurationDays', 'expiryPolicy', 'status', 'created', 'updated',
     ], ['draft', 'active', 'inactive']),
+    grantLines: resource('package_grant_lines', 'packageId,creditTypeId', [
+        'id', 'packageId', 'creditTypeId', 'quantity', 'created', 'updated',
+    ], [], '', ['packageId', 'creditTypeId']),
     priceVersions: resource('price_versions', '-validFrom,-version', [
         'id', 'packageId', 'currency', 'listAmount', 'saleAmount', 'validFrom',
         'validTo', 'version', 'status', 'created',
@@ -21,8 +30,14 @@ const RESOURCE_CONFIGS = Object.freeze({
     orders: resource('orders', '-created', [
         'id', 'orderNo', 'studentId', 'payerId', 'type', 'channel', 'status',
         'currency', 'listAmount', 'paidAmount', 'priceVersionId', 'paidAt',
-        'cancelledAt', 'version', 'created', 'updated',
-    ], ['pending', 'paid', 'granted', 'cancelled', 'failed', 'reversal_pending', 'reversed']),
+        'productSnapshot', 'grantSnapshot', 'cancelledAt', 'version', 'created', 'updated',
+    ], ['pending', 'paid', 'granted', 'cancelled', 'failed', 'reversal_pending', 'reversed'], '',
+    ['studentId', 'priceVersionId'], ['productSnapshot', 'grantSnapshot']),
+    enrollments: resource('credit_operations', '-created', [
+        'id', 'operationNo', 'studentId', 'status', 'sourceId', 'requestSnapshot',
+        'resultSnapshot', 'actorId', 'actorRole', 'traceId', 'created', 'updated',
+    ], ['pending', 'committed', 'failed', 'reversed'], 'sourceType="enrollment"',
+    ['studentId', 'sourceId'], ['requestSnapshot', 'resultSnapshot']),
     conversionRules: resource('conversion_rules', '-validFrom,-version', [
         'id', 'sourceCreditTypeId', 'targetCreditTypeId', 'sourceQuantity', 'targetQuantity',
         'minSourceQuantity', 'maxSourceQuantity', 'expiryPolicy', 'activationMode',
@@ -33,11 +48,27 @@ const RESOURCE_CONFIGS = Object.freeze({
         'id', 'code', 'name', 'courseSpecId', 'defaultCreditTypeId', 'termStart',
         'termEnd', 'capacity', 'location', 'status', 'created', 'updated',
     ], ['draft', 'active', 'completed', 'cancelled']),
+    classStudents: resource('class_students', '-effectiveFrom', [
+        'id', 'classId', 'studentId', 'status', 'effectiveFrom', 'effectiveTo', 'sourceOrderId', 'created', 'updated',
+    ], ['invited', 'active', 'paused', 'completed', 'cancelled'], '', ['classId', 'studentId']),
+    classTeachers: resource('class_teachers', 'role,teacherId', [
+        'id', 'classId', 'teacherId', 'role', 'status', 'effectiveFrom', 'effectiveTo', 'created', 'updated',
+    ], ['active', 'inactive'], '', ['classId', 'teacherId']),
     sessions: resource('sessions', '-startAt', [
         'id', 'code', 'title', 'status', 'startAt', 'endAt', 'location',
         'requiredCreditTypeId', 'requiredQuantity', 'rosterVersion', 'version',
         'settlementOperationId', 'correctionBaseStatus', 'created', 'updated',
     ], ['draft', 'scheduled', 'enrollment_closed', 'in_progress', 'completed', 'settled', 'cancelled', 'correction_pending']),
+    sessionClasses: resource('session_classes', 'sessionId', [
+        'id', 'sessionId', 'classId', 'created', 'updated',
+    ], [], '', ['sessionId', 'classId']),
+    sessionStudents: resource('session_students', 'studentId', [
+        'id', 'sessionId', 'studentId', 'sourceClassIds', 'attendanceStatus', 'creditStatus',
+        'eligibilityReason', 'checkedInAt', 'settledAt', 'version', 'created', 'updated',
+    ], [], '', ['sessionId', 'studentId', 'attendanceStatus', 'creditStatus']),
+    sessionTeachers: resource('session_teachers', 'role,teacherId', [
+        'id', 'sessionId', 'teacherId', 'role', 'assignmentSource', 'actualStatus', 'creditStatus', 'created', 'updated',
+    ], [], '', ['sessionId', 'teacherId', 'actualStatus', 'creditStatus']),
     settlementExceptions: resource('session_students', '-updated', [
         'id', 'sessionId', 'studentId', 'attendanceStatus', 'creditStatus',
         'eligibilityReason', 'checkedInAt', 'settledAt', 'version', 'created', 'updated',
@@ -45,7 +76,7 @@ const RESOURCE_CONFIGS = Object.freeze({
     teacherEvents: resource('teacher_credit_events', '-created', [
         'id', 'sessionTeacherId', 'teacherId', 'ruleId', 'eventType', 'quantityDelta',
         'status', 'operationId', 'confirmationOfEventId', 'reversalOfEventId', 'reason', 'created',
-    ], ['pending', 'confirmed', 'reversed']),
+    ], ['pending', 'confirmed', 'reversed'], '', ['teacherId', 'sessionTeacherId']),
     reconciliationRuns: resource('reconciliation_runs', '-startedAt', [
         'id', 'scope', 'status', 'startedAt', 'finishedAt', 'differenceCount', 'created',
     ], ['pending', 'running', 'passed', 'failed']),
@@ -53,6 +84,9 @@ const RESOURCE_CONFIGS = Object.freeze({
         'id', 'runId', 'batchId', 'code', 'field', 'expectedValue', 'actualValue',
         'status', 'detectedAt', 'created',
     ], ['open', 'acknowledged', 'resolved']),
+    auditLogs: resource('ops_audit_logs', '-created', [
+        'id', 'actorId', 'actorRole', 'action', 'resourceType', 'resourceId', 'outcome', 'metadata', 'created',
+    ], [], '', ['actorId', 'resourceType', 'resourceId', 'outcome'], ['metadata']),
 });
 
 class CourseCreditOpsQueryService {
@@ -68,11 +102,16 @@ class CourseCreditOpsQueryService {
             invariant(config.statuses.has(query.status), 'OPS_FILTER_STATUS_INVALID', 'Resource status filter is invalid');
             filters.push(`status="${escapeFilter(query.status)}"`);
         }
+        for (const field of config.filterFields) {
+            if (query[field] !== undefined && query[field] !== '') {
+                filters.push(`${field}="${escapeFilter(query[field])}"`);
+            }
+        }
         const result = await this.repository.page(config.collection, page.page, page.perPage, {
             ...(filters.length ? { filter: filters.join(' && ') } : {}),
             sort: config.sort,
         });
-        return mapPage(result, (record) => project(record, config.fields));
+        return mapPage(result, (record) => project(record, config.fields, config.rawFields));
     }
 
     async getResource(name, id) {
@@ -83,7 +122,7 @@ class CourseCreditOpsQueryService {
             `id="${escapeFilter(id)}"${config.baseFilter ? ` && (${config.baseFilter})` : ''}`
         );
         invariant(record, 'OPS_RESOURCE_NOT_FOUND', 'Course-credit resource was not found', { resource: name });
-        return project(record, config.fields);
+        return project(record, config.fields, config.rawFields);
     }
 
     async listAccounts(query = {}) {
@@ -107,10 +146,183 @@ class CourseCreditOpsQueryService {
             batches: batches.map(projectAccountBatch),
         };
     }
+
+    async getAssignedTeacherEvent(operator, id) {
+        const event = await this.getResource('teacherEvents', id);
+        invariant(operator?.isAdmin === true || relationId(event.teacherId) === operator?.id,
+            'TEACHER_EVENT_FORBIDDEN', '教师只能查看本人的工作量记录');
+        return event;
+    }
+
+    async listAssignedStudents(operator, query = {}) {
+        const page = pagination(query);
+        const globalScope = operator?.isAdmin === true
+            || hasCourseCreditCapability(operator, COURSE_CREDIT_CAPABILITIES.ACADEMIC);
+        const scope = globalScope ? null : await teacherScope(this.repository, operator);
+        const assignedStudentIds = scope ? studentIdsFromScope(scope) : [];
+        if (scope && assignedStudentIds.length === 0) return arrayPage([], page.page, page.perPage);
+        const filters = studentFilters(query);
+        if (scope) filters.push(anyFilter('id', assignedStudentIds));
+        const result = await this.repository.page('students', page.page, page.perPage, {
+            fields: STUDENT_FIELDS.join(','),
+            ...(filters.length ? { filter: filters.join(' && ') } : {}),
+            sort: 'realName,nickName,cellphone',
+        });
+        const studentIds = (result.items || []).map((student) => student.id);
+        const relations = scope || await studentRelations(this.repository, studentIds);
+        return mapPage(result, (student) => projectAssignedStudent(student, relations));
+    }
+
+    async listAssignedClasses(operator, query = {}) {
+        const globalScope = operator?.isAdmin === true
+            || hasCourseCreditCapability(operator, COURSE_CREDIT_CAPABILITIES.ACADEMIC);
+        const page = pagination(query);
+        const scope = globalScope ? null : await teacherScope(this.repository, operator);
+        const assignedClassIds = scope ? uniqueIds(scope.classTeachers, 'classId') : [];
+        if (scope && assignedClassIds.length === 0) return arrayPage([], page.page, page.perPage);
+        const filters = scope ? [anyFilter('id', assignedClassIds)] : [];
+        if (query.classId) filters.push(`id="${escapeFilter(query.classId)}"`);
+        if (query.status) {
+            invariant(RESOURCE_CONFIGS.classes.statuses.has(query.status),
+                'OPS_FILTER_STATUS_INVALID', 'Resource status filter is invalid');
+            filters.push(`status="${escapeFilter(query.status)}"`);
+        }
+        const result = await this.repository.page('classes', page.page, page.perPage, {
+            ...(filters.length ? { filter: filters.join(' && ') } : {}),
+            sort: RESOURCE_CONFIGS.classes.sort,
+        });
+        const classIds = (result.items || []).map((teachingClass) => teachingClass.id);
+        const relations = scope || {
+            classStudents: await relatedRows(this.repository, 'class_students', 'classId', classIds),
+            classTeachers: await relatedRows(this.repository, 'class_teachers', 'classId', classIds),
+        };
+        return mapPage(result, (record) => projectAssignedClass(record, relations));
+    }
+
+    async listAssignedLessons(operator, query = {}) {
+        const globalScope = operator?.isAdmin === true
+            || hasCourseCreditCapability(operator, COURSE_CREDIT_CAPABILITIES.ACADEMIC);
+        const page = pagination(query);
+        const scope = globalScope ? null : await teacherScope(this.repository, operator);
+        const assignedSessionIds = scope ? uniqueIds(scope.sessionTeachers, 'sessionId') : [];
+        if (scope && assignedSessionIds.length === 0) return arrayPage([], page.page, page.perPage);
+        const filters = scope ? [anyFilter('id', assignedSessionIds)] : [];
+        if (query.sessionId) filters.push(`id="${escapeFilter(query.sessionId)}"`);
+        if (query.status) {
+            const config = configFor('sessions');
+            invariant(config.statuses.has(query.status), 'OPS_FILTER_STATUS_INVALID', 'Resource status filter is invalid');
+            filters.push(`status="${escapeFilter(query.status)}"`);
+        }
+        const result = await this.repository.page('sessions', page.page, page.perPage, {
+            ...(filters.length ? { filter: filters.join(' && ') } : {}),
+            sort: RESOURCE_CONFIGS.sessions.sort,
+        });
+        const sessionIds = (result.items || []).map((lesson) => lesson.id);
+        const relations = scope || {
+            sessionStudents: await relatedRows(this.repository, 'session_students', 'sessionId', sessionIds),
+            sessionTeachers: await relatedRows(this.repository, 'session_teachers', 'sessionId', sessionIds),
+        };
+        return mapPage(result, (record) => projectAssignedLesson(record, relations));
+    }
 }
 
-function resource(collection, sort, fields, statuses, baseFilter = '') {
-    return { collection, sort, fields, statuses: new Set(statuses), baseFilter };
+async function teacherScope(repository, operator = {}) {
+    invariant(hasCourseCreditCapability(operator, COURSE_CREDIT_CAPABILITIES.TEACHER),
+        'COURSE_CREDIT_CAPABILITY_REQUIRED', '缺少课程运营权限');
+    const teacherId = escapeFilter(operator.id);
+    const [classTeachers, sessionTeachers] = await Promise.all([
+        repository.list('class_teachers', {
+            filter: `teacherId="${teacherId}" && status="active"`, sort: 'classId',
+        }),
+        repository.list('session_teachers', {
+            filter: `teacherId="${teacherId}" && actualStatus!="cancelled"`, sort: 'sessionId',
+        }),
+    ]);
+    const [classStudents, sessionStudents] = await Promise.all([
+        relatedRows(repository, 'class_students', 'classId', uniqueIds(classTeachers, 'classId')),
+        relatedRows(repository, 'session_students', 'sessionId', uniqueIds(sessionTeachers, 'sessionId')),
+    ]);
+    return { classStudents, classTeachers, sessionStudents, sessionTeachers };
+}
+
+async function studentRelations(repository, studentIds) {
+    const [classStudents, sessionStudents] = await Promise.all([
+        relatedRows(repository, 'class_students', 'studentId', studentIds),
+        relatedRows(repository, 'session_students', 'studentId', studentIds),
+    ]);
+    return { classStudents, classTeachers: [], sessionStudents, sessionTeachers: [] };
+}
+
+async function relatedRows(repository, collection, field, ids) {
+    return ids.length ? repository.list(collection, {
+        filter: anyFilter(field, ids), sort: `${field},created`,
+    }) : [];
+}
+
+function projectAssignedStudent(student, scope) {
+    return {
+        ...project(student, STUDENT_FIELDS),
+        classAssignments: scope.classStudents.filter((row) => relationId(row.studentId) === student.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.classStudents.fields)),
+        lessonAssignments: scope.sessionStudents.filter((row) => relationId(row.studentId) === student.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.sessionStudents.fields)),
+    };
+}
+
+function projectAssignedClass(teachingClass, scope) {
+    return {
+        ...project(teachingClass, RESOURCE_CONFIGS.classes.fields, RESOURCE_CONFIGS.classes.rawFields),
+        students: scope.classStudents.filter((row) => relationId(row.classId) === teachingClass.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.classStudents.fields)),
+        teachers: scope.classTeachers.filter((row) => relationId(row.classId) === teachingClass.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.classTeachers.fields)),
+    };
+}
+
+function projectAssignedLesson(lesson, scope) {
+    return {
+        ...project(lesson, RESOURCE_CONFIGS.sessions.fields, RESOURCE_CONFIGS.sessions.rawFields),
+        students: scope.sessionStudents.filter((row) => relationId(row.sessionId) === lesson.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.sessionStudents.fields)),
+        teachers: scope.sessionTeachers.filter((row) => relationId(row.sessionId) === lesson.id)
+            .map((row) => project(row, RESOURCE_CONFIGS.sessionTeachers.fields)),
+    };
+}
+
+function studentIdsFromScope(scope) {
+    return [...new Set([
+        ...uniqueIds(scope.classStudents, 'studentId'),
+        ...uniqueIds(scope.sessionStudents, 'studentId'),
+    ])];
+}
+
+function uniqueIds(rows, field) {
+    return [...new Set(rows.map((row) => relationId(row[field])).filter(Boolean))];
+}
+
+function anyFilter(field, values) {
+    return `(${values.map((value) => `${field}="${escapeFilter(value)}"`).join(' || ')})`;
+}
+
+function studentFilters(query) {
+    const filters = [];
+    if (query.studentId) filters.push(`id="${escapeFilter(query.studentId)}"`);
+    const keyword = String(query.q || query.keyword || '').trim();
+    if (keyword) {
+        const value = escapeFilter(keyword);
+        filters.push(`(realName ~ "${value}" || nickName ~ "${value}" || cellphone ~ "${value}")`);
+    }
+    if (query.status === 'active' || query.status === 'inactive') {
+        filters.push(`blocked = ${query.status === 'inactive'}`);
+    }
+    return filters;
+}
+
+function resource(collection, sort, fields, statuses, baseFilter = '', filterFields = [], rawFields = []) {
+    return {
+        collection, sort, fields, statuses: new Set(statuses), baseFilter,
+        filterFields, rawFields: new Set(rawFields),
+    };
 }
 
 function configFor(name) {
@@ -119,8 +331,11 @@ function configFor(name) {
     return config;
 }
 
-function project(record, fields) {
-    return Object.fromEntries(fields.map((field) => [field, relationOrValue(record[field])])) ;
+function project(record, fields, rawFields = new Set()) {
+    return Object.fromEntries(fields.map((field) => [
+        field,
+        rawFields.has(field) ? record[field] ?? null : relationOrValue(record[field]),
+    ]));
 }
 
 function relationOrValue(value) {
@@ -190,11 +405,19 @@ module.exports = {
     CourseCreditOpsQueryService,
     RESOURCE_CONFIGS,
     arrayPage,
+    anyFilter,
     configFor,
     emptyAccount,
     groupAccounts,
     project,
     projectAccountBatch,
+    projectAssignedClass,
+    projectAssignedLesson,
+    projectAssignedStudent,
     relationOrValue,
     resource,
+    studentFilters,
+    studentIdsFromScope,
+    teacherScope,
+    uniqueIds,
 };

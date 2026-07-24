@@ -18,8 +18,13 @@ test('every registered course-credit route has an OpenAPI operation', () => {
     assert.ok(routes.length >= 20);
     for (const route of routes) {
         assert.ok(swagger.paths[route.path], `missing OpenAPI path ${route.path}`);
-        assert.ok(swagger.paths[route.path][route.method], `missing ${route.method.toUpperCase()} ${route.path}`);
-        assert.deepEqual(swagger.paths[route.path][route.method].security, [{ BearerAuth: [] }]);
+        const operation = swagger.paths[route.path][route.method];
+        assert.ok(operation, `missing ${route.method.toUpperCase()} ${route.path}`);
+        const resolvedOperation = operation.$ref
+            ? resolveReference(swagger, operation.$ref)
+            : operation;
+        assert.ok(resolvedOperation, `unresolved operation reference ${operation.$ref}`);
+        assert.deepEqual(resolvedOperation.security, [{ BearerAuth: [] }]);
     }
 });
 

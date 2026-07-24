@@ -21,22 +21,85 @@ test('scoped operators can read every Admin workspace through structured APIs', 
 
     await get(app, '/ops/course-credits/catalog/course-specs?page=2&status=active', authorization);
     await get(app, '/ops/course-credits/packages/package', authorization);
+    await get(app, '/ops/course-credits/enrollments?studentId=student&sourceId=order', authorization);
     await get(app, '/ops/course-credits/accounts?page=1&perPage=10', authorization);
     await get(app, '/ops/course-credits/accounts/student', authorization);
     await get(app, '/ops/course-credits/classes', authorization);
+    await get(app, '/ops/course-credits/session-classes?classId=class', authorization);
+    await get(app, '/ops/course-credits/class-students?classId=class&studentId=student', authorization);
+    await get(app, '/ops/course-credits/session-teachers?sessionId=session&actualStatus=confirmed', authorization);
+    await get(app, '/ops/course-credits/package-grant-lines?creditTypeId=type', authorization);
+    await get(app, '/ops/course-credits/audit-logs?resourceType=session&resourceId=session', authorization);
     await get(app, '/ops/course-credits/settlement-exceptions', authorization);
     await get(app, '/ops/course-credits/teacher-events', authorization);
+    await get(app, '/ops/course-credits/teacher-events/event', authorization);
     await get(app, '/ops/course-credits/reconciliation/runs', authorization);
+    await get(app, '/ops/course-credits/assigned-students?status=active', authorization);
+    await get(app, '/ops/course-credits/assigned-classes?classId=class', authorization);
+    await get(app, '/ops/course-credits/assigned-lessons?status=scheduled', authorization);
 
     assert.deepEqual(calls, [
         ['list', 'courseSpecs', { page: '2', status: 'active' }],
         ['get', 'packages', 'package'],
+        ['list', 'enrollments', { studentId: 'student', sourceId: 'order' }],
         ['accounts', { page: '1', perPage: '10' }],
         ['account', 'student'],
         ['list', 'classes', {}],
+        ['list', 'sessionClasses', { classId: 'class' }],
+        ['list', 'classStudents', { studentId: 'student', classId: 'class' }],
+        ['list', 'sessionTeachers', { sessionId: 'session', actualStatus: 'confirmed' }],
+        ['list', 'grantLines', { creditTypeId: 'type' }],
+        ['list', 'auditLogs', { resourceType: 'session', resourceId: 'session' }],
         ['list', 'settlementExceptions', {}],
-        ['list', 'teacherEvents', {}],
+        ['list', 'teacherEvents', { teacherId: 'operator' }],
+        ['assignedTeacherEvent', 'operator', 'event'],
         ['list', 'reconciliationRuns', {}],
+        ['assignedStudents', 'operator', { status: 'active' }],
+        ['assignedClasses', 'operator', { classId: 'class' }],
+        ['assignedLessons', 'operator', { status: 'scheduled' }],
+    ]);
+});
+
+test('teacher-only routes expose assigned teaching data and reject global operations data', async () => {
+    const calls = [];
+    const app = createApp(calls);
+    const teacher = auth({
+        id: 'teacher', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'],
+    });
+
+    assert.equal((await get(app, '/ops/course-credits/assigned-students?studentId=student', teacher)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/assigned-classes?classId=class', teacher)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/assigned-lessons?sessionId=session', teacher)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/teacher-events?teacherId=other', teacher)).code, 10000);
+    for (const path of [
+        '/ops/course-credits/classes', '/ops/course-credits/packages', '/ops/course-credits/accounts',
+        '/ops/course-credits/audit-logs',
+    ]) assert.equal((await get(app, path, teacher)).code, 403, path);
+
+    assert.deepEqual(calls, [
+        ['assignedStudents', 'teacher', { studentId: 'student' }],
+        ['assignedClasses', 'teacher', { classId: 'class' }],
+        ['assignedLessons', 'teacher', { sessionId: 'session' }],
+        ['list', 'teacherEvents', { teacherId: 'teacher' }],
+    ]);
+});
+
+test('settlement-only routes expose global lesson evidence without academic resources', async () => {
+    const calls = [];
+    const app = createApp(calls);
+    const settlement = auth({
+        id: 'settlement', role: 'teacher', courseCreditCapabilities: ['course_credit.settlement'],
+    });
+
+    assert.equal((await get(app, '/ops/course-credits/sessions?status=completed', settlement)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/session-students?sessionId=session', settlement)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/session-teachers?sessionId=session', settlement)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/classes', settlement)).code, 403);
+
+    assert.deepEqual(calls, [
+        ['list', 'sessions', { status: 'completed' }],
+        ['list', 'sessionStudents', { sessionId: 'session' }],
+        ['list', 'sessionTeachers', { sessionId: 'session' }],
     ]);
 });
 
@@ -64,6 +127,10 @@ function createApp(calls) {
             async getResource(resource, id) { calls.push(['get', resource, id]); return { id }; },
             async listAccounts(query) { calls.push(['accounts', query]); return { items: [] }; },
             async getAccount(studentId) { calls.push(['account', studentId]); return { studentId }; },
+            async getAssignedTeacherEvent(user, id) { calls.push(['assignedTeacherEvent', user.id, id]); return { id, teacherId: user.id }; },
+            async listAssignedStudents(user, query) { calls.push(['assignedStudents', user.id, query]); return { items: [] }; },
+            async listAssignedClasses(user, query) { calls.push(['assignedClasses', user.id, query]); return { items: [] }; },
+            async listAssignedLessons(user, query) { calls.push(['assignedLessons', user.id, query]); return { items: [] }; },
         },
     };
     const app = new Hono();
