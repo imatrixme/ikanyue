@@ -1,6 +1,7 @@
 import { LogOut, Menu } from 'lucide-react'
 import { useState } from 'react'
 
+import { viewEyebrows } from '../../app/navigation'
 import type { AppView, OpsProfile, ToastState } from '../../app/types'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
@@ -17,15 +18,9 @@ interface ShellProps {
   children: React.ReactNode
 }
 
-const viewEyebrow: Record<AppView, string> = {
-  points: '积分与线下兑换',
-  rewards: '实物目录与价格',
-  students: '账号与基础资料',
-}
-
 export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const currentViewEyebrow = viewEyebrow[activeView]
+  const currentViewEyebrow = viewEyebrows[activeView]
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -64,11 +59,11 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
                 />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-[var(--muted-foreground)]">{currentViewEyebrow}</p>
-                  <p className="truncate text-base font-semibold">线下积分服务台</p>
+                  <p className="truncate text-base font-semibold">看乐教学运营中心</p>
                 </div>
               </div>
               <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
-                <span className="hidden sm:inline-flex"><Badge tone="blue">管理员</Badge></span>
+                <span className="hidden sm:inline-flex"><Badge tone="blue">{profile.isAdmin ? '管理员' : '运营账号'}</Badge></span>
                 <span className="hidden max-w-[120px] truncate text-sm font-semibold md:inline md:max-w-none">{profile.realName || profile.nickName}</span>
                 <Button aria-label="退出" className="h-9 w-9 px-0 sm:w-auto sm:px-3" variant="ghost" onClick={onLogout} icon={<LogOut className="h-4 w-4" aria-hidden="true" />}>
                   <span className="hidden sm:inline">退出</span>

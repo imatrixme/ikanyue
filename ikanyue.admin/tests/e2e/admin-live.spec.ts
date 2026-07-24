@@ -9,7 +9,8 @@ test('local admin uses real Hono and PocketBase through row dialogs', async ({ p
   await page.getByLabel('账号或手机号').fill(account)
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '学员积分' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  await openView(page, '学员积分')
 
   const managedName = testInfo.project.name === 'chromium' ? '现场学员桌面' : '现场学员移动'
   const managedPhone = testInfo.project.name === 'chromium' ? '13900009991' : '13900009992'
@@ -53,7 +54,7 @@ test('local admin uses real Hono and PocketBase through row dialogs', async ({ p
   await expect(page.getByAltText('实物图片预览')).toHaveAttribute('src', /\/api\/files\//)
 })
 
-async function openView(page: import('@playwright/test').Page, name: '学员管理' | '学员积分' | '实物管理') {
+async function openView(page: import('@playwright/test').Page, name: string) {
   const mobileMenu = page.getByRole('button', { name: '打开导航' })
   if (await mobileMenu.isVisible()) {
     await mobileMenu.click()
@@ -61,4 +62,5 @@ async function openView(page: import('@playwright/test').Page, name: '学员管�
   } else {
     await page.getByRole('button', { name }).click()
   }
+  await expect(page.getByRole('heading', { name })).toBeVisible()
 }

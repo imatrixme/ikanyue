@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
-import { ShieldAlert } from 'lucide-react'
+import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 
 import { createOpsApi, type OpsApi } from './app/api'
+import { viewFromPath, viewPaths } from './app/navigation'
 import { appReducer, canAccessView, initialState } from './app/state'
 import type { AppView, LoginResult, RewardItem, RewardItemInput, StudentInput, UploadProgressHandler } from './app/types'
+import { AdminWorkspaceRoutes } from './components/ops/AdminWorkspaceRoutes'
 import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
 import { LoginView } from './components/ops/LoginView'
-import { PointsWorkspace } from './components/ops/PointsWorkspace'
-import { RewardItemsPanel } from './components/ops/RewardItemsPanel'
 import { Shell } from './components/ops/Shell'
-import { StudentsPanel } from './components/ops/StudentsPanel'
-import { Panel } from './components/ui/Card'
 
 interface AppProps {
   api?: OpsApi
@@ -18,9 +16,17 @@ interface AppProps {
 
 const SESSION_STORAGE_KEY = 'kanyue.points-lite.session'
 
-export default function App({ api: injectedApi }: AppProps) {
+export default function App(props: AppProps) {
+  const Router = typeof window === 'undefined' ? MemoryRouter : BrowserRouter
+  return <Router><AppContent {...props} /></Router>
+}
+
+function AppContent({ api: injectedApi }: AppProps) {
   const [state, dispatch] = useReducer(appReducer, initialState)
   const api = useMemo(() => injectedApi || createOpsApi(), [injectedApi])
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activeView = viewFromPath(location.pathname)
 
   const loadStudents = useCallback(async (query = '') => {
     if (!state.token) {
@@ -55,14 +61,16 @@ export default function App({ api: injectedApi }: AppProps) {
     if (!state.token) return
     dispatch({ type: 'loading:set', payload: true })
     try {
-      const payload = await api.listManagedStudents(state.token, { perPage: 100 })
+      const payload = state.profile?.isAdmin
+        ? await api.listManagedStudents(state.token, { perPage: 100 })
+        : await api.listAssignedStudents(state.token, { perPage: 100 })
       dispatch({ type: 'managedStudents:set', payload })
     } catch (error) {
       const message = errorMessage(error, '加载学员管理列表失败')
       dispatch({ type: 'managedStudents:error', payload: message })
       dispatch({ type: 'toast:set', payload: { type: 'error', message } })
     }
-  }, [api, state.token])
+  }, [api, state.profile, state.token])
 
   const loadStudentSummary = useCallback(async (studentId: string) => {
     if (!state.token || !studentId) {
@@ -90,21 +98,24 @@ export default function App({ api: injectedApi }: AppProps) {
     if (!state.profile || !state.token || state.profile.passwordChangeRequired) {
       return
     }
-    if (!state.profile.isAdmin) {
-      dispatch({ type: 'toast:set', payload: { type: 'error', message: '积分兑换后台仅允许管理员访问' } })
-      return
-    }
-    void Promise.all([loadStudents(), loadRewards(), loadManagedStudents()])
+    if (state.profile.isAdmin) void Promise.all([loadStudents(), loadRewards(), loadManagedStudents()])
+    else if (canAccessView(state.profile, 'students')) void loadManagedStudents()
   }, [loadManagedStudents, loadRewards, loadStudents, state.profile, state.token])
+
+  useEffect(() => {
+    if (state.profile && state.activeView !== activeView) dispatch({ type: 'view:set', payload: activeView })
+  }, [activeView, state.activeView, state.profile])
 
   function onLogin(result: LoginResult) {
     writeCachedSession(result)
     dispatch({ type: 'login:success', payload: result })
+    navigate('/dashboard', { replace: true })
   }
 
   function onLogout() {
     clearCachedSession()
     dispatch({ type: 'logout' })
+    navigate('/', { replace: true })
   }
 
   function setView(view: AppView) {
@@ -112,7 +123,7 @@ export default function App({ api: injectedApi }: AppProps) {
       dispatch({ type: 'toast:set', payload: { type: 'error', message: '当前账号没有访问权限' } })
       return
     }
-    dispatch({ type: 'view:set', payload: view })
+    navigate(viewPaths[view])
   }
 
   async function selectStudent(studentId: string) {
@@ -236,67 +247,15 @@ export default function App({ api: injectedApi }: AppProps) {
     )
   }
 
-  if (!state.profile.isAdmin) {
-    return (
-      <Shell
-        activeView="points"
-        profile={state.profile}
-        toast={state.toast}
-        onViewChange={setView}
-        onLogout={onLogout}
-      >
-        <Panel className="mx-auto max-w-xl p-8 text-center">
-          <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--danger-soft)] text-[var(--destructive)]">
-            <ShieldAlert className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <h2 className="text-xl font-semibold">需要管理员权限</h2>
-          <p className="ky-paragraph mt-2">
-            积分加分和线下兑换会修改学员积分流水，当前账号没有访问权限。
-          </p>
-        </Panel>
-      </Shell>
-    )
-  }
-
   return (
     <Shell
-      activeView={state.activeView}
+      activeView={activeView}
       profile={state.profile}
       toast={state.toast}
       onViewChange={setView}
       onLogout={onLogout}
     >
-      {state.activeView === 'students' ? (
-        <StudentsPanel
-          errorMessage={state.managedStudentsError}
-          loading={state.loading}
-          students={state.managedStudents?.items || []}
-          onReload={loadManagedStudents}
-          onSave={saveStudent}
-        />
-      ) : null}
-      {state.activeView === 'points' ? (
-        <PointsWorkspace
-          loading={state.loading}
-          rewards={state.rewards?.items || []}
-          selectedStudentId={state.selectedStudentId}
-          studentSummary={state.selectedStudentSummary}
-          students={state.students?.items || []}
-          onAddPoints={addPoints}
-          onLoadStudent={selectStudent}
-          onRedeem={redeem}
-          onReloadStudents={() => loadStudents()}
-        />
-      ) : null}
-      {state.activeView === 'rewards' ? (
-        <RewardItemsPanel
-          loading={state.loading}
-          rewards={state.rewards?.items || []}
-          onReloadRewards={loadRewards}
-          onSave={saveReward}
-          onUploadImage={uploadRewardImage}
-        />
-      ) : null}
+      <AdminWorkspaceRoutes api={api} loading={state.loading} managedStudents={state.managedStudents?.items || []} managedStudentsError={state.managedStudentsError} onAddPoints={addPoints} onLoadManagedStudents={loadManagedStudents} onLoadRewards={loadRewards} onLoadStudent={selectStudent} onLoadStudents={() => loadStudents()} onRedeem={redeem} onSaveReward={saveReward} onSaveStudent={saveStudent} onUploadRewardImage={uploadRewardImage} profile={state.profile} rewards={state.rewards?.items || []} selectedStudentId={state.selectedStudentId} studentSummary={state.selectedStudentSummary} students={state.students?.items || []} token={state.token} />
     </Shell>
   )
 }

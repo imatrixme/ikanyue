@@ -1,4 +1,7 @@
 import { clone, list, mockPointEvents, mockProfiles, mockRewards, mockStudents } from './mockData'
+import { createHttpCourseOpsApi, createMockCourseOpsApi, type CourseOpsApi } from './courseApi'
+import type { CoursePage } from './courseTypes'
+import { request, toQuery } from './http'
 import type {
   AddPointsInput,
   ListResult,
@@ -14,11 +17,12 @@ import type {
   UploadProgressHandler,
 } from './types'
 
-export interface OpsApi {
+export interface OpsApi extends CourseOpsApi {
   login(account: string, password: string): Promise<LoginResult>
   register(data: RegisterPayload): Promise<RegisterResult>
   changePassword(token: string, data: ChangePasswordPayload): Promise<LoginResult>
   listManagedStudents(token: string, query?: ListQuery): Promise<ListResult<StudentRecord>>
+  listAssignedStudents(token: string, query?: ListQuery): Promise<ListResult<StudentRecord>>
   createStudent(token: string, data: StudentInput): Promise<StudentRecord>
   updateStudent(token: string, id: string, data: StudentInput): Promise<StudentRecord>
   listStudents(token: string, query?: ListQuery): Promise<ListResult<StudentPointsRow>>
@@ -74,11 +78,14 @@ export function createMockOpsApi(): OpsApi {
     nickName: student.nickName,
     realName: student.realName,
     updated: `2026-06-0${index + 1}T08:00:00.000Z`,
+    classAssignments: index === 0 ? [{ id: 'class_student_1', classId: 'class_1', studentId: student.id, status: 'active' }] : [],
+    lessonAssignments: index === 0 ? [{ id: 'session_student_1', sessionId: 'lesson_1', studentId: student.id, attendanceStatus: 'scheduled' }] : [],
   }))
   const rewards = clone(mockRewards)
   const events = clone(mockPointEvents)
 
   return {
+    ...createMockCourseOpsApi(),
     async login(account, password) {
       if (!account || !password) {
         throw new Error('账号和密码不能为空')
@@ -117,6 +124,12 @@ export function createMockOpsApi(): OpsApi {
       const keyword = String(query.q || query.keyword || '').trim()
       const status = String(query.status || '')
       const items = managedStudents.filter((student) => (!keyword || searchableStudent(student).includes(keyword)) && (!status || status === 'all' || student.blocked === (status === 'inactive')))
+      return list(items, Number(query.page || 1), Number(query.perPage || query.limit || 100))
+    },
+    async listAssignedStudents(_token, query = {}) {
+      const keyword = String(query.q || query.keyword || '').trim()
+      const status = String(query.status || '')
+      const items = managedStudents.filter((student) => (student.classAssignments?.length || student.lessonAssignments?.length) && (!keyword || searchableStudent(student).includes(keyword)) && (!status || status === 'all' || student.blocked === (status === 'inactive')))
       return list(items, Number(query.page || 1), Number(query.perPage || query.limit || 100))
     },
     async createStudent(_token, data) {
@@ -232,6 +245,7 @@ export function createMockOpsApi(): OpsApi {
 
 function createHttpOpsApi(baseUrl: string): OpsApi {
   return {
+    ...createHttpCourseOpsApi(baseUrl),
     login(account, password) {
       return request<LoginResult>(`${baseUrl}/auth/login`, {
         method: 'POST',
@@ -246,6 +260,10 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     },
     listManagedStudents(token, query = {}) {
       return request<ListResult<StudentRecord>>(`${baseUrl}/students${toQuery(query)}`, { token })
+    },
+    async listAssignedStudents(token, query = {}) {
+      const page = await request<CoursePage<StudentRecord>>(`${baseUrl}/course-credits/assigned-students${toQuery(query)}`, { token })
+      return coursePageToListResult(page)
     },
     createStudent(token, data) {
       return request<StudentRecord>(`${baseUrl}/students`, { method: 'POST', token, body: data })
@@ -282,6 +300,18 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     },
     uploadRewardImage(token, id, file, onProgress) {
       return uploadRequest<RewardItem>(`${baseUrl}/reward-items/${encodeURIComponent(id)}/image`, token, file, onProgress)
+    },
+  }
+}
+
+function coursePageToListResult<T>(page: CoursePage<T>): ListResult<T> {
+  return {
+    items: page.items,
+    pagination: {
+      page: page.page,
+      perPage: page.perPage,
+      totalItems: page.totalItems,
+      totalPages: page.totalPages,
     },
   }
 }
@@ -325,34 +355,6 @@ function uploadRequest<T>(url: string, token: string, file: File, onProgress?: U
     onProgress?.(0)
     xhr.send(body)
   })
-}
-
-async function request<T>(url: string, options: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {
-  const headers: Record<string, string> = { 'content-type': 'application/json' }
-  if (options.token) {
-    headers.authorization = `Bearer ${options.token}`
-  }
-  const response = await fetch(url, {
-    method: options.method || 'GET',
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-  })
-  const payload = await response.json()
-  if (!response.ok || payload.code !== 10000) {
-    throw new Error(payload.message || '运营后台请求失败')
-  }
-  return payload.data as T
-}
-
-function toQuery(query: ListQuery): string {
-  const params = new URLSearchParams()
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      params.set(key, String(value))
-    }
-  })
-  const text = params.toString()
-  return text ? `?${text}` : ''
 }
 
 function findStudent(students: StudentPointsRow[], studentId: string) {

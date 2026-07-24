@@ -14,6 +14,7 @@ describe('points lite app flow', () => {
     const user = userEvent.setup()
     render(<App api={createMockOpsApi()} />)
     await login(user)
+    await openPoints(user)
 
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
     expect(screen.getByRole('table')).toHaveTextContent('张同学')
@@ -57,7 +58,7 @@ describe('points lite app flow', () => {
     expect(screen.getByRole('heading', { name: '看乐积分兑换后台' })).toBeInTheDocument()
   })
 
-  it('shows login validation and blocks non-admin users', async () => {
+  it('shows login validation and scopes non-admin users by capability', async () => {
     const user = userEvent.setup()
     render(<App api={createMockOpsApi()} />)
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
@@ -65,8 +66,9 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('账号或手机号'), '13800138001')
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
-    expect(await screen.findByText('积分兑换后台仅允许管理员访问')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: '需要管理员权限' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '今日工作台' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '课堂管理' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '学员积分' })).not.toBeInTheDocument()
   })
 
   it('handles forced password changes and cached-session parse errors', async () => {
@@ -81,6 +83,7 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('新密码'), 'new-secret')
     await user.type(screen.getByLabelText('确认新密码'), 'new-secret')
     await user.click(screen.getByRole('button', { name: '确认修改' }))
+    await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
   })
 
@@ -91,6 +94,7 @@ describe('points lite app flow', () => {
     api.listRewards = async () => mockRewards
     render(<App api={api} />)
     await login(user)
+    await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
 
     api.addPoints = async () => { throw new Error('grant down') }
@@ -131,6 +135,7 @@ describe('points lite app flow', () => {
     const user = userEvent.setup()
     render(<App api={createFailingApi()} />)
     await login(user)
+    await openPoints(user)
     expect(await screen.findByText('students down')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '学员积分' })).toBeInTheDocument()
   })
@@ -141,7 +146,10 @@ describe('points lite app flow', () => {
     api.listStudents = vi.fn().mockResolvedValue({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } })
     api.listRewards = vi.fn().mockResolvedValue({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } })
     api.getStudentPoints = vi.fn(api.getStudentPoints)
+    const user = userEvent.setup()
     render(<App api={api} />)
+    await screen.findByRole('heading', { name: '今日工作台' })
+    await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
     expect(screen.getByText('还没有学员')).toBeInTheDocument()
     expect(api.getStudentPoints).not.toHaveBeenCalled()
@@ -155,6 +163,7 @@ describe('points lite app flow', () => {
     api.getStudentPoints = vi.fn().mockRejectedValue(new Error('summary unavailable'))
     render(<App api={api} />)
     await login(user)
+    await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
     await waitFor(() => expect(api.listRewards).toHaveBeenCalled())
     await waitFor(() => expect(api.getStudentPoints).toHaveBeenCalledWith('mock-token-admin_1', 'student_1'))
@@ -182,6 +191,7 @@ describe('points lite app flow', () => {
     api.listRewards = vi.fn(() => new Promise<Awaited<ReturnType<OpsApi['listRewards']>>>(() => undefined))
     render(<App api={api} />)
     await login(user)
+    await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '实物管理' }))
     await user.click(screen.getAllByRole('button', { name: '新增实物' })[0])
@@ -197,7 +207,7 @@ describe('points lite app flow', () => {
     api.listRewards = vi.fn().mockResolvedValue({ items: mockRewards.items } as Awaited<ReturnType<OpsApi['listRewards']>>)
     render(<App api={api} />)
     await login(user)
-    await screen.findByRole('heading', { name: '学员积分' })
+    await openPoints(user)
     await user.click(screen.getByRole('button', { name: '实物管理' }))
     await user.click(screen.getAllByRole('button', { name: '编辑贴纸套装' })[0])
     await user.clear(screen.getByLabelText('积分价格'))
@@ -265,6 +275,13 @@ async function login(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: /^登录$/ }))
 }
 
+async function openPoints(user: ReturnType<typeof userEvent.setup>) {
+  if (screen.queryByRole('heading', { name: '学员积分' })) return
+  await screen.findByRole('heading', { name: '今日工作台' })
+  await user.click(screen.getByRole('button', { name: '学员积分' }))
+  await screen.findByRole('heading', { name: '学员积分' })
+}
+
 function workspaceProps(overrides: Partial<React.ComponentProps<typeof PointsWorkspace>> = {}): React.ComponentProps<typeof PointsWorkspace> {
   return { loading: false, rewards: mockRewards.items, selectedStudentId: 'student_1', studentSummary: summary(120), students: mockStudents.items, onAddPoints: vi.fn(), onLoadStudent: async (id) => summary(id === 'student_1' ? 120 : 40, id), onRedeem: vi.fn(), onReloadStudents: vi.fn(), ...overrides }
 }
@@ -272,5 +289,5 @@ function workspaceProps(overrides: Partial<React.ComponentProps<typeof PointsWor
 function summary(balance: number, studentId = 'student_1'): StudentPointSummary { return { balance, events: mockPointEvents.filter((event) => event.studentId === studentId), pagination: { page: 1, perPage: 20, totalItems: 2, totalPages: 1 }, studentId } }
 
 function createFailingApi(): OpsApi {
-  return { login: async (): Promise<LoginResult> => ({ token: 'token', profile: mockProfiles.admin }), register: async () => ({ status: 'pending_activation', message: 'ok', profile: mockProfiles.teacher }), changePassword: async () => ({ token: 'token', profile: mockProfiles.admin }), listManagedStudents: async () => ({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } }), createStudent: async () => { throw new Error('student create down') }, updateStudent: async () => { throw new Error('student update down') }, listStudents: async () => { throw new Error('students down') }, getStudentPoints: async () => summary(120), addPoints: async () => summary(120), offlineRedeem: async () => summary(120), listRewards: async () => mockRewards, createReward: async (_token, data) => ({ id: 'created', description: '', image: '', status: 'active', ...data }), updateReward: async (_token, id, data) => ({ id, description: '', image: '', status: 'active', ...data }), uploadRewardImage: async (_token, id) => ({ id, name: '图片实物', description: '', image: 'https://assets.test/image.png', pointsPrice: 10, status: 'active' }) }
+  return { ...createMockOpsApi(), login: async (): Promise<LoginResult> => ({ token: 'token', profile: mockProfiles.admin }), register: async () => ({ status: 'pending_activation', message: 'ok', profile: mockProfiles.teacher }), changePassword: async () => ({ token: 'token', profile: mockProfiles.admin }), listManagedStudents: async () => ({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } }), createStudent: async () => { throw new Error('student create down') }, updateStudent: async () => { throw new Error('student update down') }, listStudents: async () => { throw new Error('students down') }, getStudentPoints: async () => summary(120), addPoints: async () => summary(120), offlineRedeem: async () => summary(120), listRewards: async () => mockRewards, createReward: async (_token, data) => ({ id: 'created', description: '', image: '', status: 'active', ...data }), updateReward: async (_token, id, data) => ({ id, description: '', image: '', status: 'active', ...data }), uploadRewardImage: async (_token, id) => ({ id, name: '图片实物', description: '', image: 'https://assets.test/image.png', pointsPrice: 10, status: 'active' }) }
 }

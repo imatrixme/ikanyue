@@ -1,5 +1,6 @@
-import { Gift, ListChecks, PackageOpen, Users, X } from 'lucide-react'
+import { GraduationCap, X } from 'lucide-react'
 
+import { navigationGroups } from '../../app/navigation'
 import { canAccessView } from '../../app/state'
 import type { AppView, OpsProfile } from '../../app/types'
 import { cn } from '../ui/utils'
@@ -13,14 +14,10 @@ interface AdminSidebarProps {
   onNavigate?: () => void
 }
 
-const navItems: Array<{ view: AppView; label: string; icon: typeof ListChecks }> = [
-  { view: 'students', label: '学员管理', icon: Users },
-  { view: 'points', label: '学员积分', icon: ListChecks },
-  { view: 'rewards', label: '实物管理', icon: PackageOpen },
-]
-
 export function AdminSidebar({ activeView, profile, onViewChange, mode = 'desktop', onClose, onNavigate }: AdminSidebarProps) {
-  const visibleItems = navItems.filter((item) => canAccessView(profile, item.view))
+  const visibleGroups = navigationGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => canAccessView(profile, item.view)) }))
+    .filter((group) => group.items.length > 0)
 
   return (
     <aside className={cn(
@@ -32,11 +29,11 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
       <div className="flex h-full w-full flex-col">
         <div className="flex h-16 items-center gap-3 border-b border-[var(--border)] bg-[var(--brand-wash)] px-3">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm">
-            <Gift className="h-4 w-4" aria-hidden="true" />
+            <GraduationCap className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1 whitespace-nowrap">
-            <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
-            <p className="truncate text-sm font-semibold text-[var(--foreground)]">线下积分服务台</p>
+            <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐艺术</p>
+            <p className="truncate text-sm font-semibold text-[var(--foreground)]">教学运营中心</p>
           </div>
           {mode === 'drawer' ? (
             <button
@@ -50,31 +47,19 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
           ) : null}
         </div>
         <nav className="flex-1 overflow-y-auto p-2.5" aria-label="后台导航">
-          <div className="grid gap-1">
-            {visibleItems.map((item) => {
-              const Icon = item.icon
-              const active = activeView === item.view
-              return (
-                <button
-                  key={item.view}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'relative flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium transition-colors',
-                    active
-                      ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
-                      : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]',
-                  )}
-                  onClick={() => {
-                    onViewChange(item.view)
-                    onNavigate?.()
-                  }}
-                  type="button"
-                >
-                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>{item.label}</span>
-                </button>
-              )
-            })}
+          <div className="grid gap-5">
+            {visibleGroups.map((group) => (
+              <section key={group.label}>
+                <p className="px-3 pb-1.5 text-xs font-semibold text-[var(--muted-foreground)]">{group.label}</p>
+                <div className="grid gap-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon
+                    const active = activeView === item.view
+                    return <button key={item.view} aria-current={active ? 'page' : undefined} className={cn('relative flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium transition-colors', active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]')} onClick={() => { onViewChange(item.view); onNavigate?.() }} type="button"><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /><span>{item.label}</span></button>
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </nav>
       </div>

@@ -1,8 +1,8 @@
 # ikanyue.admin
 
-React + TypeScript + Vite admin for the WeChat points-lite hard fork.
+React + TypeScript + Vite admin for the WeChat learner and teaching operations system.
 
-This branch intentionally keeps only:
+This branch provides:
 
 - ops login / registration / forced password change
 - admin student directory creation, editing, and enabled-status management
@@ -10,8 +10,17 @@ This branch intentionally keeps only:
 - admin point grants
 - admin offline reward redemption
 - reward item catalog management
+- course, package, price, class, and lesson management
+- admin enrollment and future-lesson roster synchronization
+- attendance, actual-teacher confirmation, settlement preview, settlement, and correction
+- learner lesson-hour accounts, teacher workload, exception, and audit views
+- capability-scoped access for finance, academic, settlement, teacher, and audit operators
 
-It does not ship the older teaching operations, assessment, report, resource, shipping, or refund workflows.
+Student self-enrollment and QR attendance are deliberately deferred. They are not exposed by this admin release or the current miniapp course experience.
+
+## Verification boundary
+
+`npm run test:coverage` enforces at least 95% statements, branches, functions, and lines across the deterministic decision layer and the routed course operations workspaces: API clients, course API mapping, HTTP behavior, route mapping, authorization, application state, student operations, enrollment, classes, lessons, course resources, dashboards, accounts, workload, exceptions, and audit views. Playwright separately verifies desktop/mobile layout, dialogs, navigation, and accessibility in a browser-shaped environment.
 
 ## Local real-backend testing
 

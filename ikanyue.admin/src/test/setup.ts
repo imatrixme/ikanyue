@@ -38,4 +38,5 @@ if (typeof Range !== 'undefined' && typeof Range.prototype.getBoundingClientRect
 afterEach(() => {
   cleanup()
   localStorage.clear()
+  window.history.replaceState({}, '', '/')
 })

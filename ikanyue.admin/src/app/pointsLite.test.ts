@@ -111,17 +111,20 @@ describe('points lite api', () => {
     const student = { id: 'student_9', realName: '新学员', nickName: '', cellphone: '13900139009', avatar: '', blocked: false, lastLoginAt: '', created: '', updated: '' }
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(ok({ items: [student], pagination: mockStudents.pagination }))
+      .mockResolvedValueOnce(ok({ items: [student], page: 1, perPage: 100, totalItems: 1, totalPages: 1 }))
       .mockResolvedValueOnce(ok(student))
       .mockResolvedValueOnce(ok({ ...student, blocked: true }))
     vi.stubGlobal('fetch', fetchMock)
     const api = createOpsApi({ baseUrl: '/ops', mock: false })
 
     await api.listManagedStudents('token', { status: 'active', perPage: 100 })
+    expect((await api.listAssignedStudents('token', { perPage: 100 })).pagination.totalItems).toBe(1)
     await api.createStudent('token', { realName: '新学员', cellphone: '13900139009', password: 'secret', blocked: false })
     await api.updateStudent('token', student.id, { realName: '新学员', cellphone: '13900139009', password: '', blocked: true })
 
     expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
       '/ops/students?status=active&perPage=100',
+      '/ops/course-credits/assigned-students?perPage=100',
       '/ops/students',
       '/ops/students/student_9',
     ])
@@ -130,6 +133,8 @@ describe('points lite api', () => {
   it('mock student management validates fields, filters status, and updates records', async () => {
     const api = createMockOpsApi()
     expect((await api.listManagedStudents('token', { q: '张', status: 'active', page: 1, limit: 10 })).items).toHaveLength(1)
+    expect((await api.listAssignedStudents('token', { q: '张', status: 'active' })).items).toHaveLength(1)
+    expect((await api.listAssignedStudents('token', { q: '李' })).items).toHaveLength(0)
     expect((await api.listManagedStudents('token', { status: 'all' })).items).toHaveLength(2)
     await expect(api.createStudent('token', { realName: '', cellphone: '', password: '', blocked: false })).rejects.toThrow('手机号不能为空')
     await expect(api.createStudent('token', { realName: '', cellphone: '13900139009', password: 'secret', blocked: false })).rejects.toThrow('学员姓名不能为空')
@@ -224,13 +229,39 @@ describe('points lite api', () => {
 })
 
 describe('points lite reducer', () => {
-  it('keeps the app on the admin-only points surface', () => {
+  it('starts on the routed dashboard and preserves admin-only points access', () => {
     const login: LoginResult = { token: 'token', profile: mockProfiles.admin }
     let state = appReducer(initialState, { type: 'login:success', payload: login })
-    expect(state.activeView).toBe('points')
+    expect(state.activeView).toBe('dashboard')
     expect(canAccessView(mockProfiles.admin, 'rewards')).toBe(true)
     expect(canAccessView(mockProfiles.admin, 'students')).toBe(true)
     expect(canAccessView(mockProfiles.teacher, 'points')).toBe(false)
+    expect(canAccessView(null, 'dashboard')).toBe(false)
+    expect(canAccessView({ ...mockProfiles.teacher, blocked: true }, 'dashboard')).toBe(false)
+    expect(canAccessView(mockProfiles.teacher, 'dashboard')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'classes')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'students')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'lessons')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'teachers')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'exceptions')).toBe(true)
+    expect(canAccessView(mockProfiles.teacher, 'audit')).toBe(false)
+    expect(canAccessView(mockProfiles.teacher, 'courses')).toBe(false)
+    const finance = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.finance' as const] }
+    const auditor = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.audit' as const] }
+    const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
+    const settlementOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.settlement' as const] }
+    expect(canAccessView(finance, 'packages')).toBe(true)
+    expect(canAccessView(finance, 'enrollments')).toBe(true)
+    expect(canAccessView(finance, 'accounts')).toBe(true)
+    expect(canAccessView(auditor, 'exceptions')).toBe(true)
+    expect(canAccessView(auditor, 'audit')).toBe(true)
+    expect(canAccessView(teacherOnly, 'students')).toBe(true)
+    expect(canAccessView(teacherOnly, 'lessons')).toBe(true)
+    expect(canAccessView(teacherOnly, 'classes')).toBe(false)
+    expect(canAccessView(settlementOnly, 'lessons')).toBe(true)
+    expect(canAccessView(settlementOnly, 'students')).toBe(false)
+    expect(canAccessView(settlementOnly, 'classes')).toBe(false)
+    expect(canAccessView({ ...mockProfiles.teacher, courseCreditCapabilities: [] }, 'dashboard')).toBe(false)
 
     state = appReducer(state, { type: 'students:set', payload: mockStudents })
     expect(state.selectedStudentId).toBe('student_1')

@@ -3,7 +3,7 @@ import type { AppAction, AppState, AppView, OpsProfile } from './types'
 export const initialState: AppState = {
   profile: null,
   token: '',
-  activeView: 'points',
+  activeView: 'dashboard',
   loading: false,
   toast: null,
   students: null,
@@ -21,7 +21,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'login:success':
       return {
         ...state,
-        activeView: 'points',
+        activeView: 'dashboard',
         loading: false,
         profile: action.payload.profile,
         token: action.payload.token,
@@ -29,7 +29,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'logout':
       return initialState
     case 'view:set':
-      return { ...state, activeView: action.payload, toast: null }
+      return { ...state, activeView: action.payload }
     case 'loading:set':
       return { ...state, loading: action.payload }
     case 'toast:set':
@@ -55,5 +55,16 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 }
 
 export function canAccessView(profile: OpsProfile | null, view: AppView): boolean {
-  return Boolean(profile?.isAdmin && (view === 'students' || view === 'points' || view === 'rewards'))
+  if (!profile || profile.blocked) return false
+  if (profile.isAdmin) return true
+  const capabilities = new Set(profile.courseCreditCapabilities || [])
+  if (view === 'dashboard') return capabilities.size > 0
+  if (view === 'students') return capabilities.has('course_credit.academic') || capabilities.has('course_credit.teacher')
+  if (view === 'classes') return capabilities.has('course_credit.academic')
+  if (view === 'lessons') return capabilities.has('course_credit.academic') || capabilities.has('course_credit.teacher') || capabilities.has('course_credit.settlement')
+  if (view === 'teachers') return capabilities.has('course_credit.teacher')
+  if (view === 'exceptions') return capabilities.has('course_credit.settlement') || capabilities.has('course_credit.audit')
+  if (view === 'audit') return capabilities.has('course_credit.audit')
+  if (['courses', 'packages', 'enrollments', 'accounts'].includes(view)) return capabilities.has('course_credit.finance')
+  return false
 }

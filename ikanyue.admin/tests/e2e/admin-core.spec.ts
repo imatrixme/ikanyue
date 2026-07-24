@@ -1,19 +1,20 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
-async function loginAsAdmin(page: import('@playwright/test').Page) {
+async function loginAsAdmin(page: import('@playwright/test').Page, openPoints = true) {
   await page.goto('/')
   await page.getByLabel('账号或手机号').fill('admin')
   await page.getByLabel('密码').fill('secret')
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '学员积分' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  if (openPoints) await openView(page, '学员积分')
 }
 
 async function openRewards(page: import('@playwright/test').Page) {
   await openView(page, '实物管理')
 }
 
-async function openView(page: import('@playwright/test').Page, name: '学员管理' | '学员积分' | '实物管理') {
+async function openView(page: import('@playwright/test').Page, name: string) {
   const mobileMenu = page.getByRole('button', { name: '打开导航' })
   if (await mobileMenu.isVisible()) {
     await mobileMenu.click()
@@ -21,6 +22,24 @@ async function openView(page: import('@playwright/test').Page, name: '学员管�
   } else {
     await page.getByRole('button', { name }).click()
   }
+  const heading = viewHeadings[name]
+  if (heading) await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+}
+
+const viewHeadings: Record<string, string> = {
+  '今日工作台': '今日工作台',
+  '学员管理': '学员管理',
+  '课程规格': '课程规格',
+  '课包与价格': '课包管理',
+  '报课管理': '报课管理',
+  '班级管理': '班级管理',
+  '课堂管理': '课堂管理',
+  '课时账户': '课时账户',
+  '教师工作量': '教师工作量',
+  '异常中心': '核销异常',
+  '操作审计': '操作审计',
+  '学员积分': '学员积分',
+  '实物管理': '实物管理',
 }
 
 test('admin completes grant and redemption from learner row dialogs', async ({ page }) => {
@@ -141,6 +160,27 @@ test('responsive dialogs fit the viewport without horizontal overflow', async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
 })
 
+test('course operations stay usable across responsive layouts', async ({ page }) => {
+  await loginAsAdmin(page, false)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+
+  await openView(page, '课程规格')
+  await expect(page.getByRole('heading', { name: '课程规格' })).toBeVisible()
+  await expect(page.getByText('综合声乐班', { exact: true }).filter({ visible: true }).first()).toBeVisible()
+  await page.getByRole('button', { name: '新增课程规格' }).click()
+  const courseDialog = page.getByRole('dialog', { name: '新增课程规格' })
+  await expect(courseDialog).toBeVisible()
+  expect(await courseDialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  await page.keyboard.press('Escape')
+
+  await openView(page, '报课管理')
+  await expect(page.getByRole('heading', { name: '报课管理' })).toBeVisible()
+  await page.getByRole('button', { name: '新建报课' }).click()
+  await expect(page.getByRole('dialog', { name: '管理员报课' })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+})
+
 test('representative admin workspaces have no serious accessibility violations', async ({ page }) => {
   await loginAsAdmin(page)
   await expectAccessible(page)
@@ -182,13 +222,15 @@ test('admin creates, edits, and disables a learner from student management', asy
   await expect(page.getByRole('button', { name: '为端到端学员增加积分' })).toHaveCount(0)
 })
 
-test('non-admin login is blocked from the points console', async ({ page }) => {
+test('non-admin login receives scoped course navigation without points access', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('账号或手机号').fill('13800138001')
   await page.getByLabel('密码').fill('secret')
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByText('积分兑换后台仅允许管理员访问')).toBeVisible()
-  await expect(page.getByRole('heading', { name: '学员积分' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  await openView(page, '课堂管理')
+  await expect(page.getByRole('heading', { name: '课堂管理' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '学员积分' })).toHaveCount(0)
 })
 
 test('admin logout returns to the login screen', async ({ page }) => {
@@ -200,7 +242,8 @@ test('admin logout returns to the login screen', async ({ page }) => {
 async function controlsDoNotOverlap(page: import('@playwright/test').Page, ids: string[]) {
   return page.evaluate((controlIds) => {
     const rects = controlIds.map((id) => document.getElementById(id)?.getBoundingClientRect()).filter(Boolean) as DOMRect[]
-    return rects.length === controlIds.length && rects.every((rect, index) => index === 0 || rect.left >= rects[index - 1].right)
+    const separated = (left: DOMRect, right: DOMRect) => left.right <= right.left || right.right <= left.left || left.bottom <= right.top || right.bottom <= left.top
+    return rects.length === controlIds.length && rects.every((rect, index) => rects.slice(index + 1).every((other) => separated(rect, other)))
   }, ids)
 }
 

@@ -20,6 +20,7 @@ export const mockProfiles: Record<'admin' | 'teacher', OpsProfile> = {
     cellphone: '13800138001',
     verified: true,
     blocked: false,
+    courseCreditCapabilities: ['course_credit.academic', 'course_credit.settlement', 'course_credit.teacher'],
   },
 }
 

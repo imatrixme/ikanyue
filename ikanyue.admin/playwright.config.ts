@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const live = process.env.PLAYWRIGHT_LIVE === 'true'
-const port = Number(process.env.ADMIN_PORT || (live ? 4173 : 4174))
+const port = Number(process.env.ADMIN_PORT || (live ? 4173 : 43174))
 const baseURL = `http://127.0.0.1:${port}`
 
 export default defineConfig({
@@ -17,7 +17,7 @@ export default defineConfig({
   webServer: {
     command: `${live ? 'VITE_OPS_API_MOCK=false' : 'VITE_OPS_API_MOCK=true'} npm run dev -- --port ${port}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [

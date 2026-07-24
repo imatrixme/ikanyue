@@ -1,6 +1,21 @@
 export type Role = 'teacher' | 'admin'
 
-export type AppView = 'students' | 'points' | 'rewards'
+import type { CourseCapability, CourseRecord } from './courseTypes'
+
+export type AppView =
+  | 'dashboard'
+  | 'students'
+  | 'courses'
+  | 'packages'
+  | 'enrollments'
+  | 'classes'
+  | 'lessons'
+  | 'accounts'
+  | 'teachers'
+  | 'exceptions'
+  | 'audit'
+  | 'points'
+  | 'rewards'
 
 export interface OpsProfile {
   id: string
@@ -12,6 +27,7 @@ export interface OpsProfile {
   verified: boolean
   blocked: boolean
   passwordChangeRequired?: boolean
+  courseCreditCapabilities?: CourseCapability[]
 }
 
 export interface LoginResult {
@@ -56,6 +72,8 @@ export interface StudentRecord {
   nickName: string
   realName: string
   updated: string
+  classAssignments?: CourseRecord[]
+  lessonAssignments?: CourseRecord[]
 }
 
 export interface StudentInput {
