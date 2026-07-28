@@ -1,19 +1,23 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 
 import { Panel } from '../ui/Card'
+import { BusinessIcon } from '../ui/BusinessIcon'
 import { cn } from '../ui/utils'
 
 export function WorkspacePanel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <Panel className={cn('min-w-0 overflow-hidden', className)} {...props} />
 }
 
-export function PageHeader({ actions, badge, description, eyebrow, title }: { actions?: ReactNode; badge?: ReactNode; description: string; eyebrow?: string; title: string }) {
+export function PageHeader({ actions, badge, description, eyebrow, icon, title }: { actions?: ReactNode; badge?: ReactNode; description: string; eyebrow?: string; icon?: string; title: string }) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4 sm:px-6">
-      <div className="min-w-0">
-        {eyebrow ? <p className="text-xs font-semibold text-[var(--primary)]">{eyebrow}</p> : null}
-        <div className="flex flex-wrap items-center gap-2"><h1 className="text-lg font-semibold">{title}</h1>{badge}</div>
-        <p className="ky-paragraph mt-1">{description}</p>
+      <div className="flex min-w-0 items-start gap-3">
+        {icon ? <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--brand-wash)]"><BusinessIcon size="header" src={icon} /></span> : null}
+        <div className="min-w-0">
+          {eyebrow ? <p className="text-xs font-semibold text-[var(--primary)]">{eyebrow}</p> : null}
+          <div className="flex flex-wrap items-center gap-2"><h1 className="text-lg font-semibold">{title}</h1>{badge}</div>
+          <p className="ky-paragraph mt-1">{description}</p>
+        </div>
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </header>

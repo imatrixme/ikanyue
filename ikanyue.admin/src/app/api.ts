@@ -1,4 +1,5 @@
 import { clone, list, mockPointEvents, mockProfiles, mockRewards, mockStudents } from './mockData'
+import { createHttpBookingOpsApi, createMockBookingOpsApi, type BookingOpsApi } from './bookingApi'
 import { createHttpCourseOpsApi, createMockCourseOpsApi, type CourseOpsApi } from './courseApi'
 import type { CoursePage } from './courseTypes'
 import { request, toQuery } from './http'
@@ -17,7 +18,7 @@ import type {
   UploadProgressHandler,
 } from './types'
 
-export interface OpsApi extends CourseOpsApi {
+export interface OpsApi extends CourseOpsApi, BookingOpsApi {
   login(account: string, password: string): Promise<LoginResult>
   register(data: RegisterPayload): Promise<RegisterResult>
   changePassword(token: string, data: ChangePasswordPayload): Promise<LoginResult>
@@ -85,6 +86,7 @@ export function createMockOpsApi(): OpsApi {
   const events = clone(mockPointEvents)
 
   return {
+    ...createMockBookingOpsApi(),
     ...createMockCourseOpsApi(),
     async login(account, password) {
       if (!account || !password) {
@@ -245,6 +247,7 @@ export function createMockOpsApi(): OpsApi {
 
 function createHttpOpsApi(baseUrl: string): OpsApi {
   return {
+    ...createHttpBookingOpsApi(baseUrl),
     ...createHttpCourseOpsApi(baseUrl),
     login(account, password) {
       return request<LoginResult>(`${baseUrl}/auth/login`, {

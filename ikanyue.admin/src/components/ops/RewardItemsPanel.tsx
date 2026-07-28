@@ -1,6 +1,7 @@
 import { Pencil, Plus, RefreshCw } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { viewBusinessIcons } from '../../app/businessIcons'
 import type { RewardItem, RewardItemInput, UploadProgressHandler } from '../../app/types'
 import { FilterToolbar, PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
@@ -38,7 +39,7 @@ export function RewardItemsPanel({ loading, rewards, onReloadRewards, onSave, on
 
   return (
     <WorkspacePanel>
-      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载实物" onClick={() => void onReloadRewards()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新增实物" onClick={() => setEditor({ reward: null })} type="button" variant="primary" /></>} badge={<Badge tone="blue">{rewards.filter((item) => item.status === 'active').length} 个上架</Badge>} description="浏览、比较并维护线下可兑换实物，编辑流程在右侧抽屉完成。" eyebrow="实物目录与价格" title="实物管理" />
+      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载实物" onClick={() => void onReloadRewards()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新增实物" onClick={() => setEditor({ reward: null })} type="button" variant="primary" /></>} badge={<Badge tone="blue">{rewards.filter((item) => item.status === 'active').length} 个上架</Badge>} description="浏览、比较并维护线下可兑换实物，编辑流程在右侧抽屉完成。" eyebrow="实物目录与价格" title="实物管理" icon={viewBusinessIcons.rewards} />
       <SummaryBand><SummaryMetric label="实物总数" value={`${rewards.length} 件`} /><SummaryMetric label="当前上架" value={`${rewards.filter((item) => item.status === 'active').length} 件`} /><SummaryMetric label="积分价格范围" value={rewardPriceRange(rewards)} /></SummaryBand>
       <FilterToolbar className="md:grid-cols-[minmax(180px,1fr)_130px_120px_120px_170px]">
         <Field label="搜索实物" htmlFor="reward-keyword"><Input id="reward-keyword" placeholder="名称 / 说明" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>

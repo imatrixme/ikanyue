@@ -34,6 +34,7 @@ const viewHeadings: Record<string, string> = {
   '报课管理': '报课管理',
   '班级管理': '班级管理',
   '课堂管理': '课堂管理',
+  '课程预约': '课程预约',
   '课时账户': '课时账户',
   '教师工作量': '教师工作量',
   '异常中心': '核销异常',
@@ -179,6 +180,54 @@ test('course operations stay usable across responsive layouts', async ({ page })
   await expect(page.getByRole('dialog', { name: '管理员报课' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(1)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+})
+
+test('course booking workspace stays responsive across queue, configuration, and conflict flows', async ({ page }) => {
+  await loginAsAdmin(page, false)
+  await openView(page, '课程预约')
+  await expect(page.getByRole('heading', { name: '课程预约' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  if (page.viewportSize()!.width >= 1280) {
+    expect(await controlsDoNotOverlap(page, [
+      'booking-status-filter',
+      'booking-teacher-filter',
+      'booking-course-filter',
+      'booking-from-filter',
+      'booking-to-filter',
+    ])).toBe(true)
+  }
+
+  await page.getByRole('button', { name: '切换到日程' }).click()
+  await expect(page).toHaveURL(/mode=calendar/)
+  await expect(page.getByText('个预约').first()).toBeVisible()
+  await page.getByRole('button', { name: '切换到列表' }).click()
+  await expect(page).toHaveURL(/mode=list/)
+  await page.getByLabel('预约状态').selectOption('confirmed,rescheduled')
+  await expect(page).toHaveURL(/status=confirmed%2Crescheduled/)
+  await page.getByRole('button', { name: /^(查看|预约详情)$/ }).filter({ visible: true }).first().click()
+  let dialog = page.getByRole('dialog', { name: '一对一声乐课预约' })
+  await expect(dialog).toContainText('李同学')
+  await expect(dialog).toContainText('时间占用明细')
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  await dialog.getByRole('button', { name: '调整时间' }).click()
+  dialog = page.getByRole('dialog', { name: '调整预约时间' })
+  await expect(dialog).toContainText('发生冲突时原预约保持不变')
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  await dialog.getByRole('button', { name: '返回' }).click()
+  await page.getByRole('dialog', { name: '一对一声乐课预约' }).getByRole('button', { name: '关闭弹窗' }).click()
+
+  await page.getByRole('tab', { name: '开放配置' }).click()
+  await expect(page.getByRole('heading', { name: '教师可预约课程' })).toBeVisible()
+  await page.getByRole('button', { name: '切换到开放时间' }).click()
+  await expect(page.getByRole('heading', { name: '每周开放' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+
+  await page.getByRole('tab', { name: '冲突与迁移' }).click()
+  await expect(page.getByRole('heading', { name: '冲突处理队列' })).toBeVisible()
+  await page.getByRole('button', { name: '记录处理结果' }).filter({ visible: true }).first().click()
+  await expect(page.getByRole('dialog', { name: '记录冲突处理结果' })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  await expectAccessible(page)
 })
 
 test('representative admin workspaces have no serious accessibility violations', async ({ page }) => {

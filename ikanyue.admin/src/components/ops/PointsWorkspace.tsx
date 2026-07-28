@@ -1,6 +1,7 @@
 import { Eye, Gift, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { viewBusinessIcons } from '../../app/businessIcons'
 import type { RewardItem, StudentPointSummary, StudentPointsRow } from '../../app/types'
 import { FilterToolbar, PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
@@ -67,7 +68,7 @@ export function PointsWorkspace(props: PointsWorkspaceProps) {
 
   return (
     <WorkspacePanel>
-      <PageHeader actions={<IconButton disabled={props.loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员" onClick={() => void props.onReloadStudents()} type="button" />} badge={<Badge tone="blue">{props.students.length} 人</Badge>} description="先确认学员与余额，再从同一行发起加分、兑换或查看流水。" eyebrow="积分与线下兑换" title="学员积分" />
+      <PageHeader actions={<IconButton disabled={props.loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员" onClick={() => void props.onReloadStudents()} type="button" />} badge={<Badge tone="blue">{props.students.length} 人</Badge>} description="先确认学员与余额，再从同一行发起加分、兑换或查看流水。" eyebrow="积分与线下兑换" title="学员积分" icon={viewBusinessIcons.points} />
       <SummaryBand><SummaryMetric label="学员总数" value={`${props.students.length} 人`} /><SummaryMetric label="当前积分总额" value={`${props.students.reduce((total, student) => total + student.balance, 0)} 分`} /><SummaryMetric label="上架实物" value={`${activeRewards.length} 件`} /></SummaryBand>
       <FilterToolbar className="md:grid-cols-[minmax(180px,1fr)_140px_140px_180px]">
         <Field label="搜索学员" htmlFor="learner-keyword"><Input id="learner-keyword" placeholder="姓名 / 昵称 / 手机号" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>

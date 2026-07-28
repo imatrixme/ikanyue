@@ -10,6 +10,7 @@ export type AppView =
   | 'enrollments'
   | 'classes'
   | 'lessons'
+  | 'appointments'
   | 'accounts'
   | 'teachers'
   | 'exceptions'

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
+import { viewBusinessIcons } from '../../app/businessIcons'
 import type { CourseRecord, EnrollmentInput, EnrollmentOperation, RosterSyncPreview } from '../../app/courseTypes'
 import type { StudentRecord } from '../../app/types'
 import { PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
@@ -104,7 +105,7 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
 
   return (
     <WorkspacePanel>
-      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载报课列表" onClick={() => void load()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新建报课" onClick={() => setEditorOpen(true)} type="button" variant="primary" /></>} badge={<Badge tone={pendingSync ? 'amber' : 'green'}>{pendingSync} 条待同步</Badge>} description="由管理员选择学员、课包、价格和可选班级；系统自动创建订单、发放课时并记录审计。" eyebrow="课程运营" title="报课管理" />
+      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载报课列表" onClick={() => void load()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新建报课" onClick={() => setEditorOpen(true)} type="button" variant="primary" /></>} badge={<Badge tone={pendingSync ? 'amber' : 'green'}>{pendingSync} 条待同步</Badge>} description="由管理员选择学员、课包、价格和可选班级；系统自动创建订单、发放课时并记录审计。" eyebrow="课程运营" title="报课管理" icon={viewBusinessIcons.enrollments} />
       <SummaryBand><SummaryMetric label="报课记录" value={enrollments.length} /><SummaryMetric label="待名单同步" value={pendingSync} /><SummaryMetric label="待分班" value={awaitingClass} /></SummaryBand>
       <AsyncState empty={enrollments.length === 0 ? <EmptyState noun="报课记录" onCreate={() => setEditorOpen(true)} /> : undefined} error={error} loading={loading && enrollments.length === 0} loadingLabel="正在加载报课记录..." onRetry={() => void load()}>
         <ResponsiveDataRegion desktop={<EnrollmentTable enrollments={enrollments} onSelect={setSelected} onSync={previewSync} />} mobile={enrollments.map((item) => <EnrollmentCard enrollment={item} key={item.id} onSelect={() => setSelected(item)} onSync={() => void previewSync(item)} />)} />

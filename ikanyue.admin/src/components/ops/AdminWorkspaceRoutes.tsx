@@ -12,6 +12,7 @@ import { EnrollmentsWorkspace } from './EnrollmentsWorkspace'
 import { LessonsWorkspace } from './LessonsWorkspace'
 import { PointsWorkspace } from './PointsWorkspace'
 import { AccountsWorkspace, AuditWorkspace, ExceptionsWorkspace, TeacherWorkloadWorkspace } from './ReadOnlyCourseWorkspaces'
+import { BookingWorkspace } from './BookingWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
 import { StudentWorkspace } from './StudentWorkspace'
 
@@ -39,7 +40,26 @@ interface AdminWorkspaceRoutesProps {
 
 export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
   const courseProps = { api: props.api, token: props.token }
-  return <Routes><Route path="/" element={<Navigate replace to="/dashboard" />} /><Route path="/dashboard" element={<Gate profile={props.profile} view="dashboard"><DashboardWorkspace {...courseProps} profile={props.profile} /></Gate>} /><Route path="/students" element={<Gate profile={props.profile} view="students"><StudentWorkspace api={props.api} errorMessage={props.managedStudentsError} loading={props.loading} onReload={props.onLoadManagedStudents} onSave={props.onSaveStudent} profile={props.profile} students={props.managedStudents} token={props.token} /></Gate>} /><Route path="/courses" element={<Gate profile={props.profile} view="courses"><CoursesWorkspace {...courseProps} /></Gate>} /><Route path="/packages" element={<Gate profile={props.profile} view="packages"><PackagesWorkspace {...courseProps} /></Gate>} /><Route path="/enrollments" element={<Gate profile={props.profile} view="enrollments"><EnrollmentsWorkspace {...courseProps} /></Gate>} /><Route path="/classes" element={<Gate profile={props.profile} view="classes"><ClassesWorkspace {...courseProps} /></Gate>} /><Route path="/lessons" element={<Gate profile={props.profile} view="lessons"><LessonsWorkspace {...courseProps} profile={props.profile} /></Gate>} /><Route path="/lesson-hours" element={<Gate profile={props.profile} view="accounts"><AccountsWorkspace {...courseProps} /></Gate>} /><Route path="/teacher-workload" element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} /><Route path="/exceptions" element={<Gate profile={props.profile} view="exceptions"><ExceptionsWorkspace {...courseProps} /></Gate>} /><Route path="/audit" element={<Gate profile={props.profile} view="audit"><AuditWorkspace {...courseProps} /></Gate>} /><Route path="/points" element={<Gate profile={props.profile} view="points"><PointsWorkspace loading={props.loading} rewards={props.rewards} selectedStudentId={props.selectedStudentId} studentSummary={props.studentSummary} students={props.students} onAddPoints={props.onAddPoints} onLoadStudent={props.onLoadStudent} onRedeem={props.onRedeem} onReloadStudents={props.onLoadStudents} /></Gate>} /><Route path="/rewards" element={<Gate profile={props.profile} view="rewards"><RewardItemsPanel loading={props.loading} rewards={props.rewards} onReloadRewards={props.onLoadRewards} onSave={props.onSaveReward} onUploadImage={props.onUploadRewardImage} /></Gate>} /><Route path="*" element={<Navigate replace to="/dashboard" />} /></Routes>
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate replace to="/dashboard" />} />
+      <Route path="/dashboard" element={<Gate profile={props.profile} view="dashboard"><DashboardWorkspace {...courseProps} profile={props.profile} /></Gate>} />
+      <Route path="/students" element={<Gate profile={props.profile} view="students"><StudentWorkspace api={props.api} errorMessage={props.managedStudentsError} loading={props.loading} onReload={props.onLoadManagedStudents} onSave={props.onSaveStudent} profile={props.profile} students={props.managedStudents} token={props.token} /></Gate>} />
+      <Route path="/courses" element={<Gate profile={props.profile} view="courses"><CoursesWorkspace {...courseProps} /></Gate>} />
+      <Route path="/packages" element={<Gate profile={props.profile} view="packages"><PackagesWorkspace {...courseProps} /></Gate>} />
+      <Route path="/enrollments" element={<Gate profile={props.profile} view="enrollments"><EnrollmentsWorkspace {...courseProps} /></Gate>} />
+      <Route path="/classes" element={<Gate profile={props.profile} view="classes"><ClassesWorkspace {...courseProps} /></Gate>} />
+      <Route path="/lessons" element={<Gate profile={props.profile} view="lessons"><LessonsWorkspace {...courseProps} profile={props.profile} /></Gate>} />
+      <Route path="/appointments" element={<Gate profile={props.profile} view="appointments"><BookingWorkspace {...courseProps} /></Gate>} />
+      <Route path="/lesson-hours" element={<Gate profile={props.profile} view="accounts"><AccountsWorkspace {...courseProps} /></Gate>} />
+      <Route path="/teacher-workload" element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} />
+      <Route path="/exceptions" element={<Gate profile={props.profile} view="exceptions"><ExceptionsWorkspace {...courseProps} /></Gate>} />
+      <Route path="/audit" element={<Gate profile={props.profile} view="audit"><AuditWorkspace {...courseProps} /></Gate>} />
+      <Route path="/points" element={<Gate profile={props.profile} view="points"><PointsWorkspace loading={props.loading} rewards={props.rewards} selectedStudentId={props.selectedStudentId} studentSummary={props.studentSummary} students={props.students} onAddPoints={props.onAddPoints} onLoadStudent={props.onLoadStudent} onRedeem={props.onRedeem} onReloadStudents={props.onLoadStudents} /></Gate>} />
+      <Route path="/rewards" element={<Gate profile={props.profile} view="rewards"><RewardItemsPanel loading={props.loading} rewards={props.rewards} onReloadRewards={props.onLoadRewards} onSave={props.onSaveReward} onUploadImage={props.onUploadRewardImage} /></Gate>} />
+      <Route path="*" element={<Navigate replace to="/dashboard" />} />
+    </Routes>
+  )
 }
 
 function Gate({ children, profile, view }: { children: React.ReactNode; profile: OpsProfile; view: AppView }) {

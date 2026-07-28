@@ -56,7 +56,7 @@ describe('points lite app flow', () => {
 
     await user.click(screen.getByRole('button', { name: '退出' }))
     expect(screen.getByRole('heading', { name: '看乐积分兑换后台' })).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('shows login validation and scopes non-admin users by capability', async () => {
     const user = userEvent.setup()

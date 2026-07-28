@@ -23,10 +23,10 @@ describe('course read model coverage', () => {
     const api = populatedDashboardApi()
     const view = renderDashboard(api, mockProfiles.admin)
     expect(await screen.findByRole('heading', { name: '今日工作台' })).toBeInTheDocument()
-    expect(await screen.findByText('7 个异常')).toBeInTheDocument()
+    expect(await screen.findByText('8 个异常')).toBeInTheDocument()
     for (const button of screen.getAllByRole('button', { name: '进入处理' })) await user.click(button)
     await user.click(screen.getByRole('button', { name: '刷新今日工作台' }))
-    await screen.findByText('7 个异常')
+    await screen.findByText('8 个异常')
     view.unmount()
 
     const profiles: OpsProfile[] = [

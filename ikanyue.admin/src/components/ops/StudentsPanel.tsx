@@ -1,6 +1,7 @@
 import { BookOpenCheck, Pencil, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { viewBusinessIcons } from '../../app/businessIcons'
 import type { StudentInput, StudentRecord } from '../../app/types'
 import { FilterToolbar, PageHeader, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
@@ -49,7 +50,7 @@ export function StudentsPanel({ canManage = true, errorMessage, loading, onOpenO
 
   return (
     <WorkspacePanel>
-      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员管理列表" onClick={() => void onReload()} type="button" />{canManage ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增学员" onClick={() => setEditor(null)} type="button" variant="primary" /> : null}</>} badge={<Badge tone="blue">{students.filter((student) => !student.blocked).length} 人启用</Badge>} description={canManage ? '维护学员账号与课程运营资料。' : '查看分配给当前教师的班级学员与课堂学员。'} eyebrow={canManage ? '账号与资料' : '授课范围'} title={canManage ? '学员管理' : '我的学员'} />
+      <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员管理列表" onClick={() => void onReload()} type="button" />{canManage ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增学员" onClick={() => setEditor(null)} type="button" variant="primary" /> : null}</>} badge={<Badge tone="blue">{students.filter((student) => !student.blocked).length} 人启用</Badge>} description={canManage ? '维护学员账号与课程运营资料。' : '查看分配给当前教师的班级学员与课堂学员。'} eyebrow={canManage ? '账号与资料' : '授课范围'} title={canManage ? '学员管理' : '我的学员'} icon={viewBusinessIcons.students} />
       <FilterToolbar className="md:grid-cols-[minmax(220px,1fr)_160px_180px]">
         <Field label="搜索学员" htmlFor="student-directory-keyword"><Input id="student-directory-keyword" placeholder="姓名 / 昵称 / 手机号" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>
         <Field label="状态" htmlFor="student-directory-status"><Select allowEmpty id="student-directory-status" options={[{ value: 'all', label: '全部状态' }, { value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }]} value={filters.status} onChange={(event) => updateFilter('status', event.target.value as StudentFilters['status'])} /></Field>

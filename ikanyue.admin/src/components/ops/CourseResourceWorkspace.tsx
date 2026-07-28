@@ -2,6 +2,7 @@ import { Eye, Pencil, Plus, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { resourceBusinessIcons } from '../../app/businessIcons'
 import type {
   CourseRecord,
   CourseResourceInput,
@@ -113,6 +114,7 @@ export function CourseResourceWorkspace(props: CourseResourceWorkspaceProps) {
         badge={<Badge tone="green">{records.length} 条 · {activeCount} 启用</Badge>}
         description={description}
         eyebrow={eyebrow}
+        icon={resourceBusinessIcons[resource]}
         title={title}
       />
       <AsyncState empty={records.length === 0 ? <EmptyState noun={noun} onCreate={writableResource ? () => setEditor(null) : undefined} /> : undefined} error={error} loading={loading && records.length === 0} loadingLabel={`正在加载${noun}...`} onRetry={() => void load()}>

@@ -1,8 +1,10 @@
-import { GraduationCap, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
+import { businessIcons } from '../../app/businessIcons'
 import { navigationGroups } from '../../app/navigation'
 import { canAccessView } from '../../app/state'
 import type { AppView, OpsProfile } from '../../app/types'
+import { BusinessIcon } from '../ui/BusinessIcon'
 import { cn } from '../ui/utils'
 
 interface AdminSidebarProps {
@@ -29,7 +31,7 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
       <div className="flex h-full w-full flex-col">
         <div className="flex h-16 items-center gap-3 border-b border-[var(--border)] bg-[var(--brand-wash)] px-3">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--brand-border)] bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm">
-            <GraduationCap className="h-4 w-4" aria-hidden="true" />
+            <BusinessIcon className="h-8 w-8" src={businessIcons.book} />
           </span>
           <div className="min-w-0 flex-1 whitespace-nowrap">
             <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐艺术</p>
@@ -53,9 +55,8 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                 <p className="px-3 pb-1.5 text-xs font-semibold text-[var(--muted-foreground)]">{group.label}</p>
                 <div className="grid gap-1">
                   {group.items.map((item) => {
-                    const Icon = item.icon
                     const active = activeView === item.view
-                    return <button key={item.view} aria-current={active ? 'page' : undefined} className={cn('relative flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium transition-colors', active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]')} onClick={() => { onViewChange(item.view); onNavigate?.() }} type="button"><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /><span>{item.label}</span></button>
+                    return <button key={item.view} aria-current={active ? 'page' : undefined} className={cn('relative flex min-h-12 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm font-medium transition-colors', active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]')} onClick={() => { onViewChange(item.view); onNavigate?.() }} type="button"><span className={cn('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md', active ? 'bg-[var(--primary-foreground)]' : 'bg-[var(--card)]')}><BusinessIcon src={item.icon} /></span><span>{item.label}</span></button>
                   })}
                 </div>
               </section>
