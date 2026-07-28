@@ -1,5 +1,6 @@
 <template>
-    <page-chrome class="points-page">
+    <teacher-calendar-home v-if="role === 'teacher'" ref="teacherCalendar" />
+    <page-chrome v-else class="points-page">
         <points-pass
             :balance="balance"
             :caption="`${redeemableRewards.length} 件可领取 · ${lockedRewards.length} 件待解锁`"
@@ -139,6 +140,8 @@ import PointEventRow from '../../components/PointEventRow.vue';
 import PointsPass from '../../components/PointsPass.vue';
 import RewardVoucher from '../../components/RewardVoucher.vue';
 import TicketSection from '../../components/TicketSection.vue';
+import TeacherCalendarHome from '../../components/TeacherCalendarHome.vue';
+import { RoleManager } from '../../../utils/rolemanager';
 import {
     formatPointEventDate,
     formatPointEventDelta,
@@ -150,7 +153,10 @@ import {
 import './index.scss';
 
 export default {
-    components: { AccountRow, AppIcon, AsyncState, PageChrome, PointEventRow, PointsPass, RewardVoucher, TicketSection },
+    components: {
+        AccountRow, AppIcon, AsyncState, PageChrome, PointEventRow, PointsPass,
+        RewardVoucher, TeacherCalendarHome, TicketSection,
+    },
     data() {
         return {
             balance: 0,
@@ -162,6 +168,7 @@ export default {
             pointEvents: [],
             pointEventsPagination: { page: 1, perPage: 2, totalItems: 0, totalPages: 1 },
             redeemableRewards: [],
+            role: 'student',
         };
     },
     computed: {
@@ -179,18 +186,24 @@ export default {
             return this.redeemableRewards.slice(0, 3);
         },
     },
-    mounted() {
-        this.loadPointsLiteData();
-    },
+    mounted() {},
     onShow() {
-        this.loadPointsLiteData();
+        this.role = RoleManager.getRole();
+        RoleManager.applyTabBar(this.role);
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '预约日历' : '积分账户' });
+        if (this.role === 'teacher') this.$nextTick(() => this.$refs.teacherCalendar?.refresh());
+        else this.loadPointsLiteData();
     },
     async onPullDownRefresh() {
         try {
-            await this.loadPointsLiteData();
+            if (this.role === 'teacher') await this.$refs.teacherCalendar?.refresh(true);
+            else await this.loadPointsLiteData();
         } finally {
             Taro.stopPullDownRefresh();
         }
+    },
+    onReachBottom() {
+        if (this.role === 'teacher') this.$refs.teacherCalendar?.loadMore();
     },
     methods: {
         formatPointEventDate,

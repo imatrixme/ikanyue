@@ -81,10 +81,20 @@ const post = (url, data = {}, authcheck = true, header = {}) => {
     return Request('POST', url, data, header, authcheck);
 };
 
+const put = (url, data = {}, authcheck = true, header = {}) => {
+    return Request('PUT', url, data, header, authcheck);
+};
+
+const patch = (url, data = {}, authcheck = true, header = {}) => {
+    return Request('PATCH', url, data, header, authcheck);
+};
+
 const iNet = {
     Request,
     get,
+    patch,
     post,
+    put,
 };
 
 export { iNet };

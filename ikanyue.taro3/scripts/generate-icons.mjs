@@ -13,6 +13,8 @@ const BUILD_DIR = path.join(ROOT, 'tmp/icon-build');
 const ICONS = [
     ['tab-activity.png', 'tab-activity.svg', themeColors.tab],
     ['tab-activity-selected.png', 'tab-activity-selected.svg', themeColors.primaryStrong],
+    ['tab-courses.png', 'tab-courses.svg', themeColors.tab],
+    ['tab-courses-selected.png', 'tab-courses.svg', themeColors.primaryStrong],
     ['tab-points.png', 'tab-points.svg', themeColors.tab],
     ['tab-points-selected.png', 'tab-points-selected.svg', themeColors.primaryStrong],
     ['tab-profile.png', 'tab-profile.svg', themeColors.tab],

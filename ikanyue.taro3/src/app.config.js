@@ -10,6 +10,11 @@ export default defineAppConfig({
         'pages/courseLessons/index',
         'pages/courseLessonDetail/index',
         'pages/courseRecords/index',
+        'pages/appointmentBooking/index',
+        'pages/appointmentSlots/index',
+        'pages/appointments/index',
+        'pages/appointmentDetail/index',
+        'pages/teacherAvailability/index',
         'pages/pointsHistory/index',
         'pages/rewardCatalog/index',
         'pages/userinfo/index',
@@ -37,8 +42,8 @@ export default defineAppConfig({
             },
             {
                 pagePath: 'pages/courses/index',
-                iconPath: 'imgs/icons/account-teaching.png',
-                selectedIconPath: 'imgs/icons/account-teaching.png',
+                iconPath: 'imgs/icons/tab-courses.png',
+                selectedIconPath: 'imgs/icons/tab-courses-selected.png',
                 text: '课程',
             },
             {

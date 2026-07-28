@@ -140,6 +140,15 @@ describe('UserManager', () => {
         expect(taroMock.removeStorageSync).toHaveBeenCalledWith(storageKey);
     });
 
+    it('normalizes the active business role to student or teacher', () => {
+        taroMock.getStorageSync.mockReturnValueOnce(JSON.stringify({ role: 'teacher' }));
+        expect(UserManager.getRole()).toBe('teacher');
+        taroMock.getStorageSync.mockReturnValueOnce(JSON.stringify({ role: 'student' }));
+        expect(UserManager.getRole()).toBe('student');
+        taroMock.getStorageSync.mockReturnValueOnce(JSON.stringify({ role: 'unexpected' }));
+        expect(UserManager.getRole()).toBe('student');
+    });
+
     it('falls back to browser storage when Taro storage APIs are unavailable', () => {
         const originalGet = taroMock.getStorageSync;
         const originalSet = taroMock.setStorageSync;

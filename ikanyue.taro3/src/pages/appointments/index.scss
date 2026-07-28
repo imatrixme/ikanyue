@@ -1,0 +1,77 @@
+@import '../../styles/tokens';
+
+.appointments-page {
+    background: $ky-canvas;
+    min-height: 100vh;
+    padding-bottom: $ky-space-8;
+}
+
+.appointments-hero-count {
+    border-top: 1px solid $ky-on-primary-divider;
+    margin-top: $ky-space-5;
+    padding-top: $ky-space-4;
+}
+
+.appointments-hero-count__value,
+.appointments-hero-count__label { display: block; }
+.appointments-hero-count__value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
+.appointments-hero-count__label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 2px; }
+
+.appointments-content { padding: 0 $ky-space-3; }
+
+.appointments-filters {
+    margin-top: -$ky-space-3;
+    position: relative;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.appointments-filters__track {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    display: inline-flex;
+    min-width: calc(100% - 2px);
+    padding: $ky-space-2;
+}
+
+.appointments-filter {
+    border-radius: $ky-radius-md;
+    color: $ky-text-secondary;
+    display: inline-flex;
+    flex: 1 0 auto;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
+    justify-content: center;
+    min-width: 72px;
+    padding: 9px $ky-space-3;
+}
+
+.appointments-filter--active {
+    background: $ky-primary-strong;
+    color: $ky-on-primary;
+}
+
+.appointments-state {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-4;
+    min-height: 250px;
+}
+
+.appointments-list {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    margin-top: $ky-space-4;
+    overflow: hidden;
+}
+
+.appointments-footer {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    padding: $ky-space-5 0;
+    text-align: center;
+}

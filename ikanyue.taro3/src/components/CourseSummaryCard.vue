@@ -1,9 +1,14 @@
 <template>
     <view class="course-summary-card" @tap="$emit('select', course)">
         <view class="course-summary-card__head">
-            <view class="course-summary-card__copy">
-                <text class="course-summary-card__eyebrow">{{ deliveryText }}</text>
-                <text class="course-summary-card__title">{{ course.courseName }}</text>
+            <view class="course-summary-card__identity">
+                <view class="course-summary-card__icon">
+                    <app-icon name="course-book" size="xl" />
+                </view>
+                <view class="course-summary-card__copy">
+                    <text class="course-summary-card__eyebrow">{{ deliveryText }}</text>
+                    <text class="course-summary-card__title">{{ course.courseName }}</text>
+                </view>
             </view>
             <app-icon name="chevron-primary" size="sm" />
         </view>
@@ -60,6 +65,8 @@ export default {
 .course-summary-card:active { background: $ky-primary-wash; }
 .course-summary-card + .course-summary-card { margin-top: $ky-space-3; }
 .course-summary-card__head { align-items: center; display: flex; justify-content: space-between; }
+.course-summary-card__identity { align-items: center; display: flex; min-width: 0; }
+.course-summary-card__icon { align-items: center; background: $ky-secondary-surface; border: 1px solid $ky-line-tinted; border-radius: $ky-radius-md; display: flex; flex: 0 0 40px; height: 40px; justify-content: center; margin-right: $ky-space-3; width: 40px; }
 .course-summary-card__copy { min-width: 0; }
 .course-summary-card__eyebrow,
 .course-summary-card__title,

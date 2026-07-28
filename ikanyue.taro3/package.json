@@ -13,6 +13,7 @@
 		"prebuild:weapp": "node scripts/clean-weapp-output.mjs",
 		"predev:weapp": "node scripts/clean-weapp-output.mjs",
 		"visual:styles": "sass tests/visual/inclusive-design-fixture.scss output/playwright/inclusive-design-fixture.css --style=expanded --no-source-map",
+		"lint": "eslint src utils scripts tests --ext .js,.mjs,.vue --max-warnings=0",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "node tests/e2e/points-lite-build.test.mjs",

@@ -117,6 +117,18 @@ describe('iNet request wrapper', () => {
         expect(taroMock.request.mock.calls[0][0].header['Idempotency-Key']).toBe('key');
     });
 
+    it('supports PUT and PATCH commands with caller-provided headers', async () => {
+        taroMock.request.mockImplementation(({ success }) => success({ data: { ready: true } }));
+
+        await iNet.put('/v1/teacher/availability', { rules: [] }, true, { 'Idempotency-Key': 'put-key' });
+        await iNet.patch('/ops/offering', { status: 'active' }, true, { 'Idempotency-Key': 'patch-key' });
+
+        expect(taroMock.request.mock.calls[0][0]).toMatchObject({ method: 'PUT' });
+        expect(taroMock.request.mock.calls[0][0].header['Idempotency-Key']).toBe('put-key');
+        expect(taroMock.request.mock.calls[1][0]).toMatchObject({ method: 'PATCH' });
+        expect(taroMock.request.mock.calls[1][0].header['Idempotency-Key']).toBe('patch-key');
+    });
+
     it('rejects transport errors from Taro.request', async () => {
         const networkError = new Error('network failed');
         taroMock.request.mockImplementation(({ fail }) => {

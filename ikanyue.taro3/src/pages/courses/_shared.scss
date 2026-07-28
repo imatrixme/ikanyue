@@ -37,6 +37,12 @@
     overflow: hidden;
 }
 
+.courses-action-list {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    overflow: hidden;
+}
+
 .courses-notices { display: grid; gap: $ky-space-3; }
 .courses-notice-link:active { opacity: 0.76; }
 

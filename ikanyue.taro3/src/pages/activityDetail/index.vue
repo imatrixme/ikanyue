@@ -94,7 +94,7 @@ import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import StickyActionBar from '../../components/StickyActionBar.vue';
 import TicketSection from '../../components/TicketSection.vue';
-import { getSafeHtml, htmlToText } from './htmlUtils';
+import { getSafeHtml } from './htmlUtils';
 import {
     formatDateOnly as formatActivityDateOnly,
     formatTimeOnly as formatActivityTimeOnly,

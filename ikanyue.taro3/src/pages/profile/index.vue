@@ -12,8 +12,8 @@
                 <view class="profile-member-pass__copy">
                     <text class="profile-member-pass__eyebrow">KANYUE MUSIC ACADEMY</text>
                     <text class="profile-member-pass__name">{{ displayName }}</text>
-                    <text class="profile-member-pass__meta">学员账号 {{ maskedPhone }}</text>
-                    <text class="profile-member-pass__meta">会员状态 已连接</text>
+                    <text class="profile-member-pass__meta">{{ accountRoleLabel }} {{ maskedPhone }}</text>
+                    <text class="profile-member-pass__meta">账户状态 已连接</text>
                 </view>
                 <view class="profile-member-pass__seal">
                     <text>K</text>
@@ -27,7 +27,7 @@
 
         <view class="profile-content">
             <template v-if="isLogin()">
-                <ticket-section subtitle="查看余额、可领取实物和积分记录" title="积分账户">
+                <ticket-section v-if="role === 'student'" subtitle="查看余额、可领取实物和积分记录" title="积分账户">
                     <view class="profile-row-group">
                         <account-row
                             description="查看可领取实物和解锁进度"
@@ -38,10 +38,49 @@
                         />
                         <account-row
                             description="查看剩余课时、课程日程和上课记录"
-                            icon="account-teaching"
+                            icon="course-book"
                             interactive
                             title="查看我的课程"
                             @select="goCourses"
+                        />
+                        <account-row
+                            description="使用剩余课时选择教师和时间"
+                            icon="booking-request"
+                            interactive
+                            title="课程预约"
+                            @select="goBooking"
+                        />
+                    </view>
+                </ticket-section>
+
+                <ticket-section v-else subtitle="处理预约申请并维护教学时间" title="预约教学">
+                    <view class="profile-row-group">
+                        <account-row
+                            description="确认或拒绝学员的预约申请"
+                            icon="teacher-workbench"
+                            interactive
+                            title="预约工作台"
+                            @select="goCourses"
+                        />
+                        <account-row
+                            description="查看已经确认的授课时间"
+                            icon="booking-confirm"
+                            interactive
+                            title="预约日历"
+                            @select="goPoints"
+                        />
+                    </view>
+                </ticket-section>
+
+                <ticket-section v-if="roleOptions.length > 1" subtitle="同一微信可在已验证身份之间切换" title="当前身份">
+                    <view class="profile-row-group">
+                        <account-row
+                            description="切换后导航和可用功能会同步变化"
+                            icon="teacher-role"
+                            interactive
+                            title="使用身份"
+                            :value="role === 'teacher' ? '教师' : '学员'"
+                            @select="openRoleSwitcher"
                         />
                     </view>
                 </ticket-section>
@@ -66,12 +105,12 @@
                     <view class="profile-welcome__bar" />
                     <text class="profile-welcome__eyebrow">MUSICIAN 01</text>
                     <text class="profile-welcome__title">登录你的看乐账户</text>
-                    <text class="profile-welcome__desc">绑定微信手机号后，即可查看活动、积分余额和当前可领取的实物。</text>
+                    <text class="profile-welcome__desc">绑定微信手机号后，即可查看活动、课程安排、预约与账户信息。</text>
                     <view class="profile-primary-action" @tap="showLoginPopup">登录 / 注册</view>
                 </view>
                 <view class="profile-note">
                     <view class="profile-note__dot" />
-                    <text>账号仅用于识别学员、活动联系和同步积分。</text>
+                    <text>账号仅用于身份识别、课程服务与必要的活动联系。</text>
                 </view>
             </template>
 
@@ -104,9 +143,9 @@
                 </view>
                 <view class="login-popup__bar" />
                 <view class="login-eyebrow">KANYUE ACCOUNT</view>
-                <view class="login-title">绑定积分账户</view>
+                <view class="login-title">登录看乐账户</view>
                 <view class="login-desc">
-                    <text>授权微信头像、昵称和手机号，用于识别学员并同步积分账户。</text>
+                    <text>授权微信头像、昵称和手机号，用于识别学员或教师并同步课程与账户信息。</text>
                 </view>
                 <button
                     class="wechat-login-btn"
@@ -120,6 +159,43 @@
                 </button>
             </view>
         </nut-popup>
+
+        <nut-popup
+            position="bottom"
+            :visible="showRolePopup"
+            :close-on-click-overlay="!roleChallenge"
+            class="role-popup-shell"
+            @close="closeRoleSwitcher"
+            @click-overlay="closeRoleSwitcher"
+        >
+            <view class="role-popup">
+                <view class="login-popup__bar" />
+                <view class="login-eyebrow">ACCOUNT ROLE</view>
+                <view class="login-title">选择使用身份</view>
+                <view class="login-desc">
+                    <text>学员身份用于查看课程与发起预约，教师身份用于确认预约和设置可预约时间。</text>
+                </view>
+                <view class="role-options">
+                    <view
+                        v-for="option in visibleRoleOptions"
+                        :key="`${option.role}:${option.id}`"
+                        class="role-option"
+                        :class="{ 'role-option--active': !roleChallenge && option.role === role }"
+                        @tap="selectRole(option.role)"
+                    >
+                        <view class="role-option__icon">
+                            <app-icon :name="option.role === 'teacher' ? 'teacher-role' : 'course-book'" size="xl" />
+                        </view>
+                        <view class="role-option__copy">
+                            <text class="role-option__title">{{ option.role === 'teacher' ? '教师身份' : '学员身份' }}</text>
+                            <text class="role-option__name">{{ option.name }}</text>
+                        </view>
+                        <text v-if="!roleChallenge && option.role === role" class="role-option__current">当前</text>
+                    </view>
+                </view>
+                <view v-if="roleSelecting" class="role-popup__loading">正在切换身份</view>
+            </view>
+        </nut-popup>
     </page-chrome>
 </template>
 
@@ -128,34 +204,44 @@ import Taro from '@tarojs/taro';
 import { UserManager } from '../../../utils/usermanager';
 import { Api } from '../../../utils/apis';
 import AccountRow from '../../components/AccountRow.vue';
+import AppIcon from '../../components/AppIcon.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import TicketSection from '../../components/TicketSection.vue';
 import { KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import heroTexture from '../../imgs/textures/hero-music.png';
+import { RoleManager } from '../../../utils/rolemanager';
 import './index.scss';
 
 export default {
-    components: { AccountRow, PageChrome, TicketSection },
+    components: { AccountRow, AppIcon, PageChrome, TicketSection },
     data() {
         return {
             heroTexture,
             showLogin: false,
+            showRolePopup: false,
             kanyueInfoLinks: KANYUE_INFO_LINKS,
             userInfo: {},
             wechatLoginLoading: false,
             wechatProfileLoading: false,
             wechatUserInfo: null,
+            role: 'student',
+            roleChallenge: null,
+            roleOptions: [],
+            roleSelecting: false,
         };
     },
     computed: {
         displayName() {
-            return this.userInfo.nickName || this.userInfo.nickname || this.userInfo.realName || this.userInfo.cellphone || '看乐学员';
+            return this.userInfo.nickName || this.userInfo.nickname || this.userInfo.realName
+                || this.userInfo.cellphone || (this.role === 'teacher' ? '看乐教师' : '看乐学员');
         },
         maskedPhone() {
             const cellphone = String(this.userInfo.cellphone || '');
             if (cellphone.length < 7) return cellphone || '已登录账号';
             return `${cellphone.slice(0, 3)}****${cellphone.slice(-4)}`;
         },
+        accountRoleLabel() { return this.role === 'teacher' ? '教师账号' : '学员账号'; },
+        visibleRoleOptions() { return this.roleChallenge?.roles || this.roleOptions; },
     },
     mounted() {
         this.refreshUserInfo();
@@ -176,21 +262,31 @@ export default {
         },
         async refreshUserInfo() {
             this.userInfo = UserManager.getUserInfo();
+            this.role = UserManager.getRole();
+            RoleManager.applyTabBar(this.role);
             if (!UserManager.isLogin()) {
+                this.roleOptions = [];
                 return;
             }
             try {
                 await Api.refreshLogin();
                 this.userInfo = UserManager.getUserInfo();
+                this.role = UserManager.getRole();
+                RoleManager.applyTabBar(this.role);
             } catch {
                 this.userInfo = UserManager.getUserInfo();
             }
+            try { this.roleOptions = await Api.listWechatRoles(); }
+            catch { this.roleOptions = []; }
         },
         goPoints() {
             Taro.switchTab({ url: '/pages/points/index' });
         },
         goCourses() {
             Taro.switchTab({ url: '/pages/courses/index' });
+        },
+        goBooking() {
+            Taro.navigateTo({ url: '/pages/appointmentBooking/index' });
         },
         openKanyueInfo(link) {
             const url = buildImageDetailUrl(link);
@@ -210,6 +306,13 @@ export default {
         handleLoginPopupClose() {
             this.showLogin = false;
             this.resetWechatAuthState();
+        },
+        openRoleSwitcher() {
+            if (this.roleOptions.length > 1) this.showRolePopup = true;
+        },
+        closeRoleSwitcher() {
+            if (this.roleChallenge || this.roleSelecting) return;
+            this.showRolePopup = false;
         },
         resetWechatAuthState() {
             this.wechatUserInfo = null;
@@ -260,7 +363,7 @@ export default {
             }
             this.wechatLoginLoading = true;
             try {
-                await Api.loginWithWechat({
+                const result = await Api.loginWithWechat({
                     code: await this.ensureWechatCode(),
                     userInfo: this.wechatUserInfo,
                     phone: {
@@ -268,14 +371,40 @@ export default {
                         iv: detail.iv,
                     },
                 });
+                if (result?.requiresRoleSelection) {
+                    this.roleChallenge = result;
+                    this.showLogin = false;
+                    this.showRolePopup = true;
+                    this.resetWechatAuthState();
+                    return;
+                }
                 this.showLogin = false;
                 this.resetWechatAuthState();
-                this.refreshUserInfo();
+                await this.refreshUserInfo();
                 Taro.showToast({ title: '登录成功', icon: 'success' });
             } catch (error) {
                 Taro.showToast({ title: error?.message || '登录失败，请重试', icon: 'none' });
             } finally {
                 this.wechatLoginLoading = false;
+            }
+        },
+        async selectRole(role) {
+            if (this.roleSelecting || (!this.roleChallenge && role === this.role)) return;
+            this.roleSelecting = true;
+            try {
+                if (this.roleChallenge) {
+                    await Api.completeWechatRoleLogin(this.roleChallenge.challenge, role);
+                } else {
+                    await Api.switchWechatRole(role);
+                }
+                this.roleChallenge = null;
+                this.showRolePopup = false;
+                await this.refreshUserInfo();
+                Taro.showToast({ title: role === 'teacher' ? '已切换为教师' : '已切换为学员', icon: 'success' });
+            } catch (error) {
+                Taro.showToast({ title: error?.message || '身份切换失败', icon: 'none' });
+            } finally {
+                this.roleSelecting = false;
             }
         },
     },

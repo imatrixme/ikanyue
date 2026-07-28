@@ -231,6 +231,88 @@
     height: 52%;
 }
 
+.role-popup-shell {
+    border-radius: $ky-radius-lg $ky-radius-lg 0 0;
+    min-height: 48%;
+}
+
+.role-popup {
+    box-sizing: border-box;
+    padding: $ky-space-5 $ky-space-5 calc(env(safe-area-inset-bottom) + 32px);
+}
+
+.role-options {
+    margin-top: $ky-space-5;
+}
+
+.role-option {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    min-height: 72px;
+    padding: $ky-space-3 $ky-space-4;
+}
+
+.role-option + .role-option {
+    margin-top: $ky-space-3;
+}
+
+.role-option--active {
+    background: $ky-primary-wash;
+    border-color: $ky-primary-line;
+}
+
+.role-option__icon {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    display: flex;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+}
+
+.role-option__icon .app-icon {
+    transform: scale(1.32);
+}
+
+.role-option__copy {
+    flex: 1;
+    padding-left: $ky-space-3;
+}
+
+.role-option__title,
+.role-option__name {
+    display: block;
+}
+
+.role-option__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+}
+
+.role-option__name {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 3px;
+}
+
+.role-option__current {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
+}
+
+.role-popup__loading {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    padding-top: $ky-space-4;
+    text-align: center;
+}
+
 .login-popup {
     box-sizing: border-box;
     padding: $ky-space-5 $ky-space-5 $ky-space-8;

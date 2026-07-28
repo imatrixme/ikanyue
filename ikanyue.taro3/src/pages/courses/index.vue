@@ -1,5 +1,6 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
+    <teacher-booking-home v-if="role === 'teacher'" ref="teacherHome" />
+    <page-chrome v-else class="courses-page" tone="immersive">
         <page-header eyebrow="MY COURSES" subtitle="查看课时、课程安排和上课记录" title="我的课程">
             <view class="courses-hero-metrics">
                 <view class="courses-hero-metric">
@@ -39,6 +40,25 @@
                 />
             </view>
             <template v-else>
+                <ticket-section subtitle="使用当前课程的剩余课时向教师发起申请" title="课程预约">
+                    <view class="courses-action-list">
+                        <account-row
+                            description="选择课程、教师和可预约时间"
+                            icon="booking-request"
+                            interactive
+                            title="发起课程预约"
+                            @select="goBooking"
+                        />
+                        <account-row
+                            description="查看待确认、已确认和历史预约"
+                            icon="booking-confirm"
+                            interactive
+                            title="我的预约"
+                            @select="goAppointments"
+                        />
+                    </view>
+                </ticket-section>
+
                 <ticket-section v-if="overview.nextLesson" action-label="全部日程" subtitle="下一节已安排课程" title="即将上课" @action="goLessons">
                     <view class="courses-list">
                         <lesson-row :lesson="overview.nextLesson" @select="goLesson" />
@@ -72,6 +92,7 @@
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { UserManager } from '../../../utils/usermanager';
+import AccountRow from '../../components/AccountRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import CourseSummaryCard from '../../components/CourseSummaryCard.vue';
 import LessonRecordRow from '../../components/LessonRecordRow.vue';
@@ -79,7 +100,9 @@ import LessonRow from '../../components/LessonRow.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import PageHeader from '../../components/PageHeader.vue';
 import TicketSection from '../../components/TicketSection.vue';
+import TeacherBookingHome from '../../components/TeacherBookingHome.vue';
 import ValidityNotice from '../../components/ValidityNotice.vue';
+import { RoleManager } from '../../../utils/rolemanager';
 import {
     courseDetailUrl, courseListUrl, learningErrorMessage, lessonDetailUrl, normalizeOverview, pageState,
 } from './pageLogic';
@@ -87,11 +110,11 @@ import './index.scss';
 
 export default {
     components: {
-        AsyncState, CourseSummaryCard, LessonRecordRow, LessonRow, PageChrome, PageHeader,
-        TicketSection, ValidityNotice,
+        AccountRow, AsyncState, CourseSummaryCard, LessonRecordRow, LessonRow, PageChrome, PageHeader,
+        TeacherBookingHome, TicketSection, ValidityNotice,
     },
     data() {
-        return { errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview() };
+        return { errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(), role: 'student' };
     },
     computed: {
         remainingLessons() { return this.overview.courses.reduce((sum, course) => sum + course.remainingLessons, 0); },
@@ -100,12 +123,23 @@ export default {
             return pageState({ error: this.errorMessage, items: this.overview.courses, loading: this.loading });
         },
     },
-    onShow() { this.loadData(); },
+    onShow() {
+        this.role = RoleManager.getRole();
+        RoleManager.applyTabBar(this.role);
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '预约工作台' : '我的课程' });
+        if (this.role === 'teacher') this.$nextTick(() => this.$refs.teacherHome?.refresh());
+        else this.loadData();
+    },
     async onPullDownRefresh() {
-        try { await this.loadData(true); } finally { Taro.stopPullDownRefresh(); }
+        try {
+            if (this.role === 'teacher') await this.$refs.teacherHome?.refresh(true);
+            else await this.loadData(true);
+        } finally { Taro.stopPullDownRefresh(); }
     },
     methods: {
         goCourse(course) { Taro.navigateTo({ url: courseDetailUrl(course.courseId) }); },
+        goBooking() { Taro.navigateTo({ url: '/pages/appointmentBooking/index' }); },
+        goAppointments() { Taro.navigateTo({ url: '/pages/appointments/index' }); },
         goLesson(lesson) { if (lesson.lessonId) Taro.navigateTo({ url: lessonDetailUrl(lesson.lessonId) }); },
         goLessons() { Taro.navigateTo({ url: courseListUrl('courseLessons') }); },
         goRecords() { Taro.navigateTo({ url: courseListUrl('courseRecords') }); },

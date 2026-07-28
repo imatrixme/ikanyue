@@ -72,7 +72,6 @@ const courseRecordsTemplate = await readFile(new URL('../../dist/pages/courseRec
 const userinfoBundle = await readFile(new URL('../../dist/pages/userinfo/index.js', import.meta.url), 'utf8');
 const userinfoStyle = await readFile(new URL('../../dist/pages/userinfo/index.wxss', import.meta.url), 'utf8');
 const userinfoTemplate = await readFile(new URL('../../dist/pages/userinfo/index.wxml', import.meta.url), 'utf8');
-const userinfoStyleSource = await readFile(new URL('../../src/pages/userinfo/index.scss', import.meta.url), 'utf8');
 const userinfoSource = await readFile(new URL('../../src/pages/userinfo/index.vue', import.meta.url), 'utf8');
 const accountIconNames = [
     'account-about',
@@ -145,6 +144,11 @@ assert.deepEqual(appConfig.pages, [
     'pages/courseLessons/index',
     'pages/courseLessonDetail/index',
     'pages/courseRecords/index',
+    'pages/appointmentBooking/index',
+    'pages/appointmentSlots/index',
+    'pages/appointments/index',
+    'pages/appointmentDetail/index',
+    'pages/teacherAvailability/index',
     'pages/pointsHistory/index',
     'pages/rewardCatalog/index',
     'pages/userinfo/index',
@@ -163,13 +167,13 @@ assert.equal(appConfig.tabBar.color, '#5f6f69');
 assert.equal(appConfig.tabBar.selectedColor, '#006241');
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.iconPath), [
     'imgs/icons/tab-activity.png',
-    'imgs/icons/account-teaching.png',
+    'imgs/icons/tab-courses.png',
     'imgs/icons/tab-points.png',
     'imgs/icons/tab-profile.png',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     'imgs/icons/tab-activity-selected.png',
-    'imgs/icons/account-teaching.png',
+    'imgs/icons/tab-courses-selected.png',
     'imgs/icons/tab-points-selected.png',
     'imgs/icons/tab-profile-selected.png',
 ]);
@@ -378,6 +382,8 @@ assert.match(activityTicketSource, /<media-thumb/);
 assert.match(accountRowSource, /chevron-primary/);
 assert.match(ticketSectionSource, /<section-header/);
 assert.match(sectionHeaderSource, /section-header__action/);
+assert.equal(ticketSectionSource.includes(':icon="icon"'), false);
+assert.equal(sectionHeaderSource.includes('section-header__icon'), false);
 assert.match(asyncStateSource, /<empty-state/);
 assert.match(formRowSource, /form-row__control/);
 assert.match(mediaThumbSource, /media-thumb__image/);
@@ -393,6 +399,8 @@ assert.match(stickyActionBarSource, /safe-area-inset-bottom/);
 assert.equal(commonBundle.includes('chevron-blue'), false);
 assert.match(iconGeneratorSource, /assets-src\/imagegen\/icons-v2/);
 assert.match(iconGeneratorSource, /'tab-activity-selected\.svg'/);
+assert.match(iconGeneratorSource, /\['tab-courses\.png', 'tab-courses\.svg', themeColors\.tab\]/);
+assert.match(iconGeneratorSource, /\['tab-courses-selected\.png', 'tab-courses\.svg', themeColors\.primaryStrong\]/);
 assert.match(iconGeneratorSource, /'tab-points-selected\.svg'/);
 assert.match(iconGeneratorSource, /'tab-profile-selected\.svg'/);
 assert.match(iconGeneratorSource, /themeColors\.primaryStrong/);

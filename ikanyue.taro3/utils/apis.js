@@ -43,7 +43,7 @@ const loginWithWechat = (payload) => {
         iNet.post('/v1/user/wechat-login', payload, false)
             .then((res) => {
                 console.log('微信登录API返回结果:', res);
-                UserManager.updateUserInfoCache(res);
+                if (res?.token) UserManager.updateUserInfoCache(res);
                 resolve(res);
             })
             .catch((err) => {
@@ -51,6 +51,20 @@ const loginWithWechat = (payload) => {
                 reject(err);
             });
     });
+};
+
+const completeWechatRoleLogin = async (challenge, role) => {
+    const result = await iNet.post('/v1/user/wechat-role-login', { challenge, role }, false);
+    UserManager.updateUserInfoCache(result);
+    return result;
+};
+
+const listWechatRoles = () => iNet.get('/v1/user/wechat-roles');
+
+const switchWechatRole = async (role) => {
+    const result = await iNet.post('/v1/user/switch-wechat-role', { role });
+    UserManager.updateUserInfoCache(result);
+    return result;
 };
 
 const updateUserInfo = async (userInfo) => {
@@ -118,9 +132,76 @@ const getLearningLesson = (lessonId) => iNet.get(`/v1/student/learning/lessons/$
 
 const listLearningRecords = (params = {}) => iNet.get('/v1/student/learning/records', params);
 
+const listStudentBookingOptions = (params = {}) => iNet.get('/v1/student/booking-options', params);
+
+const listStudentBookingSlots = (params = {}) => iNet.get('/v1/student/booking-slots', params);
+
+const listStudentAppointments = (params = {}) => iNet.get('/v1/student/appointments', params);
+
+const getStudentAppointment = (appointmentId) => iNet.get(`/v1/student/appointments/${appointmentId}`);
+
+const createStudentAppointment = (payload, idempotencyKey) => iNet.post(
+    '/v1/student/appointments', payload, true, commandHeaders(idempotencyKey)
+);
+
+const withdrawStudentAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/student/appointments/${appointmentId}/withdraw`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const cancelStudentAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/student/appointments/${appointmentId}/cancel`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const getTeacherBookingDashboard = () => iNet.get('/v1/teacher/booking/dashboard');
+
+const listTeacherAppointments = (params = {}) => iNet.get('/v1/teacher/appointments', params);
+
+const getTeacherAppointment = (appointmentId) => iNet.get(`/v1/teacher/appointments/${appointmentId}`);
+
+const getTeacherCalendar = (params = {}) => iNet.get('/v1/teacher/calendar', params);
+
+const confirmTeacherAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/teacher/appointments/${appointmentId}/confirm`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const declineTeacherAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/teacher/appointments/${appointmentId}/decline`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const cancelTeacherAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/teacher/appointments/${appointmentId}/cancel`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const rescheduleTeacherAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
+    `/v1/teacher/appointments/${appointmentId}/reschedule`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const getTeacherAvailability = (offeringId) => iNet.get(
+    `/v1/teacher/offerings/${offeringId}/availability`
+);
+
+const saveTeacherAvailability = (offeringId, payload, idempotencyKey) => iNet.put(
+    `/v1/teacher/offerings/${offeringId}/availability`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const createTeacherAvailabilityOverride = (offeringId, payload, idempotencyKey) => iNet.post(
+    `/v1/teacher/offerings/${offeringId}/availability-overrides`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const cancelTeacherAvailabilityOverride = (overrideId, idempotencyKey) => iNet.post(
+    `/v1/teacher/availability-overrides/${overrideId}/cancel`, {}, true, commandHeaders(idempotencyKey)
+);
+
+function commandHeaders(idempotencyKey) {
+    return { 'Idempotency-Key': idempotencyKey };
+}
+
 const Api = {
     loginWithPassword,
     loginWithWechat,
+    completeWechatRoleLogin,
+    listWechatRoles,
+    switchWechatRole,
     updateUserInfo,
     refreshLogin,
     findActivities,
@@ -131,6 +212,25 @@ const Api = {
     listLearningLessons,
     getLearningLesson,
     listLearningRecords,
+    listStudentBookingOptions,
+    listStudentBookingSlots,
+    listStudentAppointments,
+    getStudentAppointment,
+    createStudentAppointment,
+    withdrawStudentAppointment,
+    cancelStudentAppointment,
+    getTeacherBookingDashboard,
+    listTeacherAppointments,
+    getTeacherAppointment,
+    getTeacherCalendar,
+    confirmTeacherAppointment,
+    declineTeacherAppointment,
+    cancelTeacherAppointment,
+    rescheduleTeacherAppointment,
+    getTeacherAvailability,
+    saveTeacherAvailability,
+    createTeacherAvailabilityOverride,
+    cancelTeacherAvailabilityOverride,
 };
 
 export { Api };

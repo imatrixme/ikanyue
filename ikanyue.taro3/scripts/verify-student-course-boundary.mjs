@@ -15,10 +15,36 @@ const activeCourseComponents = [
     'src/components/ValidityNotice.vue',
     'src/components/LessonRecordRow.vue',
 ];
+const activeBookingDirectories = [
+    'src/pages/appointmentBooking',
+    'src/pages/appointmentSlots',
+    'src/pages/appointments',
+    'src/pages/appointmentDetail',
+    'src/pages/teacherAvailability',
+];
+const activeBookingComponents = [
+    'src/components/AppointmentRow.vue',
+    'src/components/BookingOptionCard.vue',
+    'src/components/BookingStatusBadge.vue',
+    'src/components/TeacherBookingHome.vue',
+    'src/components/TeacherCalendarHome.vue',
+];
 const forbiddenTerms = [
-    '课程点', '批次', '冻结', '兑换', '预约', '充值',
+    '课程点', '批次', '冻结', '兑换', '充值',
     '/v1/course-credits', 'credit_batches', 'conversion-authorizations',
 ];
+const allowedBookingMutations = new Set([
+    'cancelStudentAppointment',
+    'cancelTeacherAppointment',
+    'cancelTeacherAvailabilityOverride',
+    'confirmTeacherAppointment',
+    'createStudentAppointment',
+    'createTeacherAvailabilityOverride',
+    'declineTeacherAppointment',
+    'rescheduleTeacherAppointment',
+    'saveTeacherAvailability',
+    'withdrawStudentAppointment',
+]);
 const legacyPages = [
     'pages/courseCredits/index',
     'pages/courseCreditBatches/index',
@@ -30,9 +56,17 @@ const legacyPages = [
 
 const appConfig = await readFile(join(root, 'src/app.config.js'), 'utf8');
 const apiSource = await readFile(join(root, 'utils/apis.js'), 'utf8');
-const sourceFiles = [
+const courseSourceFiles = [
     ...(await Promise.all(activeCourseDirectories.map((directory) => collect(join(root, directory))))).flat(),
     ...activeCourseComponents.map((file) => join(root, file)),
+];
+const bookingSourceFiles = [
+    ...(await Promise.all(activeBookingDirectories.map((directory) => collect(join(root, directory))))).flat(),
+    ...activeBookingComponents.map((file) => join(root, file)),
+];
+const sourceFiles = [
+    ...courseSourceFiles,
+    ...bookingSourceFiles,
     join(root, 'utils/apis.js'),
 ];
 
@@ -48,9 +82,14 @@ for (const file of sourceFiles) {
     for (const term of forbiddenTerms) {
         assert(!source.includes(term), `forbidden student course term "${term}" in ${file}`);
     }
-    if (file.includes('/src/pages/') || file.includes('/src/components/')) {
+    if (courseSourceFiles.includes(file)) {
         assert(!/Api\.[A-Za-z]*(create|update|convert|reserve|enroll|purchase)/i.test(source),
             `student course mutation call in ${file}`);
+    }
+    if (bookingSourceFiles.includes(file)) {
+        for (const match of source.matchAll(/Api\.([A-Za-z]*(?:create|update|save|confirm|decline|cancel|withdraw|reschedule)[A-Za-z]*)\s*\(/g)) {
+            assert(allowedBookingMutations.has(match[1]), `unapproved booking mutation Api.${match[1]} in ${file}`);
+        }
     }
 }
 
@@ -58,7 +97,7 @@ const learningPaths = [...apiSource.matchAll(/['`](\/v1\/student\/learning[^'`]*
     .map((match) => match[1].replace(/\$\{[^}]+\}/g, ':id'));
 assert(learningPaths.length === 5, `expected five student learning wrappers, found ${learningPaths.length}`);
 
-console.log(`Student course boundary passed: ${sourceFiles.length} files, ${learningPaths.length} read-only endpoints.`);
+console.log(`Student course and booking boundary passed: ${sourceFiles.length} files, ${learningPaths.length} read-only learning endpoints.`);
 
 async function collect(directory) {
     const entries = await readdir(directory, { withFileTypes: true });

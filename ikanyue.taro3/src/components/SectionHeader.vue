@@ -1,8 +1,10 @@
 <template>
     <view class="section-header">
-        <view class="section-header__copy">
-            <text class="section-header__title">{{ title }}</text>
-            <text v-if="subtitle" class="section-header__subtitle">{{ subtitle }}</text>
+        <view class="section-header__identity">
+            <view class="section-header__copy">
+                <text class="section-header__title">{{ title }}</text>
+                <text v-if="subtitle" class="section-header__subtitle">{{ subtitle }}</text>
+            </view>
         </view>
         <view v-if="actionLabel" class="section-header__action" @tap="$emit('action')">
             <text>{{ actionLabel }}</text>
@@ -30,10 +32,16 @@ export default {
 @import '../styles/tokens';
 
 .section-header {
-    align-items: flex-end;
+    align-items: center;
     display: flex;
     justify-content: space-between;
     min-height: 34px;
+}
+
+.section-header__identity {
+    align-items: center;
+    display: flex;
+    min-width: 0;
 }
 
 .section-header__copy {

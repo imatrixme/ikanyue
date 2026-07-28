@@ -1,4 +1,3 @@
-import { iNet } from './request';
 import Taro from '@tarojs/taro';
 
 const kUserInfo = 'com.ikanyue.cache.userinfo';
@@ -113,6 +112,11 @@ const isLogin = () => {
     return result;
 };
 
+const getRole = () => {
+    const role = getUserInfo().role;
+    return role === 'teacher' ? 'teacher' : 'student';
+};
+
 // 清空用户信息（登出）
 const logout = () => {
     console.log('执行登出，清除用户数据');
@@ -123,6 +127,7 @@ const UserManager = {
     getUserInfo,
     updateUserInfoCache,
     getToken,
+    getRole,
     isLogin,
     logout,
 };
