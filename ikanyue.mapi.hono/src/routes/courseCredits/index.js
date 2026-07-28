@@ -4,6 +4,9 @@ const { createCourseCreditHandlers } = require('./handlers');
 
 function courseCreditRoutes(routes, handlers = createCourseCreditHandlers()) {
     adminCourseOperationRoutes(routes, handlers);
+    studentBookingRoutes(routes, handlers);
+    teacherBookingRoutes(routes, handlers);
+    opsBookingRoutes(routes, handlers);
     routes.post('/ops/course-credits/orders/:orderId/grant')
         .use(opsAuthMiddleware, opsPasswordChangeGuard)
         .handler(handlers.grantOrderCredits);
@@ -100,6 +103,75 @@ function courseCreditRoutes(routes, handlers = createCourseCreditHandlers()) {
         .handler(handlers.listStudentSessions);
 }
 
+function studentBookingRoutes(routes, handlers) {
+    routes.get('/v1/student/booking-options').use(authMiddleware).handler(handlers.listStudentBookingOptions);
+    routes.get('/v1/student/booking-slots').use(authMiddleware).handler(handlers.listStudentBookingSlots);
+    routes.get('/v1/student/appointments').use(authMiddleware).handler(handlers.listStudentAppointments);
+    routes.post('/v1/student/appointments').use(authMiddleware).handler(handlers.createStudentAppointment);
+    routes.get('/v1/student/appointments/:appointmentId')
+        .use(authMiddleware).handler(handlers.getStudentAppointment);
+    routes.post('/v1/student/appointments/:appointmentId/withdraw')
+        .use(authMiddleware).handler(handlers.withdrawStudentAppointment);
+    routes.post('/v1/student/appointments/:appointmentId/cancel')
+        .use(authMiddleware).handler(handlers.cancelStudentAppointment);
+}
+
+function teacherBookingRoutes(routes, handlers) {
+    routes.get('/v1/teacher/booking/dashboard').use(authMiddleware).handler(handlers.getTeacherBookingDashboard);
+    routes.get('/v1/teacher/appointments').use(authMiddleware).handler(handlers.listTeacherAppointments);
+    routes.get('/v1/teacher/appointments/:appointmentId')
+        .use(authMiddleware).handler(handlers.getTeacherAppointment);
+    routes.get('/v1/teacher/calendar').use(authMiddleware).handler(handlers.getTeacherCalendar);
+    routes.post('/v1/teacher/appointments/:appointmentId/confirm')
+        .use(authMiddleware).handler(handlers.confirmTeacherAppointment);
+    routes.post('/v1/teacher/appointments/:appointmentId/decline')
+        .use(authMiddleware).handler(handlers.declineTeacherAppointment);
+    routes.post('/v1/teacher/appointments/:appointmentId/cancel')
+        .use(authMiddleware).handler(handlers.cancelTeacherAppointment);
+    routes.post('/v1/teacher/appointments/:appointmentId/reschedule')
+        .use(authMiddleware).handler(handlers.rescheduleTeacherAppointment);
+    routes.get('/v1/teacher/offerings/:offeringId/availability')
+        .use(authMiddleware).handler(handlers.getTeacherAvailability);
+    routes.put('/v1/teacher/offerings/:offeringId/availability')
+        .use(authMiddleware).handler(handlers.saveTeacherAvailability);
+    routes.post('/v1/teacher/offerings/:offeringId/availability-overrides')
+        .use(authMiddleware).handler(handlers.createTeacherAvailabilityOverride);
+    routes.post('/v1/teacher/availability-overrides/:overrideId/cancel')
+        .use(authMiddleware).handler(handlers.cancelTeacherAvailabilityOverride);
+}
+
+function opsBookingRoutes(routes, handlers) {
+    const protect = (route) => route.use(opsAuthMiddleware, opsPasswordChangeGuard);
+    protect(routes.get('/ops/course-bookings/dashboard')).handler(handlers.getOpsBookingDashboard);
+    protect(routes.get('/ops/course-bookings/reference-data')).handler(handlers.getOpsBookingReferenceData);
+    protect(routes.get('/ops/course-bookings/appointments')).handler(handlers.listOpsAppointments);
+    protect(routes.get('/ops/course-bookings/appointments/:appointmentId')).handler(handlers.getOpsAppointment);
+    protect(routes.post('/ops/course-bookings/appointments/:appointmentId/cancel'))
+        .handler(handlers.cancelOpsAppointment);
+    protect(routes.post('/ops/course-bookings/appointments/:appointmentId/reschedule'))
+        .handler(handlers.rescheduleOpsAppointment);
+    protect(routes.get('/ops/course-bookings/policies')).handler(handlers.listOpsBookingPolicies);
+    protect(routes.post('/ops/course-bookings/policies')).handler(handlers.createOpsBookingPolicy);
+    protect(routes.get('/ops/course-bookings/offerings')).handler(handlers.listOpsBookingOfferings);
+    protect(routes.post('/ops/course-bookings/offerings')).handler(handlers.saveOpsBookingOffering);
+    protect(routes.patch('/ops/course-bookings/offerings/:offeringId')).handler(handlers.saveOpsBookingOffering);
+    protect(routes.put('/ops/course-bookings/offerings/:offeringId/availability'))
+        .handler(handlers.saveOpsBookingAvailability);
+    protect(routes.post('/ops/course-bookings/offerings/:offeringId/availability-overrides'))
+        .handler(handlers.createOpsBookingAvailabilityOverride);
+    protect(routes.post('/ops/course-bookings/availability-overrides/:overrideId/cancel'))
+        .handler(handlers.cancelOpsBookingAvailabilityOverride);
+    protect(routes.get('/ops/course-bookings/availability')).handler(handlers.listOpsBookingAvailability);
+    protect(routes.get('/ops/course-bookings/conflicts')).handler(handlers.listOpsBookingConflicts);
+    protect(routes.post('/ops/course-bookings/conflicts/:conflictId/resolve'))
+        .handler(handlers.resolveOpsBookingConflict);
+    protect(routes.get('/ops/course-bookings/backfill/preview')).handler(handlers.previewOpsScheduleBackfill);
+    protect(routes.post('/ops/course-bookings/backfill')).handler(handlers.applyOpsScheduleBackfill);
+    protect(routes.post('/ops/course-bookings/workers/expire')).handler(handlers.expireAppointmentWorker);
+    protect(routes.post('/ops/course-bookings/workers/fulfill')).handler(handlers.fulfillAppointmentWorker);
+    protect(routes.post('/ops/course-credits/sessions/:sessionId/cancel')).handler(handlers.cancelOpsSession);
+}
+
 function adminCourseOperationRoutes(routes, handlers) {
     const resources = [
         ['course-specs', handlers.createCourseSpec, handlers.updateCourseSpec, handlers.setCourseSpecStatus],
@@ -189,3 +261,6 @@ function opsQueryRoutes(routes, handlers) {
 }
 
 module.exports = courseCreditRoutes;
+module.exports.opsBookingRoutes = opsBookingRoutes;
+module.exports.studentBookingRoutes = studentBookingRoutes;
+module.exports.teacherBookingRoutes = teacherBookingRoutes;

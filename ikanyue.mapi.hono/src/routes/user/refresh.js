@@ -118,7 +118,12 @@ async function userRefreshHandler(c) {
             const currentIsAdmin = teacher.isAdmin || false;
 
             // 生成新的JWT令牌
-            teacher.token = jwtAuth.sign(c.req, userId, userSn, 'teacher', currentIsAdmin);
+            teacher.token = jwtAuth.sign(c.req, userId, userSn, 'teacher', currentIsAdmin, {
+                courseCreditCapabilities: Array.isArray(teacher.courseCreditCapabilities)
+                    ? teacher.courseCreditCapabilities
+                    : [],
+                wechatOpenId: user.wechatOpenId || '',
+            });
             teacher.role = 'teacher';
             teacher.isAdmin = currentIsAdmin;
 

@@ -19,7 +19,7 @@ const RESOURCE_SCHEMAS = Object.freeze({
     lessons: schema('sessions', [
         'code', 'title', 'status', 'startAt', 'endAt', 'location', 'requiredCreditTypeId',
         'requiredQuantity', 'attendanceRuleSnapshot', 'settlementRuleSnapshot', 'teacherRuleSnapshot',
-        'rosterVersion', 'version',
+        'rosterVersion', 'version', 'originType',
     ], ['draft', 'scheduled', 'enrollment_closed', 'in_progress', 'completed', 'cancelled'], validateLesson),
 });
 
@@ -37,9 +37,13 @@ function normalizeResourceInput(name, input, current = null) {
     const config = resourceSchema(name);
     invariant(input && typeof input === 'object' && !Array.isArray(input),
         'ADMIN_RESOURCE_BODY_REQUIRED', '请求内容必须是对象');
-    const unknown = Object.keys(input).filter((key) => !config.fields.has(key));
+    const normalizedInput = name === 'lessons' && input.originType === undefined
+        && (!current || current.originType === undefined)
+        ? { ...input, originType: 'admin' }
+        : input;
+    const unknown = Object.keys(normalizedInput).filter((key) => !config.fields.has(key));
     invariant(unknown.length === 0, 'ADMIN_RESOURCE_FIELD_INVALID', '请求包含不支持的字段', { fields: unknown });
-    const data = { ...(current ? pick(current, config.fields) : {}), ...input };
+    const data = { ...(current ? pick(current, config.fields) : {}), ...normalizedInput };
     config.validate(data);
     return pick(data, config.fields);
 }
@@ -123,6 +127,7 @@ function validateLesson(data) {
     requiredObject(data.teacherRuleSnapshot, 'TEACHER_RULE_SNAPSHOT_REQUIRED');
     positiveInteger(data.rosterVersion, 'LESSON_ROSTER_VERSION_INVALID');
     positiveInteger(data.version, 'LESSON_VERSION_INVALID');
+    oneOf(data.originType, ['class', 'admin'], 'LESSON_ORIGIN_TYPE_INVALID');
 }
 
 function activationModes() {

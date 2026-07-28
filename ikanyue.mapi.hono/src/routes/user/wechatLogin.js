@@ -7,8 +7,8 @@
 const { default: to } = require('await-to-js');
 const uuid = require('licia/uuid');
 const pb = require('../../utils/pocketbase');
-const { jwtAuth } = require('../../utils/jwtAuth');
 const { exchangeCodeForSession, decryptPhoneNumber, validateUserSignature } = require('../../utils/wechat');
+const { WechatIdentityService } = require('../../services/courseCredits/booking/wechatIdentityService');
 
 const DEFAULT_AVATAR = process.env.DEFAULT_AVATAR || '';
 
@@ -304,6 +304,19 @@ async function userWechatLoginHandler(c) {
         age: userInfo.age ?? '',
     };
 
+    const identityService = new WechatIdentityService(pb);
+    let teacher = null;
+    try {
+        teacher = await identityService.findTeacherByCellphone(cellphone);
+    } catch (error) {
+        console.error('查询教师微信身份失败:', error);
+        return c.error(500, '查询用户身份失败，请稍后再试');
+    }
+
+    if (teacher && (!student || student.blocked)) {
+        return c.data(await identityService.issuePrincipal(c.req, 'teacher', teacher, { openid, unionid }));
+    }
+
     if (student) {
         if (student.blocked) {
             return c.error(403, '该账号已被封禁，请联系客服');
@@ -320,6 +333,17 @@ async function userWechatLoginHandler(c) {
         } catch (updateErr) {
             console.error('更新学生微信信息失败:', updateErr);
             return c.error(500, '更新用户信息失败，请稍后重试');
+        }
+        if (teacher) {
+            return c.data(identityService.createRoleChallenge(c.req, {
+                candidates: [
+                    { role: 'student', record: student },
+                    { role: 'teacher', record: teacher },
+                ],
+                cellphone,
+                openid,
+                unionid,
+            }));
         }
     } else {
         const nickname = normalizeNickname(hydratedUserInfo, `微信用户${cellphone.slice(-4)}`);
@@ -388,11 +412,7 @@ async function userWechatLoginHandler(c) {
         student.avatar = DEFAULT_AVATAR;
     }
 
-    student.role = 'student';
-    student.isAdmin = false;
-    student.token = jwtAuth.sign(c.req, student.id, student.sn, 'student', false);
-
-    return c.data(student);
+    return c.data(await identityService.issuePrincipal(c.req, 'student', student, { openid, unionid }));
 }
 
 module.exports = { userWechatLoginHandler };

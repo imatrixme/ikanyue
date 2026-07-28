@@ -4,14 +4,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { CATALOG_SCHEMAS } = require('../src/services/courseCredits/schema/catalogSchemas');
+const { BOOKING_SCHEMAS } = require('../src/services/courseCredits/schema/bookingSchemas');
 const { LEDGER_SCHEMAS } = require('../src/services/courseCredits/schema/ledgerSchemas');
-const { TEACHING_SCHEMAS } = require('../src/services/courseCredits/schema/teachingSchemas');
+const { BASE_TEACHING_SCHEMAS } = require('../src/services/courseCredits/schema/teachingSchemas');
 
 const OUTPUT_DIR = path.resolve(__dirname, '../pocketbase/pb_migrations');
 const MIGRATIONS = [
     ['1784279100_course_credit_catalog.js', CATALOG_SCHEMAS],
     ['1784279200_course_credit_ledger.js', LEDGER_SCHEMAS],
-    ['1784279300_course_credit_teaching.js', TEACHING_SCHEMAS],
+    ['1784279300_course_credit_teaching.js', BASE_TEACHING_SCHEMAS],
+    ['1784279400_course_booking.js', BOOKING_SCHEMAS],
 ];
 
 function main(outputDir = OUTPUT_DIR) {

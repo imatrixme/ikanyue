@@ -10,6 +10,12 @@ const VERSIONED_ENTITY_TYPES = new Map([
     ['orders', 'order'],
     ['session_students', 'session_student'],
     ['sessions', 'session'],
+    ['appointment_requests', 'appointment'],
+    ['schedule_claims', 'schedule_claim'],
+    ['teacher_course_offerings', 'teacher_offering'],
+    ['teacher_availability_rules', 'availability_rule'],
+    ['teacher_availability_overrides', 'availability_override'],
+    ['booking_conflicts', 'booking_conflict'],
 ]);
 
 class PocketBaseBatchRepository {

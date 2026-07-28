@@ -19,6 +19,9 @@ const {
     update,
     versionClaim,
 } = require('./teachingCommand');
+const { sessionClaimPlan } = require('./booking/claimPlanning');
+const { isScheduleConflict } = require('./booking/decisionService');
+const { SCHEDULE_CLAIM_GRANULARITY_MINUTES } = require('./booking/policy');
 
 class CourseCreditSessionPublicationService {
     constructor(repository, options = {}) {
@@ -64,9 +67,20 @@ class CourseCreditSessionPublicationService {
         ]);
         const roster = materializeSessionRoster(studentGroups, session.id, this.idFactory);
         const teachers = materializeSessionTeachers(teacherGroups, overrides, session.id, this.idFactory);
+        const claimPlan = sessionClaimPlan({
+            appointmentId: session.appointmentId || '',
+            endAt: session.endAt,
+            granularityMinutes: SCHEDULE_CLAIM_GRANULARITY_MINUTES,
+            idFactory: this.idFactory,
+            sessionId: session.id,
+            startAt: session.startAt,
+            studentIds: roster.map((row) => row.studentId),
+            teacherIds: teachers.map((row) => row.teacherId),
+        });
         const version = positiveVersion(session.version);
         const result = {
             classIds,
+            claimCount: claimPlan.claims.length,
             operationId: command.operationId,
             rosterCount: roster.length,
             rosterVersion: positiveVersion(session.rosterVersion) + 1,
@@ -93,6 +107,7 @@ class CourseCreditSessionPublicationService {
             })),
             ...roster.map((row) => create('session_students', row)),
             ...teachers.map((row) => create('session_teachers', row)),
+            ...claimPlan.requests,
             update('sessions', session.id, {
                 status: 'scheduled',
                 rosterVersion: result.rosterVersion,
@@ -100,7 +115,12 @@ class CourseCreditSessionPublicationService {
             }),
             outbox(this.idFactory, 'course-credit.session-published', 'session', session.id, result),
         ];
-        return commitTeachingPlan(this, context, plan);
+        try {
+            return await commitTeachingPlan(this, context, plan);
+        } catch (error) {
+            if (isScheduleConflict(error)) error.code = 'SESSION_SCHEDULE_CONFLICT';
+            throw error;
+        }
     }
 }
 

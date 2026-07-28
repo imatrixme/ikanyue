@@ -2,7 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { CourseCreditError } = require('../src/services/courseCredits/domain');
-const { verifyCourseCreditStorageAtStartup } = require('../src/services/courseCredits/storageStartup');
+const {
+    REQUIRED_STORAGE_COLLECTIONS,
+    assertRequiredStorageCollections,
+    verifyCourseCreditStorageAtStartup,
+} = require('../src/services/courseCredits/storageStartup');
 
 test('course-credit startup waits for PocketBase auth and requires enabled Batch API', async () => {
     const calls = [];
@@ -19,6 +23,12 @@ test('course-credit startup waits for PocketBase auth and requires enabled Batch
                         return { batch: { enabled: true, maxRequests: 3, timeout: 1, maxBodySize: 64 } };
                     },
                 },
+                collections: {
+                    async getFullList(options) {
+                        calls.push(['collections', options]);
+                        return REQUIRED_STORAGE_COLLECTIONS.map((name) => ({ name }));
+                    },
+                },
             };
         },
     };
@@ -26,7 +36,13 @@ test('course-credit startup waits for PocketBase auth and requires enabled Batch
     const settings = await verifyCourseCreditStorageAtStartup(client);
 
     assert.deepEqual(settings, { enabled: true, maxRequests: 3, timeout: 1, maxBodySize: 64 });
-    assert.deepEqual(calls, ['ready', 'auth', 'client', ['settings', { requestKey: null }]]);
+    assert.deepEqual(calls, [
+        'ready',
+        'auth',
+        'client',
+        ['settings', { requestKey: null }],
+        ['collections', { requestKey: null }],
+    ]);
 });
 
 test('course-credit startup fails instead of serving with disabled or unavailable storage', async () => {
@@ -35,6 +51,26 @@ test('course-credit startup fails instead of serving with disabled or unavailabl
 
     const initializationError = new Error('PocketBase initialization failed');
     await assert.rejects(verifyCourseCreditStorageAtStartup({ ready: Promise.reject(initializationError) }), initializationError);
+});
+
+test('course-credit startup reports every missing business collection', async () => {
+    const existing = REQUIRED_STORAGE_COLLECTIONS.filter((name) => !['reward_items', 'student_points'].includes(name));
+
+    await assert.rejects(
+        assertRequiredStorageCollections({
+            collections: { async getFullList() { return existing.map((name) => ({ name })); } },
+        }),
+        (error) => error instanceof CourseCreditError
+            && error.code === 'POCKETBASE_COLLECTIONS_MISSING'
+            && error.details.missing.join(',') === 'reward_items,student_points'
+    );
+});
+
+test('course-credit startup rejects a client without the collection administration API', async () => {
+    await assert.rejects(
+        assertRequiredStorageCollections({}),
+        hasCode('POCKETBASE_COLLECTIONS_UNAVAILABLE')
+    );
 });
 
 function startupClient(batch) {

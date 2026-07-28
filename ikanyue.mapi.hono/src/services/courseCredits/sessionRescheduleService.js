@@ -11,6 +11,9 @@ const {
     update,
     versionClaim,
 } = require('./teachingCommand');
+const { releaseClaimPlan, sessionClaimPlan } = require('./booking/claimPlanning');
+const { isScheduleConflict } = require('./booking/decisionService');
+const { SCHEDULE_CLAIM_GRANULARITY_MINUTES } = require('./booking/policy');
 
 class CourseCreditSessionRescheduleService {
     constructor(repository, options = {}) {
@@ -33,10 +36,15 @@ class CourseCreditSessionRescheduleService {
         const creditType = await this.repository.get('credit_types', session.requiredCreditTypeId);
         invariant(creditType?.kind === 'course' && creditType.consumable === true,
             'SESSION_CREDIT_TYPE_INVALID', 'Session must require an exact consumable course credit');
-        const roster = await this.repository.list('session_students', {
-            filter: `sessionId="${escapeFilter(session.id)}"`,
-            sort: 'id',
-        });
+        const sessionFilter = `sessionId="${escapeFilter(session.id)}"`;
+        const [roster, teachers, claims] = await Promise.all([
+            this.repository.list('session_students', { filter: sessionFilter, sort: 'id' }),
+            this.repository.list('session_teachers', { filter: sessionFilter, sort: 'role,teacherId,id' }),
+            this.repository.list('schedule_claims', {
+                filter: `sourceType="session" && sourceId="${escapeFilter(session.id)}" && status="active"`,
+                sort: 'ownerType,ownerId,cellStartAt',
+            }),
+        ]);
 
         const studentPlans = [];
         for (const sessionStudent of roster.filter((student) => student.creditStatus === 'reserved')) {
@@ -56,6 +64,17 @@ class CourseCreditSessionRescheduleService {
             newEndAt: new Date(input.newEndAt).toISOString(),
             studentOutcomes: studentPlans.map(({ outcome }) => outcome),
         };
+        const newClaims = sessionClaimPlan({
+            appointmentId: session.appointmentId || '',
+            endAt: result.newEndAt,
+            granularityMinutes: SCHEDULE_CLAIM_GRANULARITY_MINUTES,
+            idFactory: this.idFactory,
+            sessionId: session.id,
+            startAt: result.newStartAt,
+            studentIds: roster.map((student) => student.studentId),
+            teacherIds: teachers.map((teacher) => teacher.teacherId),
+        });
+        result.claimCount = newClaims.claims.length;
         const context = { ...command, input, result };
         const sessionVersion = positiveVersion(session.version);
         const plan = [
@@ -72,6 +91,10 @@ class CourseCreditSessionRescheduleService {
                 },
             }),
             versionClaim(this.idFactory, 'session', session.id, sessionVersion, command.operationId),
+            ...releaseClaimPlan(claims, {
+                idFactory: this.idFactory, now: command.at, operationId: command.operationId,
+            }),
+            ...newClaims.requests,
             update('sessions', session.id, {
                 endAt: result.newEndAt,
                 startAt: result.newStartAt,
@@ -80,7 +103,12 @@ class CourseCreditSessionRescheduleService {
             ...studentPlans.flatMap(({ requests }) => requests),
             outbox(this.idFactory, 'course-credit.session-rescheduled', 'session', session.id, result),
         ];
-        return commitTeachingPlan(this, context, plan);
+        try {
+            return await commitTeachingPlan(this, context, plan);
+        } catch (error) {
+            if (isScheduleConflict(error)) error.code = 'SESSION_SCHEDULE_CONFLICT';
+            throw error;
+        }
     }
 
     async planStudent({ command, creditType, input, session, sessionStudent }) {

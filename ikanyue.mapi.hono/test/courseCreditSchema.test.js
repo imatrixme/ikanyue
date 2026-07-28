@@ -21,7 +21,9 @@ test('course credit schema defines the complete private collection set in depend
         'credit_expiry_changes', 'conversion_rules', 'conversion_authorizations', 'conversion_allocations', 'classes',
         'class_students', 'class_teachers', 'sessions', 'session_classes', 'session_students',
         'session_teachers', 'session_credit_allocations', 'teacher_credit_rules', 'teacher_credit_events',
-        'outbox_events', 'reconciliation_runs', 'reconciliation_exceptions',
+        'outbox_events', 'reconciliation_runs', 'reconciliation_exceptions', 'booking_policies',
+        'teacher_course_offerings', 'teacher_availability_rules', 'teacher_availability_overrides',
+        'appointment_requests', 'appointment_events', 'schedule_claims', 'booking_conflicts', 'wechat_identities',
     ]) {
         assert.ok(names.includes(name), `${name} should be defined`);
     }
@@ -35,6 +37,8 @@ test('course credit schema defines the complete private collection set in depend
     assert.ok(indexes(byName.get('session_students')).some((index) => index.includes('sessionId, studentId')));
     assert.ok(indexes(byName.get('class_students')).some((index) => index.includes("effectiveTo = ''")));
     assert.ok(indexes(byName.get('class_teachers')).some((index) => index.includes("effectiveTo = ''")));
+    assert.ok(indexes(byName.get('schedule_claims')).some((index) => index.includes('WHERE status = \'active\'')));
+    assert.ok(indexes(byName.get('appointment_requests')).some((index) => index.includes("status = 'pending'")));
 
     for (const schema of COURSE_CREDIT_COLLECTION_SCHEMAS) {
         assert.equal(schema.createRule, null);
@@ -61,7 +65,7 @@ test('course credit schema validator rejects duplicate, incomplete, and public s
 
 test('immutable collections and representative fields reflect the ledger contract', () => {
     assert.deepEqual([...APPEND_ONLY_COURSE_CREDIT_COLLECTIONS].sort(), [
-        'conversion_allocations', 'credit_events', 'credit_expiry_changes',
+        'appointment_events', 'conversion_allocations', 'credit_events', 'credit_expiry_changes',
         'credit_version_claims', 'payment_events', 'teacher_credit_events',
     ]);
     assert.deepEqual([...VERSIONED_COURSE_CREDIT_COLLECTIONS].sort(), [
@@ -85,7 +89,10 @@ test('immutable collections and representative fields reflect the ledger contrac
     assert.equal(field(byName.get('credit_operations'), 'beforeSummary').type, 'json');
     assert.equal(field(byName.get('credit_operations'), 'afterSummary').required, true);
     assert.equal(field(byName.get('sessions'), 'version').required, true);
+    assert.deepEqual(field(byName.get('sessions'), 'originType').values, ['class', 'appointment', 'admin']);
+    assert.equal(field(byName.get('sessions'), 'appointmentId').collectionName, 'appointment_requests');
     assert.equal(field(byName.get('session_students'), 'sourceClassIds').type, 'json');
+    assert.ok(field(byName.get('session_teachers'), 'assignmentSource').values.includes('appointment'));
     assert.equal(field(byName.get('teacher_credit_rules'), 'cancellationCompensation').type, 'json');
     assert.equal(field(byName.get('teacher_credit_events'), 'confirmationOfEventId').collectionName,
         'teacher_credit_events');
@@ -94,6 +101,16 @@ test('immutable collections and representative fields reflect the ledger contrac
     assert.equal(field(byName.get('outbox_events'), 'lastErrorCode').type, 'text');
     assert.equal(field(byName.get('reconciliation_exceptions'), 'runId').collectionName,
         'reconciliation_runs');
+    assert.equal(field(byName.get('teacher_course_offerings'), 'policyId').collectionName, 'booking_policies');
+    assert.deepEqual(field(byName.get('appointment_requests'), 'status').values, [
+        'pending', 'confirmed', 'declined', 'withdrawn', 'expired', 'slot_taken',
+        'eligibility_lost', 'cancelled', 'rescheduled', 'fulfilled',
+    ]);
+    assert.equal(field(byName.get('appointment_events'), 'appointmentId').collectionName, 'appointment_requests');
+    assert.equal(field(byName.get('appointment_requests'), 'requestFingerprint').required, true);
+    assert.equal(field(byName.get('schedule_claims'), 'ownerId').required, true);
+    assert.ok(field(byName.get('credit_operations'), 'type').values.includes('confirm_appointment'));
+    assert.ok(field(byName.get('credit_version_claims'), 'entityType').values.includes('appointment'));
 });
 
 test('schema bootstrap defers circular relation fields until target collections exist', async () => {

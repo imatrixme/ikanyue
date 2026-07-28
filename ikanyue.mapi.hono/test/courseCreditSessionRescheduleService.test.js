@@ -106,6 +106,8 @@ function mockRepository(options = {}) {
         },
         async list(collection) {
             if (collection === 'session_students') return state.roster;
+            if (collection === 'session_teachers') return [{ id: 'teacher-row', teacherId: 'teacher', role: 'lead' }];
+            if (collection === 'schedule_claims') return [];
             if (collection === 'session_credit_allocations') return state.allocations;
             if (collection === 'credit_batches') return [state.batches.candidate];
             throw new Error(`Unexpected list ${collection}`);

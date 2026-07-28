@@ -1,4 +1,5 @@
 const { CATALOG_SCHEMAS } = require('./catalogSchemas');
+const { APPEND_ONLY_BOOKING_COLLECTIONS, BOOKING_SCHEMAS } = require('./bookingSchemas');
 const { APPEND_ONLY_COURSE_CREDIT_COLLECTIONS, LEDGER_SCHEMAS } = require('./ledgerSchemas');
 const { TEACHING_SCHEMAS } = require('./teachingSchemas');
 
@@ -6,7 +7,10 @@ const COURSE_CREDIT_COLLECTION_SCHEMAS = [
     ...CATALOG_SCHEMAS,
     ...LEDGER_SCHEMAS,
     ...TEACHING_SCHEMAS,
+    ...BOOKING_SCHEMAS,
 ];
+
+for (const name of APPEND_ONLY_BOOKING_COLLECTIONS) APPEND_ONLY_COURSE_CREDIT_COLLECTIONS.add(name);
 
 const VERSIONED_COURSE_CREDIT_COLLECTIONS = new Set([
     'conversion_rules',
@@ -56,6 +60,7 @@ function validateCourseCreditSchemas(schemas = COURSE_CREDIT_COLLECTION_SCHEMAS)
 
 module.exports = {
     COURSE_CREDIT_COLLECTION_SCHEMAS,
+    BOOKING_SCHEMAS,
     APPEND_ONLY_COURSE_CREDIT_COLLECTIONS,
     VERSIONED_COURSE_CREDIT_COLLECTIONS,
     validateCourseCreditSchemas,

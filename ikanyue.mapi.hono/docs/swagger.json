@@ -3518,6 +3518,1118 @@
         "$ref": "#/components/x-operations/GetResource"
       }
     },
+    "/v1/student/booking-options": {
+      "get": {
+        "summary": "查询本人可预约课程与教师",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StudentCourseIdQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/booking-slots": {
+      "get": {
+        "summary": "查询教师可预约时段",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingIdQueryRequired"
+          },
+          {
+            "$ref": "#/components/parameters/FromQuery"
+          },
+          {
+            "$ref": "#/components/parameters/ToQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/appointments": {
+      "get": {
+        "summary": "分页查询本人预约",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "发起课程预约",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/AppointmentRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/appointments/{appointmentId}": {
+      "get": {
+        "summary": "查询本人预约详情",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/appointments/{appointmentId}/withdraw": {
+      "post": {
+        "summary": "撤回待确认预约",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/student/appointments/{appointmentId}/cancel": {
+      "post": {
+        "summary": "取消已确认预约",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/booking/dashboard": {
+      "get": {
+        "summary": "查询教师预约工作台",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments": {
+      "get": {
+        "summary": "分页查询教师预约",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments/{appointmentId}": {
+      "get": {
+        "summary": "查询教师预约详情",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/calendar": {
+      "get": {
+        "summary": "查询教师日历",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/FromQuery"
+          },
+          {
+            "$ref": "#/components/parameters/ToQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments/{appointmentId}/confirm": {
+      "post": {
+        "summary": "确认预约并原子占用时段与课时",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments/{appointmentId}/decline": {
+      "post": {
+        "summary": "拒绝待确认预约",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments/{appointmentId}/cancel": {
+      "post": {
+        "summary": "教师取消已确认预约",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/appointments/{appointmentId}/reschedule": {
+      "post": {
+        "summary": "教师改期并交换日历占位",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reschedule"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/offerings/{offeringId}/availability": {
+      "get": {
+        "summary": "查询教师课程可预约时间",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "替换教师每周可预约时间",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/WeeklyAvailability"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/offerings/{offeringId}/availability-overrides": {
+      "post": {
+        "summary": "新增日期级可用或不可用覆盖",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/AvailabilityOverride"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/v1/teacher/availability-overrides/{overrideId}/cancel": {
+      "post": {
+        "summary": "撤销日期级可用时间覆盖",
+        "tags": [
+          "TeacherBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OverrideId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/dashboard": {
+      "get": {
+        "summary": "查询预约运营看板",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/reference-data": {
+      "get": {
+        "summary": "查询预约配置所需教师、课程、课时类型和策略",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/appointments": {
+      "get": {
+        "summary": "分页查询全部预约",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          },
+          {
+            "$ref": "#/components/parameters/TeacherIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/StudentIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/CourseSpecIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/FromQuery"
+          },
+          {
+            "$ref": "#/components/parameters/ToQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/appointments/{appointmentId}": {
+      "get": {
+        "summary": "查询预约审计详情",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/appointments/{appointmentId}/cancel": {
+      "post": {
+        "summary": "教务取消预约",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/appointments/{appointmentId}/reschedule": {
+      "post": {
+        "summary": "教务改期预约",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reschedule"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/policies": {
+      "get": {
+        "summary": "分页查询预约策略版本",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建预约策略版本",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/BookingPolicy"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/offerings": {
+      "get": {
+        "summary": "分页查询教师课程预约配置",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          },
+          {
+            "$ref": "#/components/parameters/TeacherIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/CourseSpecIdQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "创建教师课程预约配置",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/BookingOffering"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/offerings/{offeringId}": {
+      "patch": {
+        "summary": "更新教师课程预约配置",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/BookingOffering"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/offerings/{offeringId}/availability": {
+      "put": {
+        "summary": "教务替换教师课程的每周可预约时间",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/WeeklyAvailability"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/offerings/{offeringId}/availability-overrides": {
+      "post": {
+        "summary": "教务新增教师课程的日期级开放或停用时间",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OfferingId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/AvailabilityOverride"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/availability-overrides/{overrideId}/cancel": {
+      "post": {
+        "summary": "教务撤销教师课程的日期级时间覆盖",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OverrideId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/availability": {
+      "get": {
+        "summary": "查询教师可用时间配置",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          },
+          {
+            "$ref": "#/components/parameters/TeacherIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/OfferingIdQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/conflicts": {
+      "get": {
+        "summary": "分页查询历史排课冲突",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Page"
+          },
+          {
+            "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "$ref": "#/components/parameters/StatusQuery"
+          },
+          {
+            "$ref": "#/components/parameters/TeacherIdQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/conflicts/{conflictId}/resolve": {
+      "post": {
+        "summary": "关闭历史排课冲突",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ConflictId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ConflictResolution"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/backfill/preview": {
+      "get": {
+        "summary": "预览历史未来课程日历占位回填",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FromQuery"
+          },
+          {
+            "$ref": "#/components/parameters/ToQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/backfill": {
+      "post": {
+        "summary": "执行历史未来课程日历占位回填",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Backfill"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/workers/expire": {
+      "post": {
+        "summary": "运行待确认预约过期任务",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/workers/fulfill": {
+      "post": {
+        "summary": "运行已完成课堂预约归档任务",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/cancel": {
+      "post": {
+        "summary": "取消普通课堂并释放课时与日历占位",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
     "/ops/course-credits/orders/{orderId}/grant": {
       "post": {
         "summary": "按已支付订单发放课程点",
@@ -8108,6 +9220,76 @@
         }
       }
     },
+    "/v1/user/wechat-role-login": {
+      "post": {
+        "summary": "完成微信登录身份选择",
+        "tags": [
+          "User"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WechatRoleChallenge"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/WechatRoleResponse"
+          }
+        }
+      }
+    },
+    "/v1/user/wechat-roles": {
+      "get": {
+        "summary": "查询当前微信可切换身份",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/WechatRoleResponse"
+          }
+        }
+      }
+    },
+    "/v1/user/switch-wechat-role": {
+      "post": {
+        "summary": "切换已绑定的学员或教师身份",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WechatRoleSwitch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/WechatRoleResponse"
+          }
+        }
+      }
+    },
     "/v1/videoMaterial/create": {
       "post": {
         "summary": "创建视频材料",
@@ -9965,6 +11147,323 @@
               "absent",
               "cancelled"
             ]
+          }
+        }
+      },
+      "AppointmentRequest": {
+        "type": "object",
+        "required": [
+          "offeringId",
+          "startAt",
+          "endAt"
+        ],
+        "properties": {
+          "offeringId": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "Reason": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "Reschedule": {
+        "type": "object",
+        "required": [
+          "newStartAt",
+          "newEndAt",
+          "reason"
+        ],
+        "properties": {
+          "newStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "newEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "AvailabilityWindow": {
+        "type": "object",
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
+        ],
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "startMinute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "endMinute": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          }
+        }
+      },
+      "InstitutionWindow": {
+        "type": "object",
+        "required": [
+          "startMinute",
+          "endMinute"
+        ],
+        "properties": {
+          "startMinute": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "endMinute": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          }
+        }
+      },
+      "WeeklyAvailability": {
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "default",
+              "custom"
+            ]
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityWindow"
+            }
+          }
+        }
+      },
+      "AvailabilityOverride": {
+        "type": "object",
+        "required": [
+          "type",
+          "startAt",
+          "endAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "available",
+              "unavailable"
+            ]
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "BookingPolicy": {
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "status",
+          "effectiveFrom"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "default": "Asia/Shanghai"
+          },
+          "defaultWindows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstitutionWindow"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive"
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slotStepMinutes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "claimGranularityMinutes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minLeadMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxAdvanceDays": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "responseTtlMinutes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "responseCutoffMinutes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cancellationCutoffMinutes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "BookingOffering": {
+        "type": "object",
+        "required": [
+          "teacherId",
+          "courseSpecId",
+          "creditTypeId",
+          "policyId",
+          "status"
+        ],
+        "properties": {
+          "teacherId": {
+            "type": "string"
+          },
+          "courseSpecId": {
+            "type": "string"
+          },
+          "creditTypeId": {
+            "type": "string"
+          },
+          "policyId": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive"
+            ]
+          }
+        }
+      },
+      "ConflictResolution": {
+        "type": "object",
+        "required": [
+          "resolution"
+        ],
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 500
+          }
+        }
+      },
+      "Backfill": {
+        "type": "object",
+        "required": [
+          "from"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookingResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "object",
+            "nullable": true
+          },
+          "operationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -12156,6 +13655,55 @@
           "token",
           "isAdmin"
         ]
+      },
+      "WechatRoleChallenge": {
+        "type": "object",
+        "required": [
+          "challenge",
+          "role"
+        ],
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "student",
+              "teacher"
+            ]
+          }
+        }
+      },
+      "WechatRoleSwitch": {
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "student",
+              "teacher"
+            ]
+          }
+        }
+      },
+      "WechatRoleEnvelope": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "nullable": true
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -12403,16 +13951,32 @@
           "type": "string"
         }
       },
-      "BatchId": {
-        "name": "batchId",
+      "AppointmentId": {
+        "name": "appointmentId",
         "in": "path",
         "required": true,
         "schema": {
           "type": "string"
         }
       },
-      "Id": {
-        "name": "id",
+      "OfferingId": {
+        "name": "offeringId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "OverrideId": {
+        "name": "overrideId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "ConflictId": {
+        "name": "conflictId",
         "in": "path",
         "required": true,
         "schema": {
@@ -12434,6 +13998,88 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 100
+        }
+      },
+      "StatusQuery": {
+        "name": "status",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "FromQuery": {
+        "name": "from",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "ToQuery": {
+        "name": "to",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "StudentCourseIdQuery": {
+        "name": "courseId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "CourseSpecIdQuery": {
+        "name": "courseSpecId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "TeacherIdQuery": {
+        "name": "teacherId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "StudentIdQuery": {
+        "name": "studentId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "OfferingIdQuery": {
+        "name": "offeringId",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "OfferingIdQueryRequired": {
+        "name": "offeringId",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "BatchId": {
+        "name": "batchId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
         }
       },
       "Status": {
@@ -12486,6 +14132,16 @@
           }
         }
       },
+      "BookingResponse": {
+        "description": "预约查询结果、命令结果或稳定业务错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingResponse"
+            }
+          }
+        }
+      },
       "CourseCreditResponse": {
         "description": "成功结果或稳定业务错误",
         "content": {
@@ -12502,6 +14158,108 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/StudentLearningResponse"
+            }
+          }
+        }
+      },
+      "WechatRoleResponse": {
+        "description": "身份列表或登录主体",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WechatRoleEnvelope"
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "AppointmentRequest": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AppointmentRequest"
+            }
+          }
+        }
+      },
+      "Reason": {
+        "required": false,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Reason"
+            }
+          }
+        }
+      },
+      "Reschedule": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Reschedule"
+            }
+          }
+        }
+      },
+      "WeeklyAvailability": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WeeklyAvailability"
+            }
+          }
+        }
+      },
+      "AvailabilityOverride": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AvailabilityOverride"
+            }
+          }
+        }
+      },
+      "BookingPolicy": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingPolicy"
+            }
+          }
+        }
+      },
+      "BookingOffering": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookingOffering"
+            }
+          }
+        }
+      },
+      "ConflictResolution": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConflictResolution"
+            }
+          }
+        }
+      },
+      "Backfill": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Backfill"
             }
           }
         }

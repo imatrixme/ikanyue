@@ -8,7 +8,7 @@ const {
     textField,
 } = require('./fields');
 
-const TEACHING_SCHEMAS = [
+const BASE_TEACHING_SCHEMAS = [
     collection('classes', [
         textField('code', { required: true }),
         textField('name', { required: true }),
@@ -181,4 +181,29 @@ const TEACHING_SCHEMAS = [
     ]),
 ];
 
-module.exports = { TEACHING_SCHEMAS };
+const TEACHING_SCHEMAS = BASE_TEACHING_SCHEMAS.map((schema) => {
+    if (schema.name === 'sessions') {
+        return extendFields(schema, [
+            selectField('originType', ['class', 'appointment', 'admin'], { required: true }),
+            relationField('appointmentId', 'appointment_requests'),
+            selectField('cancellationType', ['student', 'teacher', 'institution', 'admin']),
+            dateField('cancelledAt'),
+        ]);
+    }
+    if (schema.name === 'session_teachers') {
+        return {
+            ...schema,
+            fields: schema.fields.map((field) => field.name === 'assignmentSource'
+                ? selectField('assignmentSource', ['class_default', 'session_override', 'substitute', 'appointment'], { required: true })
+                : field),
+        };
+    }
+    return schema;
+});
+
+function extendFields(schema, fields) {
+    const timestamps = schema.fields.slice(-2);
+    return { ...schema, fields: [...schema.fields.slice(0, -2), ...fields, ...timestamps] };
+}
+
+module.exports = { BASE_TEACHING_SCHEMAS, TEACHING_SCHEMAS };

@@ -28,6 +28,13 @@ test('wechat login reuses an existing student when create hits a duplicate const
 
     const pocketbaseMock = {
         collection(name) {
+            if (name === 'teachers') return { async getList() { return { items: [] }; } };
+            if (name === 'wechat_identities') {
+                return {
+                    async getFirstListItem() { throw Object.assign(new Error('not found'), { status: 404 }); },
+                    async create(data) { return { id: 'identity', ...data }; },
+                };
+            }
             assert.equal(name, 'students');
             return {
                 async getList(_page, _perPage, options = {}) {

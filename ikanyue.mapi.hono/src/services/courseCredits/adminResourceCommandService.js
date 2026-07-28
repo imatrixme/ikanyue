@@ -41,6 +41,8 @@ class AdminResourceCommandService {
         const data = normalizeResourceInput(name, input.data || input, current);
         if (name === 'lessons') {
             validateLessonStatusTransition(current.status, data.status);
+            invariant(data.status !== 'cancelled' || current.status === 'draft',
+                'LESSON_CANCELLATION_COMMAND_REQUIRED', '已排课课堂必须使用课堂取消命令');
             return this.updateLesson(id, current, data, input);
         }
         if (config.revisioned) return this.createRevision(name, current, data, input);

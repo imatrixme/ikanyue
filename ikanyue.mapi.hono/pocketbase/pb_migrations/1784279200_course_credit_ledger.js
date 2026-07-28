@@ -7,7 +7,7 @@ const schemas = [
     fields: [
       {"name":"operationNo","type":"text","required":true,"max":0},
       {"name":"studentId","type":"relation","required":false,"collectionName":"students","cascadeDelete":false,"minSelect":0,"maxSelect":1},
-      {"name":"type","type":"select","required":true,"values":["grant","convert","reserve","activate","consume","release","expire","extend","reverse","adjust","class_membership","class_teacher_assignment","publish_session","reschedule_session","settle_session","reverse_session_settlement","confirm_teacher_credit"],"maxSelect":1},
+      {"name":"type","type":"select","required":true,"values":["grant","convert","reserve","activate","consume","release","expire","extend","reverse","adjust","class_membership","class_teacher_assignment","publish_session","reschedule_session","settle_session","reverse_session_settlement","confirm_teacher_credit","confirm_appointment","decline_appointment","withdraw_appointment","cancel_appointment","reschedule_appointment","expire_appointment","configure_availability","backfill_schedule_claims","cancel_session","fulfill_appointment","configure_booking","resolve_booking_conflict"],"maxSelect":1},
       {"name":"status","type":"select","required":true,"values":["pending","committed","failed","reversed"],"maxSelect":1},
       {"name":"idempotencyKey","type":"text","required":true,"max":0},
       {"name":"sourceType","type":"text","required":false,"max":0},
@@ -32,7 +32,7 @@ const schemas = [
     name: "credit_version_claims",
     type: "base",
     fields: [
-      {"name":"entityType","type":"select","required":true,"values":["credit_batch","session_student","order","session"],"maxSelect":1},
+      {"name":"entityType","type":"select","required":true,"values":["credit_batch","session_student","order","session","appointment","schedule_claim","teacher_offering","availability_rule","availability_override","booking_conflict"],"maxSelect":1},
       {"name":"entityId","type":"text","required":true,"max":0},
       {"name":"expectedVersion","type":"number","required":true,"min":1,"max":null,"onlyInt":true},
       {"name":"operationId","type":"relation","required":true,"collectionName":"credit_operations","cascadeDelete":false,"minSelect":0,"maxSelect":1},

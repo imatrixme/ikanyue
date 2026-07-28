@@ -3,6 +3,7 @@ const { createCourseCreditOpsQueryHandlers } = require('./opsQueryHandlers');
 const { createStudentAuthorizationHandlers } = require('./studentAuthorizationHandlers');
 const { createStudentLearningHandlers } = require('./studentLearningHandlers');
 const { createCourseCreditWorkerHandlers } = require('./workerHandlers');
+const { createCourseBookingHandlers } = require('./bookingHandlers');
 
 function createCourseCreditHandlerExtensions(options) {
     const {
@@ -35,6 +36,7 @@ function createCourseCreditHandlerExtensions(options) {
             capability, commandMetadata, loadServices, queryParams, readJsonBody,
             requireAnyCapability, requireCapability, safeCommand, safeQuery,
         }),
+        ...createCourseBookingHandlers(options),
     };
 }
 

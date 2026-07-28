@@ -3,7 +3,7 @@ const { jwtAuth } = require('../../utils/jwtAuth');
 const { normalizeBoolean, normalizeString } = require('./opsUtils');
 const { authenticatePocketBaseTeacher } = require('./pocketbaseTeacherAuth');
 
-const TEACHER_FIELDS = 'id,sn,username,email,cellphone,nickname,nickName,avatar,realname,realName,blocked,verified,isAdmin,idAdmin,opsPasswordChangeRequired,lastLoginAt,created,updated';
+const TEACHER_FIELDS = 'id,sn,username,email,cellphone,nickname,nickName,avatar,realname,realName,blocked,verified,isAdmin,idAdmin,courseCreditCapabilities,opsPasswordChangeRequired,lastLoginAt,created,updated';
 const MIN_PASSWORD_LENGTH = 8;
 
 class OpsAuthService {
@@ -190,6 +190,7 @@ function projectOpsProfile(teacher = {}) {
         verified: normalizeBoolean(teacher.verified),
         blocked: normalizeBoolean(teacher.blocked),
         passwordChangeRequired: normalizeBoolean(teacher.opsPasswordChangeRequired),
+        courseCreditCapabilities: normalizeCapabilities(teacher.courseCreditCapabilities),
     };
 }
 
@@ -200,7 +201,12 @@ function buildTeacherLoginFilter(account) {
 function signOpsToken(request, teacher, isAdmin, passwordChangeRequired) {
     return jwtAuth.sign(request, teacher.id, teacher.sn, 'teacher', isAdmin, {
         passwordChangeRequired: Boolean(passwordChangeRequired),
+        courseCreditCapabilities: normalizeCapabilities(teacher.courseCreditCapabilities),
     });
+}
+
+function normalizeCapabilities(value) {
+    return Array.isArray(value) ? [...new Set(value.filter((item) => typeof item === 'string' && item.trim()))] : [];
 }
 
 function isRegistrationEnabled() {
@@ -258,4 +264,4 @@ function isDuplicateTeacherError(error = {}) {
     return error.status === 400 && /(cellphone|username|手机号).*?(unique|already)|(?:unique|already).*?(cellphone|username|手机号)/i.test(text);
 }
 
-module.exports = { OpsAuthService, projectOpsProfile, isRegistrationEnabled };
+module.exports = { OpsAuthService, isRegistrationEnabled, normalizeCapabilities, projectOpsProfile };

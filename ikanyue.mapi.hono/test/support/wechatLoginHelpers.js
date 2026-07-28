@@ -8,6 +8,7 @@ const routeModulePath = require.resolve('../../src/routes/user/wechatLogin');
 const pocketbaseModulePath = require.resolve('../../src/utils/pocketbase');
 const jwtAuthModulePath = require.resolve('../../src/utils/jwtAuth');
 const wechatModulePath = require.resolve('../../src/utils/wechat');
+const identityServiceModulePath = require.resolve('../../src/services/courseCredits/booking/wechatIdentityService');
 
 function setMockedModule(modulePath, exportsValue) {
     const mockedModule = new Module(modulePath);
@@ -23,9 +24,11 @@ function loadWechatLoginHandler({ pocketbaseMock, jwtAuthMock, wechatMock }) {
         [pocketbaseModulePath, require.cache[pocketbaseModulePath]],
         [jwtAuthModulePath, require.cache[jwtAuthModulePath]],
         [wechatModulePath, require.cache[wechatModulePath]],
+        [identityServiceModulePath, require.cache[identityServiceModulePath]],
     ]);
 
     delete require.cache[routeModulePath];
+    delete require.cache[identityServiceModulePath];
     setMockedModule(pocketbaseModulePath, pocketbaseMock);
     setMockedModule(jwtAuthModulePath, jwtAuthMock);
     setMockedModule(wechatModulePath, wechatMock);
@@ -114,8 +117,18 @@ function createBaseMocks(overrides = {}) {
     return {
         pocketbaseMock: {
             collection(name) {
-                assert.equal(name, 'students');
-                return collectionApi;
+                if (name === 'students') return collectionApi;
+                if (name === 'teachers') {
+                    return { async getList() { return { items: [] }; } };
+                }
+                if (name === 'wechat_identities') {
+                    return {
+                        async getFirstListItem() { throw Object.assign(new Error('not found'), { status: 404 }); },
+                        async create(data) { return { id: 'identity_1', ...data }; },
+                        async update(id, data) { return { id, ...data }; },
+                    };
+                }
+                assert.fail(`Unexpected collection ${name}`);
             },
         },
         jwtAuthMock: {

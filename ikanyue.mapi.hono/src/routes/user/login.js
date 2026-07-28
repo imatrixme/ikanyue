@@ -175,7 +175,11 @@ async function userLoginHandler(c) {
             }
 
             // 生成 JWT token，指定角色为 teacher
-            teacherData.token = jwtAuth.sign(c.req, teacherData.id, teacherData.sn, 'teacher', isAdmin);
+            teacherData.token = jwtAuth.sign(c.req, teacherData.id, teacherData.sn, 'teacher', isAdmin, {
+                courseCreditCapabilities: Array.isArray(teacherData.courseCreditCapabilities)
+                    ? teacherData.courseCreditCapabilities
+                    : [],
+            });
             teacherData.role = 'teacher';
             teacherData.isAdmin = isAdmin;
 
