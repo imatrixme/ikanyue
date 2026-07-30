@@ -109,26 +109,30 @@ git add ikanyue.taro3
 git commit -m "Update ikanyue.taro3 submodule"
 ```
 
-## Local points-lite environment
+## Unified environment startup
 
-The local test environment runs PocketBase, Hono, admin, and the Taro watcher directly on the workstation. It does not use Docker and never points at production data or asset URLs.
-
-Prerequisites:
-
-- install each subproject's dependencies
-- provide a PocketBase 0.32.x binary and set `POCKETBASE_BIN` if it is not on `PATH`
-- open the generated `ikanyue.taro3/dist` directory in WeChat DevTools after startup
+根目录使用同一个入口管理本地测试环境和正式 Compose 环境：
 
 ```bash
-cp .env.local.example .env.local
-./scripts/local-points-lite.sh up
-./scripts/local-points-lite.sh smoke
-./scripts/local-points-lite.sh down
+# 本地测试：PocketBase、Hono、admin、小程序 watcher
+./scripts/kanyue-stack.sh test
+
+# 查看状态、日志、健康检查与关闭
+./scripts/kanyue-stack.sh test status
+./scripts/kanyue-stack.sh test logs
+./scripts/kanyue-stack.sh test smoke
+./scripts/kanyue-stack.sh test down
 ```
 
-The bootstrap is local-only and idempotent. It creates the minimal PocketBase collections, one local admin, two local students, reward fixtures, and point balances. Existing admin credentials are never reset by schema application.
+首次运行会从 `.env.localdocker.example` 自动创建忽略提交的 `.env.localdocker`，构建 Docker 镜像、初始化 PocketBase schema 与本地测试数据，并将小程序输出到 `ikanyue.taro3/dist`。默认后台账号为 `admin / admin870329`，PocketBase 超级用户为 `admin@local.com / admin870329`，本地学员账号为 `13800000001 / admin870329`。每个未封禁学员首次会获得 10 节“成人声乐一对一”本地课时，可直接在小程序中选择教师和时段报课；重启不会重置已经消耗的课时。这些弱口令只允许配合 `BIND_ADDR=127.0.0.1` 使用。
 
-The default mini program API is `http://127.0.0.1:1337`, which works in WeChat DevTools. For a phone on the same LAN, set `HOST=0.0.0.0` and `KANYUE_LOCAL_API_URL=http://<workstation-lan-ip>:1337` in `.env.local` before restarting. Do not expose the local service outside a trusted LAN.
+重复启动默认利用 Docker 构建缓存；只想启动现有镜像时使用：
+
+```bash
+./scripts/kanyue-stack.sh test up --no-build
+```
+
+本地 schema/种子脚本需要先在 `ikanyue.mapi.hono` 安装依赖；小程序依赖由 Compose 的 `test` profile 单独安装和缓存。在微信开发者工具中打开生成的 `ikanyue.taro3/dist` 目录。
 
 ## 1Panel / OpenResty deploy
 
@@ -136,7 +140,7 @@ The default mini program API is `http://127.0.0.1:1337`, which works in WeChat D
 
 ```bash
 cp .env.deploy.example .env.deploy
-docker compose --env-file .env.deploy up -d --build
+./scripts/kanyue-stack.sh prod up --confirm-production
 ```
 
 在 1Panel 中导入 `compose.yaml`，设置 `.env.deploy` 中的端口、PocketBase 超级用户、公开文件域名、微信配置。OpenResty 站点反代到 `http://127.0.0.1:${ADMIN_PORT}`。
@@ -154,6 +158,8 @@ admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构�
 实物图片采用 PocketBase 托管写入、MinIO 公开读取：Admin 把 multipart 文件上传到 Hono，Hono 完成管理员鉴权和文件校验后写入 PocketBase 的 `reward_items.imageFile` 文件字段；PocketBase 再通过自身的 S3 存储配置写入 MinIO。Hono 返回记录时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接 `{collectionId}/{recordId}/{filename}`，Admin 和小程序直接访问公开 bucket URL，不经过 PocketBase 域名。`PUBLIC_ASSET_BASE_URL` 为空时仅用于本地开发，回退到 `${PB_PUBLIC_URL:-$PB_URL}/api/files/...`。
 
 S3 endpoint、bucket、access key 和 secret key 只在 PocketBase 管理配置中维护，Admin、Hono 和小程序都不持有这些凭据。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`，并确认公开 bucket 的只读访问策略及 `PUBLIC_ASSET_BASE_URL` 与实际对象路径一致。
+
+`prod` 模式只负责启动、重启、停止和检查已经准备好的 Compose 服务，不自动构建发布镜像、不执行 PocketBase schema 迁移、不写入测试数据、不构建小程序，也不修改 OpenResty。正式发布仍须按 `.codex/skills/kanyue-deploy/references/deployment-runbook.md` 完成备份、旁路验证、schema 迁移和流量切换。
 
 旁路验证 Docker 版本时使用高位端口，并默认只绑定 `127.0.0.1`，不切换线上域名：
 

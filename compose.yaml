@@ -65,5 +65,27 @@ services:
     ports:
       - "${BIND_ADDR:-0.0.0.0}:${ADMIN_PORT:-8080}:80"
 
+  miniapp:
+    profiles: ["test"]
+    build:
+      context: ./ikanyue.taro3
+      dockerfile: Dockerfile.local
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      KANYUE_LOCAL_API_URL: "${KANYUE_LOCAL_API_URL:-http://127.0.0.1:1337}"
+      CHOKIDAR_USEPOLLING: "true"
+    command: pnpm run dev:weapp
+    volumes:
+      - ./ikanyue.taro3:/app
+      - miniapp_node_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /app/dist/app.json"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+
 volumes:
   pocketbase_data:
+  miniapp_node_modules:
