@@ -105,7 +105,7 @@
                     <view class="profile-welcome__bar" />
                     <text class="profile-welcome__eyebrow">MUSICIAN 01</text>
                     <text class="profile-welcome__title">登录你的看乐账户</text>
-                    <text class="profile-welcome__desc">绑定微信手机号后，即可查看活动、课程安排、预约与账户信息。</text>
+                    <text class="profile-welcome__desc">登录后，即可查看活动、课程安排、预约与账户信息。</text>
                     <view class="profile-primary-action" @tap="showLoginPopup">登录 / 注册</view>
                 </view>
                 <view class="profile-note">
@@ -144,19 +144,58 @@
                 <view class="login-popup__bar" />
                 <view class="login-eyebrow">KANYUE ACCOUNT</view>
                 <view class="login-title">登录看乐账户</view>
+                <segmented-control
+                    v-model="loginMode"
+                    class="login-mode-switch"
+                    :options="loginModeOptions"
+                />
                 <view class="login-desc">
-                    <text>授权微信头像、昵称和手机号，用于识别学员或教师并同步课程与账户信息。</text>
+                    <text v-if="loginMode === 'wechat'">授权微信头像、昵称和手机号，用于同步课程与账户信息。</text>
+                    <text v-else>使用手机号和密码进入课程与预约服务。</text>
                 </view>
-                <button
-                    class="wechat-login-btn"
-                    open-type="getPhoneNumber"
-                    :loading="wechatLoginLoading || wechatProfileLoading"
-                    :disabled="wechatLoginLoading || wechatProfileLoading"
-                    @tap="handleWechatTap"
-                    @getphonenumber="handleWechatPhone"
-                >
-                    使用微信手机号一键登录
-                </button>
+                <template v-if="loginMode === 'wechat'">
+                    <button
+                        class="wechat-login-btn"
+                        open-type="getPhoneNumber"
+                        :loading="wechatLoginLoading || wechatProfileLoading"
+                        :disabled="wechatLoginLoading || wechatProfileLoading"
+                        @tap="handleWechatTap"
+                        @getphonenumber="handleWechatPhone"
+                    >
+                        使用微信手机号一键登录
+                    </button>
+                </template>
+                <view v-else class="password-login-form">
+                    <view class="password-login-field">
+                        <text class="password-login-field__label">手机号</text>
+                        <input
+                            class="password-login-field__input password-login-cellphone"
+                            type="number"
+                            maxlength="11"
+                            placeholder="请输入手机号"
+                            :value="passwordCellphone"
+                            @input="handlePasswordCellphoneInput"
+                        />
+                    </view>
+                    <view class="password-login-field">
+                        <text class="password-login-field__label">密码</text>
+                        <input
+                            v-model="passwordValue"
+                            class="password-login-field__input password-login-password"
+                            password
+                            maxlength="64"
+                            placeholder="请输入密码"
+                        />
+                    </view>
+                    <button
+                        class="password-login-btn"
+                        :loading="passwordLoginLoading"
+                        :disabled="passwordLoginLoading"
+                        @tap="handlePasswordLogin"
+                    >
+                        手机号密码登录
+                    </button>
+                </view>
             </view>
         </nut-popup>
 
@@ -206,17 +245,24 @@ import { Api } from '../../../utils/apis';
 import AccountRow from '../../components/AccountRow.vue';
 import AppIcon from '../../components/AppIcon.vue';
 import PageChrome from '../../components/PageChrome.vue';
+import SegmentedControl from '../../components/SegmentedControl.vue';
 import TicketSection from '../../components/TicketSection.vue';
 import { KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import heroTexture from '../../imgs/textures/hero-music.png';
 import { RoleManager } from '../../../utils/rolemanager';
+import { LOGIN_MODE_OPTIONS, normalizeCellphone, validatePasswordLogin } from './pageLogic';
 import './index.scss';
 
 export default {
-    components: { AccountRow, AppIcon, PageChrome, TicketSection },
+    components: { AccountRow, AppIcon, PageChrome, SegmentedControl, TicketSection },
     data() {
         return {
             heroTexture,
+            loginMode: 'wechat',
+            loginModeOptions: LOGIN_MODE_OPTIONS,
+            passwordCellphone: '',
+            passwordLoginLoading: false,
+            passwordValue: '',
             showLogin: false,
             showRolePopup: false,
             kanyueInfoLinks: KANYUE_INFO_LINKS,
@@ -306,6 +352,7 @@ export default {
         handleLoginPopupClose() {
             this.showLogin = false;
             this.resetWechatAuthState();
+            this.resetPasswordAuthState();
         },
         openRoleSwitcher() {
             if (this.roleOptions.length > 1) this.showRolePopup = true;
@@ -318,6 +365,38 @@ export default {
             this.wechatUserInfo = null;
             this.wechatProfileLoading = false;
             this.wechatLoginLoading = false;
+        },
+        resetPasswordAuthState() {
+            this.passwordCellphone = '';
+            this.passwordLoginLoading = false;
+            this.passwordValue = '';
+        },
+        handlePasswordCellphoneInput(event) {
+            this.passwordCellphone = normalizeCellphone(event?.detail?.value);
+        },
+        async handlePasswordLogin() {
+            if (this.passwordLoginLoading) return;
+            const { credentials, error } = validatePasswordLogin({
+                cellphone: this.passwordCellphone,
+                password: this.passwordValue,
+            });
+            if (error) {
+                Taro.showToast({ title: error, icon: 'none' });
+                return;
+            }
+            this.passwordLoginLoading = true;
+            try {
+                await Api.loginWithPassword(credentials.cellphone, credentials.password);
+                this.showLogin = false;
+                this.resetWechatAuthState();
+                this.resetPasswordAuthState();
+                await this.refreshUserInfo();
+                Taro.showToast({ title: '登录成功', icon: 'success' });
+            } catch (loginError) {
+                Taro.showToast({ title: loginError?.message || '登录失败，请重试', icon: 'none' });
+            } finally {
+                this.passwordLoginLoading = false;
+            }
         },
         async handleWechatTap() {
             if (this.wechatUserInfo || this.wechatProfileLoading) {

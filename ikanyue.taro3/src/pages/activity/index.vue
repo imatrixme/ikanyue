@@ -16,6 +16,10 @@
             </view>
         </view>
 
+        <view class="activity-upcoming">
+            <upcoming-lessons ref="upcomingLessons" />
+        </view>
+
         <view class="activity-content">
             <async-state v-if="loading" compact state="loading" title="正在加载活动" />
 
@@ -81,6 +85,8 @@ import ActivityTicket from '../../components/ActivityTicket.vue';
 import AppIcon from '../../components/AppIcon.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
+import UpcomingLessons from '../../components/UpcomingLessons.vue';
+import { RoleManager } from '../../../utils/rolemanager';
 import {
     buildImageDetailUrl,
     createActivityQueryParams,
@@ -91,7 +97,7 @@ import {
 } from './pageLogic';
 
 export default {
-    components: { ActivityTicket, AppIcon, AsyncState, PageChrome },
+    components: { ActivityTicket, AppIcon, AsyncState, PageChrome, UpcomingLessons },
     data() {
         return {
             // 原始活动数据
@@ -126,13 +132,23 @@ export default {
         this.loadAllActivities();
     },
     onShow() {
+        RoleManager.applyTabBar(RoleManager.getRole());
+        Taro.setNavigationBarTitle({ title: '活动' });
+        this.$nextTick(() => this.$refs.upcomingLessons?.refresh());
         // 每次显示页面时自动刷新数据，但保持当前筛选条件
         if (this.allActivities.length > 0) {
             this.refreshActivities();
         }
     },
     async onPullDownRefresh() {
-        await this.refreshActivitiesWithToast();
+        try {
+            await Promise.all([
+                this.refreshActivitiesWithToast(false),
+                this.$refs.upcomingLessons?.refresh(true),
+            ]);
+        } finally {
+            Taro.stopPullDownRefresh();
+        }
     },
     methods: {
         canShowCover(activity) {
@@ -142,7 +158,7 @@ export default {
             this.failedCoverIds = { ...this.failedCoverIds, [id]: true };
         },
         // 手动下拉刷新时使用，带提示
-        async refreshActivitiesWithToast() {
+        async refreshActivitiesWithToast(stopRefresh = true) {
             // 记住当前的筛选索引
             const currentIndex = this.selectedGroupIndex;
 
@@ -171,7 +187,7 @@ export default {
                     duration: 1500,
                 });
             } finally {
-                Taro.stopPullDownRefresh();
+                if (stopRefresh) Taro.stopPullDownRefresh();
             }
         },
 
@@ -192,9 +208,6 @@ export default {
                 this.filterActivitiesByDate();
             } catch (error) {
                 console.error('自动刷新活动失败:', error);
-            } finally {
-                // 确保停止可能的下拉刷新动画
-                Taro.stopPullDownRefresh();
             }
         },
 

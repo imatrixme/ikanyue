@@ -25,7 +25,7 @@ const TEACHER_TABS = Object.freeze([
     },
     {
         index: 2,
-        text: '预约',
+        text: '日历',
         iconPath: 'imgs/icons/tab-booking.png',
         selectedIconPath: 'imgs/icons/tab-booking-selected.png',
     },

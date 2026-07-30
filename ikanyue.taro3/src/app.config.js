@@ -9,6 +9,7 @@ export default defineAppConfig({
         'pages/courseDetail/index',
         'pages/courseLessons/index',
         'pages/courseLessonDetail/index',
+        'pages/teacherLessonDetail/index',
         'pages/courseRecords/index',
         'pages/appointmentBooking/index',
         'pages/appointmentSlots/index',

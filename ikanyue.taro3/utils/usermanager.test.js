@@ -6,10 +6,12 @@ const taroMock = vi.hoisted(() => ({
     setStorageSync: vi.fn(),
     removeStorageSync: vi.fn(),
 }));
+const scheduleManagerMock = vi.hoisted(() => ({ clearAll: vi.fn() }));
 
 vi.mock('@tarojs/taro', () => ({
     default: taroMock,
 }));
+vi.mock('./schedulemanager', () => ({ ScheduleManager: scheduleManagerMock }));
 
 const storageKey = 'com.ikanyue.cache.userinfo';
 
@@ -73,6 +75,13 @@ describe('UserManager', () => {
             avatar: 'https://example.com/avatar.png',
         });
         expect(taroMock.setStorageSync).toHaveBeenCalledWith(storageKey, JSON.stringify(updated));
+        expect(scheduleManagerMock.clearAll).not.toHaveBeenCalled();
+    });
+
+    it('clears schedule state when the active principal or role changes', () => {
+        taroMock.getStorageSync.mockReturnValue(JSON.stringify({ id: 'student_1', role: 'student', token: 'token' }));
+        UserManager.updateUserInfoCache({ id: 'teacher_1', role: 'teacher' });
+        expect(scheduleManagerMock.clearAll).toHaveBeenCalledTimes(1);
     });
 
     it('keeps legacy profile aliases aligned with the updated canonical fields', () => {
@@ -98,6 +107,11 @@ describe('UserManager', () => {
             nickname: '新昵称',
             realName: '新姓名',
             realname: '新姓名',
+        });
+
+        taroMock.getStorageSync.mockReturnValue('{}');
+        expect(UserManager.updateUserInfoCache({ nickname: '旧字段', realname: '旧姓名' })).toMatchObject({
+            nickName: '旧字段', nickname: '旧字段', realName: '旧姓名', realname: '旧姓名',
         });
     });
 
@@ -138,6 +152,7 @@ describe('UserManager', () => {
 
         UserManager.logout();
         expect(taroMock.removeStorageSync).toHaveBeenCalledWith(storageKey);
+        expect(scheduleManagerMock.clearAll).toHaveBeenCalled();
     });
 
     it('normalizes the active business role to student or teacher', () => {

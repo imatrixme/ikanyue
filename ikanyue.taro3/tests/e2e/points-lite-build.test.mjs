@@ -67,6 +67,8 @@ const courseLessonsBundle = await readFile(new URL('../../dist/pages/courseLesso
 const courseLessonsTemplate = await readFile(new URL('../../dist/pages/courseLessons/index.wxml', import.meta.url), 'utf8');
 const courseLessonDetailBundle = await readFile(new URL('../../dist/pages/courseLessonDetail/index.js', import.meta.url), 'utf8');
 const courseLessonDetailTemplate = await readFile(new URL('../../dist/pages/courseLessonDetail/index.wxml', import.meta.url), 'utf8');
+const teacherLessonDetailBundle = await readFile(new URL('../../dist/pages/teacherLessonDetail/index.js', import.meta.url), 'utf8');
+const teacherLessonDetailTemplate = await readFile(new URL('../../dist/pages/teacherLessonDetail/index.wxml', import.meta.url), 'utf8');
 const courseRecordsBundle = await readFile(new URL('../../dist/pages/courseRecords/index.js', import.meta.url), 'utf8');
 const courseRecordsTemplate = await readFile(new URL('../../dist/pages/courseRecords/index.wxml', import.meta.url), 'utf8');
 const userinfoBundle = await readFile(new URL('../../dist/pages/userinfo/index.js', import.meta.url), 'utf8');
@@ -95,6 +97,7 @@ const coursesConfig = JSON.parse(await readFile(new URL('../../dist/pages/course
 const courseDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseDetail/index.json', import.meta.url), 'utf8'));
 const courseLessonsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseLessons/index.json', import.meta.url), 'utf8'));
 const courseLessonDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseLessonDetail/index.json', import.meta.url), 'utf8'));
+const teacherLessonDetailConfig = JSON.parse(await readFile(new URL('../../dist/pages/teacherLessonDetail/index.json', import.meta.url), 'utf8'));
 const courseRecordsConfig = JSON.parse(await readFile(new URL('../../dist/pages/courseRecords/index.json', import.meta.url), 'utf8'));
 const userinfoConfig = JSON.parse(await readFile(new URL('../../dist/pages/userinfo/index.json', import.meta.url), 'utf8'));
 const sharedOutput = `${commonBundle}\n${vendorsBundle}`;
@@ -107,6 +110,7 @@ const coursesOutput = `${sharedOutput}\n${coursesBundle}\n${coursesTemplate}`;
 const courseDetailOutput = `${sharedOutput}\n${courseDetailBundle}\n${courseDetailTemplate}`;
 const courseLessonsOutput = `${sharedOutput}\n${courseLessonsBundle}\n${courseLessonsTemplate}`;
 const courseLessonDetailOutput = `${sharedOutput}\n${courseLessonDetailBundle}\n${courseLessonDetailTemplate}`;
+const teacherLessonDetailOutput = `${sharedOutput}\n${teacherLessonDetailBundle}\n${teacherLessonDetailTemplate}`;
 const courseRecordsOutput = `${sharedOutput}\n${courseRecordsBundle}\n${courseRecordsTemplate}`;
 const userinfoOutput = `${sharedOutput}\n${userinfoBundle}\n${userinfoTemplate}`;
 
@@ -143,6 +147,7 @@ assert.deepEqual(appConfig.pages, [
     'pages/courseDetail/index',
     'pages/courseLessons/index',
     'pages/courseLessonDetail/index',
+    'pages/teacherLessonDetail/index',
     'pages/courseRecords/index',
     'pages/appointmentBooking/index',
     'pages/appointmentSlots/index',
@@ -184,7 +189,7 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     assert.equal(pageConfig.backgroundTextStyle, 'dark');
 });
 [profileConfig, userinfoConfig, coursesConfig, courseDetailConfig, courseLessonsConfig,
-    courseLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
+    courseLessonDetailConfig, teacherLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.backgroundColorTop, '#006241');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'light');
@@ -199,7 +204,8 @@ assert.equal(pointsHistoryConfig.onReachBottomDistance, 120);
 assert.equal(rewardCatalogConfig.enablePullDownRefresh, true);
 assert.equal(profileConfig.enablePullDownRefresh, true);
 assert.equal(userinfoConfig.enablePullDownRefresh, true);
-[coursesConfig, courseDetailConfig, courseLessonsConfig, courseLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
+[coursesConfig, courseDetailConfig, courseLessonsConfig, courseLessonDetailConfig,
+    teacherLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.enablePullDownRefresh, true);
     assert.equal(pageConfig.navigationBarBackgroundColor, '#006241');
 });
@@ -217,9 +223,12 @@ assert.match(commonBundle, /\/v1\/student\/learning\/overview/);
 assert.match(commonBundle, /\/v1\/student\/learning\/courses/);
 assert.match(commonBundle, /\/v1\/student\/learning\/lessons/);
 assert.match(commonBundle, /\/v1\/student\/learning\/records/);
+assert.match(commonBundle, /\/v1\/schedule\/upcoming/);
+assert.match(commonBundle, /\/v1\/teacher\/schedule/);
 assert.equal(commonBundle.includes('/v1/course-credits'), false);
 assertCompiledText(activityOutput, '暂无近期活动');
 assertCompiledText(activityOutput, '活动暂时无法加载');
+assertCompiledText(activityOutput, '近期课程');
 assertCompiledText(commonBundle, '看乐教学');
 assertCompiledText(commonBundle, '关于看乐');
 assert.equal(pointsOutput.includes('看乐积分'), false);
@@ -252,6 +261,8 @@ assertCompiledText(profileOutput, 'MUSICIAN 01');
 assertCompiledText(profileOutput, '积分账户');
 assertCompiledText(profileOutput, '账号资料');
 assertCompiledText(profileOutput, '登录你的看乐账户');
+assertCompiledText(profileOutput, '手机号登录');
+assertCompiledText(profileOutput, '手机号密码登录');
 assertCompiledText(profileOutput, '进入修改');
 assertCompiledText(profileOutput, '了解看乐');
 assertCompiledText(profileOutput, '看乐教学');
@@ -267,10 +278,12 @@ assertCompiledText(courseLessonsOutput, '即将上课');
 assertCompiledText(courseLessonsOutput, '已完成');
 assertCompiledText(courseLessonDetailOutput, '课堂信息');
 assertCompiledText(courseLessonDetailOutput, '出勤结果');
+assertCompiledText(teacherLessonDetailOutput, '正式课程安排');
+assertCompiledText(teacherLessonDetailOutput, '课堂信息');
 assertCompiledText(courseRecordsOutput, '课时记录');
 assert.equal(coursesOutput.includes('/api/collections/'), false);
 assert.equal(courseLessonsOutput.includes('studentId='), false);
-['课程点', '批次', '冻结', '兑换', '预约', '充值'].forEach((forbiddenTerm) => {
+['课程点', '批次', '冻结', '兑换', '充值'].forEach((forbiddenTerm) => {
     assert.equal(
         `${coursesOutput}\n${courseDetailOutput}\n${courseLessonsOutput}\n${courseLessonDetailOutput}\n${courseRecordsOutput}`.includes(forbiddenTerm),
         false,
@@ -366,6 +379,9 @@ assert.equal(pointsSource.includes('name="empty-points"'), false);
 assert.equal(/<app-icon[^>]*(?::size="[0-9]+"|size="[0-9]+")/.test(`${emptyStateSource}\n${accountRowSource}\n${activityTicketSource}\n${sectionHeaderSource}\n${pointsBundle}\n${profileBundle}`), false);
 assert.match(profileSource, /profile-member-pass/);
 assert.match(profileSource, /class="login-popup-shell"/);
+assert.match(profileSource, /Api\.loginWithPassword/);
+assert.match(profileSource, /class="[^"]*password-login-cellphone/);
+assert.match(profileSource, /class="[^"]*password-login-password/);
 assert.equal(profileSource.includes('borderTopLeftRadius'), false);
 assert.match(activityDetailHtmlSource, /import \{ richTextStyles \} from/);
 assert.equal(activityDetailHtmlSource.includes('font-weight:bold'), false);

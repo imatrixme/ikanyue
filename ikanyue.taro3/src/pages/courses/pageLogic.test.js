@@ -30,18 +30,22 @@ describe('student learning presentation', () => {
         const overview = normalizeOverview({
             courses: [{ courseId: 'voice', courseName: '少儿声乐', remainingLessons: '8', scheduledLessons: 2 }],
             nextLesson: lesson({ lessonId: 'next' }),
+            upcomingLessons: [lesson({ lessonId: 'next' }), lesson({ lessonId: 'later' })],
             recentRecords: [{ recordId: 'record', lessonHours: '1', course: { name: '少儿声乐' } }],
             warnings: [{ lessonId: 'next', title: '', message: '' }],
         });
 
         expect(overview.courses[0]).toMatchObject({ courseId: 'voice', remainingLessons: 8, scheduledLessons: 2 });
         expect(overview.nextLesson.lessonId).toBe('next');
+        expect(overview.upcomingLessons.map((item) => item.lessonId)).toEqual(['next', 'later']);
         expect(overview.recentRecords[0].course.name).toBe('少儿声乐');
         expect(overview.warnings[0].title).toBe('课程安排提醒');
         expect(normalizeOverview({ warnings: [{}] }).warnings[0]).toEqual({
             lessonId: '', message: '当前课程安排需要教务老师处理。', startAt: null, title: '课程安排提醒',
         });
-        expect(normalizeOverview()).toEqual({ courses: [], nextLesson: null, recentRecords: [], warnings: [] });
+        expect(normalizeOverview()).toEqual({ courses: [], nextLesson: null, recentRecords: [], upcomingLessons: [], warnings: [] });
+        expect(normalizeOverview({ nextLesson: lesson({ lessonId: 'fallback' }) }).upcomingLessons[0].lessonId).toBe('fallback');
+        expect(normalizeOverview({ upcomingLessons: [lesson({ lessonId: 'derived' })] }).nextLesson.lessonId).toBe('derived');
     });
 
     it('normalizes course details, sources, lessons, and records defensively', () => {
@@ -63,6 +67,8 @@ describe('student learning presentation', () => {
         expect(normalizeSource().status).toBe('pending');
         expect(normalizeLesson()).toMatchObject({ title: '课程', status: 'scheduled', attendanceResult: 'pending' });
         expect(normalizeLesson({ course: { name: '基础声乐' } }).title).toBe('基础声乐');
+        expect(normalizeLesson({ teacherSummary: { count: 1, label: '王老师', items: [{ id: 't1', name: '王老师' }] } }).teacherSummary.label).toBe('王老师');
+        expect(normalizeLesson({ classSummary: { items: [null] } }).classSummary.items[0]).toEqual({ id: '', name: '未命名' });
         expect(normalizeRecord()).toMatchObject({ impact: 'neutral', lessonHours: 0, title: '课时记录' });
     });
 

@@ -190,7 +190,7 @@ export default {
     onShow() {
         this.role = RoleManager.getRole();
         RoleManager.applyTabBar(this.role);
-        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '预约日历' : '积分账户' });
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '课程日历' : '积分账户' });
         if (this.role === 'teacher') this.$nextTick(() => this.$refs.teacherCalendar?.refresh());
         else this.loadPointsLiteData();
     },
@@ -201,9 +201,6 @@ export default {
         } finally {
             Taro.stopPullDownRefresh();
         }
-    },
-    onReachBottom() {
-        if (this.role === 'teacher') this.$refs.teacherCalendar?.loadMore();
     },
     methods: {
         formatPointEventDate,

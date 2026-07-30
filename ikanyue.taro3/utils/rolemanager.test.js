@@ -22,6 +22,7 @@ describe('RoleManager', () => {
         expect(RoleManager.isTeacher()).toBe(true);
         await expect(RoleManager.applyTabBar()).resolves.toBe(true);
         expect(taroMock.setTabBarItem.mock.calls.map(([item]) => item)).toEqual(TEACHER_TABS);
+        expect(TEACHER_TABS[1].text).toBe('日历');
 
         taroMock.setTabBarItem.mockClear();
         await RoleManager.applyTabBar('student');

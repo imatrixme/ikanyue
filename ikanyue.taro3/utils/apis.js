@@ -160,6 +160,10 @@ const getTeacherAppointment = (appointmentId) => iNet.get(`/v1/teacher/appointme
 
 const getTeacherCalendar = (params = {}) => iNet.get('/v1/teacher/calendar', params);
 
+const getTeacherSchedule = (params = {}) => iNet.get('/v1/teacher/schedule', params);
+
+const getUpcomingSchedule = (params = {}) => iNet.get('/v1/schedule/upcoming', params);
+
 const confirmTeacherAppointment = (appointmentId, payload, idempotencyKey) => iNet.post(
     `/v1/teacher/appointments/${appointmentId}/confirm`, payload, true, commandHeaders(idempotencyKey)
 );
@@ -223,6 +227,8 @@ const Api = {
     listTeacherAppointments,
     getTeacherAppointment,
     getTeacherCalendar,
+    getTeacherSchedule,
+    getUpcomingSchedule,
     confirmTeacherAppointment,
     declineTeacherAppointment,
     cancelTeacherAppointment,

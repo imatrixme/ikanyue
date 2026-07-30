@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro';
+import { ScheduleManager } from './schedulemanager';
 
 const kUserInfo = 'com.ikanyue.cache.userinfo';
 
@@ -82,6 +83,7 @@ const updateUserInfoCache = (userInfo) => {
         }
 
         console.log('更新用户缓存:', updatedUserInfo);
+        if (identityOf(currentUserInfo) !== identityOf(updatedUserInfo)) ScheduleManager.clearAll();
         setStorageValue(kUserInfo, JSON.stringify(updatedUserInfo));
         return updatedUserInfo;
     } catch (err) {
@@ -120,8 +122,11 @@ const getRole = () => {
 // 清空用户信息（登出）
 const logout = () => {
     console.log('执行登出，清除用户数据');
+    ScheduleManager.clearAll();
     removeStorageValue(kUserInfo);
 };
+
+const identityOf = (user = {}) => `${user.role === 'teacher' ? 'teacher' : 'student'}:${user.id || user.userId || ''}`;
 
 const UserManager = {
     getUserInfo,

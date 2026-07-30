@@ -1,5 +1,9 @@
 <template>
-    <view class="lesson-row" @tap="$emit('select', lesson)">
+    <view
+        class="lesson-row"
+        :class="{ 'lesson-row--compact': compact, 'lesson-row--prominent': prominent }"
+        @tap="$emit('select', lesson)"
+    >
         <view class="lesson-row__date">
             <text class="lesson-row__day">{{ day }}</text>
             <text class="lesson-row__month">{{ month }}</text>
@@ -10,6 +14,7 @@
                 <text class="lesson-row__status">{{ lessonStatusLabel(lesson.status) }}</text>
             </view>
             <text class="lesson-row__course">{{ lesson.course.name }}</text>
+            <text v-if="contextLabel" class="lesson-row__context">{{ contextLabel }}</text>
             <view class="lesson-row__meta">
                 <text>{{ formatLessonTime(lesson.startAt, lesson.endAt) }}</text>
                 <text v-if="lesson.location">{{ lesson.location }}</text>
@@ -23,16 +28,32 @@
 <script>
 import AppIcon from './AppIcon.vue';
 import { formatLessonTime, lessonStatusLabel } from '../pages/courses/pageLogic';
+import { dateKey } from '../pages/schedule/pageLogic';
 
 export default {
     name: 'LessonRow',
     components: { AppIcon },
     emits: ['select'],
-    props: { lesson: { type: Object, required: true } },
+    props: {
+        compact: { type: Boolean, default: false },
+        lesson: { type: Object, required: true },
+        perspective: { type: String, default: 'student' },
+        prominent: { type: Boolean, default: false },
+    },
     computed: {
-        date() { return this.lesson.startAt ? new Date(this.lesson.startAt) : null; },
-        day() { return this.date && !Number.isNaN(this.date.getTime()) ? String(this.date.getDate()).padStart(2, '0') : '--'; },
-        month() { return this.date && !Number.isNaN(this.date.getTime()) ? `${this.date.getMonth() + 1}月` : '待定'; },
+        contextLabel() {
+            const summaries = this.perspective === 'teacher'
+                ? [this.lesson.classSummary, this.lesson.participantSummary]
+                : [this.lesson.teacherSummary, this.lesson.classSummary];
+            return summaries.map((summary) => summary?.label).filter(Boolean).join(' · ');
+        },
+        dateParts() {
+            if (!this.lesson.startAt) return null;
+            const [, month, day] = dateKey(this.lesson.startAt).split('-');
+            return { day, month: `${Number(month)}月` };
+        },
+        day() { return this.dateParts?.day || '--'; },
+        month() { return this.dateParts?.month || '待定'; },
     },
     methods: { formatLessonTime, lessonStatusLabel },
 };
@@ -42,6 +63,10 @@ export default {
 @import '../styles/tokens';
 
 .lesson-row { align-items: center; background: $ky-surface; display: flex; min-height: 88px; padding: $ky-space-3; }
+.lesson-row--prominent { background: $ky-primary-wash; min-height: 98px; }
+.lesson-row--compact { min-height: 76px; }
+.lesson-row--compact .lesson-row__date { height: 46px; flex-basis: 44px; }
+.lesson-row--compact .lesson-row__day { font-size: $ky-font-size-title; }
 .lesson-row + .lesson-row { border-top: 1px solid $ky-line-tinted; }
 .lesson-row:active { background: $ky-primary-wash; }
 .lesson-row__date { align-items: center; background: $ky-primary-soft; border-radius: $ky-radius-md; display: flex; flex: 0 0 48px; flex-direction: column; height: 52px; justify-content: center; }
@@ -57,6 +82,7 @@ export default {
 .lesson-row__title { color: $ky-ink-strong; flex: 1; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lesson-row__status { color: $ky-primary-strong; flex-shrink: 0; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-semibold; margin-left: $ky-space-2; }
 .lesson-row__course { color: $ky-text-secondary; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+.lesson-row__context { color: $ky-primary-strong; display: block; font-size: $ky-font-size-xs; margin-top: $ky-space-1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lesson-row__meta { color: $ky-text-muted; display: flex; flex-wrap: wrap; font-size: $ky-font-size-xs; gap: $ky-space-2; margin-top: $ky-space-1; }
 .lesson-row__notice { color: $ky-danger; font-size: $ky-font-size-xs; margin-top: $ky-space-2; }
 </style>

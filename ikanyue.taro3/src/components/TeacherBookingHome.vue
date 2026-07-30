@@ -14,6 +14,7 @@
         </page-header>
 
         <view class="teacher-workbench__content">
+            <upcoming-lessons ref="upcomingLessons" />
             <view v-if="state !== 'ready'" class="teacher-workbench__state">
                 <async-state
                     :action-label="state === 'error' ? '重新加载' : ''"
@@ -38,22 +39,6 @@
                     <view v-else class="teacher-workbench__empty">
                         <app-icon name="booking-confirm" size="xl" />
                         <text>当前没有待确认申请</text>
-                    </view>
-                </ticket-section>
-
-                <ticket-section action-label="查看日历" subtitle="已确认时间会锁定，其他学员不可重复预约" title="近期课程" @action="goCalendar">
-                    <view v-if="dashboard.confirmed.length" class="teacher-workbench__list">
-                        <appointment-row
-                            v-for="appointment in dashboard.confirmed"
-                            :key="appointment.appointmentId"
-                            :appointment="appointment"
-                            perspective="teacher"
-                            @select="goDetail"
-                        />
-                    </view>
-                    <view v-else class="teacher-workbench__empty">
-                        <app-icon name="booking-request" size="xl" />
-                        <text>暂无已确认预约</text>
                     </view>
                 </ticket-section>
 
@@ -86,13 +71,16 @@ import AsyncState from './AsyncState.vue';
 import PageChrome from './PageChrome.vue';
 import PageHeader from './PageHeader.vue';
 import TicketSection from './TicketSection.vue';
+import UpcomingLessons from './UpcomingLessons.vue';
 import {
     appointmentDetailUrl, availabilityUrl, bookingErrorMessage, normalizeTeacherDashboard,
 } from '../pages/appointments/pageLogic';
 
 export default {
     name: 'TeacherBookingHome',
-    components: { AccountRow, AppIcon, AppointmentRow, AsyncState, PageChrome, PageHeader, TicketSection },
+    components: {
+        AccountRow, AppIcon, AppointmentRow, AsyncState, PageChrome, PageHeader, TicketSection, UpcomingLessons,
+    },
     data() {
         return { dashboard: normalizeTeacherDashboard(), errorMessage: '', loading: false, requestSerial: 0 };
     },
@@ -110,10 +98,13 @@ export default {
             const suffix = status ? `?status=${status}` : '';
             Taro.navigateTo({ url: `/pages/appointments/index${suffix}` });
         },
-        goCalendar() { Taro.switchTab({ url: '/pages/points/index' }); },
         goDetail(item) { Taro.navigateTo({ url: appointmentDetailUrl(item.appointmentId) }); },
         goAvailability(offering) { Taro.navigateTo({ url: availabilityUrl(offering.offeringId) }); },
         async refresh(force = false) {
+            await this.$nextTick();
+            return Promise.all([this.loadDashboard(force), this.$refs.upcomingLessons?.refresh(force)]);
+        },
+        async loadDashboard(force = false) {
             if (this.loading && !force) return;
             const requestId = this.requestSerial + 1;
             this.requestSerial = requestId;

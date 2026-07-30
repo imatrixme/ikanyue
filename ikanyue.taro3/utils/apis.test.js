@@ -240,6 +240,8 @@ describe('Api page-facing request wrappers', () => {
         await Api.listTeacherAppointments({ status: 'pending' });
         await Api.getTeacherAppointment('appointment');
         await Api.getTeacherCalendar({ page: 1 });
+        await Api.getTeacherSchedule({ from: 'start', to: 'end' });
+        await Api.getUpcomingSchedule({ limit: 3 });
         await Api.getTeacherAvailability('offering');
         await Api.confirmTeacherAppointment('appointment', { reason: '' }, 'confirm-key');
         await Api.declineTeacherAppointment('appointment', { reason: '时间冲突' }, 'decline-key');
@@ -249,11 +251,13 @@ describe('Api page-facing request wrappers', () => {
         await Api.createTeacherAvailabilityOverride('offering', { type: 'unavailable' }, 'override-key');
         await Api.cancelTeacherAvailabilityOverride('override', 'override-cancel-key');
 
-        expect(iNetMock.get.mock.calls.slice(-5)).toEqual([
+        expect(iNetMock.get.mock.calls.slice(-7)).toEqual([
             ['/v1/teacher/booking/dashboard'],
             ['/v1/teacher/appointments', { status: 'pending' }],
             ['/v1/teacher/appointments/appointment'],
             ['/v1/teacher/calendar', { page: 1 }],
+            ['/v1/teacher/schedule', { from: 'start', to: 'end' }],
+            ['/v1/schedule/upcoming', { limit: 3 }],
             ['/v1/teacher/offerings/offering/availability'],
         ]);
         expect(iNetMock.put).toHaveBeenCalledWith(

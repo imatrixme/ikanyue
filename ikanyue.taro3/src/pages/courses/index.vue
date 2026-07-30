@@ -59,9 +59,16 @@
                     </view>
                 </ticket-section>
 
-                <ticket-section v-if="overview.nextLesson" action-label="全部日程" subtitle="下一节已安排课程" title="即将上课" @action="goLessons">
+                <ticket-section v-if="overview.upcomingLessons.length" action-label="全部日程" subtitle="接下来 3 节已安排课程" title="即将上课" @action="goLessons">
                     <view class="courses-list">
-                        <lesson-row :lesson="overview.nextLesson" @select="goLesson" />
+                        <lesson-row
+                            v-for="(lesson, index) in overview.upcomingLessons"
+                            :key="lesson.lessonId"
+                            :compact="index > 0"
+                            :lesson="lesson"
+                            :prominent="index === 0"
+                            @select="goLesson"
+                        />
                     </view>
                 </ticket-section>
 
@@ -120,7 +127,11 @@ export default {
         remainingLessons() { return this.overview.courses.reduce((sum, course) => sum + course.remainingLessons, 0); },
         scheduledLessons() { return this.overview.courses.reduce((sum, course) => sum + course.scheduledLessons, 0); },
         state() {
-            return pageState({ error: this.errorMessage, items: this.overview.courses, loading: this.loading });
+            return pageState({
+                error: this.errorMessage,
+                items: this.overview.courses.length ? this.overview.courses : this.overview.upcomingLessons,
+                loading: this.loading,
+            });
         },
     },
     onShow() {

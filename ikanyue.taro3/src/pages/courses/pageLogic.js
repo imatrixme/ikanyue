@@ -26,10 +26,13 @@ const LESSON_HOUR_STATUS = Object.freeze({
 });
 
 function normalizeOverview(payload = {}) {
+    const upcomingLessons = array(payload.upcomingLessons).map(normalizeLesson).slice(0, 3);
+    const nextLesson = payload.nextLesson ? normalizeLesson(payload.nextLesson) : upcomingLessons[0] || null;
     return {
         courses: array(payload.courses).map(normalizeCourse),
-        nextLesson: payload.nextLesson ? normalizeLesson(payload.nextLesson) : null,
+        nextLesson,
         recentRecords: array(payload.recentRecords).map(normalizeRecord),
+        upcomingLessons: upcomingLessons.length ? upcomingLessons : nextLesson ? [nextLesson] : [],
         warnings: array(payload.warnings).map((warning) => ({
             lessonId: warning.lessonId || '',
             message: warning.message || '当前课程安排需要教务老师处理。',
@@ -85,13 +88,24 @@ function normalizeLesson(lesson = {}) {
             name: lesson.course?.name || '课程',
         },
         endAt: lesson.endAt || null,
+        classSummary: normalizeLessonSummary(lesson.classSummary),
         lessonHourResult: lesson.lessonHourResult || 'pending',
         lessonId: lesson.lessonId || '',
         location: lesson.location || '',
         notice: lesson.notice || '',
         startAt: lesson.startAt || null,
         status: lesson.status || 'scheduled',
+        teacherSummary: normalizeLessonSummary(lesson.teacherSummary),
         title: lesson.title || lesson.course?.name || '课程',
+    };
+}
+
+function normalizeLessonSummary(summary = {}) {
+    return {
+        count: count(summary.count),
+        items: array(summary.items).slice(0, 3).map((item) => ({ id: item?.id || '', name: item?.name || '未命名' })),
+        label: summary.label || '',
+        overflow: count(summary.overflow),
     };
 }
 

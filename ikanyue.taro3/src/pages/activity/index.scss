@@ -81,6 +81,10 @@
     padding: $ky-space-4 $ky-space-3 0;
 }
 
+.activity-upcoming {
+    padding: 0 $ky-space-3;
+}
+
 .activity-state {
     width: 100%;
 }
@@ -144,6 +148,7 @@
     }
 
     .activity-content,
+    .activity-upcoming,
     .activity-links {
         padding-left: $ky-space-2;
         padding-right: $ky-space-2;

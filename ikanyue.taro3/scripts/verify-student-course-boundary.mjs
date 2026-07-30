@@ -29,6 +29,15 @@ const activeBookingComponents = [
     'src/components/TeacherBookingHome.vue',
     'src/components/TeacherCalendarHome.vue',
 ];
+const activeScheduleDirectories = [
+    'src/pages/schedule',
+    'src/pages/teacherLessonDetail',
+];
+const activeScheduleComponents = [
+    'src/components/LessonRow.vue',
+    'src/components/UpcomingLessons.vue',
+    'src/components/TeacherCalendarHome.vue',
+];
 const forbiddenTerms = [
     '课程点', '批次', '冻结', '兑换', '充值',
     '/v1/course-credits', 'credit_batches', 'conversion-authorizations',
@@ -64,9 +73,14 @@ const bookingSourceFiles = [
     ...(await Promise.all(activeBookingDirectories.map((directory) => collect(join(root, directory))))).flat(),
     ...activeBookingComponents.map((file) => join(root, file)),
 ];
+const scheduleSourceFiles = [
+    ...(await Promise.all(activeScheduleDirectories.map((directory) => collect(join(root, directory))))).flat(),
+    ...activeScheduleComponents.map((file) => join(root, file)),
+];
 const sourceFiles = [
     ...courseSourceFiles,
     ...bookingSourceFiles,
+    ...scheduleSourceFiles,
     join(root, 'utils/apis.js'),
 ];
 
@@ -104,7 +118,7 @@ async function collect(directory) {
     const nested = await Promise.all(entries.map(async (entry) => {
         const path = join(directory, entry.name);
         if (entry.isDirectory()) return collect(path);
-        return ['.js', '.vue', '.scss'].includes(extname(entry.name)) ? [path] : [];
+        return ['.js', '.vue', '.scss'].includes(extname(entry.name)) && !entry.name.endsWith('.test.js') ? [path] : [];
     }));
     return nested.flat();
 }
