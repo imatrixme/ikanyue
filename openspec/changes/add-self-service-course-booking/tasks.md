@@ -25,7 +25,7 @@
 
 - [x] 4.1 Add student booking-option, slot, appointment list/detail/create/withdraw/cancel APIs with student-safe projections.
 - [x] 4.2 Add teacher dashboard, appointment decision, calendar, weekly availability, and date-override APIs with ownership guards.
-- [x] 4.3 Add Admin booking list/detail, policy, offering, availability, cancellation, reschedule, conflict, and backfill APIs.
+- [x] 4.3 Add Admin booking list/detail, pending confirmation/decline, policy, offering, availability, cancellation, reschedule, conflict, and backfill APIs.
 - [x] 4.4 Add OpenAPI definitions, stable error codes, request validation, pagination, idempotency headers, and endpoint contract tests.
 
 ## 5. Mini-Program Experience
@@ -40,7 +40,7 @@
 ## 6. Admin Experience
 
 - [x] 6.1 Add capability-scoped `/appointments` navigation, route, imagegen business icon, dashboard queue, and URL-stable workspace.
-- [x] 6.2 Implement pending queue, list/calendar filters, appointment detail drawer, linked lesson navigation, cancellation, and reschedule dialogs.
+- [x] 6.2 Implement pending queue, list/calendar filters, appointment detail drawer, Admin confirmation/decline, linked lesson navigation, cancellation, and reschedule dialogs.
 - [x] 6.3 Implement policy and teacher-offering management plus weekly availability and date-override workflows using human-readable scenes rather than relation-table CRUD.
 - [x] 6.4 Implement booking conflict and migration queue with actionable context and safe operator resolution states.
 

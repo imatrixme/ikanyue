@@ -38,11 +38,15 @@ The system SHALL keep appointment requests non-blocking until a teacher confirms
 - **THEN** the system rejects the duplicate without creating an additional request
 
 ### Requirement: Atomic Appointment Confirmation
-Teacher confirmation SHALL atomically create the formal lesson, reserve the student's exact lesson hours, assign the teacher and student, claim all occupied time cells, update the appointment, append audit facts, and enqueue notifications.
+Confirmation by the assigned teacher or an authorized Admin SHALL atomically create the formal lesson, reserve the student's exact lesson hours, assign the teacher and student, claim all occupied time cells, update the appointment, append audit facts, and enqueue notifications.
 
 #### Scenario: Teacher confirms an available request
 - **WHEN** the assigned teacher confirms a current pending request whose slot and lesson-hour eligibility remain valid
 - **THEN** one PocketBase SDK Batch commits the session, roster, FEFO reservation, schedule claims, appointment event, state transition, and Outbox records
+
+#### Scenario: Admin confirms for the assigned teacher
+- **WHEN** an authorized Admin confirms a current pending request from the global booking queue
+- **THEN** the same atomic confirmation uses the teacher stored on the appointment, records the Admin actor in audit facts, and does not accept a client-supplied teacher identity
 
 #### Scenario: Concurrent confirmation targets overlapping time
 - **WHEN** two confirmation commands attempt to claim any overlapping teacher or student time cell

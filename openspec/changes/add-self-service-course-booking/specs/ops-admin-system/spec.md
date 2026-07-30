@@ -11,6 +11,10 @@ The Admin system SHALL provide a dedicated `/appointments` workflow for pending 
 - **WHEN** an operator selects a confirmed appointment
 - **THEN** the interface links to the existing lesson workflow for attendance, completion, settlement, and correction
 
+#### Scenario: Administrator handles a pending decision for the teacher
+- **WHEN** an authorized academic operator confirms or declines a pending appointment from its detail drawer
+- **THEN** the system performs the same guarded lifecycle transition as the assigned teacher, records the operator as the Admin actor, and never requires the client to impersonate or submit the teacher identity
+
 ### Requirement: Booking Capability and Ownership Authorization
 The Ops API SHALL enforce Admin, academic capability, teacher ownership, and settlement boundaries for every booking operation.
 
@@ -19,7 +23,7 @@ The Ops API SHALL enforce Admin, academic capability, teacher ownership, and set
 - **THEN** the system limits results and mutations to that teacher's offerings, availability, assigned requests, and linked lessons
 
 #### Scenario: Academic operator manages global bookings
-- **WHEN** an operator with academic capability configures offerings, resolves conflicts, cancels, or reschedules an appointment
+- **WHEN** an operator with academic capability confirms, declines, configures offerings, resolves conflicts, cancels, or reschedules an appointment
 - **THEN** the system permits the action after workflow-state, version, policy, ownership, and audit validation without granting finance or settlement capability
 
 ### Requirement: Booking Policy and Offering Management
