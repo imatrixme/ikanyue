@@ -13,6 +13,7 @@ const {
 } = require('../teachingCommand');
 const { appointmentClaimPlan, releaseClaimPlan } = require('./claimPlanning');
 const { appointmentUpdatePlan, isScheduleConflict } = require('./decisionService');
+const { sameRange } = require('./time');
 
 class AppointmentRescheduleService {
     constructor(repository, queryService, options = {}) {
@@ -45,8 +46,10 @@ class AppointmentRescheduleService {
             from: input.newStartAt,
             to: input.newEndAt,
         });
-        invariant(availability.slots.some((slot) => slot.startAt === input.newStartAt && slot.endAt === input.newEndAt),
-            'BOOKING_SLOT_TAKEN', '新时段已不可预约');
+        invariant(availability.slots.some((slot) => sameRange(
+            slot.startAt, slot.endAt, input.newStartAt, input.newEndAt
+        )),
+        'BOOKING_SLOT_TAKEN', '新时段已不可预约');
         return this.commitReschedule({ appointment, command, input, session });
     }
 

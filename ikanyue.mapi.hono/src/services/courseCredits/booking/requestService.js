@@ -3,6 +3,7 @@ const { create } = require('../reservationRequests');
 const { escapeFilter, fingerprintRequest } = require('../repositories/operationRepository');
 const { relationId } = require('../queryService');
 const { normalizeBookingPolicy, responseDeadline } = require('./policy');
+const { sameRange } = require('./time');
 
 class AppointmentRequestService {
     constructor(repository, queryService, options = {}) {
@@ -42,7 +43,7 @@ class AppointmentRequestService {
             from: input.startAt,
             to: input.endAt,
         });
-        invariant(slots.slots.some((slot) => slot.startAt === input.startAt && slot.endAt === input.endAt),
+        invariant(slots.slots.some((slot) => sameRange(slot.startAt, slot.endAt, input.startAt, input.endAt)),
             'BOOKING_SLOT_UNAVAILABLE', '所选时间当前不可预约');
         const policy = await this.repository.get('booking_policies', relationId(offering.policyId));
         const now = new Date(this.clock()).toISOString();

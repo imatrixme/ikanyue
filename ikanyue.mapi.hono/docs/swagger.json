@@ -4130,6 +4130,61 @@
         }
       }
     },
+    "/ops/course-bookings/appointments/{appointmentId}/confirm": {
+      "post": {
+        "summary": "教务代教师确认待处理预约",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/appointments/{appointmentId}/decline": {
+      "post": {
+        "summary": "教务代教师拒绝待处理预约",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Reason"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
     "/ops/course-bookings/appointments/{appointmentId}/cancel": {
       "post": {
         "summary": "教务取消预约",

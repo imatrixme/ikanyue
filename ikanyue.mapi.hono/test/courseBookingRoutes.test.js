@@ -90,6 +90,8 @@ test('Admin booking routes expose configuration, conflict, backfill, and lifecyc
         ['PUT', '/ops/course-bookings/offerings/offering/availability', { rules: [] }],
         ['POST', '/ops/course-bookings/offerings/offering/availability-overrides', { type: 'unavailable' }],
         ['POST', '/ops/course-bookings/availability-overrides/override/cancel'],
+        ['POST', '/ops/course-bookings/appointments/appointment/confirm'],
+        ['POST', '/ops/course-bookings/appointments/appointment/decline', { reason: '教师临时无空档' }],
         ['POST', '/ops/course-bookings/appointments/appointment/cancel', { reason: '教务取消' }],
         ['POST', '/ops/course-bookings/appointments/appointment/reschedule', { reason: '教务改期' }],
         ['POST', '/ops/course-bookings/conflicts/conflict/resolve', { resolution: '已处理' }],
@@ -106,6 +108,13 @@ test('Admin booking routes expose configuration, conflict, backfill, and lifecyc
         && call.input.offeringId === 'offering');
     assert.equal(update.input.actorRole, 'admin');
     assert.equal(update.input.actorId, 'operator');
+    const confirm = fixture.calls.find((call) => call.name === 'appointmentDecisionService.confirm');
+    assert.equal(confirm.input.actorRole, 'admin');
+    assert.equal(confirm.input.actorId, 'operator');
+    assert.equal(confirm.input.teacherId, undefined);
+    const decline = fixture.calls.find((call) => call.name === 'pendingAppointmentService.decline'
+        && call.input.actorRole === 'admin');
+    assert.equal(decline.input.appointmentId, 'appointment');
 
     const denied = await request(app, 'GET', '/ops/course-bookings/dashboard', token({
         id: 'teacher', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'],

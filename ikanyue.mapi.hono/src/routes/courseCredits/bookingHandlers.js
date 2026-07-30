@@ -246,6 +246,16 @@ function createCourseBookingHandlers(options) {
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),
             })
         )),
+        confirmOpsAppointment: opsCommand('confirmAppointment', (c, services, _user, body, metadata) => (
+            services.appointmentDecisionService.confirm({
+                ...body, ...metadata, appointmentId: c.req.param('appointmentId'),
+            })
+        )),
+        declineOpsAppointment: opsCommand('declineAppointment', (c, services, _user, body, metadata) => (
+            services.pendingAppointmentService.decline({
+                ...body, ...metadata, appointmentId: c.req.param('appointmentId'),
+            })
+        )),
         rescheduleOpsAppointment: opsCommand('rescheduleAppointment', (c, services, _user, body, metadata) => (
             services.appointmentRescheduleService.reschedule({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),

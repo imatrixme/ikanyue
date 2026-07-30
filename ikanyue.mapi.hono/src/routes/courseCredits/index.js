@@ -151,6 +151,10 @@ function opsBookingRoutes(routes, handlers) {
     protect(routes.get('/ops/course-bookings/reference-data')).handler(handlers.getOpsBookingReferenceData);
     protect(routes.get('/ops/course-bookings/appointments')).handler(handlers.listOpsAppointments);
     protect(routes.get('/ops/course-bookings/appointments/:appointmentId')).handler(handlers.getOpsAppointment);
+    protect(routes.post('/ops/course-bookings/appointments/:appointmentId/confirm'))
+        .handler(handlers.confirmOpsAppointment);
+    protect(routes.post('/ops/course-bookings/appointments/:appointmentId/decline'))
+        .handler(handlers.declineOpsAppointment);
     protect(routes.post('/ops/course-bookings/appointments/:appointmentId/cancel'))
         .handler(handlers.cancelOpsAppointment);
     protect(routes.post('/ops/course-bookings/appointments/:appointmentId/reschedule'))

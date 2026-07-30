@@ -23,4 +23,8 @@ function overlaps(startA, endA, startB, endB) {
     return Date.parse(startA) < Date.parse(endB) && Date.parse(endA) > Date.parse(startB);
 }
 
-module.exports = { addLocalDays, localDateMinuteToIso, localParts, overlaps };
+function sameRange(startA, endA, startB, endB) {
+    return Date.parse(startA) === Date.parse(startB) && Date.parse(endA) === Date.parse(endB);
+}
+
+module.exports = { addLocalDays, localDateMinuteToIso, localParts, overlaps, sameRange };

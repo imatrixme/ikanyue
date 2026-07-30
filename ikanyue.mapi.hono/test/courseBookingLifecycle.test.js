@@ -30,6 +30,17 @@ test('teacher decline and student withdrawal append a guarded pending transition
     );
 });
 
+test('Admin can decline a pending appointment without teacher impersonation', async () => {
+    const repository = lifecycleRepository();
+    const declined = await pendingService(repository).decline(command({
+        actorId: 'operator', actorRole: 'admin', teacherId: undefined, reason: '教务代教师拒绝',
+    }));
+
+    assert.equal(declined.status, 'declined');
+    assert.equal(updateFor(repository.plan, 'appointment_requests').status, 'declined');
+    assert.equal(repository.plan.find((item) => item.collection === 'appointment_events').data.actorRole, 'admin');
+});
+
 test('pending appointment transitions reject missing owners, missing reasons, and stale state', async () => {
     await assert.rejects(pendingService(lifecycleRepository()).decline(command({ appointmentId: '' })),
         hasCode('APPOINTMENT_ID_REQUIRED'));

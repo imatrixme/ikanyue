@@ -15,10 +15,11 @@ class PendingAppointmentService {
     }
 
     async decline(input = {}) {
-        validateInput(input, 'teacherId');
+        validateInput(input, 'teacherId', true);
         invariant(typeof input.reason === 'string' && input.reason.trim(),
             'APPOINTMENT_DECLINE_REASON_REQUIRED', '请填写拒绝原因');
         return this.transition('declineAppointment', 'decline_appointment', 'declined', input, (appointment) => {
+            if (input.actorRole === 'admin') return;
             invariant(relationId(appointment.teacherId) === input.teacherId,
                 'APPOINTMENT_TEACHER_FORBIDDEN', '不能处理其他教师的预约');
         });
@@ -62,9 +63,10 @@ class PendingAppointmentService {
     }
 }
 
-function validateInput(input, ownerField) {
+function validateInput(input, ownerField, allowAdmin = false) {
     invariant(typeof input.appointmentId === 'string' && input.appointmentId,
         'APPOINTMENT_ID_REQUIRED', '预约编号不能为空');
+    if (allowAdmin && input.actorRole === 'admin') return;
     invariant(typeof input[ownerField] === 'string' && input[ownerField],
         'APPOINTMENT_OWNER_REQUIRED', '预约操作人不能为空');
 }

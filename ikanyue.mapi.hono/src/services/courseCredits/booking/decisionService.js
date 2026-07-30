@@ -20,6 +20,7 @@ const { appointmentClaimPlan } = require('./claimPlanning');
 const { materializeAppointment } = require('./materialization');
 const { event } = require('./requestService');
 const { transitionAppointment } = require('./state');
+const { sameRange } = require('./time');
 
 class AppointmentDecisionService {
     constructor(repository, queryService, options = {}) {
@@ -36,7 +37,7 @@ class AppointmentDecisionService {
         });
         if (command.replay) return command.replay;
         const appointment = await this.repository.get('appointment_requests', input.appointmentId);
-        requireTeacherAppointment(appointment, input.teacherId);
+        authorizeDecision(appointment, input);
         if (Date.parse(appointment.responseDeadline) <= Date.parse(command.at)) {
             return this.closePending(command, appointment, input, 'expired', '教师响应期限已过');
         }
@@ -72,8 +73,9 @@ class AppointmentDecisionService {
             from: appointment.requestedStartAt,
             to: appointment.requestedEndAt,
         });
-        invariant(availability.slots.some((slot) => slot.startAt === appointment.requestedStartAt
-            && slot.endAt === appointment.requestedEndAt),
+        invariant(availability.slots.some((slot) => sameRange(
+            slot.startAt, slot.endAt, appointment.requestedStartAt, appointment.requestedEndAt
+        )),
         'BOOKING_SLOT_TAKEN', '该时段已不可预约');
         return this.commitConfirmation({ appointment, batches, command, course, input, offering, planning, teacherRule });
     }
@@ -228,11 +230,21 @@ function requireTeacherAppointment(appointment, teacherId) {
     invariant(appointment.status === 'pending', 'APPOINTMENT_NOT_PENDING', '预约已被处理');
 }
 
+function authorizeDecision(appointment, input) {
+    if (input.actorRole === 'admin') {
+        invariant(appointment?.status === 'pending', 'APPOINTMENT_NOT_PENDING', '预约已被处理');
+        return;
+    }
+    requireTeacherAppointment(appointment, input.teacherId);
+}
+
 function validateDecisionInput(input) {
     invariant(typeof input.appointmentId === 'string' && input.appointmentId,
         'APPOINTMENT_ID_REQUIRED', '预约编号不能为空');
-    invariant(typeof input.teacherId === 'string' && input.teacherId,
-        'BOOKING_TEACHER_REQUIRED', '教师编号不能为空');
+    if (input.actorRole !== 'admin') {
+        invariant(typeof input.teacherId === 'string' && input.teacherId,
+            'BOOKING_TEACHER_REQUIRED', '教师编号不能为空');
+    }
 }
 
 function relationId(value) {
@@ -247,6 +259,7 @@ function isScheduleConflict(error = {}) {
 module.exports = {
     AppointmentDecisionService,
     appointmentUpdatePlan,
+    authorizeDecision,
     confirmationResult,
     findTeacherRule,
     isScheduleConflict,

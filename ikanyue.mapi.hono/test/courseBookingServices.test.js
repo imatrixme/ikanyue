@@ -27,6 +27,21 @@ test('teacher confirmation materializes one lesson, reserves hours, and claims b
         .map((item) => item.data.status).sort(), ['confirmed', 'slot_taken']);
 });
 
+test('Admin confirmation reuses the atomic decision without teacher impersonation', async () => {
+    const repository = decisionRepository({ appointment: appointment({
+        requestedStartAt: '2026-08-03 01:00:00.000Z',
+        requestedEndAt: '2026-08-03 02:00:00.000Z',
+    }) });
+    const result = await decisionService(repository).confirm(confirmCommand({
+        actorId: 'operator', actorRole: 'admin', teacherId: undefined,
+    }));
+
+    assert.equal(result.status, 'confirmed');
+    assert.equal(created(repository.plan, 'credit_operations').actorRole, 'admin');
+    assert.equal(created(repository.plan, 'appointment_events').actorRole, 'admin');
+    assert.equal(created(repository.plan, 'session_teachers').teacherId, 'teacher');
+});
+
 test('confirmation closes an expired or no-longer-eligible request without partial lesson records', async () => {
     const expiredRepository = decisionRepository({ appointment: appointment({ responseDeadline: NOW }) });
     const expired = await decisionService(expiredRepository).confirm(confirmCommand());
