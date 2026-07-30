@@ -10,6 +10,7 @@ import type {
   BookingCommandResult,
   BookingConflict,
   BookingDashboard,
+  BookingEvent,
   BookingListQuery,
   BookingOffering,
   BookingOfferingInput,
@@ -25,6 +26,8 @@ export interface BookingOpsApi {
   getBookingReferenceData(token: string): Promise<BookingReferenceData>
   listBookingAppointments(token: string, query?: BookingAppointmentQuery): Promise<BookingPage<BookingAppointment>>
   getBookingAppointment(token: string, appointmentId: string): Promise<BookingAppointmentDetail>
+  confirmBookingAppointment(token: string, appointmentId: string): Promise<BookingCommandResult>
+  declineBookingAppointment(token: string, appointmentId: string, reason: string): Promise<BookingCommandResult>
   cancelBookingAppointment(token: string, appointmentId: string, reason: string): Promise<BookingCommandResult>
   rescheduleBookingAppointment(token: string, appointmentId: string, newStartAt: string, newEndAt: string, reason: string): Promise<BookingCommandResult>
   listBookingPolicies(token: string, query?: BookingListQuery): Promise<BookingPage<BookingPolicy>>
@@ -53,6 +56,8 @@ export function createHttpBookingOpsApi(baseUrl: string): BookingOpsApi {
     getBookingReferenceData: (token) => request(`${baseUrl}/course-bookings/reference-data`, { token }),
     listBookingAppointments: (token, query = {}) => request(`${baseUrl}/course-bookings/appointments${toQuery(query)}`, { token }),
     getBookingAppointment: (token, id) => request(`${baseUrl}/course-bookings/appointments/${encodeURIComponent(id)}`, { token }),
+    confirmBookingAppointment: (token, id) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/confirm`, {}),
+    declineBookingAppointment: (token, id, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/decline`, { reason }),
     cancelBookingAppointment: (token, id, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/cancel`, { reason }),
     rescheduleBookingAppointment: (token, id, newStartAt, newEndAt, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/reschedule`, { newStartAt, newEndAt, reason }),
     listBookingPolicies: (token, query = {}) => request(`${baseUrl}/course-bookings/policies${toQuery(query)}`, { token }),
@@ -85,6 +90,18 @@ export function createMockBookingOpsApi(): BookingOpsApi {
     async getBookingAppointment(_token, id) {
       const appointment = requireAppointment(store, id)
       return clone({ ...appointment, events: store.events.filter((item) => item.appointmentId === id), claims: store.claims.filter((item) => item.appointmentId === id) })
+    },
+    async confirmBookingAppointment(_token, id) {
+      const appointment = requirePendingAppointment(store, id)
+      Object.assign(appointment, { status: 'confirmed', lessonId: `lesson_${id}`, canCancel: true, canConfirm: false, canDecline: false })
+      store.events.push({ id: `event_confirm_${id}`, appointmentId: id, eventType: 'confirmed', fromStatus: 'pending', toStatus: 'confirmed', actorRole: 'admin', created: new Date().toISOString() })
+      return { appointmentId: id, lessonId: appointment.lessonId, status: 'confirmed' }
+    },
+    async declineBookingAppointment(_token, id, reason) {
+      const appointment = requirePendingAppointment(store, id)
+      Object.assign(appointment, { status: 'declined', responseReason: reason, canConfirm: false, canDecline: false })
+      store.events.push({ id: `event_decline_${id}`, appointmentId: id, eventType: 'declined', fromStatus: 'pending', toStatus: 'declined', actorRole: 'admin', reason, created: new Date().toISOString() })
+      return { appointmentId: id, status: 'declined' }
     },
     async cancelBookingAppointment(_token, id, reason) {
       const appointment = requireAppointment(store, id)
@@ -203,7 +220,7 @@ function createMockBookingStore() {
     policies,
     offerings,
     referenceData,
-    events: [{ id: 'event_1', appointmentId: 'appointment_1', eventType: 'requested', toStatus: 'pending', actorRole: 'student', created: '2026-08-01T02:00:00.000Z' }],
+    events: [{ id: 'event_1', appointmentId: 'appointment_1', eventType: 'requested', toStatus: 'pending', actorRole: 'student', created: '2026-08-01T02:00:00.000Z' }] as Array<BookingEvent & { appointmentId: string }>,
     claims: [{ id: 'claim_1', appointmentId: 'appointment_2', ownerType: 'teacher' as const, ownerId: 'teacher_1', cellStartAt: '2026-08-04T06:00:00.000Z', cellEndAt: '2026-08-04T06:15:00.000Z', status: 'active' as const }],
     rules: [{ id: 'rule_1', teacherId: 'teacher_1', offeringId: 'offering_1', weekday: 1, startMinute: 540, endMinute: 660, status: 'active' }] as BookingWeeklyRule[],
     overrides: [{ id: 'override_1', teacherId: 'teacher_1', offeringId: 'offering_1', type: 'unavailable', startAt: '2026-08-10T01:00:00.000Z', endAt: '2026-08-10T02:00:00.000Z', reason: '教师培训', status: 'active' }] as BookingAvailabilityOverride[],
@@ -243,6 +260,12 @@ function filterAppointments(items: BookingAppointment[], query: BookingAppointme
 function requireAppointment(store: ReturnType<typeof createMockBookingStore>, id: string) {
   const record = store.appointments.find((item) => item.appointmentId === id)
   if (!record) throw new Error('预约不存在')
+  return record
+}
+
+function requirePendingAppointment(store: ReturnType<typeof createMockBookingStore>, id: string) {
+  const record = requireAppointment(store, id)
+  if (record.status !== 'pending') throw new Error('预约已被处理')
   return record
 }
 

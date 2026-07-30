@@ -1,4 +1,4 @@
-import { CalendarDays, Eye, RotateCw, XCircle } from 'lucide-react'
+import { Ban, CalendarDays, CheckCircle2, Eye, RotateCw, XCircle } from 'lucide-react'
 import { useState } from 'react'
 
 import type { BookingAppointment, BookingAppointmentDetail } from '../../app/bookingTypes'
@@ -16,18 +16,20 @@ export type AppointmentDisplayMode = 'list' | 'calendar'
 interface AppointmentListProps {
   appointments: BookingAppointment[]
   error: string
+  filtered?: boolean
   loading: boolean
   mode: AppointmentDisplayMode
   onModeChange: (mode: AppointmentDisplayMode) => void
   onOpen: (appointment: BookingAppointment) => void
   onPageChange: (page: number) => void
+  onReset?: () => void
   page: number
   totalItems: number
   totalPages: number
 }
 
-export function BookingAppointmentList({ appointments, error, loading, mode, onModeChange, onOpen, onPageChange, page, totalItems, totalPages }: AppointmentListProps) {
-  const empty = appointments.length === 0 ? <EmptyState noun="预约记录" /> : undefined
+export function BookingAppointmentList({ appointments, error, filtered = false, loading, mode, onModeChange, onOpen, onPageChange, onReset, page, totalItems, totalPages }: AppointmentListProps) {
+  const empty = appointments.length === 0 ? <EmptyState filtered={filtered} noun="预约记录" onReset={onReset} /> : undefined
   return (
     <div>
       <div className="flex justify-end border-b border-[var(--border)] px-4 py-3">
@@ -69,22 +71,33 @@ interface DetailProps {
   loading: boolean
   onCancel: () => void
   onClose: () => void
+  onConfirm: () => void
+  onDecline: () => void
   onLesson: (lessonId: string) => void
   onReschedule: () => void
 }
 
-export function BookingAppointmentDrawer({ detail, loading, onCancel, onClose, onLesson, onReschedule }: DetailProps) {
+export function BookingAppointmentDrawer({ detail, loading, onCancel, onClose, onConfirm, onDecline, onLesson, onReschedule }: DetailProps) {
   const editable = ['confirmed', 'rescheduled'].includes(detail.status)
   return (
     <DrawerShell description={`${formatDate(detail.startAt)} ${formatTimeRange(detail.startAt, detail.endAt)}`} onRequestClose={onClose} size="wide" title={`${detail.course.name}预约`}>
       <div className="grid gap-6 p-5">
-        <div className="flex flex-wrap items-center gap-2"><BookingStatusBadge status={detail.status} />{detail.lessonId ? <Button icon={<CalendarDays className="h-4 w-4" />} onClick={() => onLesson(detail.lessonId)} type="button" variant="secondary">关联课堂</Button> : null}{editable ? <Button disabled={loading} icon={<RotateCw className="h-4 w-4" />} onClick={onReschedule} type="button" variant="secondary">调整时间</Button> : null}{editable ? <Button disabled={loading} icon={<XCircle className="h-4 w-4" />} onClick={onCancel} type="button" variant="danger">取消预约</Button> : null}</div>
+        <div className="flex flex-wrap items-center gap-2"><BookingStatusBadge status={detail.status} />{detail.canConfirm ? <Button disabled={loading} icon={<CheckCircle2 className="h-4 w-4" />} onClick={onConfirm} type="button">代教师确认</Button> : null}{detail.canDecline ? <Button disabled={loading} icon={<Ban className="h-4 w-4" />} onClick={onDecline} type="button" variant="danger">拒绝预约</Button> : null}{detail.lessonId ? <Button icon={<CalendarDays className="h-4 w-4" />} onClick={() => onLesson(detail.lessonId)} type="button" variant="secondary">关联课堂</Button> : null}{editable ? <Button disabled={loading} icon={<RotateCw className="h-4 w-4" />} onClick={onReschedule} type="button" variant="secondary">调整时间</Button> : null}{editable ? <Button disabled={loading} icon={<XCircle className="h-4 w-4" />} onClick={onCancel} type="button" variant="danger">取消预约</Button> : null}</div>
         <section className="grid gap-3"><SectionHeader title="预约信息" /><dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2"><DetailItem label="学员" value={detail.student.name} /><DetailItem label="教师" value={detail.teacher.name} /><DetailItem label="地点" value={detail.location || '待确认'} /><DetailItem label="响应截止" value={formatDateTime(detail.responseDeadline)} /><DetailItem label="学员备注" value={detail.note || '无'} /><DetailItem label="处理说明" value={detail.responseReason || '无'} /></dl></section>
         <section className="grid gap-3"><SectionHeader description="按发生顺序保留申请、确认、改期和取消记录。" title="处理记录" />{detail.events.length ? <div className="divide-y divide-[var(--border)] rounded-md border border-[var(--border)]">{detail.events.map((event) => <div className="grid gap-1 px-3 py-3 sm:grid-cols-[9rem_1fr]" key={event.id}><div><p className="text-sm font-semibold">{bookingEventLabel(event.eventType)}</p><p className="text-xs text-[var(--muted-foreground)]">{formatDateTime(event.created)}</p></div><div className="text-sm"><p>{event.fromStatus ? `${bookingStatusLabel(event.fromStatus)} → ` : ''}{bookingStatusLabel(event.toStatus)}</p><p className="text-xs text-[var(--muted-foreground)]">{event.reason || actorLabel(event.actorRole)}</p></div></div>)}</div> : <p className="text-sm text-[var(--muted-foreground)]">暂无处理记录。</p>}</section>
         <section className="grid gap-3"><SectionHeader description="用于防止教师或学员在同一时间重复排课。" title="时间占用明细" />{detail.claims.length ? <div className="grid gap-2">{detail.claims.map((claim) => <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] px-3 py-2 text-sm" key={claim.id}><div><p className="font-medium">{claimOwnerLabel(claim.ownerType)}</p><p className="text-xs text-[var(--muted-foreground)]">{formatTimeRange(claim.cellStartAt, claim.cellEndAt)}</p></div><Badge tone={claim.status === 'active' ? 'green' : 'neutral'}>{claim.status === 'active' ? '占用中' : '已释放'}</Badge></div>)}</div> : <p className="text-sm text-[var(--muted-foreground)]">待确认预约不会占用时间。</p>}</section>
       </div>
     </DrawerShell>
   )
+}
+
+export function BookingConfirmDialog({ loading, onClose, onConfirm }: { loading: boolean; onClose: () => void; onConfirm: () => Promise<void> }) {
+  return <DialogShell description="确认后将立即创建正式课堂、预留学员课时，并占用教师与学员时间。" onRequestClose={onClose} size="compact" title="代教师确认预约"><div className="grid gap-4 p-5"><p className="text-sm text-[var(--muted-foreground)]">请确认教师已经接受本次预约安排。</p><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">返回</Button><Button disabled={loading} icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => void onConfirm()} type="button">确认预约</Button></div></div></DialogShell>
+}
+
+export function BookingDeclineDialog({ loading, onClose, onConfirm }: { loading: boolean; onClose: () => void; onConfirm: (reason: string) => Promise<void> }) {
+  const [reason, setReason] = useState('')
+  return <DialogShell description="拒绝后预约将关闭，学员可以重新选择其他教师或时间。" onRequestClose={onClose} size="compact" title="拒绝预约"><form className="grid gap-4 p-5" onSubmit={(event) => { event.preventDefault(); if (reason.trim().length >= 2) void onConfirm(reason.trim()) }}><Field htmlFor="booking-decline-reason" label="拒绝原因"><Textarea id="booking-decline-reason" minLength={2} onChange={(event) => setReason(event.target.value)} placeholder="说明无法接受本次预约的原因" required value={reason} /></Field><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">返回</Button><Button disabled={loading || reason.trim().length < 2} type="submit" variant="danger">确认拒绝</Button></div></form></DialogShell>
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {
@@ -109,7 +122,7 @@ export function BookingStatusBadge({ status }: { status: string }) {
 }
 
 function bookingStatusLabel(status: string) {
-  return ({ pending: '待教师确认', confirmed: '已确认', declined: '已拒绝', withdrawn: '学员已撤回', expired: '已过期', slot_taken: '时段已被占用', eligibility_lost: '课时已不可用', cancelled: '已取消', rescheduled: '已改期', fulfilled: '已完成' } as Record<string, string>)[status] || status
+  return ({ pending: '待确认', confirmed: '已确认', declined: '已拒绝', withdrawn: '学员已撤回', expired: '已过期', slot_taken: '时段已被占用', eligibility_lost: '课时已不可用', cancelled: '已取消', rescheduled: '已改期', fulfilled: '已完成' } as Record<string, string>)[status] || status
 }
 
 function statusTone(status: string): 'neutral' | 'green' | 'amber' | 'red' | 'blue' {
@@ -120,7 +133,7 @@ function statusTone(status: string): 'neutral' | 'green' | 'amber' | 'red' | 'bl
 }
 
 function bookingEventLabel(type: string) {
-  return ({ requested: '发起预约', confirmed: '教师确认', declined: '教师拒绝', withdrawn: '学员撤回', expired: '等待超时', slot_taken: '时段冲突', eligibility_lost: '课时失效', cancelled: '取消预约', rescheduled: '调整时间', fulfilled: '完成课程' } as Record<string, string>)[type] || type
+  return ({ requested: '发起预约', confirmed: '确认预约', declined: '拒绝预约', withdrawn: '学员撤回', expired: '等待超时', slot_taken: '时段冲突', eligibility_lost: '课时失效', cancelled: '取消预约', rescheduled: '调整时间', fulfilled: '完成课程' } as Record<string, string>)[type] || type
 }
 
 function actorLabel(role: string) { return ({ student: '学员操作', teacher: '教师操作', admin: '教务操作', worker: '系统任务' } as Record<string, string>)[role] || role }

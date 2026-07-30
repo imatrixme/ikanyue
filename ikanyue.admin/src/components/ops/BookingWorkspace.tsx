@@ -12,7 +12,7 @@ import { IconButton } from '../ui/Controls'
 import { Tabs } from '../ui/DataDisplay'
 import { Field, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
-import { BookingAppointmentDrawer, BookingAppointmentList, BookingCancelDialog, BookingRescheduleDialog, type AppointmentDisplayMode } from './BookingAppointmentViews'
+import { BookingAppointmentDrawer, BookingAppointmentList, BookingCancelDialog, BookingConfirmDialog, BookingDeclineDialog, BookingRescheduleDialog, type AppointmentDisplayMode } from './BookingAppointmentViews'
 import { BookingConfigurationViews } from './BookingConfigurationViews'
 import { BookingConflictViews } from './BookingConflictViews'
 
@@ -27,6 +27,7 @@ export function BookingWorkspace({ api, token }: { api: OpsApi; token: string })
   const [references, setReferences] = useState<BookingReferenceData>(emptyReferences)
   const [appointments, setAppointments] = useState<BookingAppointment[]>([])
   const [detail, setDetail] = useState<BookingAppointmentDetail | null>(null)
+  const [decisionDialog, setDecisionDialog] = useState<'confirm' | 'decline' | null>(null)
   const [cancelDialog, setCancelDialog] = useState(false)
   const [rescheduleDialog, setRescheduleDialog] = useState(false)
   const [pageInfo, setPageInfo] = useState({ page: 1, totalItems: 0, totalPages: 0 })
@@ -89,6 +90,14 @@ export function BookingWorkspace({ api, token }: { api: OpsApi; token: string })
     if (!detail) return
     await runAction(async () => api.cancelBookingAppointment(token, detail.appointmentId, reason), '取消预约失败')
   }
+  async function confirmAppointment() {
+    if (!detail) return
+    await runAction(async () => api.confirmBookingAppointment(token, detail.appointmentId), '确认预约失败')
+  }
+  async function declineAppointment(reason: string) {
+    if (!detail) return
+    await runAction(async () => api.declineBookingAppointment(token, detail.appointmentId, reason), '拒绝预约失败')
+  }
   async function rescheduleAppointment(startAt: string, endAt: string, reason: string) {
     if (!detail) return
     await runAction(async () => api.rescheduleBookingAppointment(token, detail.appointmentId, startAt, endAt, reason), '调整预约时间失败')
@@ -96,7 +105,7 @@ export function BookingWorkspace({ api, token }: { api: OpsApi; token: string })
   async function runAction(action: () => Promise<unknown>, fallback: string) {
     setLoading(true); setError('')
     try {
-      await action(); setCancelDialog(false); setRescheduleDialog(false); setDetail(null)
+      await action(); setDecisionDialog(null); setCancelDialog(false); setRescheduleDialog(false); setDetail(null)
       await Promise.all([loadAppointments(), loadSummary()])
     } catch (actionError) { setError(message(actionError, fallback)); setLoading(false) }
   }
@@ -108,8 +117,9 @@ export function BookingWorkspace({ api, token }: { api: OpsApi; token: string })
   }
 
   const hasFilters = Boolean(status || teacherId || courseSpecId || from || to)
-  const titleBadge = dashboard ? `${dashboard.pendingCount} 个待确认` : '预约运营'
-  return <WorkspacePanel><PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新预约工作区" onClick={() => { void loadSummary(); if (tab === 'appointments') void loadAppointments() }} type="button" />} badge={<Badge tone={dashboard?.pendingCount ? 'amber' : 'green'}>{titleBadge}</Badge>} description="集中处理学员预约、机构策略、教师开放时间与历史排课冲突。" eyebrow="一对一课程预约" icon={viewBusinessIcons.appointments} title="课程预约" /><SummaryBand><SummaryMetric label="待教师确认" value={dashboard?.pendingCount ?? '-'} /><SummaryMetric label="已确认待上课" value={dashboard?.upcoming.length ?? '-'} /><SummaryMetric label="开放冲突" value={dashboard?.openConflictCount ?? '-'} /><SummaryMetric label="可预约教师" value={references.teachers.length || '-'} /></SummaryBand><div className="px-4 sm:px-5"><Tabs label="预约工作区" onChange={(value) => setParam('tab', value, false)} options={[{ label: '预约队列', value: 'appointments' }, { label: '开放配置', value: 'configuration' }, { label: '冲突与迁移', value: 'conflicts' }]} value={tab} /></div>{error && tab !== 'appointments' ? <p className="border-b border-[var(--border)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--destructive)]">{error}</p> : null}{tab === 'appointments' ? <><FilterToolbar className="sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]"><Field htmlFor="booking-status-filter" label="预约状态"><Select allowEmpty id="booking-status-filter" onChange={(event) => setParam('status', event.target.value)} options={statusOptions} placeholder="全部状态" value={status} /></Field><Field htmlFor="booking-teacher-filter" label="教师"><Select allowEmpty id="booking-teacher-filter" onChange={(event) => setParam('teacherId', event.target.value)} options={references.teachers.map((item) => ({ label: item.name, value: item.id }))} placeholder="全部教师" value={teacherId} /></Field><Field htmlFor="booking-course-filter" label="课程"><Select allowEmpty id="booking-course-filter" onChange={(event) => setParam('courseSpecId', event.target.value)} options={references.courses.map((item) => ({ label: item.name, value: item.id }))} placeholder="全部课程" value={courseSpecId} /></Field><Field htmlFor="booking-from-filter" label="开始日期"><Input id="booking-from-filter" onChange={(event) => setParam('from', event.target.value)} type="date" value={from} /></Field><Field htmlFor="booking-to-filter" label="结束日期"><Input id="booking-to-filter" min={from || undefined} onChange={(event) => setParam('to', event.target.value)} type="date" value={to} /></Field><Button className="self-end" disabled={!hasFilters} icon={<RotateCcw className="h-4 w-4" />} onClick={clearFilters} type="button" variant="secondary">重置</Button></FilterToolbar><BookingAppointmentList appointments={appointments} error={error} loading={loading} mode={mode} onModeChange={(value) => setParam('mode', value, false)} onOpen={(item) => void openAppointment(item)} onPageChange={(value) => setParam('page', String(value), false)} page={pageInfo.page} totalItems={pageInfo.totalItems} totalPages={pageInfo.totalPages} /></> : null}{tab === 'configuration' ? <BookingConfigurationViews api={api} referenceData={references} token={token} /> : null}{tab === 'conflicts' ? <BookingConflictViews api={api} referenceData={references} token={token} /> : null}{detail && !cancelDialog && !rescheduleDialog ? <BookingAppointmentDrawer detail={detail} loading={loading} onCancel={() => setCancelDialog(true)} onClose={() => setDetail(null)} onLesson={(lessonId) => navigate(`/lessons?sessionId=${encodeURIComponent(lessonId)}`)} onReschedule={() => setRescheduleDialog(true)} /> : null}{detail && cancelDialog ? <BookingCancelDialog loading={loading} onClose={() => setCancelDialog(false)} onConfirm={cancelAppointment} /> : null}{detail && rescheduleDialog ? <BookingRescheduleDialog appointment={detail} loading={loading} onClose={() => setRescheduleDialog(false)} onConfirm={rescheduleAppointment} /> : null}</WorkspacePanel>
+  const titleBadge = dashboard ? `${dashboard.pendingCount} 个待处理` : '预约运营'
+  const visibleDetail = detail && !decisionDialog && !cancelDialog && !rescheduleDialog ? detail : null
+  return <WorkspacePanel><PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新预约工作区" onClick={() => { void loadSummary(); if (tab === 'appointments') void loadAppointments() }} type="button" />} badge={<Badge tone={dashboard?.pendingCount ? 'amber' : 'green'}>{titleBadge}</Badge>} description="集中处理学员预约、机构策略、教师开放时间与历史排课冲突。" eyebrow="一对一课程预约" icon={viewBusinessIcons.appointments} title="课程预约" /><SummaryBand><SummaryMetric label="待处理预约" value={dashboard?.pendingCount ?? '-'} /><SummaryMetric label="已确认待上课" value={dashboard?.upcoming.length ?? '-'} /><SummaryMetric label="开放冲突" value={dashboard?.openConflictCount ?? '-'} /><SummaryMetric label="可预约教师" value={references.teachers.length || '-'} /></SummaryBand><div className="px-4 sm:px-5"><Tabs label="预约工作区" onChange={(value) => setParam('tab', value, false)} options={[{ label: '预约队列', value: 'appointments' }, { label: '开放配置', value: 'configuration' }, { label: '冲突与迁移', value: 'conflicts' }]} value={tab} /></div>{error && tab !== 'appointments' ? <p className="border-b border-[var(--border)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--destructive)]">{error}</p> : null}{tab === 'appointments' ? <><FilterToolbar className="sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]"><Field htmlFor="booking-status-filter" label="预约状态"><Select allowEmpty id="booking-status-filter" onChange={(event) => setParam('status', event.target.value)} options={statusOptions} placeholder="全部状态" value={status} /></Field><Field htmlFor="booking-teacher-filter" label="教师"><Select allowEmpty id="booking-teacher-filter" onChange={(event) => setParam('teacherId', event.target.value)} options={references.teachers.map((item) => ({ label: item.name, value: item.id }))} placeholder="全部教师" value={teacherId} /></Field><Field htmlFor="booking-course-filter" label="课程"><Select allowEmpty id="booking-course-filter" onChange={(event) => setParam('courseSpecId', event.target.value)} options={references.courses.map((item) => ({ label: item.name, value: item.id }))} placeholder="全部课程" value={courseSpecId} /></Field><Field htmlFor="booking-from-filter" label="开始日期"><Input id="booking-from-filter" onChange={(event) => setParam('from', event.target.value)} type="date" value={from} /></Field><Field htmlFor="booking-to-filter" label="结束日期"><Input id="booking-to-filter" min={from || undefined} onChange={(event) => setParam('to', event.target.value)} type="date" value={to} /></Field><Button className="self-end" disabled={!hasFilters} icon={<RotateCcw className="h-4 w-4" />} onClick={clearFilters} type="button" variant="secondary">重置</Button></FilterToolbar><BookingAppointmentList appointments={appointments} error={error} filtered={hasFilters} loading={loading} mode={mode} onModeChange={(value) => setParam('mode', value, false)} onOpen={(item) => void openAppointment(item)} onPageChange={(value) => setParam('page', String(value), false)} onReset={clearFilters} page={pageInfo.page} totalItems={pageInfo.totalItems} totalPages={pageInfo.totalPages} /></> : null}{tab === 'configuration' ? <BookingConfigurationViews api={api} referenceData={references} token={token} /> : null}{tab === 'conflicts' ? <BookingConflictViews api={api} referenceData={references} token={token} /> : null}{visibleDetail ? <BookingAppointmentDrawer detail={visibleDetail} loading={loading} onCancel={() => setCancelDialog(true)} onClose={() => setDetail(null)} onConfirm={() => setDecisionDialog('confirm')} onDecline={() => setDecisionDialog('decline')} onLesson={(lessonId) => navigate(`/lessons?sessionId=${encodeURIComponent(lessonId)}`)} onReschedule={() => setRescheduleDialog(true)} /> : null}{detail && decisionDialog === 'confirm' ? <BookingConfirmDialog loading={loading} onClose={() => setDecisionDialog(null)} onConfirm={confirmAppointment} /> : null}{detail && decisionDialog === 'decline' ? <BookingDeclineDialog loading={loading} onClose={() => setDecisionDialog(null)} onConfirm={declineAppointment} /> : null}{detail && cancelDialog ? <BookingCancelDialog loading={loading} onClose={() => setCancelDialog(false)} onConfirm={cancelAppointment} /> : null}{detail && rescheduleDialog ? <BookingRescheduleDialog appointment={detail} loading={loading} onClose={() => setRescheduleDialog(false)} onConfirm={rescheduleAppointment} /> : null}</WorkspacePanel>
 }
 
 function bookingTab(value: string | null): BookingTab { return value === 'configuration' || value === 'conflicts' ? value : 'appointments' }
@@ -117,7 +127,7 @@ function displayMode(value: string | null): AppointmentDisplayMode { return valu
 function message(error: unknown, fallback: string) { return error instanceof Error ? error.message : fallback }
 
 const statusOptions = [
-  { label: '待教师确认', value: 'pending' }, { label: '已确认 / 已改期', value: 'confirmed,rescheduled' },
+  { label: '待确认', value: 'pending' }, { label: '已确认 / 已改期', value: 'confirmed,rescheduled' },
   { label: '已完成', value: 'fulfilled' }, { label: '已取消', value: 'cancelled' },
   { label: '已拒绝', value: 'declined' }, { label: '已过期或失效', value: 'expired,slot_taken,eligibility_lost' },
 ]

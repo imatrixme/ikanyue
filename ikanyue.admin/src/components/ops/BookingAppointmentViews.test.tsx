@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { BookingAppointment, BookingAppointmentDetail } from '../../app/bookingTypes'
-import { BookingAppointmentDrawer, BookingAppointmentList, BookingCancelDialog, BookingRescheduleDialog, BookingStatusBadge } from './BookingAppointmentViews'
+import { BookingAppointmentDrawer, BookingAppointmentList, BookingCancelDialog, BookingConfirmDialog, BookingDeclineDialog, BookingRescheduleDialog, BookingStatusBadge } from './BookingAppointmentViews'
 
 describe('booking appointment views', () => {
   it('renders list, mobile cards, calendar groups, pagination, and async states', async () => {
@@ -28,6 +28,9 @@ describe('booking appointment views', () => {
 
     rerender(<BookingAppointmentList appointments={[]} error="" loading={false} mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} page={1} totalItems={0} totalPages={0} />)
     expect(screen.getByText('还没有预约记录')).toBeInTheDocument()
+    rerender(<BookingAppointmentList appointments={[]} error="" filtered loading={false} mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} onReset={vi.fn()} page={1} totalItems={0} totalPages={0} />)
+    expect(screen.getByText('没有匹配的预约记录')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '重置筛选' })).toBeInTheDocument()
     rerender(<BookingAppointmentList appointments={[]} error="" loading mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} page={1} totalItems={0} totalPages={0} />)
     expect(screen.getByLabelText('正在加载预约...')).toBeInTheDocument()
     rerender(<BookingAppointmentList appointments={[]} error="预约接口错误" loading={false} mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} page={1} totalItems={0} totalPages={0} />)
@@ -36,7 +39,7 @@ describe('booking appointment views', () => {
 
   it('renders auditable detail actions and closed-state fallbacks', async () => {
     const user = userEvent.setup()
-    const actions = { onCancel: vi.fn(), onClose: vi.fn(), onLesson: vi.fn(), onReschedule: vi.fn() }
+    const actions = { onCancel: vi.fn(), onClose: vi.fn(), onConfirm: vi.fn(), onDecline: vi.fn(), onLesson: vi.fn(), onReschedule: vi.fn() }
     const { rerender } = render(<BookingAppointmentDrawer detail={detail('rescheduled')} loading={false} {...actions} />)
     const drawer = screen.getByRole('dialog', { name: '一对一声乐课预约' })
     expect(drawer).toHaveTextContent('处理记录')
@@ -55,6 +58,30 @@ describe('booking appointment views', () => {
     expect(screen.getByText('暂无处理记录。')).toBeInTheDocument()
     expect(screen.getByText('待确认预约不会占用时间。')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '取消预约' })).not.toBeInTheDocument()
+
+    rerender(<BookingAppointmentDrawer detail={{ ...detail('pending'), lessonId: '' }} loading={false} {...actions} />)
+    await user.click(screen.getByRole('button', { name: '代教师确认' }))
+    await user.click(screen.getByRole('button', { name: '拒绝预约' }))
+    expect(actions.onConfirm).toHaveBeenCalled()
+    expect(actions.onDecline).toHaveBeenCalled()
+  })
+
+  it('requires explicit confirmation and a decline reason', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onConfirm = vi.fn().mockResolvedValue(undefined)
+    const confirmView = render(<BookingConfirmDialog loading={false} onClose={onClose} onConfirm={onConfirm} />)
+    await user.click(screen.getByRole('button', { name: '确认预约' }))
+    expect(onConfirm).toHaveBeenCalled()
+    confirmView.unmount()
+
+    const onDecline = vi.fn().mockResolvedValue(undefined)
+    render(<BookingDeclineDialog loading={false} onClose={onClose} onConfirm={onDecline} />)
+    const dialog = screen.getByRole('dialog', { name: '拒绝预约' })
+    expect(within(dialog).getByRole('button', { name: '确认拒绝' })).toBeDisabled()
+    await user.type(within(dialog).getByLabelText('拒绝原因'), '教师时间冲突')
+    await user.click(within(dialog).getByRole('button', { name: '确认拒绝' }))
+    expect(onDecline).toHaveBeenCalledWith('教师时间冲突')
   })
 
   it('submits cancellation and reschedule dialogs only with valid inputs', async () => {
@@ -90,7 +117,7 @@ describe('booking appointment views', () => {
 
   it('covers every status label and tone fallback', () => {
     render(<div>{['pending', 'confirmed', 'fulfilled', 'rescheduled', 'declined', 'cancelled', 'slot_taken', 'eligibility_lost', 'withdrawn', 'expired', 'unknown'].map((status) => <BookingStatusBadge key={status} status={status} />)}</div>)
-    expect(screen.getByText('待教师确认')).toBeInTheDocument()
+    expect(screen.getByText('待确认')).toBeInTheDocument()
     expect(screen.getByText('时段已被占用')).toBeInTheDocument()
     expect(screen.getByText('unknown')).toBeInTheDocument()
   })

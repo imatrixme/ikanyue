@@ -18,6 +18,12 @@ describe('booking operations api', () => {
     expect(detail.events[0].eventType).toBe('requested')
     expect(detail.claims).toHaveLength(0)
     await expect(api.getBookingAppointment('token', 'missing')).rejects.toThrow('预约不存在')
+    expect(await api.confirmBookingAppointment('token', 'appointment_1')).toMatchObject({ status: 'confirmed' })
+    expect((await api.getBookingAppointment('token', 'appointment_1')).events.at(-1)?.actorRole).toBe('admin')
+    await expect(api.declineBookingAppointment('token', 'appointment_1', '已处理')).rejects.toThrow('预约已被处理')
+    const declineApi = createMockBookingOpsApi()
+    expect(await declineApi.declineBookingAppointment('token', 'appointment_1', '教师时间冲突')).toMatchObject({ status: 'declined' })
+    expect((await declineApi.getBookingAppointment('token', 'appointment_1')).responseReason).toBe('教师时间冲突')
     expect(await api.cancelBookingAppointment('token', 'appointment_2', '教务取消')).toMatchObject({ status: 'cancelled' })
     expect((await api.getBookingAppointment('token', 'appointment_2')).responseReason).toBe('教务取消')
     expect(await api.rescheduleBookingAppointment('token', 'appointment_1', '2026-08-06T01:00:00.000Z', '2026-08-06T02:00:00.000Z', '改期')).toMatchObject({ status: 'rescheduled' })
@@ -66,6 +72,8 @@ describe('booking operations api', () => {
       api.getBookingReferenceData('token'),
       api.listBookingAppointments('token', { page: 2, status: 'pending', teacherId: 'teacher 1' }),
       api.getBookingAppointment('token', 'appointment 1'),
+      api.confirmBookingAppointment('token', 'appointment 1'),
+      api.declineBookingAppointment('token', 'appointment 1', '拒绝'),
       api.cancelBookingAppointment('token', 'appointment 1', '取消'),
       api.rescheduleBookingAppointment('token', 'appointment 1', 'start', 'end', '调整'),
       api.listBookingPolicies('token', { status: 'active' }),
@@ -86,6 +94,10 @@ describe('booking operations api', () => {
     expect(urls).toContain('/ops/course-bookings/reference-data')
     expect(urls).toContain('/ops/course-bookings/appointments?page=2&status=pending&teacherId=teacher+1')
     expect(urls).toContain('/ops/course-bookings/appointments/appointment%201')
+    expect(urls).toContain('/ops/course-bookings/appointments/appointment%201/confirm')
+    expect(urls).toContain('/ops/course-bookings/appointments/appointment%201/decline')
+    const confirmCall = fetchMock.mock.calls.find(([url]) => url === '/ops/course-bookings/appointments/appointment%201/confirm')
+    expect(confirmCall?.[1].body).toBe('{}')
     expect(urls).toContain('/ops/course-bookings/offerings/offering%201/availability')
     expect(urls).toContain('/ops/course-bookings/backfill/preview?from=from&to=to')
     const commands = fetchMock.mock.calls.map(([, options]) => options).filter((options) => options?.method && options.method !== 'GET')

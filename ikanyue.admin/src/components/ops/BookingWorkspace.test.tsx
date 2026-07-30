@@ -29,6 +29,8 @@ describe('booking workspace', () => {
     const drawer = await screen.findByRole('dialog', { name: '一对一声乐课预约' })
     expect(drawer).toHaveTextContent('张同学')
     expect(within(drawer).queryByRole('button', { name: '取消预约' })).not.toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: '代教师确认' })).toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: '拒绝预约' })).toBeInTheDocument()
     await user.click(within(drawer).getByRole('button', { name: '关闭弹窗' }))
   })
 
@@ -75,6 +77,28 @@ describe('booking workspace', () => {
     dialog = screen.getByRole('dialog', { name: '取消预约' })
     await user.click(within(dialog).getByRole('button', { name: '确认取消' }))
     expect(cancel).toHaveBeenCalled()
+  })
+
+  it('lets Admin confirm or decline pending appointments', async () => {
+    const user = userEvent.setup()
+    const confirmApi = createMockOpsApi()
+    const confirm = vi.spyOn(confirmApi, 'confirmBookingAppointment')
+    const confirmView = renderWorkspace(confirmApi, '/appointments?status=pending')
+    await user.click((await screen.findAllByRole('button', { name: '查看' }))[0])
+    await user.click(within(screen.getByRole('dialog', { name: '一对一声乐课预约' })).getByRole('button', { name: '代教师确认' }))
+    await user.click(within(screen.getByRole('dialog', { name: '代教师确认预约' })).getByRole('button', { name: '确认预约' }))
+    expect(confirm).toHaveBeenCalledWith('token', 'appointment_1')
+    confirmView.unmount()
+
+    const declineApi = createMockOpsApi()
+    const decline = vi.spyOn(declineApi, 'declineBookingAppointment')
+    renderWorkspace(declineApi, '/appointments?status=pending')
+    await user.click((await screen.findAllByRole('button', { name: '查看' }))[0])
+    await user.click(within(screen.getByRole('dialog', { name: '一对一声乐课预约' })).getByRole('button', { name: '拒绝预约' }))
+    const dialog = screen.getByRole('dialog', { name: '拒绝预约' })
+    await user.type(within(dialog).getByLabelText('拒绝原因'), '教师当天无法授课')
+    await user.click(within(dialog).getByRole('button', { name: '确认拒绝' }))
+    expect(decline).toHaveBeenCalledWith('token', 'appointment_1', '教师当天无法授课')
   })
 
   it('switches to configuration and conflict tabs using query state', async () => {
