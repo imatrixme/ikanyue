@@ -11,7 +11,7 @@ describe('booking appointment views', () => {
     const onOpen = vi.fn()
     const onModeChange = vi.fn()
     const onPageChange = vi.fn()
-    const { rerender } = render(<BookingAppointmentList appointments={[appointment('pending'), appointment('confirmed', 'second')]} error="" loading={false} mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} page={1} totalItems={40} totalPages={2} />)
+    const { rerender } = render(<BookingAppointmentList appointments={[{ ...appointment('pending'), location: '' }, appointment('confirmed', 'second')]} error="" loading={false} mode="list" onModeChange={onModeChange} onOpen={onOpen} onPageChange={onPageChange} page={1} totalItems={40} totalPages={2} />)
     expect(screen.getAllByText('一对一声乐课').length).toBeGreaterThan(1)
     await user.click(screen.getAllByRole('button', { name: '查看' })[0])
     await user.click(screen.getAllByRole('button', { name: '预约详情' })[0])
@@ -54,7 +54,7 @@ describe('booking appointment views', () => {
     expect(actions.onCancel).toHaveBeenCalled()
     expect(actions.onClose).toHaveBeenCalled()
 
-    rerender(<BookingAppointmentDrawer detail={{ ...detail('fulfilled'), lessonId: '', events: [], claims: [] }} loading={false} {...actions} />)
+    rerender(<BookingAppointmentDrawer detail={{ ...detail('fulfilled'), lessonId: '', location: '', events: [], claims: [] }} loading={false} {...actions} />)
     expect(screen.getByText('暂无处理记录。')).toBeInTheDocument()
     expect(screen.getByText('待确认预约不会占用时间。')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '取消预约' })).not.toBeInTheDocument()
