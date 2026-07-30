@@ -86,6 +86,8 @@ describe('course operations api', () => {
   it('maps stable route paths and unknown paths to dashboard', () => {
     expect(viewPaths.enrollments).toBe('/enrollments')
     expect(viewPaths.appointments).toBe('/appointments')
+    expect(viewPaths.calendar).toBe('/calendar')
+    expect(viewFromPath('/calendar')).toBe('calendar')
     expect(viewFromPath('/appointments')).toBe('appointments')
     expect(viewFromPath('/lessons/lesson_1')).toBe('lessons')
     expect(viewFromPath('/not-found')).toBe('dashboard')

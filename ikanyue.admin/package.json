@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --coverage.thresholds.lines=95 --coverage.thresholds.branches=95 --coverage.thresholds.functions=95 --coverage.thresholds.statements=95",
+    "course-calendar:test:coverage": "vitest run src/app/calendarLogic.test.ts src/app/calendarApi.test.ts src/components/ops/CourseCalendarWorkspace.test.tsx src/components/ops/CourseCalendarComponents.test.tsx --coverage --coverage.include='src/app/calendar*.ts' --coverage.include='src/components/ops/CourseCalendar*.tsx' --coverage.thresholds.lines=95 --coverage.thresholds.branches=95 --coverage.thresholds.functions=95 --coverage.thresholds.statements=95",
     "test:e2e": "playwright test",
     "test:e2e:live": "PLAYWRIGHT_LIVE=true playwright test"
   },

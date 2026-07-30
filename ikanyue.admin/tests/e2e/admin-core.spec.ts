@@ -34,6 +34,7 @@ const viewHeadings: Record<string, string> = {
   '报课管理': '报课管理',
   '班级管理': '班级管理',
   '课堂管理': '课堂管理',
+  '机构课表': '机构课表',
   '课程预约': '课程预约',
   '课时账户': '课时账户',
   '教师工作量': '教师工作量',
@@ -228,6 +229,39 @@ test('course booking workspace stays responsive across queue, configuration, and
   await expect(page.getByRole('dialog', { name: '记录冲突处理结果' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(1)
   await expectAccessible(page)
+})
+
+test('institution timetable preserves calendar state and responsive lesson detail', async ({ page }) => {
+  await loginAsAdmin(page, false)
+  await openView(page, '机构课表')
+  await page.goto('/calendar?view=week&date=2026-08-03')
+  await expect(page.getByRole('heading', { name: '机构课表' })).toBeVisible()
+  await expect(page.getByText('少儿声乐小课', { exact: true }).filter({ visible: true }).first()).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+
+  if (page.viewportSize()!.width >= 768) {
+    await expect(page.getByTestId('calendar-time-grid')).toBeVisible()
+  } else {
+    await expect(page.getByTestId('calendar-agenda')).toBeVisible()
+  }
+
+  await page.getByRole('button', { name: '切换到月' }).click()
+  await expect(page).toHaveURL(/view=month/)
+  await expect(page.getByTestId('calendar-month-grid')).toBeVisible()
+  await page.getByRole('button', { name: '切换到列表' }).click()
+  await expect(page).toHaveURL(/view=list/)
+  await page.getByText('少儿声乐小课', { exact: true }).filter({ visible: true }).first().click()
+  const detail = page.getByRole('dialog', { name: '少儿声乐小课' })
+  await expect(detail).toContainText('周老师')
+  await expect(detail).toContainText('看乐艺术一号教室')
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  expect(await detail.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  await expectAccessible(page)
+  await detail.getByRole('button', { name: '关闭弹窗' }).click()
+
+  await page.getByLabel('教师').selectOption('teacher_1')
+  await expect(page).toHaveURL(/teacherId=teacher_1/)
+  await expect(page.getByText('少儿声乐小课', { exact: true }).filter({ visible: true }).first()).toBeVisible()
 })
 
 test('representative admin workspaces have no serious accessibility violations', async ({ page }) => {
