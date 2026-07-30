@@ -27,7 +27,7 @@ The system SHALL calculate bookable time in `Asia/Shanghai` from a versioned ins
 - **THEN** the system rejects the override and preserves the previous availability version
 
 ### Requirement: Pending Requests Do Not Occupy Schedule Time
-The system SHALL keep appointment requests non-blocking until a teacher confirms them.
+The system SHALL keep appointment requests non-blocking until the assigned teacher or an authorized Admin confirms them.
 
 #### Scenario: Multiple students request the same open slot
 - **WHEN** multiple eligible students submit pending requests for the same teacher and time before any request is confirmed
