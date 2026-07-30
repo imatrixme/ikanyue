@@ -108,6 +108,38 @@ test('local core bootstrap creates the release collections only when enabled', a
     assert.equal(activityDefinition.fields.find((field) => field.name === 'images').maxSelect, 10);
 });
 
+test('local core bootstrap accepts legacy field-name casing without duplicate updates', async () => {
+    const records = LOCAL_CORE_COLLECTIONS.map((collection, index) => ({
+        id: `collection_${index + 1}`,
+        name: collection.name,
+        fields: collection.fields.map((field) => ({
+            ...field,
+            name: field.name === 'nickName' ? 'nickname'
+                : field.name === 'realName' ? 'realname'
+                    : field.name === 'lastLoginIp' ? 'lastLoginIP' : field.name,
+        })),
+    }));
+    const updates = [];
+    const pb = {
+        collections: {
+            async getFullList() {
+                return records;
+            },
+            async getScaffolds() {
+                return {};
+            },
+            async update(id, payload) {
+                updates.push({ id, payload });
+            },
+        },
+    };
+
+    const collections = await ensureLocalCoreCollections(pb, true);
+
+    assert.equal(collections.size, LOCAL_CORE_COLLECTIONS.length);
+    assert.equal(updates.length, 0);
+});
+
 test('local activity fixture remains visible in the restored seven-day activity window', () => {
     const baseDate = new Date('2026-07-13T12:00:00+08:00');
     const [activity] = createLocalActivities(baseDate);

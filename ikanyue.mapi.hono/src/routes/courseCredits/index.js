@@ -56,6 +56,9 @@ function courseCreditRoutes(routes, handlers = createCourseCreditHandlers()) {
         .use(opsAuthMiddleware, opsPasswordChangeGuard)
         .handler(handlers.runReconciliation);
     opsQueryRoutes(routes, handlers);
+    routes.get('/v1/schedule/upcoming')
+        .use(authMiddleware)
+        .handler(handlers.getUpcomingSchedule);
     routes.get('/v1/student/learning/overview')
         .use(authMiddleware)
         .handler(handlers.getLearningOverview);
@@ -122,6 +125,7 @@ function teacherBookingRoutes(routes, handlers) {
     routes.get('/v1/teacher/appointments/:appointmentId')
         .use(authMiddleware).handler(handlers.getTeacherAppointment);
     routes.get('/v1/teacher/calendar').use(authMiddleware).handler(handlers.getTeacherCalendar);
+    routes.get('/v1/teacher/schedule').use(authMiddleware).handler(handlers.getTeacherSchedule);
     routes.post('/v1/teacher/appointments/:appointmentId/confirm')
         .use(authMiddleware).handler(handlers.confirmTeacherAppointment);
     routes.post('/v1/teacher/appointments/:appointmentId/decline')
@@ -142,6 +146,7 @@ function teacherBookingRoutes(routes, handlers) {
 
 function opsBookingRoutes(routes, handlers) {
     const protect = (route) => route.use(opsAuthMiddleware, opsPasswordChangeGuard);
+    protect(routes.get('/ops/course-calendar')).handler(handlers.getInstitutionCourseCalendar);
     protect(routes.get('/ops/course-bookings/dashboard')).handler(handlers.getOpsBookingDashboard);
     protect(routes.get('/ops/course-bookings/reference-data')).handler(handlers.getOpsBookingReferenceData);
     protect(routes.get('/ops/course-bookings/appointments')).handler(handlers.listOpsAppointments);

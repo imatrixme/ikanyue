@@ -6,7 +6,7 @@ const { createUserRouteApp, createUserRouteMocks } = require('./support/userRout
 
 test('user routes cover miniapp profile login, refresh, and update flow', async () => {
     await withUserRoutes(async (app, { studentUpdateCalls }) => {
-        const loginPayload = await formPost(app, '/v1/user/login', {
+        const loginPayload = await jsonPost(app, '/v1/user/login', {
             cellphone: '13800138000',
             password: 'secret',
         });

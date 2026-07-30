@@ -6,8 +6,8 @@
  * 示例请求:
  * POST /v1/user/login
  *
- * 请求体 (application/x-www-form-urlencoded):
- * cellphone=13800138000&password=yourpassword
+ * 请求体 (application/json 或 application/x-www-form-urlencoded):
+ * { "cellphone": "13800138000", "password": "yourpassword" }
  *
  * 参数说明:
  * - cellphone: 手机号 (必传)
@@ -35,7 +35,8 @@ const uuid = require('licia/uuid');
 const { getFileUrl } = require('../../utils/fileUrl');
 
 async function userLoginHandler(c) {
-    const body = await c.req.parseBody();
+    const contentType = c.req.header('content-type') || '';
+    const body = contentType.includes('application/json') ? await c.req.json() : await c.req.parseBody();
     const cellphone = body.cellphone || '';
     const password = body.password || '';
 

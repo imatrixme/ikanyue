@@ -118,9 +118,10 @@ function bookingFixture() {
     const methods = {
         bookingQueryService: [
             'studentOptions', 'availableSlots', 'listStudentAppointments', 'getStudentAppointment',
-            'teacherDashboard', 'listTeacherAppointments', 'getTeacherAppointment', 'teacherCalendar',
+            'teacherDashboard', 'listTeacherAppointments', 'getTeacherAppointment',
             'teacherAvailability',
         ],
+        scheduleQueryService: ['teacher'],
         appointmentRequestService: ['createRequest'],
         pendingAppointmentService: ['withdraw', 'decline'],
         appointmentCancellationService: ['cancel'],

@@ -6,7 +6,10 @@ const path = require('node:path');
 const { CATALOG_SCHEMAS } = require('../src/services/courseCredits/schema/catalogSchemas');
 const { BOOKING_SCHEMAS } = require('../src/services/courseCredits/schema/bookingSchemas');
 const { LEDGER_SCHEMAS } = require('../src/services/courseCredits/schema/ledgerSchemas');
-const { BASE_TEACHING_SCHEMAS } = require('../src/services/courseCredits/schema/teachingSchemas');
+const {
+    BASE_TEACHING_SCHEMAS,
+    CALENDAR_INDEX_DEFINITIONS,
+} = require('../src/services/courseCredits/schema/teachingSchemas');
 
 const OUTPUT_DIR = path.resolve(__dirname, '../pocketbase/pb_migrations');
 const MIGRATIONS = [
@@ -15,6 +18,9 @@ const MIGRATIONS = [
     ['1784279300_course_credit_teaching.js', BASE_TEACHING_SCHEMAS],
     ['1784279400_course_booking.js', BOOKING_SCHEMAS],
 ];
+const INDEX_MIGRATIONS = [
+    ['1785312000_role_aware_course_calendar_indexes.js', CALENDAR_INDEX_DEFINITIONS],
+];
 
 function main(outputDir = OUTPUT_DIR) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -22,6 +28,43 @@ function main(outputDir = OUTPUT_DIR) {
         fs.writeFileSync(path.join(outputDir, filename), migrationSource(schemas));
         console.log(`generated pocketbase/pb_migrations/${filename}`);
     }
+    for (const [filename, definitions] of INDEX_MIGRATIONS) {
+        fs.writeFileSync(path.join(outputDir, filename), indexMigrationSource(definitions));
+        console.log(`generated pocketbase/pb_migrations/${filename}`);
+    }
+}
+
+function indexMigrationSource(definitions) {
+    const entries = definitions.map(({ collectionName, index }) => (
+        `  ${JSON.stringify(collectionName)}: ${JSON.stringify(index)},`
+    )).join('\n');
+    return `/// <reference path="../pb_data/types.d.ts" />
+
+const CALENDAR_INDEXES = {
+${entries}
+};
+
+migrate((app) => {
+  for (const [name, index] of Object.entries(CALENDAR_INDEXES)) {
+    const collection = app.findCollectionByNameOrId(name);
+    if (!collection.indexes.some((value) => value.includes(indexName(index)))) {
+      collection.indexes = [...collection.indexes, index];
+      app.save(collection);
+    }
+  }
+}, (app) => {
+  for (const [name, index] of Object.entries(CALENDAR_INDEXES)) {
+    const collection = app.findCollectionByNameOrId(name);
+    const target = indexName(index);
+    collection.indexes = collection.indexes.filter((value) => !value.includes(target));
+    app.save(collection);
+  }
+});
+
+function indexName(index) {
+  return index.split(" ")[2];
+}
+`;
 }
 
 function migrationSource(schemas) {
@@ -129,4 +172,11 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { MIGRATIONS, formatSchemas, main, migrationSource };
+module.exports = {
+    INDEX_MIGRATIONS,
+    MIGRATIONS,
+    formatSchemas,
+    indexMigrationSource,
+    main,
+    migrationSource,
+};

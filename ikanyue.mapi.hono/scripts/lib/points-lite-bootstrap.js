@@ -107,7 +107,7 @@ async function ensureLocalCoreCollections(pb, enabled) {
         const current = byName.get(definition.name);
         if (current) {
             const fields = Array.isArray(current.fields) ? current.fields : [];
-            const missing = definition.fields.filter((field) => !fields.some((item) => item.name === field.name));
+            const missing = definition.fields.filter((field) => !hasFieldNamed(fields, field.name));
             if (missing.length) {
                 await pb.collections.update(current.id, { fields: [...fields, ...missing] });
                 console.log(`updated local core collection ${definition.name}`);
@@ -132,13 +132,14 @@ async function applyOpsSchemas(pb, schemas, initialCollections) {
     for (const schema of schemas) {
         const current = byName.get(schema.name);
         const readyFields = schema.fields.filter((field) => isResolvableField(field, byName));
-        if (readyFields.length !== schema.fields.length) {
+        const deferredFields = schema.fields.filter((field) => !isResolvableField(field, byName));
+        if (deferredFields.length) {
             deferredSchemas.push(schema);
         }
         const payload = {
             ...schema,
             fields: readyFields.map((field) => normalizeFieldPayload(field, byName)),
-            indexes: [...schema.indexes],
+            indexes: indexesWithoutDeferredFields(schema.indexes, deferredFields),
         };
         if (current) {
             await pb.collections.update(current.id, payload);
@@ -173,7 +174,7 @@ async function ensureTeacherOpsFields(pb, byName) {
         throw new Error('Missing teachers collection; enable local core bootstrap for an empty local database');
     }
     const fields = Array.isArray(teachers.fields) ? [...teachers.fields] : [];
-    const missing = TEACHER_OPS_FIELDS.filter((field) => !fields.some((item) => item.name === field.name));
+    const missing = TEACHER_OPS_FIELDS.filter((field) => !hasFieldNamed(fields, field.name));
     if (!missing.length) {
         return;
     }
@@ -262,6 +263,22 @@ function normalizeFieldPayload(field, byName) {
 
 function isResolvableField(field, byName) {
     return field.type !== 'relation' || !field.collectionName || byName.has(field.collectionName);
+}
+
+function hasFieldNamed(fields, name) {
+    const normalized = name.toLowerCase();
+    return fields.some((field) => String(field.name || '').toLowerCase() === normalized);
+}
+
+function indexesWithoutDeferredFields(indexes, deferredFields) {
+    const deferredNames = deferredFields.map((field) => field.name);
+    return indexes.filter((index) => !deferredNames.some((name) => (
+        new RegExp(`\\b${escapeRegExp(name)}\\b`).test(index)
+    )));
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function textField(name) {

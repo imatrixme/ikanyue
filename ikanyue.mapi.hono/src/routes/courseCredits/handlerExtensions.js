@@ -4,6 +4,7 @@ const { createStudentAuthorizationHandlers } = require('./studentAuthorizationHa
 const { createStudentLearningHandlers } = require('./studentLearningHandlers');
 const { createCourseCreditWorkerHandlers } = require('./workerHandlers');
 const { createCourseBookingHandlers } = require('./bookingHandlers');
+const { createCourseScheduleHandlers } = require('./scheduleHandlers');
 
 function createCourseCreditHandlerExtensions(options) {
     const {
@@ -37,6 +38,7 @@ function createCourseCreditHandlerExtensions(options) {
             requireAnyCapability, requireCapability, safeCommand, safeQuery,
         }),
         ...createCourseBookingHandlers(options),
+        ...createCourseScheduleHandlers(options),
     };
 }
 

@@ -36,6 +36,7 @@ const { AppointmentWorkerService } = require('./booking/workerService');
 const { ScheduleClaimBackfillService } = require('./booking/backfillService');
 const { BookingAdminService } = require('./booking/adminService');
 const { BookingOpsQueryService } = require('./booking/opsQueryService');
+const { ScheduleQueryService } = require('./schedule');
 
 function createCourseCreditServices(repository, options = {}) {
     const metrics = options.metrics || defaultCourseCreditMetrics;
@@ -76,6 +77,7 @@ function createCourseCreditServices(repository, options = {}) {
         opsQueryService: new CourseCreditOpsQueryService(repository),
         reconciliationService: new CourseCreditReconciliationService(repository),
         reservationService: new CourseCreditReservationService(repository),
+        scheduleQueryService: new ScheduleQueryService(repository, options.scheduleQuery),
         sessionPublicationService: new CourseCreditSessionPublicationService(repository),
         sessionCancellationService: new CourseCreditSessionCancellationService(repository),
         sessionRescheduleService: new CourseCreditSessionRescheduleService(repository),

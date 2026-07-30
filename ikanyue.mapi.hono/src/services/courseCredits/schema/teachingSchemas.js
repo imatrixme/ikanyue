@@ -181,6 +181,25 @@ const BASE_TEACHING_SCHEMAS = [
     ]),
 ];
 
+const CALENDAR_INDEX_DEFINITIONS = Object.freeze([
+    {
+        collectionName: 'sessions',
+        index: 'CREATE INDEX idx_sessions_calendar_range ON sessions (startAt, endAt, status)',
+    },
+    {
+        collectionName: 'session_classes',
+        index: 'CREATE INDEX idx_session_classes_class_session ON session_classes (classId, sessionId)',
+    },
+    {
+        collectionName: 'session_students',
+        index: 'CREATE INDEX idx_session_students_student_session ON session_students (studentId, sessionId, attendanceStatus)',
+    },
+    {
+        collectionName: 'session_teachers',
+        index: 'CREATE INDEX idx_session_teachers_teacher_session ON session_teachers (teacherId, sessionId, actualStatus)',
+    },
+]);
+
 const TEACHING_SCHEMAS = BASE_TEACHING_SCHEMAS.map((schema) => {
     if (schema.name === 'sessions') {
         return extendFields(schema, [
@@ -206,4 +225,4 @@ function extendFields(schema, fields) {
     return { ...schema, fields: [...schema.fields.slice(0, -2), ...fields, ...timestamps] };
 }
 
-module.exports = { BASE_TEACHING_SCHEMAS, TEACHING_SCHEMAS };
+module.exports = { BASE_TEACHING_SCHEMAS, CALENDAR_INDEX_DEFINITIONS, TEACHING_SCHEMAS };

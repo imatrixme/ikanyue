@@ -51,10 +51,12 @@ test('policy, offering, availability, and conflict projections remain pagination
 });
 
 test('Admin reference data exposes selectable academic labels without raw teacher records', async () => {
-    const result = await new BookingOpsQueryService(repositoryMock()).referenceData();
+    const repository = repositoryMock();
+    const result = await new BookingOpsQueryService(repository).referenceData();
     assert.deepEqual(result.teachers[0], {
         id: 'teacher', name: '林老师', cellphone: '13800000000', avatar: 'teacher.png',
     });
+    assert.equal(repository.listCalls.find((call) => call.collection === 'teachers').options.sort, 'cellphone');
     assert.equal(result.courses[0].durationMinutes, 60);
     assert.equal(result.creditTypes[0].courseSpecId, 'course');
     assert.equal(result.policies[0].name, '默认预约策略');
@@ -100,6 +102,7 @@ test('Admin booking projections preserve legacy labels and safe empty fallbacks'
 
 function repositoryMock() {
     return {
+        listCalls: [],
         pageCalls: [],
         async page(collection, page, perPage, options) {
             this.pageCalls.push({ collection, page, perPage, options });
@@ -110,7 +113,8 @@ function repositoryMock() {
             return { page, perPage, totalItems: 1, totalPages: 1, items: [item] };
         },
         async get() { return appointment(); },
-        async list(collection) {
+        async list(collection, options = {}) {
+            this.listCalls.push({ collection, options });
             if (collection === 'appointment_events') return [{ id: 'event' }];
             if (collection === 'schedule_claims') return [{ id: 'claim' }];
             if (collection === 'teacher_availability_rules') return [{ id: 'rule' }];

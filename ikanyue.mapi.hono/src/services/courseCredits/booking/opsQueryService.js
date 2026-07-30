@@ -28,7 +28,7 @@ class BookingOpsQueryService {
     async referenceData() {
         const [teachers, courses, creditTypes, policies] = await Promise.all([
             this.repository.list('teachers', {
-                filter: 'verified=true && blocked=false', sort: 'realName,nickName,cellphone',
+                filter: 'verified=true && blocked=false', sort: 'cellphone',
             }),
             this.repository.list('course_specs', {
                 filter: 'status="active" && deliveryMode="one_to_one"', sort: 'name',

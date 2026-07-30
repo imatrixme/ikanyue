@@ -7,6 +7,9 @@ const {
     VERSIONED_COURSE_CREDIT_COLLECTIONS,
     validateCourseCreditSchemas,
 } = require('../src/services/courseCredits/schema');
+const {
+    CALENDAR_INDEX_DEFINITIONS,
+} = require('../src/services/courseCredits/schema/teachingSchemas');
 const { COURSE_CREDIT_SEED } = require('../scripts/fixtures/course-credit-seed');
 const { applyOpsSchemas } = require('../scripts/lib/points-lite-bootstrap');
 
@@ -39,6 +42,15 @@ test('course credit schema defines the complete private collection set in depend
     assert.ok(indexes(byName.get('class_teachers')).some((index) => index.includes("effectiveTo = ''")));
     assert.ok(indexes(byName.get('schedule_claims')).some((index) => index.includes('WHERE status = \'active\'')));
     assert.ok(indexes(byName.get('appointment_requests')).some((index) => index.includes("status = 'pending'")));
+    assert.deepEqual(CALENDAR_INDEX_DEFINITIONS.map(({ collectionName }) => collectionName), [
+        'sessions', 'session_classes', 'session_students', 'session_teachers',
+    ]);
+    assert.ok(CALENDAR_INDEX_DEFINITIONS.some(({ index }) => index.includes('startAt, endAt, status')));
+    assert.ok(CALENDAR_INDEX_DEFINITIONS.some(({ index }) => index.includes('classId, sessionId')));
+    assert.ok(CALENDAR_INDEX_DEFINITIONS
+        .some(({ index }) => index.includes('studentId, sessionId, attendanceStatus')));
+    assert.ok(CALENDAR_INDEX_DEFINITIONS
+        .some(({ index }) => index.includes('teacherId, sessionId, actualStatus')));
 
     for (const schema of COURSE_CREDIT_COLLECTION_SCHEMAS) {
         assert.equal(schema.createRule, null);
@@ -119,12 +131,14 @@ test('schema bootstrap defers circular relation fields until target collections 
         { id: 'teachers_id', name: 'teachers', fields: [] },
     ];
     const updates = [];
+    const creates = [];
     const pb = {
         collections: {
             async getFullList() {
                 return records;
             },
             async create(payload) {
+                creates.push(payload);
                 const created = { ...payload, id: `${payload.name}_id` };
                 records.push(created);
                 return created;
@@ -141,9 +155,13 @@ test('schema bootstrap defers circular relation fields until target collections 
     const result = await applyOpsSchemas(pb, COURSE_CREDIT_COLLECTION_SCHEMAS, new Map(records.map((item) => [item.name, item])));
     const courseSpecs = result.get('course_specs');
     const deferred = courseSpecs.fields.find((item) => item.name === 'defaultCreditTypeId');
+    const creditBatchCreate = creates.find((item) => item.name === 'credit_batches');
+    const creditBatchUpdate = updates.find((item) => item.id === 'credit_batches_id');
 
     assert.equal(deferred.collectionId, 'credit_types_id');
     assert.equal(updates.some((item) => item.id === 'course_specs_id'), true);
+    assert.equal(indexes(creditBatchCreate).some((index) => index.includes('compensationSourceBatchId')), false);
+    assert.equal(indexes(creditBatchUpdate.payload).some((index) => index.includes('compensationSourceBatchId')), true);
 });
 
 test('seed fixtures contain universal credits, three incompatible courses, and discounted packages', () => {

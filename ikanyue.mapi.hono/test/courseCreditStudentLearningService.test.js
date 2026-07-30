@@ -35,6 +35,8 @@ test('learning overview returns course language, next lesson, warnings, and rece
             session: session({ id: 'lesson-help', title: '补充课程点', startAt: '2026-07-25T08:00:00.000Z' }),
         })],
         events: [event()],
+        teachers: [lessonTeacher()],
+        classes: [lessonClass()],
     });
 
     const result = await new StudentLearningService(repository, {
@@ -42,6 +44,9 @@ test('learning overview returns course language, next lesson, warnings, and rece
     }).overview('student-1');
 
     assert.equal(result.nextLesson.lessonId, 'lesson-1');
+    assert.equal(result.upcomingLessons.length, 2);
+    assert.equal(result.nextLesson.teacherSummary.label, '周老师');
+    assert.equal(result.nextLesson.classSummary.label, '少儿声乐 A 班');
     assert.equal(result.courses[0].courseName, '声乐一对一');
     assert.equal(result.courses[0].remainingLessons, 5);
     assert.equal(result.courses[0].scheduledLessons, 2);
@@ -51,7 +56,8 @@ test('learning overview returns course language, next lesson, warnings, and rece
     assert.equal(result.warnings[0].title, '补充课时');
     assert.equal(result.recentRecords[0].title, '已完成课程');
     assert.doesNotMatch(JSON.stringify(result), /课程点|batchId|creditTypeId|frozenQuantity|operationNo/);
-    assert.match(repository.calls[0].options.filter, /studentId="student-1"/);
+    assert.match(repository.calls.find((call) => call.collection === 'credit_batches').options.filter,
+        /studentId="student-1"/);
 
     const empty = await new StudentLearningService(mockRepository(), { clock: () => NOW }).overview('student-1');
     assert.equal(empty.nextLesson, null);
@@ -95,19 +101,23 @@ test('lesson and record lists preserve pagination and authenticated ownership fi
         page: '2', perPage: '5', scope: 'upcoming', courseId: 'course-1',
     });
     assert.deepEqual([upcoming.page, upcoming.perPage, upcoming.totalItems], [2, 5, 1]);
-    assert.match(repository.calls[0].options.filter, /studentId="student-1"/);
-    assert.match(repository.calls[0].options.filter, /courseSpecId="course-1"/);
-    assert.match(repository.calls[0].options.filter, /startAt>=/);
+    const lessonPages = () => repository.calls.filter((call) => (
+        call.method === 'page' && call.collection === 'session_students'
+    ));
+    assert.match(lessonPages()[0].options.filter, /studentId="student-1"/);
+    assert.match(lessonPages()[0].options.filter, /courseSpecId="course-1"/);
+    assert.match(lessonPages()[0].options.filter, /startAt>=/);
 
     await service.listLessons('student-1', { scope: 'completed' });
-    assert.match(repository.calls[1].options.filter, /status="completed"/);
+    assert.match(lessonPages()[1].options.filter, /status="completed"/);
     await service.listLessons('student-1');
-    assert.doesNotMatch(repository.calls[2].options.filter, /startAt|completed/);
+    assert.doesNotMatch(lessonPages()[2].options.filter, /startAt|completed/);
     await assert.rejects(service.listLessons('student-1', { scope: 'future' }), hasCode('LEARNING_LESSON_SCOPE_INVALID'));
 
     const records = await service.listRecords('student-1', { page: 3, perPage: 4, courseId: 'course-1' });
     assert.equal(records.items[0].impact, 'used');
-    assert.match(repository.calls[3].options.filter, /courseSpecId="course-1"/);
+    const recordCall = repository.calls.find((call) => call.collection === 'credit_events');
+    assert.match(recordCall.options.filter, /courseSpecId="course-1"/);
 });
 
 test('lesson detail enforces ownership and produces experience-safe states', async () => {
@@ -164,6 +174,19 @@ test('projection helpers cover statuses, fallback data, ordering, and event pres
         completedLessons: 0, validFrom: null, validUntil: null, status: 'pending',
     });
     assert.equal(mapLesson({}).title, '课程');
+    const contextualLesson = mapLesson(lesson(), {
+        teachers: [
+            { teacherId: 't1', expand: { teacherId: { realname: '甲老师' } } },
+            { teacherId: 't2', expand: { teacherId: { nickName: '乙老师' } } },
+            { teacherId: 't3', expand: { teacherId: { nickname: '丙老师' } } },
+            { teacherId: 't4', expand: { teacherId: { name: '丁老师' } } },
+            { teacherId: '' },
+        ],
+        classes: [{ classId: 'c1', expand: { classId: { code: 'C1' } } }],
+    });
+    assert.equal(contextualLesson.teacherSummary.count, 4);
+    assert.equal(contextualLesson.teacherSummary.overflow, 1);
+    assert.equal(contextualLesson.classSummary.label, 'C1');
     assert.equal(mapLessonRecord({}).title, '课时记录');
 
     const presentations = ['GRANT', 'CONVERT_IN', 'CONVERT_OUT', 'FREEZE', 'ACTIVATE', 'CONSUME',
@@ -198,13 +221,31 @@ test('projection helpers cover statuses, fallback data, ordering, and event pres
     assert.equal(typeNameFallback[0].deliveryMode, '');
 });
 
+test('learning overview tolerates sparse lessons and deterministically orders equal start times', async () => {
+    const sameStart = '2026-07-24T00:00:00.000Z';
+    const repository = mockRepository({
+        lessons: [
+            lesson({ session: session({ id: 'lesson-b', startAt: sameStart }) }),
+            lesson({ session: session({ id: 'lesson-a', startAt: sameStart }) }),
+            {},
+        ],
+    });
+    const result = await new StudentLearningService(repository, { clock: () => NOW }).overview('student-1');
+    assert.deepEqual(result.upcomingLessons.map((item) => item.lessonId), ['lesson-a', 'lesson-b']);
+    assert.equal(result.courses.length, 0);
+});
+
 function mockRepository(options = {}) {
     return {
         calls: [],
         first: options.lessons?.[0] || lesson(),
         async list(collection, requestOptions) {
             this.calls.push({ method: 'list', collection, options: requestOptions });
-            return collection === 'credit_batches' ? options.batches || [] : options.lessons || [];
+            if (collection === 'credit_batches') return options.batches || [];
+            if (collection === 'session_students') return options.lessons || [];
+            if (collection === 'session_teachers') return options.teachers || [];
+            if (collection === 'session_classes') return options.classes || [];
+            return [];
         },
         async page(collection, page, perPage, requestOptions) {
             this.calls.push({ method: 'page', collection, page, perPage, options: requestOptions });
@@ -215,6 +256,20 @@ function mockRepository(options = {}) {
             this.calls.push({ method: 'findFirst', collection, filter, options: requestOptions });
             return this.first;
         },
+    };
+}
+
+function lessonTeacher() {
+    return {
+        sessionId: 'lesson-1', teacherId: 'teacher-1',
+        expand: { teacherId: { id: 'teacher-1', realName: '周老师' } },
+    };
+}
+
+function lessonClass() {
+    return {
+        sessionId: 'lesson-1', classId: 'class-1',
+        expand: { classId: { id: 'class-1', name: '少儿声乐 A 班' } },
     };
 }
 

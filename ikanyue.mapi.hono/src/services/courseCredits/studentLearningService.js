@@ -13,6 +13,8 @@ const {
 } = require('./studentLearningContract');
 
 const LESSON_SCOPES = new Set(['all', 'upcoming', 'completed']);
+const UPCOMING_LESSON_LIMIT = 3;
+const RELATION_CHUNK_SIZE = 40;
 
 class StudentLearningService {
     constructor(repository, options = {}) {
@@ -30,13 +32,16 @@ class StudentLearningService {
             this.repository.page('credit_events', 1, this.recentLimit, recordQueryOptions(studentId)),
         ]);
         const courses = buildCourseSummaries(batches, this.clock(), this.expiryWarningDays);
-        const lessons = roster.map(mapLesson);
+        const contexts = await loadLessonContexts(this.repository, roster);
+        const lessons = roster.map((record) => mapLesson(record, lessonContext(record, contexts)));
         const now = this.clock();
-        const nextLesson = lessons.find((lesson) => isUpcomingLesson(lesson, now)) || null;
+        const upcomingLessons = lessons.filter((lesson) => isUpcomingLesson(lesson, now))
+            .sort(compareLessonStart).slice(0, UPCOMING_LESSON_LIMIT);
         const result = {
-            nextLesson,
+            nextLesson: upcomingLessons[0] || null,
+            upcomingLessons,
             courses,
-            warnings: buildLearningWarnings(roster),
+            warnings: buildLearningWarnings(roster, contexts),
             recentRecords: (records.items || []).map(mapLessonRecord),
         };
         return assertStudentLearningProjection(result);
@@ -50,13 +55,15 @@ class StudentLearningService {
             this.repository.list('session_students', lessonQueryOptions(studentId)),
             this.repository.page('credit_events', 1, this.recentLimit, recordQueryOptions(studentId)),
         ]);
+        const contexts = await loadLessonContexts(this.repository, roster);
         const course = buildCourseSummaries(batches, this.clock(), this.expiryWarningDays)
             .find((item) => item.courseId === courseId);
         invariant(course, 'LEARNING_COURSE_NOT_FOUND', '未找到这门课程');
         const result = {
             ...course,
             sources: batches.filter((batch) => courseIdentity(batch) === courseId).map(mapCourseSource),
-            recentLessons: roster.map(mapLesson).filter((lesson) => lesson.course.courseId === courseId).slice(0, 5),
+            recentLessons: roster.map((record) => mapLesson(record, lessonContext(record, contexts)))
+                .filter((lesson) => lesson.course.courseId === courseId).slice(0, 5),
             recentRecords: (records.items || []).map(mapLessonRecord)
                 .filter((record) => record.course.courseId === courseId),
         };
@@ -70,7 +77,9 @@ class StudentLearningService {
         invariant(LESSON_SCOPES.has(scope), 'LEARNING_LESSON_SCOPE_INVALID', '课程日程筛选无效');
         const result = await this.repository.page('session_students', page.page, page.perPage,
             lessonQueryOptions(studentId, { courseId: query.courseId, now: this.clock(), scope }));
-        return assertStudentLearningProjection(mapPage(result, mapLesson));
+        const contexts = await loadLessonContexts(this.repository, result.items || []);
+        return assertStudentLearningProjection(mapPage(result,
+            (record) => mapLesson(record, lessonContext(record, contexts))));
     }
 
     async getLesson(studentId, lessonId) {
@@ -81,7 +90,8 @@ class StudentLearningService {
                 expand: lessonExpand(),
             });
         invariant(record, 'LEARNING_LESSON_NOT_FOUND', '未找到这节课');
-        return assertStudentLearningProjection(mapLesson(record));
+        const contexts = await loadLessonContexts(this.repository, [record]);
+        return assertStudentLearningProjection(mapLesson(record, lessonContext(record, contexts)));
     }
 
     async listRecords(studentId, query = {}) {
@@ -157,7 +167,7 @@ function mapCourseSource(batch) {
     };
 }
 
-function mapLesson(record) {
+function mapLesson(record, context = {}) {
     const session = relation(record, 'sessionId');
     const type = relation(session, 'requiredCreditTypeId');
     const spec = relation(type, 'courseSpecId');
@@ -172,6 +182,8 @@ function mapLesson(record) {
         startAt: nullableDate(session.startAt),
         endAt: nullableDate(session.endAt),
         location: sanitizeStudentText(session.location || ''),
+        teacherSummary: relationSummary(context.teachers, 'teacherId', '教师'),
+        classSummary: relationSummary(context.classes, 'classId', '班级'),
         attendanceResult: attendanceResult(record.attendanceStatus),
         lessonHourResult: lessonHourResult(record.creditStatus),
         notice: learningNotice(record.creditStatus),
@@ -195,10 +207,10 @@ function mapLessonRecord(event) {
     };
 }
 
-function buildLearningWarnings(roster) {
+function buildLearningWarnings(roster, contexts = new Map()) {
     return roster.filter((record) => ['credit_insufficient', 'conversion_required'].includes(record.creditStatus))
         .map((record) => {
-            const lesson = mapLesson(record);
+            const lesson = mapLesson(record, lessonContext(record, contexts));
             return {
                 lessonId: lesson.lessonId,
                 title: lesson.title,
@@ -300,7 +312,66 @@ function sourceStatus(status) {
 
 function isUpcomingLesson(lesson, now) {
     const startAt = Date.parse(lesson.startAt || '');
-    return Number.isFinite(startAt) && startAt >= Number(now) && lesson.status !== 'cancelled';
+    const endAt = Date.parse(lesson.endAt || '');
+    const relevantAt = Number.isFinite(endAt) ? endAt : startAt;
+    return Number.isFinite(startAt) && relevantAt >= Number(now) && lesson.status !== 'cancelled';
+}
+
+async function loadLessonContexts(repository, records) {
+    const sessionIds = [...new Set((records || []).map(sessionIdOf).filter(Boolean))];
+    if (!sessionIds.length) return new Map();
+    const [teachers, classes] = await Promise.all([
+        loadLessonRelations(repository, 'session_teachers', sessionIds, 'teacherId'),
+        loadLessonRelations(repository, 'session_classes', sessionIds, 'classId'),
+    ]);
+    const contexts = new Map(sessionIds.map((id) => [id, { teachers: [], classes: [] }]));
+    for (const row of teachers) contexts.get(relationId(row.sessionId))?.teachers.push(row);
+    for (const row of classes) contexts.get(relationId(row.sessionId))?.classes.push(row);
+    return contexts;
+}
+
+async function loadLessonRelations(repository, collection, sessionIds, expand) {
+    const chunks = [];
+    for (let index = 0; index < sessionIds.length; index += RELATION_CHUNK_SIZE) {
+        chunks.push(sessionIds.slice(index, index + RELATION_CHUNK_SIZE));
+    }
+    const rows = await Promise.all(chunks.map((ids) => repository.list(collection, {
+        filter: `(${ids.map((id) => `sessionId="${escapeFilter(id)}"`).join(' || ')})`,
+        sort: 'sessionId',
+        expand,
+    })));
+    return rows.flat();
+}
+
+function lessonContext(record, contexts) {
+    return contexts.get(sessionIdOf(record)) || {};
+}
+
+function sessionIdOf(record = {}) {
+    const session = relation(record, 'sessionId');
+    return session.id || relationId(record.sessionId);
+}
+
+function relationSummary(rows = [], field, fallback) {
+    const items = rows.map((row) => {
+        const expanded = relation(row, field);
+        return {
+            id: expanded.id || relationId(row[field]),
+            name: sanitizeStudentText(expanded.realName || expanded.realname || expanded.nickName
+                || expanded.nickname || expanded.name || expanded.code || fallback),
+        };
+    }).filter((item) => item.id);
+    return {
+        count: items.length,
+        items: items.slice(0, 3),
+        label: items.slice(0, 3).map((item) => item.name).join('、'),
+        overflow: Math.max(0, items.length - 3),
+    };
+}
+
+function compareLessonStart(left, right) {
+    return Date.parse(left.startAt) - Date.parse(right.startAt)
+        || left.lessonId.localeCompare(right.lessonId);
 }
 
 function nullableDate(value) {
@@ -328,6 +399,7 @@ module.exports = {
     lessonHourResult,
     lessonQueryOptions,
     lessonStatus,
+    loadLessonContexts,
     mapCourseSource,
     mapLesson,
     mapLessonRecord,
