@@ -1,6 +1,7 @@
 {
   "name": "ikanyue-hono",
   "private": true,
+  "packageManager": "pnpm@10.19.0",
   "version": "0.0.0",
   "description": "backend for ikanyue using hono.js",
   "keywords": [],
@@ -24,6 +25,7 @@
     "course-credits:test:pocketbase-business": "PB_COURSE_CREDIT_INTEGRATION=1 node --test 'test/courseCredit*Integration.test.js'",
     "course-credits:backup": "node scripts/course-credit-pocketbase-backup.js backup",
     "course-credits:restore": "node scripts/course-credit-pocketbase-backup.js restore",
+    "course-credits:restore:finalize": "node scripts/course-credit-pocketbase-backup.js restore-finalize",
     "course-bookings:workers": "node scripts/course-booking-worker.js",
     "course-bookings:seed:local": "node scripts/pb-seed-course-booking-local.js",
     "ops:seed:local": "node scripts/pb-seed-points-lite-local.js",
@@ -35,12 +37,12 @@
     "swagger:build": "npm run swagger:collect && echo '✅ Swagger 文档已生成到 docs/swagger.json'"
   },
   "dependencies": {
-    "@hono/node-server": "^1.4.1",
+    "@hono/node-server": "^2.1.1",
     "await-to-js": "^2.1.1",
     "dayjs": "^1.9.4",
     "dotenv": "^16.4.7",
-    "hono": "^3.11.7",
-    "jsonwebtoken": "^8.5.1",
+    "hono": "^4.13.2",
+    "jsonwebtoken": "^9.0.3",
     "licia": "^1.27.0",
     "pocketbase": "^0.25.2"
   },
@@ -56,6 +58,8 @@
   "author": "matrixme",
   "license": "",
   "engines": {
-    "bun": "^1.0.0"
+    "bun": "^1.0.0",
+    "node": ">=22.15 <23",
+    "npm": ">=10"
   }
 }

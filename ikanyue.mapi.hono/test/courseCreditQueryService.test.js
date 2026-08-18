@@ -100,7 +100,7 @@ test('event, conversion-rule, and session queries expose only student-facing fie
             id: 'rule', sourceCreditTypeId: 'universal', targetCreditTypeId: 'course',
             sourceQuantity: 300, targetQuantity: 1, minSourceQuantity: 300, maxSourceQuantity: 900,
             expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', reversible: true,
-            validFrom: '2026-07-01T00:00:00Z', version: 2,
+            validFrom: '2026-07-01T00:00:00Z', version: 2, status: 'active',
             expand: {
                 sourceCreditTypeId: creditType('universal', 'universal', '通用课程点'),
                 targetCreditTypeId: creditType('course', 'course', '声乐一对一'),

@@ -168,6 +168,8 @@ function validateCommand(input) {
 function validateSession(session) {
     invariant(session && ['completed', 'cancelled', 'correction_pending'].includes(session.status),
         'SESSION_NOT_SETTLEABLE', 'Only completed, cancelled, or correction-pending sessions can be settled');
+    invariant(session.originType !== 'migration',
+        'MIGRATION_SESSION_SETTLEMENT_FORBIDDEN', 'Historical migration sessions must never settle credits');
     invariant(Number.isInteger(session.requiredQuantity) && session.requiredQuantity > 0,
         'SESSION_CREDIT_QUANTITY_INVALID', 'Session required quantity must be a positive integer');
     if (session.status === 'correction_pending') {

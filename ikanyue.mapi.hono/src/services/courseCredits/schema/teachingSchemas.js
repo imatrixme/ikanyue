@@ -79,7 +79,10 @@ const BASE_TEACHING_SCHEMAS = [
         relationField('studentId', 'students', { required: true }),
         jsonField('sourceClassIds'),
         selectField('attendanceStatus', ['scheduled', 'checked_in', 'present', 'late', 'leave', 'absent', 'cancelled'], { required: true }),
-        selectField('creditStatus', ['pending', 'credit_insufficient', 'conversion_required', 'reserved', 'consumed', 'released', 'reversed'], { required: true }),
+        selectField('creditStatus', [
+            'pending', 'credit_insufficient', 'conversion_required', 'reserved', 'consumed',
+            'released', 'reversed', 'not_charged',
+        ], { required: true }),
         textField('eligibilityReason'),
         dateField('checkedInAt'),
         dateField('settledAt'),
@@ -124,7 +127,7 @@ const BASE_TEACHING_SCHEMAS = [
         'CREATE UNIQUE INDEX idx_teacher_credit_rules_version ON teacher_credit_rules (courseSpecId, role, version)',
     ]),
     collection('teacher_credit_events', [
-        relationField('sessionTeacherId', 'session_teachers', { required: true }),
+        relationField('sessionTeacherId', 'session_teachers'),
         relationField('teacherId', 'teachers', { required: true }),
         relationField('ruleId', 'teacher_credit_rules'),
         selectField('eventType', ['earn', 'compensate', 'confirm', 'reverse', 'adjust'], { required: true }),
@@ -203,7 +206,7 @@ const CALENDAR_INDEX_DEFINITIONS = Object.freeze([
 const TEACHING_SCHEMAS = BASE_TEACHING_SCHEMAS.map((schema) => {
     if (schema.name === 'sessions') {
         return extendFields(schema, [
-            selectField('originType', ['class', 'appointment', 'admin'], { required: true }),
+            selectField('originType', ['class', 'appointment', 'admin', 'migration'], { required: true }),
             relationField('appointmentId', 'appointment_requests'),
             selectField('cancellationType', ['student', 'teacher', 'institution', 'admin']),
             dateField('cancelledAt'),

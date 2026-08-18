@@ -4,6 +4,9 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: process.env.KANYUE_ENV_FILE || '.env' });
 
+const VALID_PNG_BASE64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
 async function main() {
     const baseUrl = trimSlash(process.env.LOCAL_HONO_URL || 'http://127.0.0.1:1337');
     assertLocalUrl(baseUrl);
@@ -28,7 +31,7 @@ async function main() {
 
     const imageForm = new FormData();
     imageForm.set('imageFile', new File([
-        new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        Buffer.from(VALID_PNG_BASE64, 'base64'),
     ], 'local-reward.png', { type: 'image/png' }));
     const uploadedReward = await request(baseUrl, `/ops/reward-items/${reward.id}/image`, {
         method: 'POST',

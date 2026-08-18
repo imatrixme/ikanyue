@@ -153,6 +153,9 @@ test('conversion rejects stale consent, insufficient source steps, invalid rules
         .previewConversion(command()), hasCode('CREDIT_INSUFFICIENT'));
     await assert.rejects(service(mockRepository({ rule: conversionRule({ status: 'inactive' }) }))
         .previewConversion(command()), hasCode('CONVERSION_RULE_INACTIVE'));
+    await assert.rejects(service(mockRepository({
+        ruleVersions: [conversionRule(), conversionRule({ id: 'newer', version: 3, status: 'inactive' })],
+    })).previewConversion(command()), hasCode('CONVERSION_RULE_SUPERSEDED'));
     await assert.rejects(service(mockRepository({ targetType: { kind: 'universal', consumable: false } }))
         .previewConversion(command()), hasCode('CONVERSION_TARGET_NOT_CONSUMABLE'));
     await assert.rejects(service(mockRepository({ sourceType: null })).previewConversion(command()),
@@ -272,10 +275,13 @@ function mockRepository(options = {}) {
             if (collection === 'conversion_authorizations') return options.authorization || null;
             throw new Error(`Unexpected get ${collection}`);
         },
-        async list() { return options.batches || [sourceBatch(), sourceBatch({
-            id: 'source-later', originalQuantity: 200, availableQuantity: 200,
-            paidUnitCost: 0.8, effectiveExpiresAt: '2026-09-01T00:00:00Z', version: 3,
-        })]; },
+        async list(collection) {
+            if (collection === 'conversion_rules') return options.ruleVersions || [rule];
+            return options.batches || [sourceBatch(), sourceBatch({
+                id: 'source-later', originalQuantity: 200, availableQuantity: 200,
+                paidUnitCost: 0.8, effectiveExpiresAt: '2026-09-01T00:00:00Z', version: 3,
+            })];
+        },
         async send(plan) {
             this.plan = plan;
             if (options.raceReplayAfterSend) {

@@ -1,5 +1,7 @@
 const { createRecordId, invariant } = require('./domain');
 const { normalizeResourceInput, resourceSchema, validateStatus } = require('./adminResourceSchemas');
+const { assertNoProfitableConversionCycles } = require('./domain/conversion');
+const { currentConversionRule, latestConversionRules } = require('./conversionRuleVersions');
 const {
     commitTeachingPlan,
     create,
@@ -23,6 +25,9 @@ class AdminResourceCommandService {
         const data = normalizeResourceInput(name, input.data || input);
         if (name === 'lessons') {
             invariant(data.status === 'draft', 'LESSON_MUST_START_DRAFT', '新课堂必须先保存为草稿');
+        }
+        if (name === 'conversionRules') {
+            invariant(data.status === 'draft', 'CONVERSION_RULE_MUST_START_DRAFT', '新兑换规则必须先保存为草稿');
         }
         const id = this.idFactory();
         const plan = [create(config.collection, { id, ...data }), audit(this.idFactory, input, name, id, 'create')];
@@ -56,6 +61,7 @@ class AdminResourceCommandService {
     async setStatus(name, id, status, input = {}) {
         validateStatus(name, status);
         if (name === 'packages' && status === 'active') await this.validatePackagePublication(id);
+        if (name === 'conversionRules' && status === 'active') await this.validateConversionPublication(id);
         return this.updateResource(name, id, { ...input, data: { status } });
     }
 
@@ -72,8 +78,32 @@ class AdminResourceCommandService {
         invariant(prices.length > 0, 'PACKAGE_ACTIVE_PRICE_REQUIRED', '课包启用前必须配置有效价格');
     }
 
+    async validateConversionPublication(ruleId) {
+        const current = await this.repository.get('conversion_rules', ruleId);
+        invariant(current, 'CONVERSION_RULE_NOT_FOUND', '兑换规则不存在');
+        const [rules, creditTypes] = await Promise.all([
+            this.repository.list('conversion_rules', { sort: 'sourceCreditTypeId,targetCreditTypeId,-version' }),
+            this.repository.list('credit_types', { sort: 'code' }),
+        ]);
+        const candidate = {
+            ...normalizeResourceInput('conversionRules', { status: 'active' }, current),
+            id: `${ruleId}:publication`, version: positiveVersion(current.version) + 1,
+        };
+        const activeRules = latestConversionRules([...rules, candidate]).filter((rule) => rule.status === 'active');
+        assertNoProfitableConversionCycles(activeRules, creditTypes);
+    }
+
     async createRevision(name, current, data, input) {
         const config = resourceSchema(name);
+        if (name === 'conversionRules') {
+            const versions = await this.repository.list('conversion_rules', {
+                filter: `sourceCreditTypeId="${escapeFilter(current.sourceCreditTypeId)}"`
+                    + ` && targetCreditTypeId="${escapeFilter(current.targetCreditTypeId)}"`,
+                sort: '-version',
+            });
+            invariant(currentConversionRule(versions, current)?.id === current.id,
+                'CONVERSION_RULE_SUPERSEDED', '兑换规则已有更新版本，请刷新后重试');
+        }
         const id = this.idFactory();
         const version = Math.max(positiveVersion(current.version) + 1, positiveVersion(data.version));
         const next = { ...data, id, version };

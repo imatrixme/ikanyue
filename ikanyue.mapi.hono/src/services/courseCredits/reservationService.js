@@ -5,6 +5,7 @@ const {
     scopedIdempotencyKey,
     validateConversionRule,
 } = require('./domain');
+const { activeConversionRulesAt } = require('./conversionRuleVersions');
 const { buildFefoFilter, FEFO_SORT } = require('./repositories/batchRepository');
 const { fingerprintRequest, normalizeOperation } = require('./repositories/operationRepository');
 const { buildAuthorizedImplicitReservation, sourceQuantityForTarget } = require('./implicitReservation');
@@ -162,11 +163,10 @@ class CourseCreditReservationService {
 async function findConversionAvailability(repository, query) {
     const at = escapeFilter(new Date(query.now).toISOString());
     const rules = await repository.list('conversion_rules', {
-        filter: `targetCreditTypeId="${escapeFilter(query.targetCreditTypeId)}" && status="active"`
-            + ` && validFrom<="${at}" && (validTo="" || validTo>"${at}")`,
+        filter: `targetCreditTypeId="${escapeFilter(query.targetCreditTypeId)}"`,
         sort: '-version',
     });
-    for (const rule of rules) {
+    for (const rule of activeConversionRulesAt(rules, at)) {
         validateConversionRule(rule, query.now);
         const sourceQuantity = sourceQuantityForTarget(rule, query.missingQuantity);
         if (rule.maxSourceQuantity && sourceQuantity > rule.maxSourceQuantity) continue;

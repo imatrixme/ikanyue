@@ -7,8 +7,8 @@ async function main(options) {
     const argv = normalizeArgv(options.argv);
     const env = options.env;
     const command = argv[0];
-    if (!['backup', 'restore'].includes(command)) {
-        throw new Error('Usage: course-credit-pocketbase-backup.js <backup|restore> [file]');
+    if (!['backup', 'restore', 'restore-finalize'].includes(command)) {
+        throw new Error('Usage: course-credit-pocketbase-backup.js <backup|restore|restore-finalize> [file]');
     }
     const pb = options.pb || await connect(env, options.loadPocketBase);
     if (command === 'backup') {
@@ -21,12 +21,13 @@ async function main(options) {
             pb,
         });
     }
-    return restorePocketBase({
+    const restoreOptions = {
         env,
         filePath: argv[1],
         fsImpl: options.fsImpl,
         pb,
-    });
+    };
+    return command === 'restore' ? restorePocketBase(restoreOptions) : finalizePocketBaseRestore(restoreOptions);
 }
 
 function normalizeArgv(argv) {
@@ -95,9 +96,86 @@ async function restorePocketBase({ env, filePath, fsImpl, pb }) {
     const data = await fsImpl.readFile(resolved);
     if (data.length === 0) throw new Error('PocketBase restore file is empty');
     const file = new File([data], basename, { type: 'application/zip' });
-    await pb.backups.upload({ file }, { requestKey: null });
-    await pb.backups.restore(basename, { requestKey: null });
-    return { basename, bytes: data.length, restored: true };
+    const originalBackups = await switchToLocalBackupStorage(pb, env);
+    let uploaded = false;
+    try {
+        await pb.backups.upload({ file }, { requestKey: null });
+        uploaded = true;
+        await pb.backups.restore(basename, { requestKey: null });
+        return {
+            basename,
+            bytes: data.length,
+            restoreRequested: true,
+            restartRequired: true,
+            finalizeRequired: true,
+            reenableS3Required: Boolean(originalBackups?.s3?.enabled),
+        };
+    } catch (error) {
+        if (uploaded) await deleteBackupIfPresent(pb, basename, false);
+        if (originalBackups) {
+            await pb.settings.update({ backups: originalBackups }, { requestKey: null });
+        }
+        throw error;
+    }
+}
+
+async function finalizePocketBaseRestore({ env, filePath, pb }) {
+    if (!filePath) throw new Error('Restore finalization requires the restored backup zip path');
+    const basename = path.basename(path.resolve(filePath));
+    if (env.PB_RESTORE_CONFIRM !== basename) {
+        throw new Error(`Set PB_RESTORE_CONFIRM=${basename} to confirm restore finalization`);
+    }
+    const reenableS3 = env.PB_BACKUP_STORAGE === 'local'
+        ? explicitBooleanEnv('PB_RESTORE_REENABLE_S3', env)
+        : false;
+    await refreshPocketBaseAuth(pb, env);
+    const settings = env.PB_BACKUP_STORAGE === 'local'
+        ? await pb.settings.getAll({ requestKey: null })
+        : null;
+    const backups = settings?.backups;
+    if (backups?.s3?.enabled) {
+        await pb.settings.update({
+            backups: { ...backups, s3: { ...backups.s3, enabled: false } },
+        }, { requestKey: null });
+    }
+    await deleteBackupIfPresent(pb, basename);
+    if (reenableS3 && backups?.s3) {
+        await pb.settings.update({
+            backups: { ...backups, s3: { ...backups.s3, enabled: true } },
+        }, { requestKey: null });
+    }
+    return { basename, finalized: true, s3Enabled: reenableS3 };
+}
+
+async function refreshPocketBaseAuth(pb, env) {
+    if (!pb.health?.check || typeof pb.collection !== 'function'
+        || !env.PB_EMAIL || !env.PB_PASSWORD) return;
+    await pb.health.check({ requestKey: null });
+    await pb.collection('_superusers').authWithPassword(
+        env.PB_EMAIL, env.PB_PASSWORD, { requestKey: null }
+    );
+}
+
+async function deleteBackupIfPresent(pb, basename, strict = true) {
+    if (!pb.backups?.delete) return;
+    try {
+        await pb.backups.delete(basename, { requestKey: null });
+    } catch (error) {
+        if (isMissingBackupError(error) || !strict) return;
+        throw error;
+    }
+}
+
+function isMissingBackupError(error) {
+    const message = `${error?.message || ''} ${error?.response?.message || ''}`.toLowerCase();
+    return error?.status === 404 || message.includes('already deleted') || message.includes('no such file');
+}
+
+function explicitBooleanEnv(name, env) {
+    const value = env[name];
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    throw new Error(`${name} must be explicitly true or false`);
 }
 
 function backupName(filePath, now) {
@@ -144,8 +222,13 @@ module.exports = {
     backupName,
     backupPocketBase,
     connect,
+    deleteBackupIfPresent,
+    explicitBooleanEnv,
+    finalizePocketBaseRestore,
+    isMissingBackupError,
     main,
     normalizeArgv,
+    refreshPocketBaseAuth,
     requiredEnv,
     restorePocketBase,
     switchToLocalBackupStorage,

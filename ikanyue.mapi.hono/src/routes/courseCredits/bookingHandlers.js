@@ -12,6 +12,7 @@ function createCourseBookingHandlers(options) {
         requireStudent,
         safeCommand,
         safeQuery,
+        featureGate,
     } = options;
     const studentCommand = (name, run) => async (c) => safeCommand(c, name, async () => {
         const user = requireStudent(c.get('user'));
@@ -19,13 +20,15 @@ function createCourseBookingHandlers(options) {
         const services = await loadServices();
         return run(c, services, user, body, commandMetadata(c, user));
     }, metrics);
-    const teacherCommand = (name, run) => async (c) => safeCommand(c, name, async () => {
+    const teacherCommand = (name, run, feature) => async (c) => safeCommand(c, name, async () => {
+        if (feature) featureGate.require(feature);
         const user = requireBookingTeacher(c.get('user'), capability, requireCapability);
         const body = await readOptionalJsonBody(c);
         const services = await loadServices();
         return run(c, services, user, body, commandMetadata(c, user));
     }, metrics);
-    const opsCommand = (name, run) => async (c) => safeCommand(c, name, async () => {
+    const opsCommand = (name, run, feature) => async (c) => safeCommand(c, name, async () => {
+        if (feature) featureGate.require(feature);
         const user = requireBookingOperator(c.get('user'), capability, requireCapability);
         const body = await readOptionalJsonBody(c);
         const services = await loadServices();
@@ -118,7 +121,7 @@ function createCourseBookingHandlers(options) {
             services.appointmentDecisionService.confirm({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'), teacherId: user.id,
             })
-        )),
+        ), 'reservation'),
         declineTeacherAppointment: teacherCommand('declineAppointment', (c, services, user, body, metadata) => (
             services.pendingAppointmentService.decline({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'), teacherId: user.id,
@@ -250,7 +253,7 @@ function createCourseBookingHandlers(options) {
             services.appointmentDecisionService.confirm({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),
             })
-        )),
+        ), 'reservation'),
         declineOpsAppointment: opsCommand('declineAppointment', (c, services, _user, body, metadata) => (
             services.pendingAppointmentService.decline({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),

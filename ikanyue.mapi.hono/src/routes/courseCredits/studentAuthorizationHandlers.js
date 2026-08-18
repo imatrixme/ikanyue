@@ -1,5 +1,6 @@
 function createStudentAuthorizationHandlers(options) {
     const {
+        featureGate,
         loadServices,
         metrics,
         readJsonBody,
@@ -9,6 +10,7 @@ function createStudentAuthorizationHandlers(options) {
     return {
         async authorizeStudentConversion(c) {
             return safeCommand(c, 'authorizeAutomaticConversion', async () => {
+                featureGate.require('implicitConversion');
                 const user = requireStudent(c.get('user'));
                 const body = await readJsonBody(c);
                 const services = await loadServices();

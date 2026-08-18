@@ -70,7 +70,15 @@ function createCourseCreditOpsQueryHandlers(options) {
         getSessionStudent: getAny('sessionStudents', [capability.ACADEMIC, capability.SETTLEMENT]),
         listSessionTeachers: listAny('sessionTeachers', [capability.ACADEMIC, capability.SETTLEMENT]),
         getSessionTeacher: getAny('sessionTeachers', [capability.ACADEMIC, capability.SETTLEMENT]),
-        listSettlementExceptions: list('settlementExceptions', capability.SETTLEMENT),
+        async listSettlementExceptions(c) {
+            return safeQuery(c, async () => {
+                requireCapability(c.get('user'), capability.SETTLEMENT);
+                const services = await loadServices();
+                return services.opsQueryService.listSettlementExceptions(queryParams(c, [
+                    'page', 'perPage', 'kind', 'status', 'sessionId', 'studentId',
+                ]));
+            });
+        },
         getSettlementException: get('settlementExceptions', capability.SETTLEMENT),
         async listTeacherEvents(c) {
             return safeQuery(c, async () => {
@@ -78,7 +86,7 @@ function createCourseCreditOpsQueryHandlers(options) {
                 const services = await loadServices();
                 const query = queryParams(c, ['page', 'perPage', 'status', 'teacherId', 'sessionTeacherId']);
                 if (!user.isAdmin) query.teacherId = user.id;
-                return services.opsQueryService.listResource('teacherEvents', query);
+                return services.opsQueryService.listTeacherEvents(query);
             });
         },
         async getTeacherEvent(c) {

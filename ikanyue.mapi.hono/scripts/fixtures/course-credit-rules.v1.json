@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "effectiveFrom": "2026-08-17T00:00:00.000Z",
+  "timezone": "Asia/Shanghai",
+  "universalCredit": {
+    "referenceCurrency": "CNY",
+    "referenceUnitValue": 1,
+    "consumableForLessons": false,
+    "expiryPolicy": "NO_EXPIRY"
+  },
+  "activationDefaults": {
+    "rollingPackage": {
+      "mode": "FIRST_CHECK_IN",
+      "activationDeadlineDays": 30,
+      "validityDurationDays": 180
+    },
+    "fixedTermClass": {
+      "mode": "TERM_START",
+      "expiryPolicy": "TERM_END"
+    }
+  },
+  "attendanceSettlement": {
+    "leaveCutoffMinutes": 720,
+    "present": "consume",
+    "late": "consume",
+    "leaveBeforeCutoff": "release",
+    "leaveAfterCutoff": "consume",
+    "noShow": "consume",
+    "institutionCancellation": "release",
+    "teacherCancellationCompensation": 0
+  },
+  "conversion": {
+    "defaultReversible": false,
+    "allowedDirections": "published_directed_rules_only",
+    "maxReferenceValueGrowthBps": 0,
+    "maxReferenceValueLossBps": 2000,
+    "implicitConversionRequiresCurrentConsent": true
+  },
+  "commerce": {
+    "firstReleaseChannels": ["admin", "offline"],
+    "guardianPaymentEnabled": false,
+    "offlineOrderRequiresAdminApproval": true,
+    "automaticCashRefundEnabled": false
+  }
+}

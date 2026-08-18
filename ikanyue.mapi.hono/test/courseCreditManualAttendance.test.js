@@ -76,6 +76,10 @@ test('settlement preview reports consume, release, unresolved rows, and teacher 
             roster({ id: 'missing', studentId: 'student-3', attendanceStatus: 'absent', creditStatus: 'credit_insufficient' }),
         ],
         teachers: [teacher()],
+        allocations: [{
+            id: 'allocation', sessionStudentId: 'roster-1', batchId: 'batch-1', quantity: 1,
+            status: 'reserved', expand: { batchId: { id: 'batch-1', effectiveExpiresAt: '2026-12-31T00:00:00Z' } },
+        }],
     });
     const result = await service(repository).previewSettlement('session-1');
 
@@ -84,6 +88,10 @@ test('settlement preview reports consume, release, unresolved rows, and teacher 
     assert.match(result.students[2].exception, /课时不足/);
     assert.equal(result.teachers[0].action, 'earn');
     assert.equal(result.teachers[0].quantity, 1.2);
+    assert.deepEqual(result.students[0].allocations, [{
+        allocationId: 'allocation', batchId: 'batch-1', quantity: 1,
+        status: 'reserved', effectiveExpiresAt: '2026-12-31T00:00:00Z',
+    }]);
     assert.equal(repository.plan.length, 0);
 });
 
@@ -205,6 +213,7 @@ function mockRepository(options = {}) {
             this.calls.push({ collection, options: requestOptions });
             if (collection === 'session_students') return options.roster === undefined ? [roster()] : options.roster;
             if (collection === 'session_teachers') return options.teachers || [teacher()];
+            if (collection === 'session_credit_allocations') return options.allocations || [];
             return [];
         },
         async findFirst(collection, filter) {

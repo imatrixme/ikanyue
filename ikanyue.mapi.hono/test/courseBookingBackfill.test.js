@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { ScheduleClaimBackfillService, buildReport } = require('../src/services/courseCredits/booking/backfillService');
+const { normalizedCellStart } = require('../src/services/courseCredits/booking/claims');
 const { sessionClaimPlan } = require('../src/services/courseCredits/booking/claimPlanning');
 
 test('backfill preview separates ready, already claimed, and conflicting future lessons', () => {
@@ -16,6 +17,26 @@ test('backfill preview separates ready, already claimed, and conflicting future 
     assert.deepEqual(report.claimed, [{ sessionId: 'claimed' }]);
     assert.ok(report.conflicts.length > 0);
     assert.equal(report.ready.some((item) => item.sessionId === 'ready'), true);
+});
+
+test('backfill recognizes PocketBase space-formatted dates as existing ISO claims', () => {
+    const claimed = entry('claimed', 'teacher-b');
+    const existing = claimed.plan.claims.map((claim) => ({
+        ...claim,
+        cellStartAt: claim.cellStartAt.replace('T', ' '),
+        sourceId: 'claimed',
+    }));
+
+    const report = buildReport([claimed], existing);
+
+    assert.deepEqual(report.claimed, [{ sessionId: 'claimed' }]);
+    assert.deepEqual(report.ready, []);
+    assert.deepEqual(report.conflicts, []);
+});
+
+test('claim key normalization keeps malformed storage values deterministic', () => {
+    assert.equal(normalizedCellStart('not-a-date'), 'not-a-date');
+    assert.equal(normalizedCellStart(null), '');
 });
 
 test('backfill apply creates claims and disables offerings for conflicting teachers', async () => {

@@ -79,12 +79,26 @@ pnpm run course-credits:backup -- .local/course-credit-backups/course-credit-loc
 ```
 
 Restore is destructive for the local PocketBase runtime and requires an exact
-filename confirmation:
+filename confirmation. PocketBase 0.32 stages the restored files; keep the
+uploaded backup in place, restart PocketBase, and only then finalize the
+restore. When local storage temporarily replaced S3, finalization requires an
+explicit decision about re-enabling S3.
 
 ```bash
 PB_URL=http://127.0.0.1:18091 \
 PB_EMAIL=course-credit-local@ikanyue.invalid \
 PB_PASSWORD='<local password>' \
+PB_BACKUP_STORAGE=local \
 PB_RESTORE_CONFIRM=course-credit-local.zip \
 pnpm run course-credits:restore -- .local/course-credit-backups/course-credit-local.zip
+
+# Restart the PocketBase process or container here, then verify the restored data.
+
+PB_URL=http://127.0.0.1:18091 \
+PB_EMAIL=course-credit-local@ikanyue.invalid \
+PB_PASSWORD='<local password>' \
+PB_BACKUP_STORAGE=local \
+PB_RESTORE_CONFIRM=course-credit-local.zip \
+PB_RESTORE_REENABLE_S3=false \
+pnpm run course-credits:restore:finalize -- .local/course-credit-backups/course-credit-local.zip
 ```

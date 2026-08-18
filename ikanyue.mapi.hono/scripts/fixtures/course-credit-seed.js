@@ -1,4 +1,7 @@
+const COURSE_CREDIT_RULES_V1 = require('./course-credit-rules.v1.json');
+
 const COURSE_CREDIT_SEED = Object.freeze({
+    rules: COURSE_CREDIT_RULES_V1,
     courseSpecs: [
         { code: 'VOCAL-ADULT-1V1-60', name: '成人声乐一对一 60 分钟', deliveryMode: 'one_to_one', durationMinutes: 60 },
         { code: 'SIGHT-SINGING-GROUP-60', name: '视唱练耳小组课 60 分钟', deliveryMode: 'group', durationMinutes: 60 },
@@ -31,4 +34,4 @@ const COURSE_CREDIT_SEED = Object.freeze({
     ],
 });
 
-module.exports = { COURSE_CREDIT_SEED };
+module.exports = { COURSE_CREDIT_RULES_V1, COURSE_CREDIT_SEED };

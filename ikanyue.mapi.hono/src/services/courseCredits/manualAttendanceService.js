@@ -127,7 +127,16 @@ class ManualAttendanceService {
             this.repository.list('session_teachers', { filter, sort: 'role,teacherId' }),
             this.repository.get('credit_types', session.requiredCreditTypeId),
         ]);
-        const students = roster.map((record) => previewStudent(effectiveSession, record));
+        const allocations = roster.length ? await this.repository.list('session_credit_allocations', {
+            filter: `(${roster.map((record) => `sessionStudentId="${escapeFilter(record.id)}"`).join(' || ')})`,
+            sort: 'sessionStudentId,created',
+            expand: 'batchId',
+        }) : [];
+        const students = roster.map((record) => previewStudent(
+            effectiveSession,
+            record,
+            allocations.filter((allocation) => relationId(allocation.sessionStudentId) === record.id)
+        ));
         const earnings = planTeacherEarnings(effectiveSession, teachers, roster, creditType.courseSpecId);
         return {
             sessionId,
@@ -173,7 +182,17 @@ function attendancePlan(service, context, roster, attendanceStatus) {
     return plan;
 }
 
-function previewStudent(session, record) {
+function previewStudent(session, record, allocations = []) {
+    const affectedBatches = allocations.map((allocation) => {
+        const batch = expanded(allocation, 'batchId');
+        return {
+            allocationId: allocation.id,
+            batchId: relationId(allocation.batchId),
+            quantity: Number(allocation.quantity || 0),
+            status: allocation.status || '',
+            effectiveExpiresAt: batch.effectiveExpiresAt || null,
+        };
+    });
     if (record.creditStatus !== 'reserved') {
         return {
             sessionStudentId: record.id,
@@ -181,6 +200,7 @@ function previewStudent(session, record) {
             attendanceStatus: record.attendanceStatus,
             action: 'exception',
             quantity: Number(session.requiredQuantity),
+            allocations: affectedBatches,
             exception: record.creditStatus === 'credit_insufficient'
                 ? '课时不足，需要教务处理'
                 : '课时状态尚未准备完成',
@@ -194,6 +214,7 @@ function previewStudent(session, record) {
             attendanceStatus: record.attendanceStatus,
             action: decision.action,
             quantity: Number(session.requiredQuantity),
+            allocations: affectedBatches,
             exception: null,
         };
     } catch (error) {
@@ -203,9 +224,20 @@ function previewStudent(session, record) {
             attendanceStatus: record.attendanceStatus,
             action: 'exception',
             quantity: Number(session.requiredQuantity),
+            allocations: affectedBatches,
             exception: error.code === 'ATTENDANCE_NOT_FINAL' ? '需要先完成出勤登记' : '课堂规则需要教务检查',
         };
     }
+}
+
+function expanded(record, field) {
+    const value = record.expand?.[field];
+    return Array.isArray(value) ? value[0] || {} : value || {};
+}
+
+function relationId(value) {
+    if (Array.isArray(value)) return relationId(value[0]);
+    return value && typeof value === 'object' ? value.id || '' : value || '';
 }
 
 function audit(idFactory, input, sessionId, action, metadata) {

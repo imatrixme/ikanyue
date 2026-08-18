@@ -1,8 +1,25 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const md5 = require('licia/md5');
 
 const { requestJson, withEnv, withMockedUserRouteModules } = require('./support/pageRouteTestHelpers');
 const { createUserRouteApp, createUserRouteMocks } = require('./support/userRouteFixtures');
+
+test('teacher password matching supports legacy hashes and PocketBase auth records', async () => {
+    const { matchesTeacherPassword } = require('../src/routes/user/login');
+    let authCalls = 0;
+    const authenticator = async (teacher, password, cellphone) => {
+        authCalls += 1;
+        return teacher.id === 'pb_teacher' && password === 'secret' && cellphone === '13800000000';
+    };
+
+    assert.equal(await matchesTeacherPassword({ password: md5('secret') }, 'secret', 'legacy', authenticator), true);
+    assert.equal(await matchesTeacherPassword({ password: md5('secret') }, 'wrong', 'legacy', authenticator), false);
+    assert.equal(authCalls, 0);
+    assert.equal(await matchesTeacherPassword({ id: 'pb_teacher' }, 'secret', '13800000000', authenticator), true);
+    assert.equal(await matchesTeacherPassword({ id: 'pb_teacher' }, 'wrong', '13800000000', authenticator), false);
+    assert.equal(authCalls, 2);
+});
 
 test('user routes cover miniapp profile login, refresh, and update flow', async () => {
     await withUserRoutes(async (app, { studentUpdateCalls }) => {

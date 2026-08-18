@@ -12,6 +12,7 @@ const {
     validateConversionRule,
     validateCreditType,
 } = require('./domain');
+const { currentConversionRule } = require('./conversionRuleVersions');
 const { balanceSnapshot } = require('./grantService');
 const {
     buildConversionTargetPreview,
@@ -195,7 +196,17 @@ class CourseCreditConversionService {
     async prepare(input) {
         validateConversionInput(input);
         const now = resolvePreparationTime(input, this.clock);
-        const rule = validateConversionRule(await this.repository.get('conversion_rules', input.ruleId), now);
+        const storedRule = await this.repository.get('conversion_rules', input.ruleId);
+        invariant(storedRule, 'CONVERSION_RULE_NOT_FOUND', 'Conversion rule was not found');
+        const versions = await this.repository.list('conversion_rules', {
+            filter: `sourceCreditTypeId="${escapeFilter(storedRule?.sourceCreditTypeId)}"`
+                + ` && targetCreditTypeId="${escapeFilter(storedRule?.targetCreditTypeId)}"`,
+            sort: '-version',
+        });
+        const currentRule = currentConversionRule(versions, storedRule);
+        invariant(currentRule?.id === storedRule?.id, 'CONVERSION_RULE_SUPERSEDED',
+            'Conversion rule has been superseded by a newer version');
+        const rule = validateConversionRule(storedRule, now);
         calculateTargetQuantity(rule, input.sourceQuantity);
         const [sourceType, targetType] = await Promise.all([
             this.repository.get('credit_types', rule.sourceCreditTypeId),

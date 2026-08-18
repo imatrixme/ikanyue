@@ -1,4 +1,4 @@
-const { createOperationNo, invariant } = require('../domain');
+const { createOperationNo, invariant, validateTeacherRuleSnapshot } = require('../domain');
 
 const ATTENDANCE_RULE_SNAPSHOT = Object.freeze({
     version: 1,
@@ -71,7 +71,8 @@ function teacherSnapshot(rule, courseSpecId) {
     invariant(rule?.id, 'BOOKING_TEACHER_RULE_REQUIRED', '该课程缺少有效的教师课酬规则');
     invariant(relationId(rule.courseSpecId) === courseSpecId,
         'BOOKING_TEACHER_RULE_COURSE_MISMATCH', '教师规则与预约课程不匹配');
-    return {
+    const cancellationCompensation = normalizeCancellationCompensation(rule.cancellationCompensation);
+    const snapshot = {
         version: positiveInteger(rule.version),
         rules: {
             lead: {
@@ -80,12 +81,20 @@ function teacherSnapshot(rule, courseSpecId) {
                 baseQuantity: nonNegativeNumber(rule.baseQuantity),
                 durationFactor: nonNegativeNumber(rule.durationFactor),
                 participantFactor: nonNegativeNumber(rule.participantFactor),
-                ...(rule.cancellationCompensation
-                    ? { cancellationCompensation: rule.cancellationCompensation }
-                    : {}),
+                ...(cancellationCompensation ? { cancellationCompensation } : {}),
             },
         },
     };
+    return validateTeacherRuleSnapshot(snapshot);
+}
+
+function normalizeCancellationCompensation(value) {
+    if (value === undefined || value === null) return null;
+    if (Number.isFinite(Number(value.cancelled))) {
+        const quantity = Number(value.cancelled);
+        return quantity > 0 ? { quantity, eligibleActualStatuses: ['confirmed'] } : null;
+    }
+    return value;
 }
 
 function validateInput(input) {
@@ -117,5 +126,6 @@ module.exports = {
     ATTENDANCE_RULE_SNAPSHOT,
     SETTLEMENT_RULE_SNAPSHOT,
     materializeAppointment,
+    normalizeCancellationCompensation,
     teacherSnapshot,
 };

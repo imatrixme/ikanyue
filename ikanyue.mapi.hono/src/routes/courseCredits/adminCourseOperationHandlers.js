@@ -3,6 +3,7 @@ const RESOURCE_CAPABILITIES = Object.freeze({
     packages: 'FINANCE',
     grantLines: 'FINANCE',
     priceVersions: 'FINANCE',
+    conversionRules: 'FINANCE',
     classes: 'ACADEMIC',
     lessons: 'ACADEMIC',
 });
@@ -56,6 +57,9 @@ function createAdminCourseOperationHandlers(options) {
         createPriceVersion: createResource('priceVersions'),
         revisePriceVersion: updateResource('priceVersions'),
         setPriceVersionStatus: setStatus('priceVersions'),
+        createConversionRule: createResource('conversionRules'),
+        reviseConversionRule: updateResource('conversionRules'),
+        setConversionRuleStatus: setStatus('conversionRules'),
         createClass: createResource('classes'),
         updateClass: updateResource('classes'),
         setClassStatus: setStatus('classes'),

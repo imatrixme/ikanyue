@@ -60,7 +60,9 @@ test('real PocketBase atomically converts authorized credits and reserves the le
         const successSource = await createSourceBatch(pb, student.id, catalog.universal.id,
             sourceOperation.id, 'success');
         created.sourceBatchIds.push(successSource.id);
-        const successSession = await createSessionFixture(pb, student.id, catalog.course.id, marker, 'success');
+        const successSession = await createSessionFixture(
+            pb, student.id, catalog.course.id, catalog.courseSpec.id, marker, 'success'
+        );
         created.sessionIds.push(successSession.session.id);
         created.sessionStudentIds.push(successSession.sessionStudent.id);
 
@@ -109,7 +111,9 @@ test('real PocketBase atomically converts authorized credits and reserves the le
         const rollbackSource = await createSourceBatch(pb, student.id, catalog.universal.id,
             sourceOperation.id, 'rollback');
         created.sourceBatchIds.push(rollbackSource.id);
-        const rollbackSession = await createSessionFixture(pb, student.id, catalog.course.id, marker, 'rollback');
+        const rollbackSession = await createSessionFixture(
+            pb, student.id, catalog.course.id, catalog.courseSpec.id, marker, 'rollback'
+        );
         created.sessionIds.push(rollbackSession.session.id);
         created.sessionStudentIds.push(rollbackSession.sessionStudent.id);
         const failingRepository = failingBatchRepository(repository);
@@ -177,7 +181,7 @@ async function createCatalog(pb, marker, created) {
         referenceUnitValue: 100, status: 'active',
     }, { requestKey: null });
     created.creditTypeIds = [universal.id, course.id];
-    return { universal, course };
+    return { course, courseSpec, universal };
 }
 
 async function createSourceOperation(pb, studentId, marker) {
@@ -185,7 +189,8 @@ async function createSourceOperation(pb, studentId, marker) {
         operationNo: `it-implicit-source-${marker}`, studentId, type: 'grant', status: 'committed',
         idempotencyKey: `it-implicit-source-${marker}`, sourceType: 'integration', sourceId: marker,
         requestSnapshot: {}, resultSnapshot: {}, actorId: 'integration-test', actorRole: 'service',
-        reason: 'integration_setup', outcome: 'committed', beforeSummary: {}, afterSummary: {},
+        reason: 'integration_setup', outcome: 'committed',
+        beforeSummary: { integration: marker }, afterSummary: { integration: marker },
     }, { requestKey: null });
 }
 
@@ -202,10 +207,13 @@ async function createSourceBatch(pb, studentId, creditTypeId, operationId, suffi
     }, { requestKey: null });
 }
 
-async function createSessionFixture(pb, studentId, creditTypeId, marker, suffix) {
+async function createSessionFixture(pb, studentId, creditTypeId, courseSpecId, marker, suffix) {
+    const startAt = new Date(Date.now() + 2 * 86400000).toISOString();
+    const endAt = new Date(Date.now() + 2 * 86400000 + 3600000).toISOString();
     const session = await pb.collection('sessions').create({
         code: `IT-IMPLICIT-${suffix}-${marker}`, title: `Implicit ${suffix} ${marker}`,
-        status: 'scheduled', startAt: '2026-08-01T10:00:00Z', endAt: '2026-08-01T11:00:00Z',
+        status: 'scheduled', originType: 'admin',
+        startAt, endAt,
         requiredCreditTypeId: creditTypeId, requiredQuantity: 2,
         attendanceRuleSnapshot: {
             version: 1, present: 'consume', late: 'consume', leave: 'release', absent: 'consume',
@@ -216,7 +224,7 @@ async function createSessionFixture(pb, studentId, creditTypeId, marker, suffix)
             rules: {
                 lead: {
                     ruleId: 'implicit-integration-lead',
-                    courseSpecId: created.courseSpecId,
+                    courseSpecId,
                     baseQuantity: 1,
                     durationFactor: 0,
                     participantFactor: 0,

@@ -93,7 +93,7 @@ const schemas = [
       {"name":"studentId","type":"relation","required":true,"collectionName":"students","cascadeDelete":false,"minSelect":0,"maxSelect":1},
       {"name":"sourceClassIds","type":"json","required":false},
       {"name":"attendanceStatus","type":"select","required":true,"values":["scheduled","checked_in","present","late","leave","absent","cancelled"],"maxSelect":1},
-      {"name":"creditStatus","type":"select","required":true,"values":["pending","credit_insufficient","conversion_required","reserved","consumed","released","reversed"],"maxSelect":1},
+      {"name":"creditStatus","type":"select","required":true,"values":["pending","credit_insufficient","conversion_required","reserved","consumed","released","reversed","not_charged"],"maxSelect":1},
       {"name":"eligibilityReason","type":"text","required":false,"max":0},
       {"name":"checkedInAt","type":"date","required":false},
       {"name":"settledAt","type":"date","required":false},
@@ -156,7 +156,7 @@ const schemas = [
     name: "teacher_credit_events",
     type: "base",
     fields: [
-      {"name":"sessionTeacherId","type":"relation","required":true,"collectionName":"session_teachers","cascadeDelete":false,"minSelect":0,"maxSelect":1},
+      {"name":"sessionTeacherId","type":"relation","required":false,"collectionName":"session_teachers","cascadeDelete":false,"minSelect":0,"maxSelect":1},
       {"name":"teacherId","type":"relation","required":true,"collectionName":"teachers","cascadeDelete":false,"minSelect":0,"maxSelect":1},
       {"name":"ruleId","type":"relation","required":false,"collectionName":"teacher_credit_rules","cascadeDelete":false,"minSelect":0,"maxSelect":1},
       {"name":"eventType","type":"select","required":true,"values":["earn","compensate","confirm","reverse","adjust"],"maxSelect":1},

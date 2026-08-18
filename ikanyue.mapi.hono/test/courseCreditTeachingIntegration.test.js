@@ -87,6 +87,7 @@ test('real PocketBase persists teaching commands through Hono SDK batches withou
             code: `IT-PUBLISH-${marker}`,
             title: `Publishing integration ${marker}`,
             status: 'draft',
+            originType: 'class',
             startAt: sessionStart,
             endAt: sessionEnd,
             requiredCreditTypeId: created.creditType.id,
@@ -187,6 +188,7 @@ test('real PocketBase persists teaching commands through Hono SDK batches withou
 
 async function cleanup(pb, created) {
     if (created.session?.id) {
+        await deleteByFilter(pb, 'schedule_claims', `sourceId="${created.session.id}"`);
         const sessionStudents = await pb.collection('session_students').getFullList({
             filter: `sessionId="${created.session.id}"`, requestKey: null,
         });
@@ -219,18 +221,12 @@ async function cleanup(pb, created) {
 }
 
 async function ensureActors(pb, marker, created) {
-    const [studentList, teacherList] = await Promise.all([
-        pb.collection('students').getList(1, 1, { requestKey: null }),
-        pb.collection('teachers').getList(1, 2, { requestKey: null }),
-    ]);
-    let student = studentList.items[0];
-    if (!student) {
-        student = await pb.collection('students').create({ sn: `it-student-${marker}` }, { requestKey: null });
-        created.studentId = student.id;
-    }
-    const teachers = [...teacherList.items];
-    while (teachers.length < 2) {
-        const index = teachers.length;
+    const student = await pb.collection('students').create({
+        sn: `it-student-${marker}`,
+    }, { requestKey: null });
+    created.studentId = student.id;
+    const teachers = [];
+    for (let index = 0; index < 2; index += 1) {
         const password = 'LocalTeacher-2026!';
         const teacher = await pb.collection('teachers').create({
             sn: `it-teacher-${index}-${marker}`,

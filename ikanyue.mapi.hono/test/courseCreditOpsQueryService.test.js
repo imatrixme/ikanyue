@@ -128,6 +128,10 @@ test('credit account detail exposes auditable cost fields without raw snapshots'
             effectiveExpiresAt: '2026-12-31T00:00:00Z', listUnitValue: '300', paidUnitCost: '280',
             currency: 'CNY', grantSnapshot: { private: true },
         })],
+        events: [{
+            id: 'event', studentId: 'student', creditTypeId: 'course', operationId: 'operation',
+            batchId: 'batch', eventType: 'GRANT', quantityDelta: 10, reason: 'admin enrollment',
+        }],
     });
     const account = await new CourseCreditOpsQueryService(repository).getAccount('student');
 
@@ -136,7 +140,62 @@ test('credit account detail exposes auditable cost fields without raw snapshots'
     assert.equal(account.batches[0].sourceOperationId, 'operation');
     assert.equal(account.batches[0].paidUnitCost, 280);
     assert.equal(account.batches[0].grantSnapshot, undefined);
+    assert.equal(account.events[0].eventType, 'GRANT');
+    assert.equal(account.events[0].quantityDelta, 10);
     assert.match(repository.calls[0].options.filter, /studentId="student"/);
+});
+
+test('teacher workload queues hide resolved earnings and paginate confirmed events', async () => {
+    const repository = mockRepository({ teacherEvents: [
+        { id: 'pending-open', teacherId: 'teacher', sessionTeacherId: 'row-1', eventType: 'earn', quantityDelta: 1, status: 'pending' },
+        { id: 'pending-closed', teacherId: 'teacher', sessionTeacherId: 'row-2', eventType: 'earn', quantityDelta: 2, status: 'pending' },
+        { id: 'confirmation', teacherId: 'teacher', sessionTeacherId: 'row-2', eventType: 'confirm', quantityDelta: 2, status: 'confirmed', confirmationOfEventId: 'pending-closed' },
+    ] });
+    const service = new CourseCreditOpsQueryService(repository);
+
+    const pending = await service.listTeacherEvents({ status: 'pending', teacherId: 'teacher' });
+    const confirmed = await service.listTeacherEvents({ status: 'confirmed', page: 1, perPage: 10 });
+
+    assert.deepEqual(pending.items.map((item) => item.id), ['pending-open']);
+    assert.deepEqual(confirmed.items.map((item) => item.id), ['confirmation']);
+    assert.equal(repository.calls[0].options.filter, 'teacherId="teacher"');
+});
+
+test('settlement exception workspace aggregates every operational failure class', async () => {
+    const repository = mockRepository({ collections: {
+        session_students: [{
+            id: 'roster', sessionId: 'lesson-1', studentId: 'student-1',
+            creditStatus: 'credit_insufficient', eligibilityReason: '余额不足', updated: '2026-08-18T01:00:00Z',
+        }],
+        session_credit_allocations: [{
+            id: 'allocation', batchId: 'batch-1', quantity: 1, status: 'expired',
+            expand: { sessionStudentId: { sessionId: 'lesson-2', studentId: 'student-2' } },
+            updated: '2026-08-18T02:00:00Z',
+        }],
+        credit_operations: [{
+            id: 'operation', type: 'settle_session', status: 'failed', studentId: 'student-3',
+            requestSnapshot: { sessionId: 'lesson-3' }, resultSnapshot: { errorCode: 'DB_DOWN', message: '写入失败' },
+            updated: '2026-08-18T03:00:00Z',
+        }],
+        sessions: [{ id: 'lesson-4', status: 'correction_pending', updated: '2026-08-18T04:00:00Z' }],
+        reconciliation_exceptions: [{
+            id: 'duplicate', code: 'DUPLICATE_EVENT', status: 'open', batchId: 'batch-2',
+            detectedAt: '2026-08-18T05:00:00Z',
+        }, { id: 'other', code: 'BALANCE_MISMATCH', status: 'open' }],
+    } });
+    const service = new CourseCreditOpsQueryService(repository);
+
+    const result = await service.listSettlementExceptions({ page: 1, perPage: 10 });
+    const filtered = await service.listSettlementExceptions({ kind: 'failed_operation', studentId: 'student-3' });
+
+    assert.deepEqual(result.items.map((item) => item.kind), [
+        'duplicate', 'correction_pending', 'failed_operation', 'expired_release', 'credit_insufficient',
+    ]);
+    assert.equal(result.items.find((item) => item.kind === 'expired_release').sessionId, 'lesson-2');
+    assert.equal(filtered.items[0].reason, '写入失败');
+    assert.equal(repository.calls[0].options.filter,
+        'creditStatus="credit_insufficient" || creditStatus="conversion_required"');
+    assert.match(repository.calls[2].options.filter, /status="failed"/);
 });
 
 test('ops projection helpers normalize relations, empty accounts, and empty pages', () => {
@@ -245,6 +304,9 @@ function mockRepository(options = {}) {
         },
         async list(collection, requestOptions) {
             this.calls.push({ method: 'list', collection, options: requestOptions });
+            if (options.collections) return options.collections[collection] || [];
+            if (collection === 'credit_events') return options.events || [];
+            if (collection === 'teacher_credit_events') return options.teacherEvents || [];
             return options.batches || [];
         },
     };

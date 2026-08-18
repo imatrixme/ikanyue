@@ -2,7 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { AppointmentDecisionService } = require('../src/services/courseCredits/booking/decisionService');
-const { materializeAppointment, teacherSnapshot } = require('../src/services/courseCredits/booking/materialization');
+const {
+    materializeAppointment,
+    normalizeCancellationCompensation,
+    teacherSnapshot,
+} = require('../src/services/courseCredits/booking/materialization');
 const {
     AppointmentRequestService,
     event,
@@ -157,6 +161,31 @@ test('materialization validates teacher rules and snapshots the existing lesson 
     assert.equal(result.session.attendanceRuleSnapshot.absent, 'consume');
     assert.equal(result.session.settlementRuleSnapshot.cancelled, 'release');
     assert.equal(result.session.teacherRuleSnapshot.rules.lead.ruleId, 'teacher-rule');
+    assert.equal(teacherSnapshot(teacherRule({ cancellationCompensation: { cancelled: 0 } }), 'course')
+        .rules.lead.cancellationCompensation, undefined);
+    assert.deepEqual(normalizeCancellationCompensation({ cancelled: 0.5 }), {
+        quantity: 0.5,
+        eligibleActualStatuses: ['confirmed'],
+    });
+    assert.throws(() => teacherSnapshot(teacherRule({ cancellationCompensation: {} }), 'course'),
+        /Cancellation compensation quantity/);
+    const fallback = materializeAppointment({
+        appointment: appointment({
+            courseSpecId: { id: 'course' },
+            creditTypeId: { id: 'credit' },
+            studentId: { id: 'student' },
+            teacherId: { id: 'teacher' },
+        }),
+        course: course(),
+        offering: offering({ location: '' }),
+        teacherRule: teacherRule({ courseSpecId: { id: 'course' }, version: 0 }),
+        now: NOW,
+        sessionId: 'session-fallback',
+        sessionStudentId: 'student-fallback',
+        sessionTeacherId: 'teacher-fallback',
+    });
+    assert.equal(fallback.session.location, '');
+    assert.equal(fallback.session.teacherRuleSnapshot.version, 1);
     assert.throws(() => teacherSnapshot(null, 'course'), /课酬规则/);
     assert.throws(() => teacherSnapshot(teacherRule({ courseSpecId: 'other' }), 'course'), /不匹配/);
 });

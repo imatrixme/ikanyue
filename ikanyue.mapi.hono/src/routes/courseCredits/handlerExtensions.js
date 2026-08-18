@@ -5,6 +5,8 @@ const { createStudentLearningHandlers } = require('./studentLearningHandlers');
 const { createCourseCreditWorkerHandlers } = require('./workerHandlers');
 const { createCourseBookingHandlers } = require('./bookingHandlers');
 const { createCourseScheduleHandlers } = require('./scheduleHandlers');
+const { createCourseCreditMigrationHandlers } = require('./migrationHandlers');
+const { createCourseCreditShadowHandlers } = require('./shadowHandlers');
 
 function createCourseCreditHandlerExtensions(options) {
     const {
@@ -30,7 +32,7 @@ function createCourseCreditHandlerExtensions(options) {
             requireCapability, safeCommand,
         }),
         ...createStudentAuthorizationHandlers({
-            loadServices, metrics, readJsonBody, requireStudent, safeCommand,
+            featureGate: options.featureGate, loadServices, metrics, readJsonBody, requireStudent, safeCommand,
         }),
         ...createStudentLearningHandlers({ loadServices, queryParams, safeQuery }),
         ...createAdminCourseOperationHandlers({
@@ -39,6 +41,8 @@ function createCourseCreditHandlerExtensions(options) {
         }),
         ...createCourseBookingHandlers(options),
         ...createCourseScheduleHandlers(options),
+        ...createCourseCreditMigrationHandlers(options),
+        ...createCourseCreditShadowHandlers(options),
     };
 }
 

@@ -50,6 +50,7 @@ const LOCAL_TEACHER = Object.freeze({
     username: 'localteacher',
     email: 'teacher@local.com',
     cellphone: '13800000000',
+    courseCreditCapabilities: ['course_credit.teacher'],
     name: '本地测试老师',
 });
 
@@ -66,6 +67,7 @@ async function main() {
     const pb = new PocketBase.default(url);
     await pb.collection('_superusers').authWithPassword(requiredEnv('PB_EMAIL'), requiredEnv('PB_PASSWORD'));
 
+    await ensureLocalTeacherCapabilitiesField(pb);
     const teacher = await ensureLocalTeacher(pb, requiredEnv('LOCAL_TEACHER_PASSWORD'));
     let course = await upsertByFilter(pb, 'course_specs', `code="${escapeFilter(LOCAL_COURSE.code)}"`, LOCAL_COURSE);
     const creditType = await upsertByFilter(pb, 'credit_types',
@@ -87,7 +89,7 @@ async function main() {
             baseQuantity: 1,
             durationFactor: 0,
             participantFactor: 0,
-            cancellationCompensation: { cancelled: 0 },
+            cancellationCompensation: null,
             validFrom: LOCAL_POLICY.effectiveFrom,
             version: 1,
             status: 'active',
@@ -123,6 +125,19 @@ async function main() {
     );
 }
 
+async function ensureLocalTeacherCapabilitiesField(pb) {
+    const teachers = await pb.collections.getOne('teachers');
+    const fields = Array.isArray(teachers.fields) ? teachers.fields : [];
+    if (fields.some((field) => field.name === 'courseCreditCapabilities')) return;
+    await pb.collections.update(teachers.id, {
+        fields: [...fields, localTeacherCapabilitiesField()],
+    });
+}
+
+function localTeacherCapabilitiesField() {
+    return { name: 'courseCreditCapabilities', type: 'json', required: false };
+}
+
 async function ensureLocalTeacher(pb, password) {
     const result = await pb.collection('teachers').getList(1, 2, {
         filter: `cellphone="${LOCAL_TEACHER.cellphone}"`,
@@ -136,6 +151,8 @@ async function ensureLocalTeacher(pb, password) {
         return pb.collection('teachers').update(teacher.id, {
             blocked: false,
             verified: true,
+            ...localTeacherCredentials(password),
+            courseCreditCapabilities: LOCAL_TEACHER.courseCreditCapabilities,
             nickName: teacher.nickName || teacher.nickname || LOCAL_TEACHER.name,
             nickname: teacher.nickname || teacher.nickName || LOCAL_TEACHER.name,
             realName: teacher.realName || teacher.realname || LOCAL_TEACHER.name,
@@ -145,8 +162,7 @@ async function ensureLocalTeacher(pb, password) {
     return pb.collection('teachers').create({
         ...LOCAL_TEACHER,
         emailVisibility: false,
-        password,
-        passwordConfirm: password,
+        ...localTeacherCredentials(password),
         nickName: LOCAL_TEACHER.name,
         nickname: LOCAL_TEACHER.name,
         realName: LOCAL_TEACHER.name,
@@ -156,6 +172,10 @@ async function ensureLocalTeacher(pb, password) {
         idAdmin: false,
         isAdmin: false,
     }, { requestKey: null });
+}
+
+function localTeacherCredentials(password) {
+    return { password, passwordConfirm: password };
 }
 
 async function ensureOffering(pb, payload) {
@@ -323,6 +343,8 @@ module.exports = {
     LOCAL_TEACHER,
     assertLocalPocketBase,
     createGrantRecords,
+    localTeacherCapabilitiesField,
+    localTeacherCredentials,
     localRecordId,
     main,
 };

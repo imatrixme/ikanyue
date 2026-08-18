@@ -78,8 +78,8 @@ test('real PocketBase rolls back every conversion write after an injected batch 
             resultSnapshot: {},
             reason: 'integration_setup',
             outcome: 'committed',
-            beforeSummary: {},
-            afterSummary: {},
+            beforeSummary: { integration: marker },
+            afterSummary: { integration: marker },
             actorId: 'integration-test',
             actorRole: 'service',
         }, { requestKey: null });

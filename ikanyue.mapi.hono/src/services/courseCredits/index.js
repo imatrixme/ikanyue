@@ -4,6 +4,8 @@ const { CourseCreditConversionService } = require('./conversionService');
 const { CourseCreditGrantService } = require('./grantService');
 const { CourseCreditExpiryService } = require('./expiryService');
 const { CourseCreditOutboxService } = require('./outboxService');
+const { CourseCreditMigrationService } = require('./migrationService');
+const { createCourseCreditNotificationDispatcher } = require('./notificationDispatcher');
 const { CourseCreditOpsQueryService } = require('./opsQueryService');
 const {
     CourseCreditMetricsService,
@@ -37,10 +39,12 @@ const { ScheduleClaimBackfillService } = require('./booking/backfillService');
 const { BookingAdminService } = require('./booking/adminService');
 const { BookingOpsQueryService } = require('./booking/opsQueryService');
 const { ScheduleQueryService } = require('./schedule');
+const { CourseCreditShadowService } = require('./shadowService');
 
 function createCourseCreditServices(repository, options = {}) {
     const metrics = options.metrics || defaultCourseCreditMetrics;
     const bookingQueryService = new CourseBookingQueryService(repository, options.bookingQuery);
+    const manualAttendanceService = new ManualAttendanceService(repository, options.attendance);
     return {
         adminResourceCommandService: new AdminResourceCommandService(repository, options.adminResources),
         automaticEnrollmentService: new AutomaticEnrollmentService(repository, options.enrollment),
@@ -71,13 +75,15 @@ function createCourseCreditServices(repository, options = {}) {
         grantService: new CourseCreditGrantService(repository),
         metrics,
         metricsService: new CourseCreditMetricsService(repository, { metrics }),
-        manualAttendanceService: new ManualAttendanceService(repository, options.attendance),
+        manualAttendanceService,
+        migrationService: new CourseCreditMigrationService(repository, options.migration),
         queryService: new CourseCreditQueryService(repository, options.query),
         outboxService: new CourseCreditOutboxService(repository, options.outbox),
         opsQueryService: new CourseCreditOpsQueryService(repository),
         reconciliationService: new CourseCreditReconciliationService(repository),
         reservationService: new CourseCreditReservationService(repository),
         scheduleQueryService: new ScheduleQueryService(repository, options.scheduleQuery),
+        shadowService: new CourseCreditShadowService(manualAttendanceService, options.shadow),
         sessionPublicationService: new CourseCreditSessionPublicationService(repository),
         sessionCancellationService: new CourseCreditSessionCancellationService(repository),
         sessionRescheduleService: new CourseCreditSessionRescheduleService(repository),
@@ -92,7 +98,11 @@ function createCourseCreditServices(repository, options = {}) {
 async function createDefaultCourseCreditServices(client = pbClient, options = {}) {
     await client.ready;
     await client.ensureAuth();
-    return createCourseCreditServices(new PocketBaseBatchRepository(client.getClient()), options);
+    const outbox = { ...options.outbox };
+    if (!Object.hasOwn(outbox, 'dispatcher')) {
+        outbox.dispatcher = createCourseCreditNotificationDispatcher(options.env || process.env, options.notification);
+    }
+    return createCourseCreditServices(new PocketBaseBatchRepository(client.getClient()), { ...options, outbox });
 }
 
 module.exports = {

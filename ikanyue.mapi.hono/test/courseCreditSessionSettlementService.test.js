@@ -121,6 +121,7 @@ test('teacher write failure rejects the single transaction without compensation 
 test('settlement validates session, roster, credit, allocation, and storage contracts', async () => {
     await reject({}, { sessionId: '' }, 'SESSION_ID_REQUIRED');
     await reject({ session: { status: 'scheduled' } }, {}, 'SESSION_NOT_SETTLEABLE');
+    await reject({ session: { originType: 'migration' } }, {}, 'MIGRATION_SESSION_SETTLEMENT_FORBIDDEN');
     await reject({ session: { requiredQuantity: 0 } }, {}, 'SESSION_CREDIT_QUANTITY_INVALID');
     await reject({ session: { settlementOperationId: 'prior' } }, {}, 'SESSION_ALREADY_SETTLED');
     await reject({ session: { status: 'correction_pending', correctionBaseStatus: '' } }, {},

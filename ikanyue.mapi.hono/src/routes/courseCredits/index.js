@@ -55,6 +55,18 @@ function courseCreditRoutes(routes, handlers = createCourseCreditHandlers()) {
     routes.post('/ops/course-credits/reconciliation/runs')
         .use(opsAuthMiddleware, opsPasswordChangeGuard)
         .handler(handlers.runReconciliation);
+    routes.get('/ops/course-credits/migration/inventory')
+        .use(opsAuthMiddleware, opsPasswordChangeGuard)
+        .handler(handlers.getMigrationInventory);
+    routes.post('/ops/course-credits/migration/preview')
+        .use(opsAuthMiddleware, opsPasswordChangeGuard)
+        .handler(handlers.previewMigration);
+    routes.post('/ops/course-credits/migration/apply')
+        .use(opsAuthMiddleware, opsPasswordChangeGuard)
+        .handler(handlers.applyMigration);
+    routes.post('/ops/course-credits/shadow/preview')
+        .use(opsAuthMiddleware, opsPasswordChangeGuard)
+        .handler(handlers.runCourseCreditShadow);
     opsQueryRoutes(routes, handlers);
     routes.get('/v1/schedule/upcoming')
         .use(authMiddleware)
@@ -187,6 +199,7 @@ function adminCourseOperationRoutes(routes, handlers) {
         ['packages', handlers.createPackage, handlers.updatePackage, handlers.setPackageStatus],
         ['grant-lines', handlers.createGrantLine, handlers.updateGrantLine, null],
         ['price-versions', handlers.createPriceVersion, handlers.revisePriceVersion, handlers.setPriceVersionStatus],
+        ['conversion-rules', handlers.createConversionRule, handlers.reviseConversionRule, handlers.setConversionRuleStatus],
         ['classes', handlers.createClass, handlers.updateClass, handlers.setClassStatus],
         ['lessons', handlers.createLesson, handlers.updateLesson, handlers.setLessonStatus],
     ];

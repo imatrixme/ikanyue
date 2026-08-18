@@ -87,6 +87,7 @@ test('real PocketBase SDK batch grants and reserves without business hooks', {
         created.batchId = grant.batches[0].batchId;
 
         const first = await createSessionFixture(pb, {
+            courseSpecId: created.courseSpec.id,
             creditTypeId: created.creditType.id,
             marker,
             studentId: students.items[0].id,
@@ -118,6 +119,7 @@ test('real PocketBase SDK batch grants and reserves without business hooks', {
         assert.deepEqual(events.map((event) => event.eventType), ['GRANT', 'ACTIVATE', 'FREEZE']);
 
         const competitors = await Promise.all(['second', 'third'].map((suffix) => createSessionFixture(pb, {
+            courseSpecId: created.courseSpec.id,
             creditTypeId: created.creditType.id,
             marker,
             studentId: students.items[0].id,
@@ -182,8 +184,8 @@ test('real PocketBase SDK batch grants and reserves without business hooks', {
             resultSnapshot: {},
             reason: 'integration_setup',
             outcome: 'committed',
-            beforeSummary: {},
-            afterSummary: {},
+            beforeSummary: { integration: marker },
+            afterSummary: { integration: marker },
             actorId: 'integration-test',
             actorRole: 'service',
         }, { requestKey: null });
@@ -295,8 +297,8 @@ test('real PocketBase SDK batch grants and reserves without business hooks', {
             resultSnapshot: {},
             reason: 'integration_setup',
             outcome: 'committed',
-            beforeSummary: {},
-            afterSummary: {},
+            beforeSummary: { integration: marker },
+            afterSummary: { integration: marker },
             actorId: 'integration-test',
             actorRole: 'service',
         }, { requestKey: null });
@@ -407,6 +409,7 @@ async function createSessionFixture(pb, options) {
         code: `IT-SESSION-${options.suffix}-${options.marker}`,
         title: `Integration session ${options.suffix} ${options.marker}`,
         status: 'scheduled',
+        originType: 'admin',
         startAt: new Date(now + 2 * 86400000).toISOString(),
         endAt: new Date(now + 2 * 86400000 + 3600000).toISOString(),
         requiredCreditTypeId: options.creditTypeId,
@@ -420,7 +423,7 @@ async function createSessionFixture(pb, options) {
             rules: {
                 lead: {
                     ruleId: 'business-integration-lead',
-                    courseSpecId: created.courseSpec.id,
+                    courseSpecId: options.courseSpecId,
                     baseQuantity: 1,
                     durationFactor: 0,
                     participantFactor: 0,

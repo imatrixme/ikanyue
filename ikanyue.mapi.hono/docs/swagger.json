@@ -3150,6 +3150,21 @@
         "$ref": "#/components/x-operations/SetStatus"
       }
     },
+    "/ops/course-operations/conversion-rules": {
+      "post": {
+        "$ref": "#/components/x-operations/CreateResource"
+      }
+    },
+    "/ops/course-operations/conversion-rules/{id}": {
+      "patch": {
+        "$ref": "#/components/x-operations/UpdateResource"
+      }
+    },
+    "/ops/course-operations/conversion-rules/{id}/status": {
+      "post": {
+        "$ref": "#/components/x-operations/SetStatus"
+      }
+    },
     "/ops/course-operations/classes": {
       "post": {
         "$ref": "#/components/x-operations/CreateResource"
@@ -5172,6 +5187,102 @@
         }
       }
     },
+    "/ops/course-credits/migration/inventory": {
+      "get": {
+        "summary": "盘点历史课时与学习数据",
+        "tags": [
+          "CourseCreditOps"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/migration/preview": {
+      "post": {
+        "summary": "预览人工映射迁移计划与差异",
+        "tags": [
+          "CourseCreditOps"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/migration/apply": {
+      "post": {
+        "summary": "提交零差异历史迁移计划",
+        "tags": [
+          "CourseCreditOps"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "plan",
+                  "previewHash"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
     "/ops/course-credits/metrics": {
       "get": {
         "summary": "查询课程点运行指标",
@@ -6378,6 +6489,38 @@
         }
       }
     },
+    "/ops/course-credits/shadow/preview": {
+      "post": {
+        "summary": "对真实课堂执行只读资格与核销影子计算",
+        "tags": [
+          "CourseCreditOps"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionIds",
+                  "expectations"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
     "/v1/student/learning/overview": {
       "get": {
         "summary": "查询本人课程首页",
@@ -7217,6 +7360,68 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/public/course-catalog": {
+      "get": {
+        "summary": "查询已发布课程与课包",
+        "tags": [
+          "PublicCourseCatalog"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PublicCatalogResponse"
+          }
+        }
+      }
+    },
+    "/v1/public/course-catalog/courses/{code}": {
+      "get": {
+        "summary": "查询公开课程详情",
+        "tags": [
+          "PublicCourseCatalog"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PublicCatalogResponse"
+          }
+        }
+      }
+    },
+    "/v1/public/course-catalog/packages/{code}": {
+      "get": {
+        "summary": "查询公开课包详情",
+        "tags": [
+          "PublicCourseCatalog"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PublicCatalogResponse"
           }
         }
       }
@@ -12352,6 +12557,26 @@
           }
         }
       },
+      "PublicCatalogEnvelope": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreateStudentRequest": {
         "type": "object",
         "required": [
@@ -14368,6 +14593,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/StudentLearningResponse"
+            }
+          }
+        }
+      },
+      "PublicCatalogResponse": {
+        "description": "公开课程投影或稳定错误",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicCatalogEnvelope"
             }
           }
         }

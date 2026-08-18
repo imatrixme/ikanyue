@@ -2,6 +2,10 @@ const { randomUUID } = require('node:crypto');
 
 const { CourseCreditError, invariant } = require('../../services/courseCredits/domain');
 const { createDefaultCourseCreditServices } = require('../../services/courseCredits');
+const {
+    COURSE_CREDIT_FEATURES: FEATURE,
+    createCourseCreditFeatureGate,
+} = require('../../services/courseCredits/featureFlags');
 const { createOpsServices } = require('../../services/ops');
 const { defaultCourseCreditMetrics } = require('../../services/courseCredits/metricsService');
 const {
@@ -35,7 +39,8 @@ const AUTHORIZATION_ERRORS = new Set([
 function createCourseCreditHandlers(
     loadServices = createDefaultCourseCreditServices,
     metrics = defaultCourseCreditMetrics,
-    authorizationAudit = createOpsServices().auditService
+    authorizationAudit = createOpsServices().auditService,
+    featureGate = createCourseCreditFeatureGate()
 ) {
     return withAuthorizationAudit({
         ...createCourseCreditHandlerExtensions({
@@ -51,9 +56,11 @@ function createCourseCreditHandlers(
             requireStudent,
             safeCommand,
             safeQuery,
+            featureGate,
         }),
         async grantOrderCredits(c) {
             return safeCommand(c, 'grantOrderCredits', async () => {
+                featureGate.require(FEATURE.GRANTS);
                 const user = requireCapability(c.get('user'), CAPABILITY.FINANCE);
                 const services = await loadServices();
                 return services.grantService.grantOrderCredits({
@@ -62,7 +69,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async setStudentMembership(c) {
             return safeCommand(c, 'setStudentMembership', async () => {
                 const user = requireCapability(c.get('user'), CAPABILITY.ACADEMIC);
@@ -79,7 +85,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async transferStudent(c) {
             return safeCommand(c, 'transferStudent', async () => {
                 const user = requireCapability(c.get('user'), CAPABILITY.ACADEMIC);
@@ -95,7 +100,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async setTeacherAssignment(c) {
             return safeCommand(c, 'setTeacherAssignment', async () => {
                 const user = requireCapability(c.get('user'), CAPABILITY.ACADEMIC);
@@ -112,7 +116,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async publishSession(c) {
             return safeCommand(c, 'publishSession', async () => {
                 const user = requireCapability(c.get('user'), CAPABILITY.ACADEMIC);
@@ -126,11 +129,12 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async reserveSessionCredit(c) {
             return safeCommand(c, 'reserveSessionCredit', async () => {
+                featureGate.require(FEATURE.RESERVATION);
                 const user = requireStudent(c.get('user'));
                 const body = await readOptionalJsonBody(c);
+                if (body.authorizationId) featureGate.require(FEATURE.IMPLICIT_CONVERSION);
                 const services = await loadServices();
                 return services.reservationService.reserveSessionCredit({
                     actorId: user.id,
@@ -144,7 +148,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async confirmTeacherCredit(c) {
             return safeCommand(c, 'confirmTeacherCredit', async () => {
                 const user = requireCapability(c.get('user'), CAPABILITY.FINANCE);
@@ -157,7 +160,6 @@ function createCourseCreditHandlers(
                 });
             }, metrics);
         },
-
         async listOutboxDeadLetters(c) {
             return safeQuery(c, async () => {
                 requireCapability(c.get('user'), CAPABILITY.AUDIT);
@@ -225,6 +227,7 @@ function createCourseCreditHandlers(
 
         async settleSession(c) {
             return safeCommand(c, 'settleSession', async () => {
+                featureGate.require(FEATURE.SETTLEMENT);
                 const user = requireCapability(c.get('user'), CAPABILITY.SETTLEMENT);
                 const body = await readOptionalJsonBody(c);
                 const services = await loadServices();
@@ -238,6 +241,7 @@ function createCourseCreditHandlers(
 
         async reverseSessionSettlement(c) {
             return safeCommand(c, 'reverseSessionSettlement', async () => {
+                featureGate.require(FEATURE.SETTLEMENT);
                 const user = requireCapability(c.get('user'), CAPABILITY.SETTLEMENT);
                 const body = await readJsonBody(c);
                 const services = await loadServices();
@@ -303,6 +307,7 @@ function createCourseCreditHandlers(
 
         async previewStudentConversion(c) {
             return safeQuery(c, async () => {
+                featureGate.require(FEATURE.EXPLICIT_CONVERSION);
                 const user = requireStudent(c.get('user'));
                 const body = await readJsonBody(c);
                 const services = await loadServices();
@@ -312,6 +317,7 @@ function createCourseCreditHandlers(
 
         async convertStudentCredits(c) {
             return safeCommand(c, 'convertCredits', async () => {
+                featureGate.require(FEATURE.EXPLICIT_CONVERSION);
                 const user = requireStudent(c.get('user'));
                 const body = await readJsonBody(c);
                 const services = await loadServices();

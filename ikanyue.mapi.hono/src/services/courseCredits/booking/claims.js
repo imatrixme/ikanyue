@@ -36,7 +36,12 @@ function buildScheduleClaims(input = {}, idFactory) {
 }
 
 function claimKey(claim) {
-    return `${claim.ownerType}:${claim.ownerId}:${claim.cellStartAt}`;
+    return `${claim.ownerType}:${claim.ownerId}:${normalizedCellStart(claim.cellStartAt)}`;
+}
+
+function normalizedCellStart(value) {
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : String(value || '');
 }
 
 function findClaimConflicts(requested, existing) {
@@ -44,4 +49,4 @@ function findClaimConflicts(requested, existing) {
     return requested.filter((claim) => active.has(claimKey(claim)));
 }
 
-module.exports = { buildScheduleClaims, claimKey, findClaimConflicts };
+module.exports = { buildScheduleClaims, claimKey, findClaimConflicts, normalizedCellStart };

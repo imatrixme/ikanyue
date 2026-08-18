@@ -1,6 +1,11 @@
 const { invariant } = require('./domain');
 const { COURSE_CREDIT_CAPABILITIES, hasCourseCreditCapability } = require('./authorization');
-const { escapeFilter, mapPage, pagination, quantity, relationId } = require('./queryService');
+const { escapeFilter, mapEvent, mapPage, pagination, quantity, relationId } = require('./queryService');
+const {
+    SETTLEMENT_OPERATION_TYPES,
+    buildSettlementExceptions,
+    filterSettlementExceptions,
+} = require('./settlementExceptionProjection');
 
 const STUDENT_FIELDS = [
     'id', 'realName', 'nickName', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
@@ -137,14 +142,71 @@ class CourseCreditOpsQueryService {
     async getAccount(studentId) {
         invariant(typeof studentId === 'string' && studentId,
             'STUDENT_ID_REQUIRED', 'Student id is required');
-        const batches = await this.repository.list('credit_batches', {
-            filter: `studentId="${escapeFilter(studentId)}"`,
-            sort: 'effectiveExpiresAt,priority,created',
-        });
+        const [batches, events] = await Promise.all([
+            this.repository.list('credit_batches', {
+                filter: `studentId="${escapeFilter(studentId)}"`,
+                sort: 'effectiveExpiresAt,priority,created',
+            }),
+            this.repository.list('credit_events', {
+                filter: `studentId="${escapeFilter(studentId)}"`,
+                sort: '-businessTime,-created',
+                expand: 'creditTypeId,creditTypeId.courseSpecId,operationId',
+            }),
+        ]);
         return {
             ...(groupAccounts(batches).get(studentId) || emptyAccount(studentId)),
             batches: batches.map(projectAccountBatch),
+            events: events.slice(0, 100).map(mapEvent),
         };
+    }
+
+    async listTeacherEvents(query = {}) {
+        const page = pagination(query);
+        const config = configFor('teacherEvents');
+        if (query.status) {
+            invariant(config.statuses.has(query.status),
+                'OPS_FILTER_STATUS_INVALID', 'Resource status filter is invalid');
+        }
+        const filters = config.filterFields
+            .filter((field) => query[field] !== undefined && query[field] !== '')
+            .map((field) => `${field}="${escapeFilter(query[field])}"`);
+        const records = await this.repository.list(config.collection, {
+            ...(filters.length ? { filter: filters.join(' && ') } : {}),
+            sort: config.sort,
+        });
+        const resolved = new Set(records.flatMap((record) => [
+            relationId(record.confirmationOfEventId), relationId(record.reversalOfEventId),
+        ]).filter(Boolean));
+        const visible = records.filter((record) => {
+            if (query.status === 'pending') {
+                return record.status === 'pending' && ['earn', 'compensate'].includes(record.eventType)
+                    && !resolved.has(record.id);
+            }
+            return !query.status || record.status === query.status;
+        }).map((record) => project(record, config.fields, config.rawFields));
+        return arrayPage(visible, page.page, page.perPage);
+    }
+
+    async listSettlementExceptions(query = {}) {
+        const page = pagination(query);
+        const operationTypes = SETTLEMENT_OPERATION_TYPES.map((type) => `type="${type}"`).join(' || ');
+        const [roster, allocations, operations, sessions, reconciliation] = await Promise.all([
+            this.repository.list('session_students', {
+                filter: 'creditStatus="credit_insufficient" || creditStatus="conversion_required"', sort: '-updated',
+            }),
+            this.repository.list('session_credit_allocations', {
+                filter: 'status="expired"', sort: '-updated', expand: 'sessionStudentId',
+            }),
+            this.repository.list('credit_operations', {
+                filter: `status="failed" && (${operationTypes})`, sort: '-updated',
+            }),
+            this.repository.list('sessions', { filter: 'status="correction_pending"', sort: '-updated' }),
+            this.repository.list('reconciliation_exceptions', {
+                filter: 'status="open" || status="acknowledged"', sort: '-detectedAt',
+            }),
+        ]);
+        const items = buildSettlementExceptions({ roster, allocations, operations, sessions, reconciliation });
+        return arrayPage(filterSettlementExceptions(items, query), page.page, page.perPage);
     }
 
     async getAssignedTeacherEvent(operator, id) {

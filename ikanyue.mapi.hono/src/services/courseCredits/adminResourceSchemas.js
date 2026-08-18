@@ -1,4 +1,5 @@
 const { invariant } = require('./domain');
+const { validateConversionRuleShape } = require('./domain/conversion');
 
 const RESOURCE_SCHEMAS = Object.freeze({
     courseSpecs: schema('course_specs', [
@@ -12,6 +13,12 @@ const RESOURCE_SCHEMAS = Object.freeze({
     priceVersions: schema('price_versions', [
         'packageId', 'currency', 'listAmount', 'saleAmount', 'validFrom', 'validTo', 'version', 'status', 'grantSnapshot',
     ], ['draft', 'active', 'inactive'], validatePriceVersion, true),
+    conversionRules: schema('conversion_rules', [
+        'sourceCreditTypeId', 'targetCreditTypeId', 'sourceQuantity', 'targetQuantity',
+        'minSourceQuantity', 'maxSourceQuantity', 'expiryPolicy', 'activationMode',
+        'validityDurationDays', 'activationDeadlineDays', 'reversible', 'referenceValueLimit',
+        'validFrom', 'validTo', 'version', 'status',
+    ], ['draft', 'active', 'inactive'], validateConversionRuleInput, true),
     classes: schema('classes', [
         'code', 'name', 'courseSpecId', 'defaultCreditTypeId', 'termStart', 'termEnd',
         'capacity', 'location', 'status', 'metadata',
@@ -103,6 +110,18 @@ function validatePriceVersion(data) {
     oneOf(data.status, ['draft', 'active', 'inactive'], 'PRICE_STATUS_INVALID');
 }
 
+function validateConversionRuleInput(data) {
+    positiveInteger(data.version, 'CONVERSION_VERSION_INVALID');
+    oneOf(data.status, ['draft', 'active', 'inactive'], 'CONVERSION_STATUS_INVALID');
+    validDate(data.validFrom, 'CONVERSION_VALID_FROM_INVALID');
+    optionalLaterDate(data.validTo, data.validFrom, 'CONVERSION_VALID_TO_INVALID');
+    invariant(typeof data.reversible === 'boolean', 'CONVERSION_REVERSIBLE_INVALID', '可逆设置必须为布尔值');
+    if (data.referenceValueLimit !== undefined && data.referenceValueLimit !== null && data.referenceValueLimit !== '') {
+        nonNegativeNumber(data.referenceValueLimit, 'CONVERSION_REFERENCE_LIMIT_INVALID');
+    }
+    validateConversionRuleShape(data);
+}
+
 function validateClass(data) {
     requiredText(data.code, 'CLASS_CODE_REQUIRED');
     requiredText(data.name, 'CLASS_NAME_REQUIRED');
@@ -127,7 +146,7 @@ function validateLesson(data) {
     requiredObject(data.teacherRuleSnapshot, 'TEACHER_RULE_SNAPSHOT_REQUIRED');
     positiveInteger(data.rosterVersion, 'LESSON_ROSTER_VERSION_INVALID');
     positiveInteger(data.version, 'LESSON_VERSION_INVALID');
-    oneOf(data.originType, ['class', 'admin'], 'LESSON_ORIGIN_TYPE_INVALID');
+    oneOf(data.originType, ['class', 'appointment', 'admin'], 'LESSON_ORIGIN_TYPE_INVALID');
 }
 
 function activationModes() {

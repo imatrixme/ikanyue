@@ -4,8 +4,11 @@ const assert = require('node:assert/strict');
 const {
     LOCAL_LESSON_QUANTITY,
     LOCAL_POLICY,
+    LOCAL_TEACHER,
     assertLocalPocketBase,
     createGrantRecords,
+    localTeacherCapabilitiesField,
+    localTeacherCredentials,
     localRecordId,
 } = require('../scripts/pb-seed-course-booking-local');
 
@@ -36,4 +39,14 @@ test('local seed safety rejects remote PocketBase hosts and validates booking de
     assert.equal(LOCAL_POLICY.timezone, 'Asia/Shanghai');
     assert.equal(LOCAL_POLICY.claimGranularityMinutes, 15);
     assert.ok(LOCAL_POLICY.defaultWindows.length > 0);
+    assert.deepEqual(LOCAL_TEACHER.courseCreditCapabilities, ['course_credit.teacher']);
+    assert.deepEqual(localTeacherCapabilitiesField(), {
+        name: 'courseCreditCapabilities',
+        type: 'json',
+        required: false,
+    });
+    assert.deepEqual(localTeacherCredentials('admin870329'), {
+        password: 'admin870329',
+        passwordConfirm: 'admin870329',
+    });
 });

@@ -6,8 +6,13 @@ const {
     backupName,
     backupPocketBase,
     connect,
+    deleteBackupIfPresent,
+    explicitBooleanEnv,
+    finalizePocketBaseRestore,
+    isMissingBackupError,
     main,
     normalizeArgv,
+    refreshPocketBaseAuth,
     requiredEnv,
     restorePocketBase,
     switchToLocalBackupStorage,
@@ -107,7 +112,10 @@ test('restore requires explicit filename confirmation before upload and restore'
     const result = await restorePocketBase({
         env: { PB_RESTORE_CONFIRM: 'restore.zip' }, filePath: '/tmp/restore.zip', fsImpl, pb,
     });
-    assert.deepEqual(result, { basename: 'restore.zip', bytes: 3, restored: true });
+    assert.deepEqual(result, {
+        basename: 'restore.zip', bytes: 3, restoreRequested: true,
+        restartRequired: true, finalizeRequired: true, reenableS3Required: false,
+    });
     assert.deepEqual(calls, [
         ['read', '/tmp/restore.zip'],
         ['upload', 'restore.zip', 3, { requestKey: null }],
@@ -117,6 +125,81 @@ test('restore requires explicit filename confirmation before upload and restore'
         env: { PB_RESTORE_CONFIRM: 'empty.zip' }, filePath: '/tmp/empty.zip',
         fsImpl: { async readFile() { return Buffer.alloc(0); } }, pb,
     }), /empty/);
+});
+
+test('forced local restore preserves the upload and local storage until restart finalization', async () => {
+    const calls = [];
+    const backups = { cron: '0 0 * * *', s3: { enabled: true, bucket: 'production' } };
+    const pb = {
+        settings: {
+            async getAll(options) { calls.push(['settings:get', options]); return { backups }; },
+            async update(payload, options) { calls.push(['settings:update', payload, options]); },
+        },
+        backups: {
+            async upload() { calls.push(['upload']); },
+            async restore() { calls.push(['restore']); },
+        },
+    };
+    const result = await restorePocketBase({
+        env: {
+            PB_RESTORE_CONFIRM: 'restore.zip', PB_BACKUP_STORAGE: 'local',
+            PB_EMAIL: 'admin@example.com', PB_PASSWORD: 'secret',
+        },
+        filePath: '/tmp/restore.zip',
+        fsImpl: { async readFile() { return Buffer.from('zip'); } },
+        pb,
+    });
+    assert.equal(result.restoreRequested, true);
+    assert.equal(result.reenableS3Required, true);
+    const updates = calls.filter((call) => call[0] === 'settings:update');
+    assert.equal(updates[0][1].backups.s3.enabled, false);
+    assert.equal(updates.length, 1);
+    assert.deepEqual(calls.filter((call) => ['upload', 'restore'].includes(call[0]))
+        .map((call) => call[0]), ['upload', 'restore']);
+});
+
+test('restore finalization cleans the staged backup and explicitly restores S3', async () => {
+    const calls = [];
+    const backups = { cron: '0 0 * * *', s3: { enabled: false, bucket: 'production' } };
+    const pb = {
+        settings: {
+            async getAll(options) { calls.push(['settings:get', options]); return { backups }; },
+            async update(payload, options) { calls.push(['settings:update', payload, options]); },
+        },
+        health: { async check(options) { calls.push(['health', options]); } },
+        collection(name) {
+            assert.equal(name, '_superusers');
+            return { async authWithPassword(...args) { calls.push(['auth', ...args]); } };
+        },
+        backups: { async delete(...args) { calls.push(['delete', ...args]); } },
+    };
+    const result = await finalizePocketBaseRestore({
+        env: {
+            PB_RESTORE_CONFIRM: 'restore.zip', PB_BACKUP_STORAGE: 'local',
+            PB_RESTORE_REENABLE_S3: 'true', PB_EMAIL: 'admin@example.com', PB_PASSWORD: 'secret',
+        },
+        filePath: '/tmp/restore.zip',
+        pb,
+    });
+    assert.deepEqual(result, { basename: 'restore.zip', finalized: true, s3Enabled: true });
+    assert.deepEqual(calls.map((call) => call[0]), [
+        'health', 'auth', 'settings:get', 'delete', 'settings:update',
+    ]);
+    assert.equal(calls.at(-1)[1].backups.s3.enabled, true);
+});
+
+test('restore cleanup tolerates PocketBase missing-file responses', async () => {
+    assert.equal(isMissingBackupError({ status: 404 }), true);
+    assert.equal(isMissingBackupError({ status: 400, message: 'backup already deleted' }), true);
+    assert.equal(isMissingBackupError({ status: 400, response: { message: 'no such file' } }), true);
+    assert.equal(isMissingBackupError({ status: 500, message: 'failed' }), false);
+    assert.equal(explicitBooleanEnv('FLAG', { FLAG: 'true' }), true);
+    assert.equal(explicitBooleanEnv('FLAG', { FLAG: 'false' }), false);
+    assert.throws(() => explicitBooleanEnv('FLAG', {}), /explicitly/);
+    await deleteBackupIfPresent({ backups: { async delete() {
+        throw { status: 400, message: 'backup already deleted' };
+    } } }, 'missing.zip');
+    await refreshPocketBaseAuth({}, {});
 });
 
 test('backup CLI validates command, loopback credentials, names, and injected connection', async () => {
@@ -170,8 +253,16 @@ test('main routes backup and restore commands through injected local dependencie
             },
         },
     });
-    assert.equal(restoreResult.restored, true);
+    assert.equal(restoreResult.restoreRequested, true);
     assert.deepEqual(calls, ['upload', 'restore']);
+    const finalized = await main({
+        argv: ['restore-finalize', '/safe/restore.zip'],
+        env: { PB_RESTORE_CONFIRM: 'restore.zip' },
+        fsImpl: {},
+        pb: { backups: { async delete() { calls.push('delete'); } } },
+    });
+    assert.equal(finalized.finalized, true);
+    assert.deepEqual(calls, ['upload', 'restore', 'delete']);
     await assert.rejects(restorePocketBase({ env: {}, fsImpl: {}, pb: {} }), /requires/);
 });
 

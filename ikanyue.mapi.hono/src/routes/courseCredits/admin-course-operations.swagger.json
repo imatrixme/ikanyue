@@ -35,6 +35,15 @@
     "/ops/course-operations/price-versions/{id}/status": {
       "post": { "$ref": "#/components/x-operations/SetStatus" }
     },
+    "/ops/course-operations/conversion-rules": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/conversion-rules/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/conversion-rules/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
     "/ops/course-operations/classes": {
       "post": { "$ref": "#/components/x-operations/CreateResource" }
     },

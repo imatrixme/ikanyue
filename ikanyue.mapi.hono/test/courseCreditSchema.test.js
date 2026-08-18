@@ -101,7 +101,9 @@ test('immutable collections and representative fields reflect the ledger contrac
     assert.equal(field(byName.get('credit_operations'), 'beforeSummary').type, 'json');
     assert.equal(field(byName.get('credit_operations'), 'afterSummary').required, true);
     assert.equal(field(byName.get('sessions'), 'version').required, true);
-    assert.deepEqual(field(byName.get('sessions'), 'originType').values, ['class', 'appointment', 'admin']);
+    assert.deepEqual(field(byName.get('sessions'), 'originType').values, ['class', 'appointment', 'admin', 'migration']);
+    assert.equal(field(byName.get('session_students'), 'creditStatus').values.includes('not_charged'), true);
+    assert.equal(field(byName.get('teacher_credit_events'), 'sessionTeacherId').required, false);
     assert.equal(field(byName.get('sessions'), 'appointmentId').collectionName, 'appointment_requests');
     assert.equal(field(byName.get('session_students'), 'sourceClassIds').type, 'json');
     assert.ok(field(byName.get('session_teachers'), 'assignmentSource').values.includes('appointment'));
@@ -173,6 +175,15 @@ test('seed fixtures contain universal credits, three incompatible courses, and d
     assert.equal(discounted.listAmount, 3000);
     assert.equal(discounted.saleAmount, 2800);
     assert.deepEqual(discounted.grants, [{ creditTypeCode: 'VOCAL-ADULT-1V1-60-CREDIT', quantity: 10 }]);
+    assert.equal(COURSE_CREDIT_SEED.rules.universalCredit.referenceUnitValue, 1);
+    assert.equal(COURSE_CREDIT_SEED.rules.universalCredit.expiryPolicy, 'NO_EXPIRY');
+    assert.equal(COURSE_CREDIT_SEED.rules.activationDefaults.rollingPackage.mode, 'FIRST_CHECK_IN');
+    assert.equal(COURSE_CREDIT_SEED.rules.activationDefaults.fixedTermClass.mode, 'TERM_START');
+    assert.equal(COURSE_CREDIT_SEED.rules.attendanceSettlement.noShow, 'consume');
+    assert.equal(COURSE_CREDIT_SEED.rules.attendanceSettlement.institutionCancellation, 'release');
+    assert.equal(COURSE_CREDIT_SEED.rules.conversion.allowedDirections, 'published_directed_rules_only');
+    assert.deepEqual(COURSE_CREDIT_SEED.rules.commerce.firstReleaseChannels, ['admin', 'offline']);
+    assert.equal(COURSE_CREDIT_SEED.rules.commerce.guardianPaymentEnabled, false);
 });
 
 function field(schema, name) {

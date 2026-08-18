@@ -18,6 +18,7 @@ test('admin course operation routes expose every explicit resource and workflow 
         ['packages', 'packages', true],
         ['grant-lines', 'grantLines', false],
         ['price-versions', 'priceVersions', true],
+        ['conversion-rules', 'conversionRules', true],
         ['classes', 'classes', true],
         ['lessons', 'lessons', true],
     ];
@@ -48,9 +49,9 @@ test('admin course operation routes expose every explicit resource and workflow 
     });
     await request(app, 'GET', '/ops/course-operations/lessons/session/settlement-preview', headers);
 
-    assert.equal(calls.filter((call) => call[0] === 'createResource').length, 6);
-    assert.equal(calls.filter((call) => call[0] === 'updateResource').length, 6);
-    assert.equal(calls.filter((call) => call[0] === 'setStatus').length, 5);
+    assert.equal(calls.filter((call) => call[0] === 'createResource').length, 7);
+    assert.equal(calls.filter((call) => call[0] === 'updateResource').length, 7);
+    assert.equal(calls.filter((call) => call[0] === 'setStatus').length, 6);
     assert.ok(calls.some((call) => call[0] === 'enroll' && call[1].actorRole === 'admin'));
     assert.ok(calls.some((call) => call[0] === 'syncPreview' && call[1].orderId === 'order'));
     assert.ok(calls.some((call) => call[0] === 'attendance' && call[1].sessionStudentId === 'row'));

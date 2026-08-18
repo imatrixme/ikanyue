@@ -30,7 +30,7 @@ test('scoped operators can read every Admin workspace through structured APIs', 
     await get(app, '/ops/course-credits/session-teachers?sessionId=session&actualStatus=confirmed', authorization);
     await get(app, '/ops/course-credits/package-grant-lines?creditTypeId=type', authorization);
     await get(app, '/ops/course-credits/audit-logs?resourceType=session&resourceId=session', authorization);
-    await get(app, '/ops/course-credits/settlement-exceptions', authorization);
+    await get(app, '/ops/course-credits/settlement-exceptions?kind=duplicate&status=open', authorization);
     await get(app, '/ops/course-credits/teacher-events', authorization);
     await get(app, '/ops/course-credits/teacher-events/event', authorization);
     await get(app, '/ops/course-credits/reconciliation/runs', authorization);
@@ -50,8 +50,8 @@ test('scoped operators can read every Admin workspace through structured APIs', 
         ['list', 'sessionTeachers', { sessionId: 'session', actualStatus: 'confirmed' }],
         ['list', 'grantLines', { creditTypeId: 'type' }],
         ['list', 'auditLogs', { resourceType: 'session', resourceId: 'session' }],
-        ['list', 'settlementExceptions', {}],
-        ['list', 'teacherEvents', { teacherId: 'operator' }],
+        ['settlementExceptions', { kind: 'duplicate', status: 'open' }],
+        ['teacherEvents', { teacherId: 'operator' }],
         ['assignedTeacherEvent', 'operator', 'event'],
         ['list', 'reconciliationRuns', {}],
         ['assignedStudents', 'operator', { status: 'active' }],
@@ -80,7 +80,7 @@ test('teacher-only routes expose assigned teaching data and reject global operat
         ['assignedStudents', 'teacher', { studentId: 'student' }],
         ['assignedClasses', 'teacher', { classId: 'class' }],
         ['assignedLessons', 'teacher', { sessionId: 'session' }],
-        ['list', 'teacherEvents', { teacherId: 'teacher' }],
+        ['teacherEvents', { teacherId: 'teacher' }],
     ]);
 });
 
@@ -127,6 +127,8 @@ function createApp(calls) {
             async getResource(resource, id) { calls.push(['get', resource, id]); return { id }; },
             async listAccounts(query) { calls.push(['accounts', query]); return { items: [] }; },
             async getAccount(studentId) { calls.push(['account', studentId]); return { studentId }; },
+            async listTeacherEvents(query) { calls.push(['teacherEvents', query]); return { items: [] }; },
+            async listSettlementExceptions(query) { calls.push(['settlementExceptions', query]); return { items: [] }; },
             async getAssignedTeacherEvent(user, id) { calls.push(['assignedTeacherEvent', user.id, id]); return { id, teacherId: user.id }; },
             async listAssignedStudents(user, query) { calls.push(['assignedStudents', user.id, query]); return { items: [] }; },
             async listAssignedClasses(user, query) { calls.push(['assignedClasses', user.id, query]); return { items: [] }; },

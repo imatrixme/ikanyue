@@ -1,4 +1,5 @@
 const { invariant } = require('./domain');
+const { activeConversionRulesAt } = require('./conversionRuleVersions');
 
 const BATCH_STATUSES = new Set(['pending', 'unactivated', 'active', 'depleted', 'expired', 'cancelled']);
 const EVENT_TYPES = new Set([
@@ -71,11 +72,10 @@ class CourseCreditQueryService {
     async listConversionRules() {
         const now = new Date(this.clock()).toISOString();
         const rules = await this.repository.list('conversion_rules', {
-            filter: `status="active" && validFrom<="${now}" && (validTo="" || validTo>"${now}")`,
-            sort: 'sourceCreditTypeId,targetCreditTypeId,version',
+            sort: 'sourceCreditTypeId,targetCreditTypeId,-version',
             expand: 'sourceCreditTypeId,targetCreditTypeId',
         });
-        return rules.map(mapConversionRule);
+        return activeConversionRulesAt(rules, now).map(mapConversionRule);
     }
 
     async listSessions(studentId, query = {}) {

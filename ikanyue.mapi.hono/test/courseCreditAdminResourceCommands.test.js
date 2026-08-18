@@ -19,6 +19,7 @@ test('admin resource commands create every supported explicit resource with audi
         ['packages', packageData()],
         ['grantLines', grantLine()],
         ['priceVersions', priceVersion()],
+        ['conversionRules', conversionRule()],
         ['classes', classData()],
         ['lessons', lessonData()],
     ];
@@ -163,6 +164,11 @@ test('resource validation rejects unsupported fields, invalid statuses, and unsa
         hasCode('LESSON_STATUS_TRANSITION_INVALID'));
     assert.doesNotThrow(() => validateLessonStatusTransition('draft', 'draft'));
     assert.doesNotThrow(() => validateLessonStatusTransition('scheduled', 'in_progress'));
+    assert.equal(normalizeResourceInput(
+        'lessons',
+        { title: '预约课堂完成态' },
+        lessonData({ originType: 'appointment' })
+    ).originType, 'appointment');
 });
 
 test('resource defaults support direct inputs, default service dependencies, and status-less updates', async () => {
@@ -192,6 +198,46 @@ test('package activation requires grant lines and an active price', async () => 
         records, lists: { package_grant_lines: [grantLine()], price_versions: [priceVersion()] },
     });
     assert.equal((await createService(repository).setStatus('packages', 'package', 'active', metadata())).status, 'active');
+});
+
+test('conversion publication creates immutable versions and rejects profitable graphs', async () => {
+    const current = conversionRule({
+        id: 'rule', sourceCreditTypeId: 'B', targetCreditTypeId: 'A',
+        sourceQuantity: 1, targetQuantity: 1, minSourceQuantity: 1, maxSourceQuantity: 100,
+    });
+    const safeRepository = mockRepository({
+        records: { conversion_rules: current },
+        lists: {
+            conversion_rules: [current],
+            credit_types: [creditType('A'), creditType('B')],
+        },
+    });
+    const published = await createService(safeRepository)
+        .setStatus('conversionRules', 'rule', 'active', metadata());
+    assert.equal(published.previousId, 'rule');
+    assert.equal(published.version, 2);
+    assert.equal(lastPlan(safeRepository)[0].action, 'create');
+    assert.equal(lastPlan(safeRepository)[0].data.status, 'active');
+
+    const cycleRepository = mockRepository({
+        records: { conversion_rules: current },
+        lists: {
+            conversion_rules: [
+                conversionRule({ id: 'forward', sourceCreditTypeId: 'A', targetCreditTypeId: 'B', sourceQuantity: 1, targetQuantity: 2, referenceValueLimit: 2, status: 'active' }),
+                current,
+            ],
+            credit_types: [creditType('A'), creditType('B')],
+        },
+    });
+    await assert.rejects(
+        createService(cycleRepository).setStatus('conversionRules', 'rule', 'active', metadata()),
+        hasCode('CONVERSION_PROFITABLE_CYCLE')
+    );
+
+    const deactivated = await createService(safeRepository)
+        .setStatus('conversionRules', 'rule', 'inactive', metadata());
+    assert.equal(deactivated.status, 'inactive');
+    assert.equal(lastPlan(safeRepository)[0].data.version, 2);
 });
 
 function mockRepository(options = {}) {
@@ -252,6 +298,21 @@ function priceVersion(overrides = {}) {
         validFrom: '2026-01-01T00:00:00Z', validTo: '', version: 1, status: 'active', grantSnapshot: {},
         ...overrides,
     };
+}
+
+function conversionRule(overrides = {}) {
+    return {
+        sourceCreditTypeId: 'universal', targetCreditTypeId: 'course', sourceQuantity: 100,
+        targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000,
+        expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0,
+        activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1,
+        validFrom: '2026-01-01T00:00:00Z', validTo: '', version: 1, status: 'draft',
+        ...overrides,
+    };
+}
+
+function creditType(id) {
+    return { id, referenceUnitValue: 1 };
 }
 
 function classData(overrides = {}) {

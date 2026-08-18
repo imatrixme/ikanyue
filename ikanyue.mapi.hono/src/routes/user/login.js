@@ -33,6 +33,14 @@ const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
 const uuid = require('licia/uuid');
 const { getFileUrl } = require('../../utils/fileUrl');
+const { authenticatePocketBaseTeacher } = require('../../services/ops/pocketbaseTeacherAuth');
+
+async function matchesTeacherPassword(teacher, password, cellphone, authenticator = authenticatePocketBaseTeacher) {
+    if (teacher.password) {
+        return teacher.password === md5(password);
+    }
+    return authenticator(teacher, password, cellphone);
+}
 
 async function userLoginHandler(c) {
     const contentType = c.req.header('content-type') || '';
@@ -120,7 +128,7 @@ async function userLoginHandler(c) {
             const teacher = teachers.items[0];
 
             // 验证密码
-            if (teacher.password !== md5(password)) {
+            if (!(await matchesTeacherPassword(teacher, password, cellphone))) {
                 return c.error(401, '手机号或密码错误');
             }
 
@@ -221,4 +229,4 @@ async function userLoginHandler(c) {
     }
 }
 
-module.exports = { userLoginHandler };
+module.exports = { matchesTeacherPassword, userLoginHandler };
