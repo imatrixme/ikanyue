@@ -47,6 +47,7 @@ export const viewBusinessIcons: Record<AppView, string> = {
   teachers: businessIcons.teachers,
   exceptions: businessIcons.alert,
   audit: businessIcons.history,
+  migration: businessIcons.history,
   points: businessIcons.points,
   rewards: businessIcons.rewards,
 }
@@ -55,6 +56,7 @@ export const resourceBusinessIcons: Record<CourseResourceKey, string> = {
   courseSpecs: businessIcons.book,
   packages: businessIcons.packages,
   priceVersions: businessIcons.packages,
+  conversionRules: businessIcons.validity,
   grantLines: businessIcons.validity,
   accounts: businessIcons.validity,
   classes: businessIcons.classes,

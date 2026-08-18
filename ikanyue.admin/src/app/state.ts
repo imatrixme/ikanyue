@@ -67,6 +67,7 @@ export function canAccessView(profile: OpsProfile | null, view: AppView): boolea
   if (view === 'teachers') return capabilities.has('course_credit.teacher')
   if (view === 'exceptions') return capabilities.has('course_credit.settlement') || capabilities.has('course_credit.audit')
   if (view === 'audit') return capabilities.has('course_credit.audit')
+  if (view === 'migration') return capabilities.has('course_credit.finance') && capabilities.has('course_credit.academic')
   if (['courses', 'packages', 'enrollments', 'accounts'].includes(view)) return capabilities.has('course_credit.finance')
   return false
 }

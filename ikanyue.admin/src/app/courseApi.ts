@@ -11,6 +11,7 @@ import type {
   EnrollmentInput,
   RosterSyncPreview,
   SettlementPreview,
+  TeacherCreditConfirmation,
 } from './courseTypes'
 
 export interface CourseOpsApi {
@@ -30,6 +31,7 @@ export interface CourseOpsApi {
   rescheduleLesson(token: string, sessionId: string, newStartAt: string, newEndAt: string, reason: string): Promise<CourseCommandResult>
   settleLesson(token: string, sessionId: string): Promise<CourseCommandResult>
   reverseSettlement(token: string, sessionId: string, reason: string): Promise<CourseCommandResult>
+  confirmTeacherCredit(token: string, teacherCreditEventId: string, reason: string): Promise<TeacherCreditConfirmation>
   setClassMembership(token: string, classId: string, studentId: string, status: string): Promise<CourseCommandResult>
   transferClassStudent(token: string, classId: string, studentId: string, targetClassId: string): Promise<CourseCommandResult>
   setClassTeacher(token: string, classId: string, teacherId: string, role: string, status: string): Promise<CourseCommandResult>
@@ -40,6 +42,7 @@ const resourcePaths: Record<CourseResourceKey, string> = {
   packages: '/course-credits/packages',
   grantLines: '/course-credits/package-grant-lines',
   priceVersions: '/course-credits/price-versions',
+  conversionRules: '/course-credits/conversion-rules',
   enrollments: '/course-credits/enrollments',
   classes: '/course-credits/classes',
   classStudents: '/course-credits/class-students',
@@ -113,6 +116,9 @@ export function createHttpCourseOpsApi(baseUrl: string): CourseOpsApi {
     reverseSettlement(token, sessionId, reason) {
       return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/reverse-settlement`, { reason })
     },
+    confirmTeacherCredit(token, teacherCreditEventId, reason) {
+      return command(token, `/course-credits/teacher-events/${encodeURIComponent(teacherCreditEventId)}/confirm`, { reason })
+    },
     setClassMembership(token, classId, studentId, status) {
       return command(token, `/course-credits/classes/${encodeURIComponent(classId)}/students/${encodeURIComponent(studentId)}/membership`, { status, effectiveFrom: new Date().toISOString() })
     },
@@ -168,11 +174,22 @@ export function createMockCourseOpsApi(): CourseOpsApi {
     async setAttendance(_token, sessionId, sessionStudentId, attendanceStatus) { updateRecord(store.sessionStudents, sessionStudentId, { attendanceStatus }); return { sessionId, sessionStudentId, attendanceStatus } },
     async markAllPresent(_token, sessionId) { store.sessionStudents.filter((item) => item.sessionId === sessionId).forEach((item) => { item.attendanceStatus = 'present' }); return { sessionId, status: 'attendance_confirmed' } },
     async setActualTeacher(_token, sessionId, sessionTeacherId, actualStatus) { updateRecord(store.sessionTeachers, sessionTeacherId, { actualStatus }); return { sessionId, sessionTeacherId, actualStatus } },
-    async previewSettlement(_token, sessionId) { return { sessionId, studentMovements: store.sessionStudents.filter((item) => item.sessionId === sessionId), teacherMovements: store.sessionTeachers.filter((item) => item.sessionId === sessionId), exceptions: [] } },
+    async previewSettlement(_token, sessionId) {
+      const students = store.sessionStudents.filter((item) => item.sessionId === sessionId).map((item) => ({ ...item, sessionStudentId: item.id, studentId: String(item.studentId || ''), attendanceStatus: String(item.attendanceStatus || ''), action: item.creditStatus === 'reserved' ? 'consume' : 'exception', quantity: 1, exception: item.creditStatus === 'reserved' ? null : '课时状态尚未准备完成', allocations: [{ allocationId: 'allocation_1', batchId: 'batch_1', quantity: 1, status: 'reserved', effectiveExpiresAt: '2027-01-31T00:00:00.000Z' }] }))
+      const teachers = store.sessionTeachers.filter((item) => item.sessionId === sessionId).map((item) => ({ ...item, sessionTeacherId: item.id, teacherId: String(item.teacherId || ''), role: String(item.role || ''), action: 'earn', quantity: 1 }))
+      return { sessionId, sessionStatus: 'completed', canSettle: students.every((item) => !item.exception), students, teachers }
+    },
     async publishLesson(_token, sessionId, classIds) { updateRecord(store.lessons, sessionId, { status: 'scheduled' }); return { sessionId, classIds, status: 'scheduled' } },
     async rescheduleLesson(_token, sessionId, newStartAt, newEndAt, reason) { updateRecord(store.lessons, sessionId, { startAt: newStartAt, endAt: newEndAt }); return { sessionId, newStartAt, newEndAt, reason } },
     async settleLesson(_token, sessionId) { updateRecord(store.lessons, sessionId, { status: 'settled' }); return { sessionId, status: 'settled' } },
     async reverseSettlement(_token, sessionId, reason) { updateRecord(store.lessons, sessionId, { status: 'correction_pending' }); return { sessionId, reason, status: 'correction_pending' } },
+    async confirmTeacherCredit(_token, teacherCreditEventId, reason) {
+      const event = requireRecord(store.teacherEvents, teacherCreditEventId)
+      if (event.status !== 'pending') throw new Error('教师工作量已处理')
+      event.status = 'confirmed'
+      event.reason = reason
+      return { confirmationEventId: `confirmation_${teacherCreditEventId}`, earningEventId: teacherCreditEventId, quantity: Number(event.quantityDelta || 0), sessionTeacherId: String(event.sessionTeacherId || ''), teacherId: String(event.teacherId || '') }
+    },
     async setClassMembership(_token, classId, studentId, status) {
       const current = store.classStudents.find((item) => item.classId === classId && item.studentId === studentId)
       if (current) current.status = status
@@ -199,6 +216,7 @@ function createMockStore(): Record<CourseResourceKey, CourseRecord[]> {
     packages: [{ id: 'package_1', code: 'VOCAL-10', name: '综合声乐 10 课时', description: '一期声乐课程', saleChannel: 'admin', activationMode: 'FIRST_COMPLETED_SESSION', activationDeadlineDays: 30, validityDurationDays: 180, expiryPolicy: 'FIXED_DURATION', status: 'active' }],
     grantLines: [{ id: 'grant_1', packageId: 'package_1', creditTypeId: 'credit_voice', quantity: 10 }],
     priceVersions: [{ id: 'price_1', packageId: 'package_1', currency: 'CNY', listAmount: 3000, saleAmount: 2800, version: 1, status: 'active' }],
+    conversionRules: [{ id: 'conversion_1', sourceCreditTypeId: 'credit_universal', targetCreditTypeId: 'credit_voice', sourceQuantity: 100, targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000, expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0, activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1, validFrom: '2026-08-01T00:00:00.000Z', validTo: '', version: 1, status: 'draft' }],
     enrollments: [{ id: 'enrollment_1', operationNo: 'ENR-001', studentId: 'student_1', sourceId: 'order_1', status: 'committed', requestSnapshot: { packageId: 'package_1', classId: 'class_1' }, resultSnapshot: { orderId: 'order_1', status: 'synchronizing_future_lessons', sync: { futureLessonCount: 2 } } }],
     classes: [{ id: 'class_1', code: 'GROUP-A', name: '周六综合声乐班', courseSpecId: 'course_1', defaultCreditTypeId: 'credit_voice', termStart: '2026-08-01', termEnd: '2027-01-31', capacity: 12, location: '一号教室', status: 'active' }],
     classStudents: [{ id: 'class_student_1', classId: 'class_1', studentId: 'student_1', status: 'active', effectiveFrom: '2026-08-01' }],
@@ -226,7 +244,7 @@ function assignedLessons(store: Record<CourseResourceKey, CourseRecord[]>): Cour
 }
 
 function writableStoreKey(resource: CourseWritableResource): CourseResourceKey {
-  return ({ 'course-specs': 'courseSpecs', packages: 'packages', 'grant-lines': 'grantLines', 'price-versions': 'priceVersions', classes: 'classes', lessons: 'lessons' } as const)[resource]
+  return ({ 'course-specs': 'courseSpecs', packages: 'packages', 'grant-lines': 'grantLines', 'price-versions': 'priceVersions', 'conversion-rules': 'conversionRules', classes: 'classes', lessons: 'lessons' } as const)[resource]
 }
 
 function matchesQuery(record: CourseRecord, query: CourseQuery) {

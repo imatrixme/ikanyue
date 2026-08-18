@@ -34,11 +34,11 @@ export function CoursesWorkspace({ api, token }: WorkspaceProps) {
   return <CourseResourceWorkspace api={api} columns={courseColumns} defaultValues={{ durationMinutes: 60, deliveryMode: 'group', teacherTier: 'standard', status: 'draft' }} description="定义课程名称、授课形式、单节时长与教师要求；启用后可用于课包和班级。" eyebrow="课程目录" fields={courseFields} noun="课程规格" resource="courseSpecs" statusOptions={statusOptions} title="课程规格" token={token} writableResource="course-specs" />
 }
 
-type PackageTab = 'packages' | 'prices' | 'grants'
+type PackageTab = 'packages' | 'prices' | 'grants' | 'conversions'
 
 export function PackagesWorkspace({ api, token }: WorkspaceProps) {
   const [tab, setTab] = useState<PackageTab>('packages')
-  return <div className="grid gap-4"><div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4"><Tabs label="课包配置视图" onChange={setTab} options={[{ label: '课包', value: 'packages' }, { label: '价格版本', value: 'prices' }, { label: '发放规则', value: 'grants' }]} value={tab} /></div>{tab === 'packages' ? <PackageList api={api} token={token} /> : null}{tab === 'prices' ? <PriceList api={api} token={token} /> : null}{tab === 'grants' ? <GrantList api={api} token={token} /> : null}</div>
+  return <div className="grid gap-4"><div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4"><Tabs label="课包配置视图" onChange={setTab} options={[{ label: '课包', value: 'packages' }, { label: '价格版本', value: 'prices' }, { label: '发放规则', value: 'grants' }, { label: '兑换规则', value: 'conversions' }]} value={tab} /></div>{tab === 'packages' ? <PackageList api={api} token={token} /> : null}{tab === 'prices' ? <PriceList api={api} token={token} /> : null}{tab === 'grants' ? <GrantList api={api} token={token} /> : null}{tab === 'conversions' ? <ConversionRuleList api={api} token={token} /> : null}</div>
 }
 
 function PackageList({ api, token }: WorkspaceProps) {
@@ -85,4 +85,38 @@ function GrantList({ api, token }: WorkspaceProps) {
     { key: 'quantity', label: '发放课时', type: 'number', required: true },
   ]
   return <CourseResourceWorkspace api={api} columns={columns} description="每条规则指定课包发放哪一种课程课时以及数量。" eyebrow="产品与课时" fields={fields} noun="发放规则" resource="grantLines" title="课时发放规则" token={token} writableResource="grant-lines" />
+}
+
+function ConversionRuleList({ api, token }: WorkspaceProps) {
+  const columns: ResourceColumn[] = [
+    { key: 'sourceCreditTypeId', label: '来源课时' }, { key: 'targetCreditTypeId', label: '目标课时' },
+    { key: 'version', label: '版本' }, { key: 'example', label: '最小兑换示例', render: conversionExample },
+    { key: 'validFrom', label: '生效时间' }, { key: 'status', label: '状态' },
+  ]
+  const fields: ResourceField[] = [
+    { key: 'sourceCreditTypeId', label: '来源课时类型编号', required: true },
+    { key: 'targetCreditTypeId', label: '目标课时类型编号', required: true },
+    { key: 'sourceQuantity', label: '来源比例', type: 'number', required: true },
+    { key: 'targetQuantity', label: '目标比例', type: 'number', required: true },
+    { key: 'minSourceQuantity', label: '最小兑换数量', type: 'number', required: true },
+    { key: 'maxSourceQuantity', label: '单次最大数量', type: 'number' },
+    { key: 'expiryPolicy', label: '目标有效期', type: 'select', required: true, options: [{ label: '继承来源批次', value: 'INHERIT_SOURCE' }, { label: '兑换时重置', value: 'RESET_ON_CONVERSION' }, { label: '激活时重置', value: 'RESET_ON_ACTIVATION' }, { label: '取来源与新期限较早值', value: 'MIN_SOURCE_AND_NEW' }, { label: '目标学期结束', value: 'TARGET_TERM_END' }] },
+    { key: 'activationMode', label: '目标激活方式', type: 'select', required: true, options: [{ label: '兑换时激活', value: 'GRANT_TIME' }, { label: '首次排课', value: 'FIRST_RESERVATION' }, { label: '首次签到', value: 'FIRST_CHECK_IN' }, { label: '首次完课', value: 'FIRST_COMPLETED_SESSION' }, { label: '学期开始', value: 'TERM_START' }] },
+    { key: 'validityDurationDays', label: '重置有效天数', type: 'number' },
+    { key: 'activationDeadlineDays', label: '最晚激活天数', type: 'number' },
+    { key: 'reversible', label: '允许反向兑换', type: 'checkbox' },
+    { key: 'referenceValueLimit', label: '参考价值倍率上限', type: 'number', required: true },
+    { key: 'validFrom', label: '生效时间', type: 'datetime-local', required: true },
+    { key: 'validTo', label: '失效时间', type: 'datetime-local' },
+    { key: 'version', label: '版本号', type: 'number', required: true },
+  ]
+  const validFrom = new Date().toISOString().slice(0, 16)
+  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ sourceQuantity: 100, targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000, expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0, activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1, validFrom, validTo: '', version: 1, status: 'draft' }} description="发布时校验整张有向兑换图，拒绝可套利循环；修改、发布和停用都会创建不可变新版本。" eyebrow="产品与课时" fields={fields} noun="兑换规则" resource="conversionRules" statusOptions={statusOptions} title="兑换规则" token={token} writableResource="conversion-rules" />
+}
+
+function conversionExample(record: Record<string, unknown>) {
+  const source = Number(record.sourceQuantity || 0)
+  const target = Number(record.targetQuantity || 0)
+  const minimum = Number(record.minSourceQuantity || 0)
+  return source > 0 ? `${minimum} -> ${(minimum / source) * target}` : '-'
 }

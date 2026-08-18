@@ -30,7 +30,7 @@ export interface ResourceField {
   key: string
   label: string
   required?: boolean
-  type?: 'text' | 'number' | 'date' | 'datetime-local' | 'select'
+  type?: 'text' | 'number' | 'date' | 'datetime-local' | 'select' | 'checkbox'
   options?: Array<{ label: string; value: string }>
   placeholder?: string
 }
@@ -147,8 +147,9 @@ function ResourceEditor({ defaultValues, fields, loading, noun, onClose, onSave,
   return <DialogShell description="字段会通过 Hono 校验并写入操作审计。" onRequestClose={onClose} title={record ? `编辑${noun}` : `新增${noun}`}><form className="grid gap-4 p-5 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void onSave(values) }}>{fields.map((field) => <Field htmlFor={`resource-${field.key}`} key={field.key} label={field.label}><ResourceInput field={field} value={values[field.key]} onChange={(value) => setValues((current) => ({ ...current, [field.key]: value }))} /></Field>)}<div className="flex justify-end gap-2 border-t border-[var(--border)] pt-4 sm:col-span-2"><Button onClick={onClose} type="button" variant="secondary">取消</Button><Button disabled={loading} type="submit">{loading ? '保存中...' : '保存'}</Button></div></form></DialogShell>
 }
 
-function ResourceInput({ field, onChange, value }: { field: ResourceField; onChange: (value: string | number) => void; value: CourseResourceInput[string] }) {
+function ResourceInput({ field, onChange, value }: { field: ResourceField; onChange: (value: string | number | boolean) => void; value: CourseResourceInput[string] }) {
   if (field.type === 'select') return <Select id={`resource-${field.key}`} options={field.options || []} required={field.required} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} />
+  if (field.type === 'checkbox') return <input checked={Boolean(value)} className="h-5 w-5 accent-[var(--brand)]" id={`resource-${field.key}`} onChange={(event) => onChange(event.target.checked)} type="checkbox" />
   return <Input id={`resource-${field.key}`} placeholder={field.placeholder} required={field.required} type={field.type || 'text'} value={String(value ?? '')} onChange={(event) => onChange(field.type === 'number' ? Number(event.target.value) : event.target.value)} />
 }
 

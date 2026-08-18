@@ -15,6 +15,7 @@ export const viewPaths: Record<AppView, string> = {
   teachers: '/teacher-workload',
   exceptions: '/exceptions',
   audit: '/audit',
+  migration: '/migration',
   points: '/points',
   rewards: '/rewards',
 }
@@ -49,6 +50,7 @@ export const navigationGroups: Array<{
       { view: 'teachers', label: '教师工作量', icon: viewBusinessIcons.teachers },
       { view: 'exceptions', label: '异常中心', icon: viewBusinessIcons.exceptions },
       { view: 'audit', label: '操作审计', icon: viewBusinessIcons.audit },
+      { view: 'migration', label: '历史迁移', icon: viewBusinessIcons.migration },
     ],
   },
   {
@@ -74,6 +76,7 @@ export const viewEyebrows: Record<AppView, string> = {
   teachers: '教师授课工作量',
   exceptions: '待处理业务异常',
   audit: '关键操作追踪',
+  migration: '历史数据盘点、映射与零差异迁移',
   points: '积分与线下兑换',
   rewards: '实物目录与价格',
 }

@@ -10,12 +10,14 @@ import { CoursesWorkspace, PackagesWorkspace } from './CourseCatalogWorkspaces'
 import { DashboardWorkspace } from './DashboardWorkspace'
 import { EnrollmentsWorkspace } from './EnrollmentsWorkspace'
 import { LessonsWorkspace } from './LessonsWorkspace'
+import { MigrationWorkspace } from './MigrationWorkspace'
 import { PointsWorkspace } from './PointsWorkspace'
-import { AccountsWorkspace, AuditWorkspace, ExceptionsWorkspace, TeacherWorkloadWorkspace } from './ReadOnlyCourseWorkspaces'
+import { AccountsWorkspace, AuditWorkspace, ExceptionsWorkspace } from './ReadOnlyCourseWorkspaces'
 import { BookingWorkspace } from './BookingWorkspace'
 import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
 import { StudentWorkspace } from './StudentWorkspace'
+import { TeacherWorkloadWorkspace } from './TeacherWorkloadWorkspace'
 
 interface AdminWorkspaceRoutesProps {
   api: OpsApi
@@ -57,6 +59,7 @@ export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
       <Route path="/teacher-workload" element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} />
       <Route path="/exceptions" element={<Gate profile={props.profile} view="exceptions"><ExceptionsWorkspace {...courseProps} /></Gate>} />
       <Route path="/audit" element={<Gate profile={props.profile} view="audit"><AuditWorkspace {...courseProps} /></Gate>} />
+      <Route path="/migration" element={<Gate profile={props.profile} view="migration"><MigrationWorkspace {...courseProps} /></Gate>} />
       <Route path="/points" element={<Gate profile={props.profile} view="points"><PointsWorkspace loading={props.loading} rewards={props.rewards} selectedStudentId={props.selectedStudentId} studentSummary={props.studentSummary} students={props.students} onAddPoints={props.onAddPoints} onLoadStudent={props.onLoadStudent} onRedeem={props.onRedeem} onReloadStudents={props.onLoadStudents} /></Gate>} />
       <Route path="/rewards" element={<Gate profile={props.profile} view="rewards"><RewardItemsPanel loading={props.loading} rewards={props.rewards} onReloadRewards={props.onLoadRewards} onSave={props.onSaveReward} onUploadImage={props.onUploadRewardImage} /></Gate>} />
       <Route path="*" element={<Navigate replace to="/dashboard" />} />

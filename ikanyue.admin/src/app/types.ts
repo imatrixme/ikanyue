@@ -16,6 +16,7 @@ export type AppView =
   | 'teachers'
   | 'exceptions'
   | 'audit'
+  | 'migration'
   | 'points'
   | 'rewards'
 

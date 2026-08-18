@@ -8,7 +8,7 @@ import type { CoursePage, CourseQuery, CourseRecord, CourseResourceKey } from '.
 import { mockProfiles } from '../../app/mockData'
 import type { OpsProfile, StudentRecord } from '../../app/types'
 import { DashboardWorkspace } from './DashboardWorkspace'
-import { AccountsWorkspace } from './ReadOnlyCourseWorkspaces'
+import { AccountsWorkspace, ExceptionsWorkspace } from './ReadOnlyCourseWorkspaces'
 import { StudentsPanel } from './StudentsPanel'
 import { StudentWorkspace } from './StudentWorkspace'
 
@@ -18,6 +18,24 @@ const student: StudentRecord = {
 }
 
 describe('course read model coverage', () => {
+  it('shows every settlement exception class in one Admin workspace', async () => {
+    const api = createMockOpsApi()
+    replaceResource(api, 'settlementExceptions', [
+      { id: 'one', kind: 'credit_insufficient', status: 'open', reason: '余额不足' },
+      { id: 'two', kind: 'expired_release', status: 'open', reason: '释放时过期' },
+      { id: 'three', kind: 'duplicate', status: 'acknowledged', reason: 'DUPLICATE_EVENT' },
+      { id: 'four', kind: 'failed_operation', status: 'failed', reason: '写入失败' },
+      { id: 'five', kind: 'correction_pending', status: 'correction_pending', reason: '等待更正' },
+    ])
+    render(<ExceptionsWorkspace api={api} token="token" />)
+
+    expect(await screen.findByRole('table')).toHaveTextContent('课时不足')
+    expect(screen.getByRole('table')).toHaveTextContent('过期释放')
+    expect(screen.getByRole('table')).toHaveTextContent('重复写入')
+    expect(screen.getByRole('table')).toHaveTextContent('操作失败')
+    expect(screen.getByRole('table')).toHaveTextContent('等待更正')
+  })
+
   it('covers dashboard capability combinations, populated queues, and navigation callbacks', async () => {
     const user = userEvent.setup()
     const api = populatedDashboardApi()
@@ -70,6 +88,10 @@ describe('course read model coverage', () => {
         { id: 'batch_type', creditTypeId: 'credit_voice', availableQuantity: 2, effectiveExpiresAt: '' },
         { id: 'batch_id', availableQuantity: null, effectiveExpiresAt: '' },
       ],
+      events: [
+        { id: 'event_1', eventType: 'GRANT', quantityDelta: 10, reason: '管理员报课' },
+        { id: 'event_2', eventType: 'CONSUME', quantityDelta: -1, operationId: 'operation_2' },
+      ],
     })
     const view = renderAccounts(api)
     await user.click((await screen.findAllByRole('button', { name: '查看课时账户明细' }))[0])
@@ -78,6 +100,9 @@ describe('course read model coverage', () => {
     expect(drawer).toHaveTextContent('credit_voice')
     expect(drawer).toHaveTextContent('batch_id')
     expect(drawer).toHaveTextContent('长期有效')
+    expect(drawer).toHaveTextContent('不可变流水')
+    expect(drawer).toHaveTextContent('管理员报课')
+    expect(drawer).toHaveTextContent('operation_2')
     await user.click(within(drawer).getByRole('button', { name: '关闭弹窗' }))
     await user.click(screen.getAllByRole('button', { name: /学员 student_1/ }).at(-1)!)
     drawer = await screen.findByRole('dialog', { name: '课时账户明细' })

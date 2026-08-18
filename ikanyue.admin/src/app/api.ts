@@ -2,6 +2,7 @@ import { clone, list, mockPointEvents, mockProfiles, mockRewards, mockStudents }
 import { createHttpBookingOpsApi, createMockBookingOpsApi, type BookingOpsApi } from './bookingApi'
 import { createHttpCourseOpsApi, createMockCourseOpsApi, type CourseOpsApi } from './courseApi'
 import { createHttpCourseCalendarApi, createMockCourseCalendarApi, type CourseCalendarApi } from './calendarApi'
+import { createHttpMigrationOpsApi, createMockMigrationOpsApi, type MigrationOpsApi } from './migrationApi'
 import type { CoursePage } from './courseTypes'
 import { request, toQuery } from './http'
 import type {
@@ -19,7 +20,7 @@ import type {
   UploadProgressHandler,
 } from './types'
 
-export interface OpsApi extends CourseOpsApi, BookingOpsApi, CourseCalendarApi {
+export interface OpsApi extends CourseOpsApi, BookingOpsApi, CourseCalendarApi, MigrationOpsApi {
   login(account: string, password: string): Promise<LoginResult>
   register(data: RegisterPayload): Promise<RegisterResult>
   changePassword(token: string, data: ChangePasswordPayload): Promise<LoginResult>
@@ -90,6 +91,7 @@ export function createMockOpsApi(): OpsApi {
     ...createMockCourseCalendarApi(),
     ...createMockBookingOpsApi(),
     ...createMockCourseOpsApi(),
+    ...createMockMigrationOpsApi(),
     async login(account, password) {
       if (!account || !password) {
         throw new Error('账号和密码不能为空')
@@ -252,6 +254,7 @@ function createHttpOpsApi(baseUrl: string): OpsApi {
     ...createHttpCourseCalendarApi(baseUrl),
     ...createHttpBookingOpsApi(baseUrl),
     ...createHttpCourseOpsApi(baseUrl),
+    ...createHttpMigrationOpsApi(baseUrl),
     login(account, password) {
       return request<LoginResult>(`${baseUrl}/auth/login`, {
         method: 'POST',

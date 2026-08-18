@@ -10,6 +10,7 @@ export type CourseResourceKey =
   | 'packages'
   | 'grantLines'
   | 'priceVersions'
+  | 'conversionRules'
   | 'enrollments'
   | 'classes'
   | 'classStudents'
@@ -25,7 +26,7 @@ export type CourseResourceKey =
   | 'reconciliationExceptions'
   | 'auditLogs'
 
-export type CourseWritableResource = 'course-specs' | 'packages' | 'grant-lines' | 'price-versions' | 'classes' | 'lessons'
+export type CourseWritableResource = 'course-specs' | 'packages' | 'grant-lines' | 'price-versions' | 'conversion-rules' | 'classes' | 'lessons'
 
 export interface CoursePage<T = CourseRecord> {
   page: number
@@ -124,6 +125,7 @@ export interface CourseAccount extends CourseRecord {
   expiredQuantity: number
   unactivatedQuantity: number
   batches?: CourseRecord[]
+  events?: CourseRecord[]
 }
 
 export interface CourseQuery {
@@ -147,6 +149,14 @@ export interface CourseCommandResult {
   [key: string]: unknown
 }
 
+export interface TeacherCreditConfirmation extends CourseCommandResult {
+  confirmationEventId: string
+  earningEventId: string
+  quantity: number
+  sessionTeacherId: string
+  teacherId: string
+}
+
 export interface EnrollmentInput {
   studentId: string
   packageId: string
@@ -165,9 +175,24 @@ export interface RosterSyncPreview extends CourseCommandResult {
 
 export interface SettlementPreview extends CourseCommandResult {
   sessionId: string
-  studentMovements?: CourseRecord[]
-  teacherMovements?: CourseRecord[]
-  exceptions?: CourseRecord[]
+  sessionStatus?: string
+  canSettle?: boolean
+  students?: Array<CourseRecord & {
+    sessionStudentId: string
+    studentId: string
+    attendanceStatus: string
+    action: string
+    quantity: number
+    exception?: string | null
+    allocations?: Array<{ allocationId?: string; batchId: string; quantity: number; status?: string; effectiveExpiresAt?: string | null }>
+  }>
+  teachers?: Array<CourseRecord & {
+    sessionTeacherId: string
+    teacherId: string
+    role: string
+    action: string
+    quantity: number
+  }>
 }
 
 export interface CourseResourceInput {
