@@ -1,0 +1,43 @@
+overrides:
+  '@babel/runtime@<7.26.10': 7.29.7
+  'ajv@>=7.0.0-alpha.0 <8.18.0': 8.20.0
+  'body-parser@<1.20.6': 1.20.6
+  'brace-expansion@<1.1.18': 1.1.18
+  'braces@<3.0.3': 3.0.3
+  'cookie@<0.7.0': 0.7.2
+  'cross-spawn@>=7.0.0 <7.0.5': 7.0.6
+  'esbuild@<=0.24.2': 0.25.12
+  'express@<4.20.0': 4.21.2
+  'follow-redirects@<=1.15.11': 1.16.0
+  'http-proxy-middleware@<2.0.10': 2.0.10
+  'immutable@>=4.0.0-rc.1 <4.3.9': 4.3.9
+  'joi@<17.13.4': 17.13.4
+  'launch-editor@<=2.14.0': 2.14.1
+  'less@<4.9.0': 4.9.0
+  'lodash-es@<=4.17.23': 4.18.1
+  'lodash@<=4.17.23': 4.18.1
+  'minimatch@<3.1.4': 3.1.4
+  'nanoid@<3.3.18': 3.3.18
+  'node-forge@<1.4.0': 1.4.0
+  'on-headers@<1.1.0': 1.1.0
+  'path-to-regexp@<0.1.13': 0.1.13
+  'picomatch@<2.3.2': 2.3.2
+  'qs@<6.14.2': 6.14.2
+  'rollup@>=3.0.0 <3.30.0': 3.30.0
+  'send@<0.19.0': 0.19.0
+  'serve-static@<1.16.0': 1.16.2
+  'shell-quote@<1.9.0': 1.9.0
+  'swiper@>=6.5.1 <12.1.2': 12.1.2
+  'uuid@<11.1.1': 11.1.1
+  'webpackbar@<7.0.0': 7.0.0
+  'webpack-dev-server@<5.2.6': 5.2.6
+  'websocket-driver@<0.7.5': 0.7.5
+  'ws@>=8.0.0 <8.21.0': 8.21.3
+
+# Taro 4.2 pins older exact peers; these replacements stay on compatible APIs
+# and are accepted only with the build and compiled-output gates in this repo.
+peerDependencyRules:
+  allowedVersions:
+    '@tarojs/components': 4.2.1
+    vite: 8.2.1
+    webpack: 5.109.2

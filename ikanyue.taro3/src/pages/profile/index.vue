@@ -182,7 +182,7 @@
                         <input
                             v-model="passwordValue"
                             class="password-login-field__input password-login-password"
-                            password
+                            :password="true"
                             maxlength="64"
                             placeholder="请输入密码"
                         />
