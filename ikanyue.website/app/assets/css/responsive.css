@@ -272,6 +272,40 @@
   }
 }
 
+@media (max-width: 900px) {
+  .public-detail,
+  .package-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .package-ledger-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  }
+
+  .package-ledger-row__handoff {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .public-course-index,
+  .package-ledger-row,
+  .package-detail__terms li {
+    grid-template-columns: 1fr;
+  }
+
+  .public-course-index a,
+  .public-course-index a:nth-child(3n) {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .public-course-index a:last-child {
+    border-bottom: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

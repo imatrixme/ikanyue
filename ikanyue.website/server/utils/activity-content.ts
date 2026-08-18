@@ -1,4 +1,4 @@
-import { convert } from 'html-to-text'
+import { parseFragment } from 'parse5'
 import sanitizeHtml from 'sanitize-html'
 import type { Activity } from '../../app/types/content'
 
@@ -15,14 +15,36 @@ const activityHtmlOptions: sanitizeHtml.IOptions = {
 
 const activitySummaryLimit = 180
 
+interface HtmlNode {
+  nodeName: string
+  tagName?: string
+  value?: string
+  childNodes?: HtmlNode[]
+}
+
+const blockTags = new Set(['p', 'br', 'div', 'li', 'ul', 'ol', 'section', 'article', 'header', 'footer'])
+
+function extractText(descriptionHtml: string) {
+  const chunks: string[] = []
+
+  const visit = (node: HtmlNode) => {
+    if (node.nodeName === '#text') {
+      chunks.push(node.value || '')
+      return
+    }
+
+    const separatesText = Boolean(node.tagName && blockTags.has(node.tagName))
+    if (separatesText) chunks.push(' ')
+    node.childNodes?.forEach(visit)
+    if (separatesText) chunks.push(' ')
+  }
+
+  visit(parseFragment(descriptionHtml) as unknown as HtmlNode)
+  return chunks.join('').replace(/\s+/g, ' ').trim()
+}
+
 function createActivitySummary(descriptionHtml: string) {
-  const summary = convert(descriptionHtml, {
-    wordwrap: false,
-    selectors: [
-      { selector: 'a', options: { hideLinkHrefIfSameAsText: true, ignoreHref: true } },
-      { selector: 'img', format: 'skip' },
-    ],
-  }).replace(/\s+/g, ' ').trim()
+  const summary = extractText(descriptionHtml)
 
   const characters = Array.from(summary)
   return characters.length > activitySummaryLimit

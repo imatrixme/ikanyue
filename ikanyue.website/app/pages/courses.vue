@@ -2,6 +2,9 @@
 import { Check } from '@lucide/vue'
 import { courses } from '~/data/site'
 
+const config = useRuntimeConfig()
+const { catalog, pending, error, refresh } = useCourseCatalog()
+
 useSeoMeta({
   title: '全年龄声乐课程',
   description: '看乐艺术为儿童、少儿、青少年、成人与熟龄学习者提供分龄声乐、合唱与舞台表达课程。',
@@ -40,6 +43,51 @@ useHead({
     </section>
 
     <section class="section-band">
+      <div class="site-container public-catalog">
+        <UiSectionHeading
+          eyebrow="CURRENT CATALOG"
+          title="当前开放的课程规格与课包"
+          description="价格、课点构成和有效期来自当前发布目录；提交前由教务确认适合的课程与教师。"
+        />
+        <UiAsyncState v-if="pending" state="loading" title="正在读取当前课程目录" />
+        <UiAsyncState
+          v-else-if="error"
+          state="error"
+          title="当前课程目录暂时不可用"
+          description="您仍可查看训练路径，或直接联系教务。"
+          @retry="refresh"
+        />
+        <UiAsyncState
+          v-else-if="!catalog.courses.length && !catalog.packages.length"
+          state="empty"
+          title="当前暂无公开课包"
+          description="课程顾问仍可根据年龄与目标提供建议。"
+        />
+        <template v-else>
+          <nav v-if="catalog.courses.length" class="public-course-index" aria-label="当前开放课程">
+            <NuxtLink
+              v-for="course in catalog.courses"
+              :key="course.code"
+              :to="`/courses/${encodeURIComponent(course.code)}`"
+            >
+              <span>{{ course.code }}</span>
+              <strong>{{ course.name }}</strong>
+              <small>{{ course.durationMinutes }} 分钟 · {{ course.deliveryMode }}</small>
+            </NuxtLink>
+          </nav>
+          <div v-if="catalog.packages.length" class="package-ledger">
+            <ContentPackageLedgerRow
+              v-for="coursePackage in catalog.packages"
+              :key="coursePackage.code"
+              :course-package="coursePackage"
+              :handoff-href="packageHandoffHref(coursePackage, config.public.miniProgramUrl)"
+            />
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section class="section-band section-band--paper">
       <div class="site-container learning-path">
         <UiSectionHeading eyebrow="HOW IT WORKS" title="先判断声音阶段，再决定训练重点" />
         <ol>

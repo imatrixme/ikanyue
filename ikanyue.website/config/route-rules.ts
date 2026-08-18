@@ -1,6 +1,8 @@
 export const siteRouteRules = {
   '/': { swr: 300 },
-  '/courses': { prerender: true },
+  '/courses': { swr: 300 },
+  '/courses/**': { swr: 300 },
+  '/packages/**': { swr: 300 },
   '/faculty': { prerender: true },
   '/stories': { prerender: true },
   '/about': { prerender: true },

@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:1337',
+      miniProgramUrl: process.env.NUXT_PUBLIC_MINI_PROGRAM_URL || '',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://127.0.0.1:3000',
     },
   },
