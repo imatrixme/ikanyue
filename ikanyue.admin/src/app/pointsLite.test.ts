@@ -261,7 +261,7 @@ describe('points lite reducer', () => {
     expect(canAccessView(teacherOnly, 'lessons')).toBe(true)
     expect(canAccessView(teacherOnly, 'classes')).toBe(false)
     expect(canAccessView(teacherOnly, 'appointments')).toBe(false)
-    expect(canAccessView(teacherOnly, 'calendar')).toBe(false)
+    expect(canAccessView(teacherOnly, 'calendar')).toBe(true)
     expect(canAccessView(settlementOnly, 'lessons')).toBe(true)
     expect(canAccessView(settlementOnly, 'students')).toBe(false)
     expect(canAccessView(settlementOnly, 'classes')).toBe(false)

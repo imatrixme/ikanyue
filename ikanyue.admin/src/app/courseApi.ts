@@ -12,6 +12,7 @@ import type {
   RosterSyncPreview,
   SettlementPreview,
   TeacherCreditConfirmation,
+  TeacherOverride,
 } from './courseTypes'
 
 export interface CourseOpsApi {
@@ -27,7 +28,7 @@ export interface CourseOpsApi {
   markAllPresent(token: string, sessionId: string): Promise<CourseCommandResult>
   setActualTeacher(token: string, sessionId: string, sessionTeacherId: string, actualStatus: string): Promise<CourseCommandResult>
   previewSettlement(token: string, sessionId: string): Promise<SettlementPreview>
-  publishLesson(token: string, sessionId: string, classIds: string[]): Promise<CourseCommandResult>
+  publishLesson(token: string, sessionId: string, classIds: string[], teacherOverrides?: TeacherOverride[]): Promise<CourseCommandResult>
   rescheduleLesson(token: string, sessionId: string, newStartAt: string, newEndAt: string, reason: string): Promise<CourseCommandResult>
   settleLesson(token: string, sessionId: string): Promise<CourseCommandResult>
   reverseSettlement(token: string, sessionId: string, reason: string): Promise<CourseCommandResult>
@@ -104,8 +105,8 @@ export function createHttpCourseOpsApi(baseUrl: string): CourseOpsApi {
     previewSettlement(token, sessionId) {
       return request(`${baseUrl}/course-operations/lessons/${encodeURIComponent(sessionId)}/settlement-preview`, { token })
     },
-    publishLesson(token, sessionId, classIds) {
-      return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/publish`, { classIds, teacherOverrides: [] })
+    publishLesson(token, sessionId, classIds, teacherOverrides = []) {
+      return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/publish`, { classIds, teacherOverrides })
     },
     rescheduleLesson(token, sessionId, newStartAt, newEndAt, reason) {
       return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/reschedule`, { newStartAt, newEndAt, reason })
@@ -179,7 +180,7 @@ export function createMockCourseOpsApi(): CourseOpsApi {
       const teachers = store.sessionTeachers.filter((item) => item.sessionId === sessionId).map((item) => ({ ...item, sessionTeacherId: item.id, teacherId: String(item.teacherId || ''), role: String(item.role || ''), action: 'earn', quantity: 1 }))
       return { sessionId, sessionStatus: 'completed', canSettle: students.every((item) => !item.exception), students, teachers }
     },
-    async publishLesson(_token, sessionId, classIds) { updateRecord(store.lessons, sessionId, { status: 'scheduled' }); return { sessionId, classIds, status: 'scheduled' } },
+    async publishLesson(_token, sessionId, classIds, teacherOverrides = []) { updateRecord(store.lessons, sessionId, { status: 'scheduled' }); return { sessionId, classIds, teacherOverrides, status: 'scheduled' } },
     async rescheduleLesson(_token, sessionId, newStartAt, newEndAt, reason) { updateRecord(store.lessons, sessionId, { startAt: newStartAt, endAt: newEndAt }); return { sessionId, newStartAt, newEndAt, reason } },
     async settleLesson(_token, sessionId) { updateRecord(store.lessons, sessionId, { status: 'settled' }); return { sessionId, status: 'settled' } },
     async reverseSettlement(_token, sessionId, reason) { updateRecord(store.lessons, sessionId, { status: 'correction_pending' }); return { sessionId, reason, status: 'correction_pending' } },
@@ -212,7 +213,7 @@ export function createMockCourseOpsApi(): CourseOpsApi {
 
 function createMockStore(): Record<CourseResourceKey, CourseRecord[]> {
   return {
-    courseSpecs: [{ id: 'course_1', code: 'VOCAL-GROUP', name: '综合声乐班', deliveryMode: 'group', durationMinutes: 60, teacherTier: 'standard', status: 'active' }],
+    courseSpecs: [{ id: 'course_1', code: 'VOCAL-GROUP', name: '综合声乐班', deliveryMode: 'group', durationMinutes: 60, teacherTier: 'standard', defaultCreditTypeId: 'credit_voice', status: 'active' }],
     packages: [{ id: 'package_1', code: 'VOCAL-10', name: '综合声乐 10 课时', description: '一期声乐课程', saleChannel: 'admin', activationMode: 'FIRST_COMPLETED_SESSION', activationDeadlineDays: 30, validityDurationDays: 180, expiryPolicy: 'FIXED_DURATION', status: 'active' }],
     grantLines: [{ id: 'grant_1', packageId: 'package_1', creditTypeId: 'credit_voice', quantity: 10 }],
     priceVersions: [{ id: 'price_1', packageId: 'package_1', currency: 'CNY', listAmount: 3000, saleAmount: 2800, version: 1, status: 'active' }],

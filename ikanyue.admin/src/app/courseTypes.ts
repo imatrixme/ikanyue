@@ -46,6 +46,7 @@ export interface CourseRecord {
 
 export interface CourseSpec extends CourseRecord {
   code: string
+  defaultCreditTypeId?: string
   name: string
   deliveryMode: string
   durationMinutes: number
@@ -147,6 +148,13 @@ export interface CourseCommandResult {
   traceId?: string
   replayed?: boolean
   [key: string]: unknown
+}
+
+export interface TeacherOverride {
+  actualStatus?: 'planned' | 'confirmed' | 'absent' | 'cancelled'
+  assignmentSource?: 'session_override' | 'substitute'
+  role: 'lead' | 'assistant' | 'observer' | 'evaluator'
+  teacherId: string
 }
 
 export interface TeacherCreditConfirmation extends CourseCommandResult {

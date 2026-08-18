@@ -56,7 +56,8 @@ export function AdminSidebar({ activeView, profile, onViewChange, mode = 'deskto
                 <div className="grid gap-1">
                   {group.items.map((item) => {
                     const active = activeView === item.view
-                    return <button key={item.view} aria-current={active ? 'page' : undefined} className={cn('relative flex min-h-12 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm font-medium transition-colors', active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]')} onClick={() => { onViewChange(item.view); onNavigate?.() }} type="button"><span className={cn('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md', active ? 'bg-[var(--primary-foreground)]' : 'bg-[var(--card)]')}><BusinessIcon src={item.icon} /></span><span>{item.label}</span></button>
+                    const label = item.view === 'calendar' && !profile.isAdmin && !(profile.courseCreditCapabilities || []).includes('course_credit.academic') ? '我的课表' : item.label
+                    return <button key={item.view} aria-current={active ? 'page' : undefined} className={cn('relative flex min-h-12 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm font-medium transition-colors', active ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm' : 'text-[var(--muted-foreground)] hover:bg-[var(--secondary)] hover:text-[var(--accent-foreground)]')} onClick={() => { onViewChange(item.view); onNavigate?.() }} type="button"><span className={cn('inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md', active ? 'bg-[var(--primary-foreground)]' : 'bg-[var(--card)]')}><BusinessIcon src={item.icon} /></span><span>{label}</span></button>
                   })}
                 </div>
               </section>

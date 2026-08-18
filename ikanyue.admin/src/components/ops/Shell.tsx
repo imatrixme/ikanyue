@@ -20,7 +20,13 @@ interface ShellProps {
 
 export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const currentViewEyebrow = viewEyebrows[activeView]
+  const capabilities = profile.courseCreditCapabilities || []
+  const teacherOnly = !profile.isAdmin
+    && capabilities.includes('course_credit.teacher')
+    && !capabilities.includes('course_credit.academic')
+  const currentViewEyebrow = activeView === 'calendar' && teacherOnly
+    ? '个人授课周日历'
+    : viewEyebrows[activeView]
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">

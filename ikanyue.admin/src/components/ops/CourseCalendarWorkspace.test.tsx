@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi } from '../../app/api'
+import { mockProfiles } from '../../app/mockData'
 import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
 
 describe('institution course calendar workspace', () => {
@@ -113,10 +114,41 @@ describe('institution course calendar workspace', () => {
     await user.click(screen.getByRole('button', { name: '重置筛选' }))
     expect((await screen.findAllByRole('button', { name: /少儿声乐小课/ })).length).toBeGreaterThan(0)
   })
+
+  it('creates and publishes from an academic time slot', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    const create = vi.spyOn(api, 'createCourseResource')
+    const publish = vi.spyOn(api, 'publishLesson')
+    renderWorkspace(api, '/calendar?date=2026-08-03&mode=schedule')
+    expect(await screen.findByRole('heading', { name: '排课日历' })).toBeInTheDocument()
+    const slot = await screen.findByRole('button', { name: '在周老师 2026-08-03 11:00新增排课' })
+    await user.click(slot)
+    const drawer = await screen.findByRole('dialog', { name: '新增排课' })
+    await user.selectOptions(within(drawer).getByLabelText('班级'), 'class_1')
+    await user.click(within(drawer).getByRole('button', { name: '创建并发布' }))
+    expect(create).toHaveBeenCalledWith('token', 'lessons', expect.objectContaining({ title: '周六综合声乐班', status: 'draft' }))
+    expect(publish).toHaveBeenCalledWith('token', expect.any(String), ['class_1'], [{ teacherId: 'teacher_1', role: 'lead' }])
+    expect(await screen.findByText('已创建并发布 1 节课堂')).toBeInTheDocument()
+  })
+
+  it('defaults a teacher-only account to a personal week without academic actions', async () => {
+    const user = userEvent.setup()
+    const teacher = { ...mockProfiles.teacher, id: 'teacher_1', isAdmin: false, role: 'teacher' as const, courseCreditCapabilities: ['course_credit.teacher' as const] }
+    renderWorkspace(createMockOpsApi(), '/calendar?date=2026-08-03', teacher)
+    expect(await screen.findByRole('heading', { name: '我的周排程' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '切换到周' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('button', { name: '新增排课' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('教师')).not.toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: /少儿声乐小课/ }))[0])
+    const drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
+    expect(within(drawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: '取消课堂' })).not.toBeInTheDocument()
+  })
 })
 
-function renderWorkspace(api = createMockOpsApi(), entry = '/calendar?date=2026-08-03') {
-  return render(<MemoryRouter initialEntries={[entry]}><CourseCalendarWorkspace api={api} token="token" /><Location /></MemoryRouter>)
+function renderWorkspace(api = createMockOpsApi(), entry = '/calendar?date=2026-08-03', profile = mockProfiles.admin) {
+  return render(<MemoryRouter initialEntries={[entry]}><CourseCalendarWorkspace api={api} profile={profile} token="token" /><Location /></MemoryRouter>)
 }
 
 function Location() {

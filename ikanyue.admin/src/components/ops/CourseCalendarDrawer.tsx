@@ -13,6 +13,7 @@ import { Field } from '../ui/Input'
 import { Input } from '../ui/Input'
 
 interface Props {
+  canManage?: boolean
   detail: Lesson | null
   entry: CourseCalendarEntry
   error?: string
@@ -25,7 +26,7 @@ interface Props {
 
 export function CourseCalendarDrawer(props: Props) {
   const [action, setAction] = useState<'cancel' | 'reschedule' | null>(null)
-  const editable = !['cancelled', 'settled'].includes(props.entry.rawStatus)
+  const editable = props.canManage !== false && !['cancelled', 'settled'].includes(props.entry.rawStatus)
   return <>{!action ? <DrawerShell description={`${formatDateTime(props.entry.startAt)} · ${props.entry.location || '地点待定'}`} onRequestClose={props.onClose} size="wide" title={props.entry.title}><div className="grid gap-6 p-5"><div className="flex flex-wrap items-center gap-2"><Badge tone={props.entry.rawStatus === 'cancelled' ? 'red' : 'blue'}>{calendarStatusLabel(props.entry.rawStatus)}</Badge><Badge tone="neutral">{calendarOriginLabel(props.entry.originType)}</Badge>{props.entry.adjusted ? <Badge tone="amber">已改期</Badge> : null}{props.entry.attention ? <Badge tone="amber">{props.entry.attention}</Badge> : null}</div>{props.error ? <ActionError message={props.error} /> : null}<dl className="grid gap-px overflow-hidden rounded-md border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2"><Fact label="课程" value={props.entry.course.name} /><Fact label="教师" value={props.entry.teacherSummary.label || '待安排'} /><Fact label="班级" value={props.entry.classSummary.label || '一对一课程'} /><Fact label="学员" value={props.entry.participantSummary.label || `${props.entry.participantSummary.count} 名`} /><Fact label="时间" value={formatRange(props.entry)} /><Fact label="地点" value={props.entry.location || '待安排'} /><Fact label="课堂版本" value={`V${props.detail?.version || props.entry.version}`} /><Fact label="课堂编号" value={props.entry.lessonId} /></dl><div className="flex flex-wrap gap-2"><Button onClick={props.onOpenLesson} type="button">进入课堂管理</Button>{editable ? <Button disabled={props.loading} onClick={() => setAction('reschedule')} type="button" variant="secondary">调整时间</Button> : null}{editable ? <Button disabled={props.loading} onClick={() => setAction('cancel')} type="button" variant="danger">取消课堂</Button> : null}</div></div></DrawerShell> : null}{action === 'reschedule' ? <RescheduleDialog entry={props.entry} error={props.error} loading={props.loading} onClose={() => setAction(null)} onSave={props.onReschedule} /> : null}{action === 'cancel' ? <CancelDialog error={props.error} loading={props.loading} onClose={() => setAction(null)} onSave={props.onCancel} /> : null}</>
 }
 

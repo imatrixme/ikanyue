@@ -35,7 +35,7 @@ describe('course operations api', () => {
     expect(await api.markAllPresent(token, 'lesson_1')).toMatchObject({ status: 'attendance_confirmed' })
     expect(await api.setActualTeacher(token, 'lesson_1', 'session_teacher_1', 'confirmed')).toMatchObject({ actualStatus: 'confirmed' })
     expect((await api.previewSettlement(token, 'lesson_1')).students).toHaveLength(1)
-    expect(await api.publishLesson(token, 'lesson_1', ['class_1'])).toMatchObject({ status: 'scheduled' })
+    expect(await api.publishLesson(token, 'lesson_1', ['class_1'], [{ teacherId: 'teacher_1', role: 'lead' }])).toMatchObject({ status: 'scheduled', teacherOverrides: [{ teacherId: 'teacher_1', role: 'lead' }] })
     expect(await api.rescheduleLesson(token, 'lesson_1', '2026-08-09T10:00:00.000Z', '2026-08-09T11:00:00.000Z', '调整')).toMatchObject({ reason: '调整' })
     expect(await api.settleLesson(token, 'lesson_1')).toMatchObject({ status: 'settled' })
     expect(await api.reverseSettlement(token, 'lesson_1', '更正')).toMatchObject({ status: 'correction_pending' })
@@ -67,7 +67,7 @@ describe('course operations api', () => {
       api.markAllPresent('token', 'lesson 1'),
       api.setActualTeacher('token', 'lesson 1', 'teacher row', 'confirmed'),
       api.previewSettlement('token', 'lesson 1'),
-      api.publishLesson('token', 'lesson 1', ['class_1']),
+      api.publishLesson('token', 'lesson 1', ['class_1'], [{ teacherId: 'teacher_1', role: 'lead' }]),
       api.rescheduleLesson('token', 'lesson 1', 'start', 'end', 'reason'),
       api.settleLesson('token', 'lesson 1'),
       api.reverseSettlement('token', 'lesson 1', 'reason'),
@@ -87,6 +87,7 @@ describe('course operations api', () => {
     const commands = fetchMock.mock.calls.map(([, options]) => options).filter((options) => options?.method === 'POST')
     expect(commands.every((options) => options.headers.authorization === 'Bearer token')).toBe(true)
     expect(commands.every((options) => options.headers['Idempotency-Key'])).toBe(true)
+    expect(JSON.parse(fetchMock.mock.calls[13][1].body)).toMatchObject({ teacherOverrides: [{ teacherId: 'teacher_1', role: 'lead' }] })
     expect(JSON.parse(fetchMock.mock.calls.at(-2)?.[1].body)).toMatchObject({ toClassId: 'class 2' })
   })
 

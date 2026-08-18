@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 
+import type { CourseCalendarMode } from '../../app/calendarScheduler'
 import type { CourseCalendarResponse, CourseCalendarView } from '../../app/calendarTypes'
 import { Button } from '../ui/Button'
 import { IconButton, SegmentedControl } from '../ui/Controls'
@@ -11,11 +12,14 @@ interface Props {
   dateLabel: string
   facets?: CourseCalendarResponse['facets']
   filters: Record<string, string>
+  mode: CourseCalendarMode
   onFilter: (name: string, value: string) => void
+  onMode: (mode: CourseCalendarMode) => void
   onReset: () => void
   onShift: (direction: -1 | 1) => void
   onToday: () => void
   onView: (view: CourseCalendarView) => void
+  teacherOnly?: boolean
   view: CourseCalendarView
 }
 
@@ -30,18 +34,13 @@ export function CourseCalendarToolbar(props: Props) {
           <IconButton icon={<ChevronRight className="h-4 w-4" />} label="下一时间段" onClick={() => props.onShift(1)} type="button" />
           <strong className="ml-1 text-sm sm:text-base">{props.dateLabel}</strong>
         </div>
-        <SegmentedControl<CourseCalendarView>
-          label="课表视图"
-          onChange={props.onView}
-          options={[
-            { label: '日', value: 'day' }, { label: '周', value: 'week' },
-            { label: '月', value: 'month' }, { label: '列表', value: 'list' },
-          ]}
-          value={props.view}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {!props.teacherOnly ? <SegmentedControl<CourseCalendarMode> label="课表模式" onChange={props.onMode} options={[{ label: '查看', value: 'browse' }, { label: '排课', value: 'schedule' }]} value={props.mode} /> : null}
+          <SegmentedControl<CourseCalendarView> label="课表视图" onChange={props.onView} options={props.mode === 'schedule' || props.teacherOnly ? [{ label: '日', value: 'day' }, { label: '周', value: 'week' }] : [{ label: '日', value: 'day' }, { label: '周', value: 'week' }, { label: '月', value: 'month' }, { label: '列表', value: 'list' }]} value={props.view} />
+        </div>
       </section>
       <FilterToolbar className="sm:grid-cols-2 xl:grid-cols-[repeat(6,minmax(0,1fr))_auto]">
-        <CalendarSelect label="教师" name="teacherId" options={props.facets?.teachers || []} {...props} />
+        {!props.teacherOnly ? <CalendarSelect label="教师" name="teacherId" options={props.facets?.teachers || []} {...props} /> : null}
         <CalendarSelect label="学员" name="studentId" options={props.facets?.students || []} {...props} />
         <CalendarSelect label="班级" name="classId" options={props.facets?.classes || []} {...props} />
         <CalendarSelect label="课程" name="courseSpecId" options={props.facets?.courses || []} {...props} />

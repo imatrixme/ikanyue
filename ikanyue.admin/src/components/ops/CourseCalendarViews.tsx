@@ -1,5 +1,6 @@
 import type { CourseCalendarEntry, CourseCalendarView } from '../../app/calendarTypes'
 import { calendarOriginLabel, calendarStatusLabel, groupCalendarEntries, layoutDayEntries } from '../../app/calendarLogic'
+import { SCHEDULER_SLOT_COUNT, slotTimeLabel } from '../../app/calendarScheduler'
 import { Badge } from '../ui/Badge'
 import { DataTable } from '../ui/DataDisplay'
 import { cn } from '../ui/utils'
@@ -9,6 +10,7 @@ interface Props {
   days: string[]
   entries: CourseCalendarEntry[]
   onOpen: (entry: CourseCalendarEntry) => void
+  onSelectSlot?: (dayKey: string, slot: number) => void
   view: CourseCalendarView
 }
 
@@ -19,7 +21,7 @@ export function CourseCalendarViews(props: Props) {
   return <><div className="hidden md:block"><TimeGrid {...props} groups={groups} /></div><div className="md:hidden"><AgendaList entries={props.entries} groups={groups} onOpen={props.onOpen} /></div></>
 }
 
-function TimeGrid({ days, groups, onOpen }: Props & { groups: Map<string, CourseCalendarEntry[]> }) {
+function TimeGrid({ days, groups, onOpen, onSelectSlot }: Props & { groups: Map<string, CourseCalendarEntry[]> }) {
   const columns = `4rem repeat(${days.length}, minmax(8rem, 1fr))`
   return (
     <div className="overflow-x-auto" data-testid="calendar-time-grid">
@@ -27,7 +29,7 @@ function TimeGrid({ days, groups, onOpen }: Props & { groups: Map<string, Course
         <div className="border-b border-[var(--border)] bg-[var(--muted)]" />
         {days.map((day) => <DayHeader day={day} key={day} />)}
         <TimeLabels />
-        {days.map((day) => <DayColumn day={day} entries={groups.get(day) || []} key={day} onOpen={onOpen} />)}
+        {days.map((day) => <DayColumn day={day} entries={groups.get(day) || []} key={day} onOpen={onOpen} onSelectSlot={onSelectSlot} />)}
       </div>
     </div>
   )
@@ -42,11 +44,12 @@ function TimeLabels() {
   return <div className="relative h-[780px] border-r border-[var(--border)] bg-[var(--card)]">{hours.map((hour, index) => <span className="absolute right-2 -translate-y-1/2 text-xs tabular-nums text-[var(--muted-foreground)]" key={hour} style={{ top: `${(index / 13) * 100}%` }}>{hour}:00</span>)}</div>
 }
 
-function DayColumn({ day, entries, onOpen }: { day: string; entries: CourseCalendarEntry[]; onOpen: (entry: CourseCalendarEntry) => void }) {
+function DayColumn({ day, entries, onOpen, onSelectSlot }: { day: string; entries: CourseCalendarEntry[]; onOpen: (entry: CourseCalendarEntry) => void; onSelectSlot?: (dayKey: string, slot: number) => void }) {
   const layouts = layoutDayEntries(entries, day)
   return (
     <div className="relative h-[780px] border-r border-[var(--border)] bg-[var(--card)]">
       <div aria-hidden="true" className="absolute inset-0 grid grid-rows-[repeat(13,minmax(0,1fr))]">{hours.slice(0, 13).map((hour) => <span className="border-b border-[var(--border)]/70" key={hour} />)}</div>
+      {onSelectSlot ? Array.from({ length: SCHEDULER_SLOT_COUNT }, (_, slot) => <button aria-label={`在${day} ${slotTimeLabel(slot)}新增排课`} className="absolute inset-x-0 z-[1] border-b border-transparent transition-colors hover:bg-[var(--brand-wash)] focus-visible:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[var(--ring)]" key={slot} onClick={() => onSelectSlot(day, slot)} style={{ top: `${(slot / SCHEDULER_SLOT_COUNT) * 100}%`, height: `${100 / SCHEDULER_SLOT_COUNT}%` }} type="button" />) : null}
       {layouts.map((entry) => <button className={cn('absolute z-10 overflow-hidden rounded border px-2 py-1 text-left text-xs shadow-sm transition hover:z-20 hover:shadow-md', eventTone(entry))} key={entry.lessonId} onClick={() => onOpen(entry)} style={{ top: `${entry.topPercent}%`, height: `${entry.heightPercent}%`, left: `calc(${(entry.lane / entry.laneCount) * 100}% + 2px)`, width: `calc(${100 / entry.laneCount}% - 4px)` }} type="button"><strong className="block truncate">{entry.title}</strong><span className="mt-0.5 block truncate">{timeRange(entry)}</span><span className="block truncate opacity-80">{entry.teacherSummary.label || entry.classSummary.label || entry.location}</span></button>)}
     </div>
   )

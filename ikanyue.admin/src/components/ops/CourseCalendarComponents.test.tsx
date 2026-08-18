@@ -41,12 +41,12 @@ describe('course calendar presentation components', () => {
 
   it('covers empty agenda and all toolbar callbacks', async () => {
     const user = userEvent.setup()
-    const callbacks = { onFilter: vi.fn(), onReset: vi.fn(), onShift: vi.fn(), onToday: vi.fn(), onView: vi.fn() }
+    const callbacks = { onFilter: vi.fn(), onMode: vi.fn(), onReset: vi.fn(), onShift: vi.fn(), onToday: vi.fn(), onView: vi.fn() }
     const facets: CourseCalendarResponse['facets'] = {
       teachers: [{ id: 't', name: '教师' }], students: [{ id: 's', name: '学员' }],
       classes: [{ id: 'c', name: '班级' }], courses: [{ id: 'course', name: '课程' }],
     }
-    const view = render(<CourseCalendarToolbar dateLabel="本周" facets={facets} filters={{ teacherId: '', studentId: '', classId: '', courseSpecId: '', status: '', originType: '' }} {...callbacks} view="week" />)
+    const view = render(<CourseCalendarToolbar dateLabel="本周" facets={facets} filters={{ teacherId: '', studentId: '', classId: '', courseSpecId: '', status: '', originType: '' }} mode="browse" {...callbacks} view="week" />)
     for (const [label, value] of [['教师', 't'], ['学员', 's'], ['班级', 'c'], ['课程', 'course'], ['课堂状态', 'scheduled'], ['排课来源', 'class']] as const) {
       await user.selectOptions(screen.getByLabelText(label), value)
     }

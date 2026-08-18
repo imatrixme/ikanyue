@@ -55,6 +55,23 @@ describe('points lite shell and login components', () => {
     expect(screen.getByText('提示消息')).toBeInTheDocument()
   })
 
+  it('labels the calendar as a personal week view for teacher-only accounts', () => {
+    render(
+      <Shell
+        activeView="calendar"
+        profile={{ ...mockProfiles.teacher, isAdmin: false, courseCreditCapabilities: ['course_credit.teacher'] }}
+        toast={null}
+        onLogout={vi.fn()}
+        onViewChange={vi.fn()}
+      >
+        <div>教师周课表</div>
+      </Shell>,
+    )
+
+    expect(screen.getByText('个人授课周日历')).toBeInTheDocument()
+    expect(screen.queryByText('全机构课程日历')).not.toBeInTheDocument()
+  })
+
   it('registers a pending account and reports registration errors', async () => {
     const user = userEvent.setup()
     const api = createMockOpsApi()
