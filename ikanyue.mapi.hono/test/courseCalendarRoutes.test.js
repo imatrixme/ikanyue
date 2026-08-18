@@ -39,7 +39,7 @@ test('calendar routes enforce role ownership and keep the teacher alias compatib
     assert.equal(unsupported.errorCode, 'CALENDAR_ROLE_UNSUPPORTED');
 });
 
-test('institution calendar requires academic capability and forwards all filters', async () => {
+test('Ops calendar preserves academic filters and routes teacher-only users to their scope', async () => {
     const fixture = scheduleFixture();
     const app = createApp(fixture.services);
     const academic = token({
@@ -54,8 +54,14 @@ test('institution calendar requires academic capability and forwards all filters
     assert.equal(query.teacherId, 'teacher-1');
     assert.equal(query.originType, 'class');
 
-    const denied = await request(app, `/ops/course-calendar?${RANGE}`, token({
+    const teacher = await request(app, `/ops/course-calendar?${RANGE}`, token({
         id: 'teacher-1', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'],
+    }));
+    assert.equal(teacher.code, 10000);
+    assert.equal(fixture.calls.find((call) => call.name === 'teacherOps').args[0], 'teacher-1');
+
+    const denied = await request(app, `/ops/course-calendar?${RANGE}`, token({
+        id: 'finance-1', role: 'teacher', courseCreditCapabilities: ['course_credit.finance'],
     }));
     assert.equal(denied.code, 403);
 });
@@ -69,7 +75,7 @@ test('schedule handler identity helper rejects missing and unsupported users', (
 function scheduleFixture() {
     const calls = [];
     const scheduleQueryService = {};
-    for (const name of ['institution', 'teacher', 'upcoming']) {
+    for (const name of ['institution', 'teacher', 'teacherOps', 'upcoming']) {
         scheduleQueryService[name] = async (...args) => {
             calls.push({ name, args });
             return { name, args };

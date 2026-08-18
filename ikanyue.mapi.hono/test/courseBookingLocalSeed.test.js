@@ -9,6 +9,7 @@ const {
     createGrantRecords,
     localTeacherCapabilitiesField,
     localTeacherCredentials,
+    localTeacherRoleFields,
     localRecordId,
 } = require('../scripts/pb-seed-course-booking-local');
 
@@ -48,5 +49,9 @@ test('local seed safety rejects remote PocketBase hosts and validates booking de
     assert.deepEqual(localTeacherCredentials('admin870329'), {
         password: 'admin870329',
         passwordConfirm: 'admin870329',
+    });
+    assert.deepEqual(localTeacherRoleFields(), {
+        idAdmin: false,
+        isAdmin: false,
     });
 });

@@ -151,6 +151,7 @@ async function ensureLocalTeacher(pb, password) {
         return pb.collection('teachers').update(teacher.id, {
             blocked: false,
             verified: true,
+            ...localTeacherRoleFields(),
             ...localTeacherCredentials(password),
             courseCreditCapabilities: LOCAL_TEACHER.courseCreditCapabilities,
             nickName: teacher.nickName || teacher.nickname || LOCAL_TEACHER.name,
@@ -169,13 +170,16 @@ async function ensureLocalTeacher(pb, password) {
         realname: LOCAL_TEACHER.name,
         blocked: false,
         verified: true,
-        idAdmin: false,
-        isAdmin: false,
+        ...localTeacherRoleFields(),
     }, { requestKey: null });
 }
 
 function localTeacherCredentials(password) {
     return { password, passwordConfirm: password };
+}
+
+function localTeacherRoleFields() {
+    return { idAdmin: false, isAdmin: false };
 }
 
 async function ensureOffering(pb, payload) {
@@ -345,6 +349,7 @@ module.exports = {
     createGrantRecords,
     localTeacherCapabilitiesField,
     localTeacherCredentials,
+    localTeacherRoleFields,
     localRecordId,
     main,
 };

@@ -12,6 +12,7 @@ const {
 const {
     buildFacets,
     buildScheduleEntry,
+    publicName,
     relationGroups,
     relationsForSession,
 } = require('./projection');
@@ -30,6 +31,24 @@ class ScheduleQueryService {
         const range = parseCalendarRange(query);
         const filters = normalizeCalendarFilters(query);
         const sessions = await this.rangeSessions(range);
+        const entries = await this.projectSessions(sessions, 'admin');
+        const facets = buildFacets(entries);
+        facets.teachers = mergeFacets(facets.teachers, await this.eligibleTeachers());
+        return {
+            range: { ...range, timezone: CALENDAR_TIMEZONE },
+            filters: serializeFilters(filters),
+            facets,
+            items: entries.filter((entry) => matchesFilters(entry, filters)),
+        };
+    }
+
+    async teacherOps(teacherId, query = {}) {
+        requiredPrincipal(teacherId, 'CALENDAR_TEACHER_REQUIRED', '教师身份不能为空');
+        const range = parseCalendarRange(query);
+        const filters = normalizeCalendarFilters(query);
+        const sessionIds = await this.scopedSessionIds('session_teachers', 'teacherId', teacherId, range,
+            'actualStatus!="cancelled"');
+        const sessions = await this.sessionsByIds(sessionIds);
         const entries = await this.projectSessions(sessions, 'admin');
         return {
             range: { ...range, timezone: CALENDAR_TIMEZONE },
@@ -144,6 +163,16 @@ class ScheduleQueryService {
         })));
         return pages.flat();
     }
+
+    async eligibleTeachers() {
+        const rows = await this.repository.list('teachers', {
+            filter: 'blocked=false && verified=true',
+            fields: 'id,realName,realname,nickName,nickname,username,sn',
+            sort: 'realname,nickName,username',
+        });
+        return rows.map((teacher) => ({ id: teacher.id, name: publicName(teacher) }))
+            .filter((teacher) => teacher.id);
+    }
 }
 
 function matchesFilters(entry, filters) {
@@ -180,6 +209,14 @@ function unique(values) {
     return [...new Set(values.filter(Boolean))];
 }
 
+function mergeFacets(...groups) {
+    const values = new Map();
+    for (const item of groups.flat()) {
+        if (item?.id && !values.has(item.id)) values.set(item.id, item);
+    }
+    return [...values.values()].sort((left, right) => left.name.localeCompare(right.name, 'zh-CN'));
+}
+
 function byStart(left, right) {
     const timeOrder = Date.parse(left.startAt || '') - Date.parse(right.startAt || '');
     if (Number.isFinite(timeOrder) && timeOrder !== 0) return timeOrder;
@@ -197,5 +234,6 @@ module.exports = {
     anyIdFilter,
     chunk,
     matchesFilters,
+    mergeFacets,
     serializeFilters,
 };

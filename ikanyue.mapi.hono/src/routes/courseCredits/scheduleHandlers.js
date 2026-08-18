@@ -1,11 +1,12 @@
 const { invariant } = require('../../services/courseCredits/domain');
-const { requireBookingOperator, requireBookingTeacher } = require('./bookingHandlers');
+const { requireBookingTeacher } = require('./bookingHandlers');
 
 function createCourseScheduleHandlers(options) {
     const {
         capability,
         loadServices,
         queryParams,
+        requireAnyCapability,
         requireCapability,
         safeQuery,
     } = options;
@@ -19,12 +20,15 @@ function createCourseScheduleHandlers(options) {
     return {
         async getInstitutionCourseCalendar(c) {
             return safeQuery(c, async () => {
-                requireBookingOperator(c.get('user'), capability, requireCapability);
+                const user = requireAnyCapability(c.get('user'), [capability.ACADEMIC, capability.TEACHER]);
                 const services = await loadServices();
-                return services.scheduleQueryService.institution(queryParams(c, [
+                const query = queryParams(c, [
                     'from', 'to', 'teacherId', 'studentId', 'classId', 'courseSpecId',
                     'status', 'originType',
-                ]));
+                ]);
+                return user.isAdmin || (user.courseCreditCapabilities || []).includes(capability.ACADEMIC)
+                    ? services.scheduleQueryService.institution(query)
+                    : services.scheduleQueryService.teacherOps(user.id, query);
             });
         },
         getTeacherCalendar: teacherSchedule,

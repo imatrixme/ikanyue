@@ -6,7 +6,8 @@
     "/ops/course-calendar": {
       "get": {
         "tags": ["Course Calendar"],
-        "summary": "Query the institution course calendar",
+        "summary": "Query the role-scoped operations course calendar",
+        "description": "Academic operators receive the institution calendar. Teacher-only operators receive only lessons assigned to the authenticated teacher.",
         "security": [{ "BearerAuth": [] }],
         "parameters": [
           { "name": "from", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
@@ -18,7 +19,7 @@
           { "name": "status", "in": "query", "schema": { "type": "string" } },
           { "name": "originType", "in": "query", "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Institution calendar projection" } }
+        "responses": { "200": { "description": "Role-scoped operations calendar projection" } }
       }
     },
     "/v1/teacher/schedule": {

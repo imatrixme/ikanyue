@@ -8,7 +8,7 @@ const {
 } = require('./settlementExceptionProjection');
 
 const STUDENT_FIELDS = [
-    'id', 'realName', 'nickName', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
+    'id', 'realname', 'nickname', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
     'created', 'updated',
 ];
 
@@ -228,7 +228,7 @@ class CourseCreditOpsQueryService {
         const result = await this.repository.page('students', page.page, page.perPage, {
             fields: STUDENT_FIELDS.join(','),
             ...(filters.length ? { filter: filters.join(' && ') } : {}),
-            sort: 'realName,nickName,cellphone',
+            sort: 'realname,nickname,cellphone',
         });
         const studentIds = (result.items || []).map((student) => student.id);
         const relations = scope || await studentRelations(this.repository, studentIds);
@@ -322,8 +322,11 @@ async function relatedRows(repository, collection, field, ids) {
 }
 
 function projectAssignedStudent(student, scope) {
+    const { realname, nickname, ...record } = project(student, STUDENT_FIELDS);
     return {
-        ...project(student, STUDENT_FIELDS),
+        ...record,
+        realName: student.realName || realname || '',
+        nickName: student.nickName || nickname || '',
         classAssignments: scope.classStudents.filter((row) => relationId(row.studentId) === student.id)
             .map((row) => project(row, RESOURCE_CONFIGS.classStudents.fields)),
         lessonAssignments: scope.sessionStudents.filter((row) => relationId(row.studentId) === student.id)
@@ -372,7 +375,7 @@ function studentFilters(query) {
     const keyword = String(query.q || query.keyword || '').trim();
     if (keyword) {
         const value = escapeFilter(keyword);
-        filters.push(`(realName ~ "${value}" || nickName ~ "${value}" || cellphone ~ "${value}")`);
+        filters.push(`(realname ~ "${value}" || nickname ~ "${value}" || cellphone ~ "${value}")`);
     }
     if (query.status === 'active' || query.status === 'inactive') {
         filters.push(`blocked = ${query.status === 'inactive'}`);

@@ -220,7 +220,7 @@ test('ops projection helpers normalize relations, empty accounts, and empty page
     assert.equal(projected.effectiveExpiresAt, null);
     assert.equal(projected.listUnitValue, 0);
     assert.deepEqual(studentFilters({ q: '张', status: 'inactive' }), [
-        '(realName ~ "张" || nickName ~ "张" || cellphone ~ "张")', 'blocked = true',
+        '(realname ~ "张" || nickname ~ "张" || cellphone ~ "张")', 'blocked = true',
     ]);
     assert.deepEqual(studentFilters({ studentId: 'student' }), ['id="student"']);
     assert.deepEqual(uniqueIds([{ studentId: 'one' }, { studentId: { id: 'one' } }], 'studentId'), ['one']);
@@ -240,6 +240,8 @@ test('assigned student and lesson queries scope teacher data to explicit teachin
     const lessons = await service.listAssignedLessons(teacher, { status: 'scheduled' });
 
     assert.equal(students.items[0].id, 'student');
+    assert.equal(students.items[0].realName, '张同学');
+    assert.equal(students.items[0].nickName, '小张');
     assert.equal(students.items[0].classAssignments[0].classId, 'class');
     assert.equal(students.items[0].lessonAssignments[0].sessionId, 'session');
     assert.equal(classes.items[0].id, 'class');
@@ -249,6 +251,7 @@ test('assigned student and lesson queries scope teacher data to explicit teachin
     assert.equal(lessons.items[0].students[0].studentId, 'student');
     assert.equal(lessons.items[0].teachers[0].teacherId, 'teacher');
     assert.match(repository.pageCalls[0].options.filter, /id="student"/);
+    assert.equal(repository.pageCalls[0].options.sort, 'realname,nickname,cellphone');
     assert.match(repository.pageCalls[1].options.filter, /id="class"/);
     assert.match(repository.pageCalls[2].options.filter, /id="session"/);
     assert.match(repository.pageCalls[2].options.filter, /status="scheduled"/);
@@ -319,7 +322,7 @@ function assignedRepository(options = {}) {
         async page(collection, page, perPage, requestOptions) {
             this.pageCalls.push({ collection, page, perPage, options: requestOptions });
             const items = collection === 'students'
-                ? [{ id: 'student', realName: '张同学', blocked: false }]
+                ? [{ id: 'student', realname: '张同学', nickname: '小张', blocked: false }]
                 : collection === 'classes'
                     ? [{ id: 'class', name: '周六声乐班', status: 'active' }]
                     : [{ id: 'session', title: '合唱排练', status: 'scheduled' }];

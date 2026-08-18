@@ -6,6 +6,7 @@ const {
     anyIdFilter,
     chunk,
     matchesFilters,
+    mergeFacets,
     serializeFilters,
 } = require('../src/services/courseCredits/schedule/queryService');
 
@@ -21,7 +22,9 @@ test('institution calendar projects formal sessions and applies relation filters
     assert.equal(result.items[0].lessonId, 'session-1');
     assert.equal(result.range.timezone, 'Asia/Shanghai');
     assert.deepEqual(result.filters.status, ['scheduled']);
-    assert.equal(result.facets.teachers[0].name, '周老师');
+    assert.equal(result.facets.teachers.find((teacher) => teacher.id === 'teacher-1').name, '周老师');
+    assert.equal(result.facets.teachers.find((teacher) => teacher.id === 'teacher-2').name, '郑老师');
+    assert.deepEqual(Object.keys(result.facets.teachers.find((teacher) => teacher.id === 'teacher-2')), ['id', 'name']);
     assert.match(repository.calls.find((call) => call.collection === 'sessions').options.filter, /endAt>/);
 });
 
@@ -32,11 +35,14 @@ test('teacher and learner calendars use assignment ownership and role-safe proje
     const teacherWithAvailability = await service.teacher('teacher-1', {
         ...RANGE, includeAvailability: 'true',
     });
+    const teacherOps = await service.teacherOps('teacher-1', RANGE);
     const learner = await service.learner('student-1', RANGE);
 
     assert.equal(teacher.items[0].participantSummary.label, '林同学');
     assert.equal(learner.items[0].participantSummary.count, 0);
     assert.equal(learner.items[0].teacherSummary.label, '周老师');
+    assert.equal(teacherOps.items[0].relationIds.teacherIds[0], 'teacher-1');
+    assert.equal(teacherOps.items[0].version, 1);
     assert.deepEqual(teacher.availability, []);
     assert.deepEqual(teacherWithAvailability.availability, []);
     const teacherScope = repository.calls.find((call) => call.collection === 'session_teachers'
@@ -46,6 +52,7 @@ test('teacher and learner calendars use assignment ownership and role-safe proje
     assert.match(teacherScope.options.filter, /actualStatus!="cancelled"/);
     assert.match(studentScope.options.filter, /attendanceStatus!="cancelled"/);
     await assert.rejects(service.teacher('', RANGE), hasCode('CALENDAR_TEACHER_REQUIRED'));
+    await assert.rejects(service.teacherOps('', RANGE), hasCode('CALENDAR_TEACHER_REQUIRED'));
     await assert.rejects(service.learner('', RANGE), hasCode('CALENDAR_STUDENT_REQUIRED'));
 });
 
@@ -71,6 +78,9 @@ test('upcoming schedule limits results, filters statuses, and rejects unsupporte
 test('query helpers and density guard cover empty, chunked, and filtered cases', async () => {
     assert.equal(anyIdFilter('id', ['a', 'b']), '(id="a" || id="b")');
     assert.deepEqual(chunk(['a', 'b', 'c'], 2), [['a', 'b'], ['c']]);
+    assert.deepEqual(mergeFacets([{ id: 'b', name: '乙' }], [{ id: 'a', name: '甲' }, { id: 'b', name: '重复' }]), [
+        { id: 'a', name: '甲' }, { id: 'b', name: '乙' },
+    ]);
     assert.deepEqual(serializeFilters({
         teacherId: '', studentId: '', classId: '', courseSpecId: '', statuses: [], origins: [],
     }), {
@@ -113,7 +123,9 @@ test('query helpers and density guard cover empty, chunked, and filtered cases',
         filters: {
             teacherId: '', studentId: '', classId: '', courseSpecId: '', status: [], originType: [],
         },
-        facets: { teachers: [], students: [], classes: [], courses: [] },
+        facets: {
+            teachers: [{ id: 'teacher-2', name: '郑老师' }], students: [], classes: [], courses: [],
+        },
         items: [],
     });
     assert.deepEqual(await emptyService.upcoming({ id: 'student', role: 'student' }), {
@@ -154,6 +166,9 @@ function calendarRepository(options = {}) {
             if (collection === 'session_teachers') return teachers;
             if (collection === 'session_students') return students;
             if (collection === 'session_classes') return classes;
+            if (collection === 'teachers') return [{
+                id: 'teacher-2', realName: '郑老师', cellphone: 'secret', password: 'secret',
+            }];
             return [];
         },
     };
