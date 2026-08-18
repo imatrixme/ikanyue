@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     user: "0:0"
     ports:
-      - "${BIND_ADDR:-0.0.0.0}:${POCKETBASE_PORT:-8090}:8090"
+      - "${BIND_ADDR:-127.0.0.1}:${POCKETBASE_PORT:-8090}:8090"
     environment:
       POCKETBASE_ADMIN_EMAIL: "${PB_EMAIL:-admin@example.com}"
       POCKETBASE_ADMIN_PASSWORD: "${PB_PASSWORD:-change-me}"
@@ -15,7 +15,7 @@ services:
         /usr/local/bin/pocketbase superuser upsert "$${POCKETBASE_ADMIN_EMAIL}" "$${POCKETBASE_ADMIN_PASSWORD}" --dir=/pb_data
         exec /usr/local/bin/pocketbase serve --http=0.0.0.0:8090 --dir=/pb_data
     volumes:
-      - pocketbase_data:/pb_data
+      - "${PB_DATA_SOURCE:-pocketbase_data}:/pb_data"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health >/dev/null"]
       interval: 10s
@@ -31,9 +31,10 @@ services:
       pocketbase:
         condition: service_healthy
     ports:
-      - "${BIND_ADDR:-0.0.0.0}:${HONO_PORT:-1337}:1337"
+      - "${BIND_ADDR:-127.0.0.1}:${HONO_PORT:-1337}:1337"
     environment:
-      NODE_ENV: production
+      NODE_ENV: "${NODE_ENV:-production}"
+      HOST: "${HOST:-0.0.0.0}"
       PORT: "1337"
       PB_URL: http://pocketbase:8090
       PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
@@ -45,6 +46,14 @@ services:
       WECHAT_APPID: "${WECHAT_APPID:-}"
       WECHAT_SECRET: "${WECHAT_SECRET:-}"
       WECHAT_JSCODE2SESSION: "${WECHAT_JSCODE2SESSION:-https://api.weixin.qq.com/sns/jscode2session}"
+      COURSE_CREDIT_GRANTS_ENABLED: "${COURSE_CREDIT_GRANTS_ENABLED:-false}"
+      COURSE_CREDIT_RESERVATION_ENABLED: "${COURSE_CREDIT_RESERVATION_ENABLED:-false}"
+      COURSE_CREDIT_SETTLEMENT_ENABLED: "${COURSE_CREDIT_SETTLEMENT_ENABLED:-false}"
+      COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED: "${COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED:-false}"
+      COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED: "${COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED:-false}"
+      COURSE_CREDIT_MIGRATION_ENABLED: "${COURSE_CREDIT_MIGRATION_ENABLED:-false}"
+      COURSE_CREDIT_OUTBOX_WEBHOOK_URL: "${COURSE_CREDIT_OUTBOX_WEBHOOK_URL:-}"
+      COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET: "${COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET:-}"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1337/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
@@ -63,7 +72,7 @@ services:
       hono:
         condition: service_healthy
     ports:
-      - "${BIND_ADDR:-0.0.0.0}:${ADMIN_PORT:-8080}:80"
+      - "${BIND_ADDR:-127.0.0.1}:${ADMIN_PORT:-8080}:80"
 
   miniapp:
     profiles: ["test"]
@@ -73,13 +82,15 @@ services:
     restart: unless-stopped
     working_dir: /app
     environment:
+      CI: "true"
       NODE_ENV: development
       KANYUE_LOCAL_API_URL: "${KANYUE_LOCAL_API_URL:-http://127.0.0.1:1337}"
       CHOKIDAR_USEPOLLING: "true"
-    command: pnpm run dev:weapp
+    command: /bin/sh -c "pnpm install --store-dir /pnpm/store --frozen-lockfile && exec pnpm run dev:weapp"
     volumes:
       - ./ikanyue.taro3:/app
       - miniapp_node_modules:/app/node_modules
+      - miniapp_pnpm_store:/pnpm/store
     healthcheck:
       test: ["CMD-SHELL", "test -f /app/dist/app.json"]
       interval: 3s
@@ -89,3 +100,4 @@ services:
 volumes:
   pocketbase_data:
   miniapp_node_modules:
+  miniapp_pnpm_store:

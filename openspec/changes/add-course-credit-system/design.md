@@ -128,11 +128,21 @@ The rollout sequence is schema and transaction foundation, direct package grants
 8. Run local full validation throughout development; perform migration rehearsal and Docker deployment validation only at the final release gate.
 9. Roll back by disabling Hono command routes and rule publication while preserving all new records; never write new ledger state back into legacy `hours`.
 
-## Open Questions
+## Confirmed First-Release Rules
 
-- Is one universal credit exactly one yuan of reference exchange value, or another fixed denomination?
-- Does a universal-credit batch itself expire?
-- Is the rolling-package default activation event `FIRST_CHECK_IN` or `FIRST_COMPLETED_SESSION`?
-- What are the exact leave cutoff, late, no-show, institution cancellation, and teacher compensation rules?
-- Which course-to-course conversion directions are allowed, and what reference-value loss is acceptable?
-- Which payment channels and guardian-payment relationships are included in the first release?
+The release rules are approved in `docs/product/course-credit-system-prd.md`
+and encoded in the versioned
+`ikanyue.mapi.hono/scripts/fixtures/course-credit-rules.v1.json` fixture:
+
+- One universal credit represents one CNY of reference value, never directly
+  consumes a lesson, and does not expire in the first release.
+- Rolling packages default to `FIRST_CHECK_IN`, with a 30-day activation
+  deadline and 180-day validity. Fixed-term classes use `TERM_START` and
+  expire at term end.
+- Present and late consume credit; leave at least 12 hours before class and
+  institution cancellation release credit; late leave and no-show consume;
+  institution cancellation has no default teacher compensation.
+- Only published directed conversion rules are allowed. Rules are irreversible
+  by default, cannot increase reference value, and may lose at most 20 percent.
+- The first release accepts Admin and Admin-approved offline orders. Guardian
+  payment and automatic cash refunds remain disabled.

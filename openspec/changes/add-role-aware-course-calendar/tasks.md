@@ -33,14 +33,21 @@
 
 - [x] 5.1 Run Hono lint, focused tests, complete course-calendar tests, and a coverage command enforcing at least 95% for lines, branches, functions, and statements.
 - [x] 5.2 Run Admin lint, unit tests, coverage, production/SSR builds, and desktop/narrow responsive calendar verification.
-- [ ] 5.3 Run Taro lint, unit tests, 95% affected-scope coverage, WeChat build/output checks, and WeChat DevTools compile plus visual checks.
+- [x] 5.3 Run Taro lint, unit tests, 95% affected-scope coverage, WeChat build/output checks, and WeChat DevTools compile plus visual checks.
+
+Automated evidence: lint and 105 unit tests pass; affected-scope coverage is
+100% statements/lines/functions and 97.28% branches; the WeChat output check
+passes. Authenticated WeChat DevTools verification compiled the critical page
+WXML and WXSS, then visually verified the teacher workbench, seven-day calendar,
+formal lesson agenda, availability toggle, and two daily availability windows.
+The simulator console reported no errors.
 - [x] 5.4 Validate the OpenSpec change strictly, record requirement-by-requirement evidence, confirm Website/Flutter/root dependency neutrality, and document release-only Docker migration/rollback verification as deferred to the release gate.
 
 ## Verification Evidence
 
-- Hono: `npm test` passed 475 tests with 4 environment skips; lint and Swagger build passed. Calendar coverage is 100% statements, 98.29% branches, 100% functions, and 100% lines. The broader course-credit coverage gate is 97.11% statements/lines, 95.27% branches, and 95.03% functions.
-- Admin: lint passed; 118 unit tests and 36 Playwright tests passed. Calendar coverage is 100% statements/lines/functions and 96.15% branches. Client and SSR production builds passed; the existing bundle-size warning remains non-blocking.
-- Mini-program local gates: lint and 102 unit tests passed. Calendar coverage is 100% statements/lines/functions and 97.66% branches. Student boundary, WeChat build/output checks, and build E2E passed; existing CSS-order and stale Browserslist warnings remain non-blocking.
-- Mini-program DevTools: blocked because the official WeChat DevTools reports `loginExpired: true`; the login QR flow has been reopened. Task 5.3 remains incomplete until DevTools compile and visual checks run after login.
-- Scope: only `ikanyue.mapi.hono`, `ikanyue.admin`, `ikanyue.taro3`, and this OpenSpec change were modified. Website, Flutter, and root dependency files remain untouched.
-- Release gate: Docker-based PocketBase migration apply/rollback and query-plan verification were deliberately not run during continuous development and remain mandatory before release.
+- Hono: lint and the full 529-test run passed with 525 passes and 4 environment skips; the production dependency audit reports zero vulnerabilities.
+- Admin: lint, 129 unit tests, client/SSR production builds, and the production dependency audit passed; the existing client chunk-size warning remains non-blocking.
+- Mini-program local gates: lint and 105 unit tests passed. Calendar coverage is 100% statements/lines/functions and 97.28% branches. Student boundary, WeChat build/output checks, build E2E, and the production dependency audit passed.
+- Mini-program DevTools: official CLI authorization succeeded. Critical WXML/WXSS compilation and student/teacher visual flows passed, including the seven-day teacher calendar and availability projection; the simulator console reported no errors.
+- Scope: the release candidate touches Hono, Admin, Taro, Website, root Compose/startup configuration, and the related OpenSpec evidence; Flutter remains untouched.
+- Release gate: the local Docker stack completed idempotent schema/seed, Admin login, student booking, teacher workbench/calendar smoke, shadow/reconciliation rehearsal, and image-cache cleanup. Production backup, bypass deployment, and traffic switch remain separate release actions.

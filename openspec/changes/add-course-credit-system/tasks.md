@@ -1,11 +1,11 @@
 ## 1. Product Rule Gates
 
-- [ ] 1.1 Confirm the universal-credit denomination and whether universal batches expire.
-- [ ] 1.2 Confirm default activation modes for rolling packages and fixed-term classes.
-- [ ] 1.3 Confirm leave cutoff, late, no-show, institution cancellation, and teacher compensation rules.
-- [ ] 1.4 Confirm allowed course-to-course conversion directions and reference-value loss limits.
-- [ ] 1.5 Confirm first-release payment channels, guardian payment ownership, and offline-order approval.
-- [ ] 1.6 Convert confirmed rule decisions into versioned fixtures shared by backend contract tests.
+- [x] 1.1 Confirm the universal-credit denomination and whether universal batches expire.
+- [x] 1.2 Confirm default activation modes for rolling packages and fixed-term classes.
+- [x] 1.3 Confirm leave cutoff, late, no-show, institution cancellation, and teacher compensation rules.
+- [x] 1.4 Confirm allowed course-to-course conversion directions and reference-value loss limits.
+- [x] 1.5 Confirm first-release payment channels, guardian payment ownership, and offline-order approval.
+- [x] 1.6 Convert confirmed rule decisions into versioned fixtures shared by backend contract tests.
 
 ## 2. PocketBase Transaction Foundation
 
@@ -111,52 +111,72 @@
 
 ## 12. Admin Workspaces
 
-- [ ] 12.1 Add course specification, package, grant-line, and price-version management views.
-- [ ] 12.2 Add student credit-account table and batch/event detail drawer.
-- [ ] 12.3 Add conversion-rule editor with graph validation, preview examples, publication, and deactivation.
-- [ ] 12.4 Add class workspace for students, teachers, course specification, term, and status.
-- [ ] 12.5 Add session workspace for linked classes, deduplicated roster, actual teachers, eligibility, and attendance.
-- [ ] 12.6 Add settlement exception workspace for insufficient, expired release, duplicate, failed, and correction states.
-- [ ] 12.7 Add teacher-credit pending and confirmed workspaces.
-- [ ] 12.8 Add high-risk review dialogs that display affected batches, quantities, expiry, sessions, and reasons.
-- [ ] 12.9 Add wide and narrow viewport tests without page-internal focus-confusing view replacement.
+- [x] 12.1 Add course specification, package, grant-line, and price-version management views.
+- [x] 12.2 Add student credit-account table and batch/event detail drawer.
+- [x] 12.3 Add conversion-rule editor with graph validation, preview examples, publication, and deactivation.
+- [x] 12.4 Add class workspace for students, teachers, course specification, term, and status.
+- [x] 12.5 Add session workspace for linked classes, deduplicated roster, actual teachers, eligibility, and attendance.
+- [x] 12.6 Add settlement exception workspace for insufficient, expired release, duplicate, failed, and correction states.
+- [x] 12.7 Add teacher-credit pending and confirmed workspaces.
+- [x] 12.8 Add high-risk review dialogs that display affected batches, quantities, expiry, sessions, and reasons.
+- [x] 12.9 Add wide and narrow viewport tests without page-internal focus-confusing view replacement.
 
 ## 13. Mini Program Experience
 
-- [ ] 13.1 Add course-credit summary grouped by universal and exact course type.
-- [ ] 13.2 Add batch detail with source, activation deadline, effective expiry, frozen quantity, and restrictions.
-- [ ] 13.3 Add paginated credit-event history linked to orders, conversions, and lesson sessions.
-- [ ] 13.4 Add explicit conversion preview and confirmation flow.
-- [ ] 13.5 Add lesson eligibility states for reserved, conversion required, insufficient, and settled.
-- [ ] 13.6 Add current-consent flow for implicit conversion during reservation.
-- [ ] 13.7 Add pull-to-refresh, pagination, loading, empty, expired, and network-error states.
-- [ ] 13.8 Verify critical flows in WeChat DevTools and add compiled-output contracts.
+The original student-facing ledger surfaces in 13.1-13.7 were superseded by
+`deliver-course-tab-admin-enrollment`. The active mini program deliberately
+hides batches, frozen quantities, conversion rules, and raw events behind
+read-only `/v1/student/learning/*` projections while preserving the equivalent
+course, validity, schedule, history, refresh, pagination, and error experience.
+
+- [x] 13.1 Replace the raw course-credit summary with a student-language course and remaining-hours overview.
+- [x] 13.2 Replace raw batch detail with privacy-safe validity and entitlement-source summaries.
+- [x] 13.3 Replace raw credit-event history with paginated lesson-hour records linked to the student's courses and lessons.
+- [x] 13.4 Remove the student conversion command surface from the first-release mini program.
+- [x] 13.5 Add lesson eligibility and warning states through the student learning projection.
+- [x] 13.6 Keep implicit conversion outside the first-release student surface and require operator handling.
+- [x] 13.7 Add pull-to-refresh, pagination, loading, empty, validity, and network-error states to the active course pages.
+- [x] 13.8 Verify critical flows in WeChat DevTools and add compiled-output contracts.
+
+Automated evidence: Taro lint, 105 unit tests, the student-course boundary
+contract, and the 20-page/25-chunk WeChat build-output check pass. Authenticated
+WeChat DevTools verification compiled WXML and WXSS for the course, booking,
+slot, appointment-list, and appointment-detail pages. The local student flow
+visually verified masked password login, course balance, booking options, 480
+slot nodes, slot selection without submission, appointment history, and detail
+rendering; simulator console inspection reported no errors. Evidence screenshots
+are retained under the ignored `ikanyue.taro3/output/wechat-devtools/` directory.
 
 ## 14. Public Website Projection
 
-- [ ] 14.1 Add a public API projection for published course specifications, packages, prices, and validity summaries.
-- [ ] 14.2 Add website course and package pages using the shared design tokens without private account data.
-- [ ] 14.3 Add purchase or mini-program handoff links without executing ledger commands in the website client.
-- [ ] 14.4 Add tests proving private balance, roster, order, and teacher-credit fields are never rendered publicly.
+- [x] 14.1 Add a public API projection for published course specifications, packages, prices, and validity summaries.
+- [x] 14.2 Add website course and package pages using the shared design tokens without private account data.
+- [x] 14.3 Add purchase or mini-program handoff links without executing ledger commands in the website client.
+- [x] 14.4 Add tests proving private balance, roster, order, and teacher-credit fields are never rendered publicly.
 
 ## 15. Historical Data Migration
 
-- [ ] 15.1 Inventory production `students.hours`, `teachers.hours`, legacy learning collections, lessons, and attendance records.
-- [ ] 15.2 Build an Admin-assisted mapping workflow for legacy student hours to explicit migration batches.
-- [ ] 15.3 Build an Admin-assisted classification workflow that splits legacy learning programs into packages or classes.
-- [ ] 15.4 Import historical sessions and attendance without automatically charging course credits.
-- [ ] 15.5 Migrate teacher hours only as explicit teacher-credit adjustment events.
-- [ ] 15.6 Produce before/after migration reports and require zero unexplained quantity differences.
+- [x] 15.1 Inventory production `students.hours`, `teachers.hours`, legacy learning collections, lessons, and attendance records.
+- [x] 15.2 Build an Admin-assisted mapping workflow for legacy student hours to explicit migration batches.
+- [x] 15.3 Build an Admin-assisted classification workflow that splits legacy learning programs into packages or classes.
+- [x] 15.4 Import historical sessions and attendance without automatically charging course credits.
+- [x] 15.5 Migrate teacher hours only as explicit teacher-credit adjustment events.
+- [x] 15.6 Produce before/after migration reports and require zero unexplained quantity differences.
 
 ## 16. Shadow Rollout and Release
 
-- [ ] 16.1 Run shadow eligibility and settlement against representative real classes without mutating balances.
-- [ ] 16.2 Compare shadow results with academic-operations expectations and resolve every discrepancy.
-- [ ] 16.3 Enable direct package grants behind a feature flag and monitor reconciliation.
-- [ ] 16.4 Enable reservation and settlement behind separate feature flags.
-- [ ] 16.5 Enable explicit conversion, then authorized implicit conversion, after earlier stages are stable.
-- [ ] 16.6 Configure independent lines, branches, functions, and statements thresholds of at least 95% in every affected project.
-- [ ] 16.7 Before release, rehearse PocketBase migration and rollback on a production-like backup.
+- [x] 16.1 Run shadow eligibility and settlement against representative real classes without mutating balances.
+- [x] 16.2 Compare shadow results with academic-operations expectations and resolve every discrepancy.
+- [x] 16.3 Enable direct package grants behind a feature flag and monitor reconciliation.
+- [x] 16.4 Enable reservation and settlement behind separate feature flags.
+- [x] 16.5 Enable explicit conversion, then authorized implicit conversion, after earlier stages are stable.
+
+Rollout evidence: the four stages were enabled sequentially in the isolated
+`kanyue_local` environment, and each stage completed a full reconciliation with
+zero differences. These checks are release-rehearsal evidence; public production
+flags remain a separate cutover decision.
+- [x] 16.6 Configure independent lines, branches, functions, and statements thresholds of at least 95% in every affected project.
+- [x] 16.7 Before release, rehearse PocketBase migration and rollback on a production-like backup.
 - [x] 16.8 Add explicit tests for validation failure, authorization failure, duplicate command, rollback, concurrent reservation, expiry boundary, reversal, and reconciliation drift.
-- [ ] 16.9 Run focused local tests, coverage, and runtime verification throughout implementation without Docker.
-- [ ] 16.10 At the final release gate, confirm all four coverage metrics are at least 95% in each affected project, then run Docker build/deployment validation, reconciliation, and rollback smoke tests.
+- [x] 16.9 Run focused local tests, coverage, and runtime verification throughout implementation without Docker.
+- [x] 16.10 At the final release gate, confirm all four coverage metrics are at least 95% in each affected project, then run Docker build/deployment validation, reconciliation, and rollback smoke tests.

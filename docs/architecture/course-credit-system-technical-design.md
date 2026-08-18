@@ -425,10 +425,9 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 - 规则配置过于复杂 -> Admin 提供预演、样例结果和发布检查清单。
 - 事件和快照漂移 -> 定期重建对账和异常中心。
 
-## 17. 后续业务待确认
+## 17. 首发规则来源
 
-- 通用课程点计量单位和是否自身过期。
-- `FIRST_CHECK_IN` 与 `FIRST_COMPLETED_SESSION` 的最终默认选择。
-- 请假、迟到、缺席和机构取消规则矩阵。
-- 支付渠道、监护人付款和订单撤销审批流程。
-- 特定课程点允许的兑换方向与参考价值算法。
+首发业务规则已经确认，以 `docs/product/course-credit-system-prd.md` 第 25 节和
+`ikanyue.mapi.hono/scripts/fixtures/course-credit-rules.v1.json` 为共同来源。规则包括通用点
+人民币参考计量、滚动课包首次签到激活、12 小时请假边界、有向不可逆兑换及 20% 参考价值
+损失上限，以及 Admin/线下首发订单渠道。后续调整必须新增规则版本，不得修改历史快照。

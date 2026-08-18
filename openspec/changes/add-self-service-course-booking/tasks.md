@@ -56,5 +56,5 @@
 - [x] 8.2 Add Taro unit, compiled-output, role-boundary, design-token, page-registration, refresh, pagination, and interaction tests.
 - [x] 8.3 Add Admin unit, SSR, responsive workflow, capability, API-client, calendar, conflict, and Playwright tests.
 - [x] 8.4 Run Hono, Taro, and Admin lint, build, unit, E2E, and coverage commands and prove all four coverage metrics are at least 95% independently.
-- [ ] 8.5 Run final PocketBase Docker migration, rollback, restore, concurrent confirmation, backfill, and reconciliation verification only at the release gate.
+- [x] 8.5 Run final PocketBase Docker migration, rollback, restore, concurrent confirmation, backfill, and reconciliation verification only at the release gate.
 - [x] 8.6 Run WeChat DevTools compile and visual checks plus desktop/mobile Admin screenshots, then record requirement-by-requirement implementation evidence.

@@ -9,8 +9,8 @@ MINIAPP_DIR="$ROOT_DIR/ikanyue.taro3"
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/kanyue-stack.sh test [up|restart|down|status|logs|smoke] [options]
-  ./scripts/kanyue-stack.sh prod [up|restart|down|status|logs|smoke] [options]
+  ./scripts/kanyue-stack.sh test [up|restart|down|status|logs|smoke|cleanup] [options]
+  ./scripts/kanyue-stack.sh prod [up|restart|down|status|logs|smoke|cleanup] [options]
 
 Defaults:
   test up     .env.localdocker, project kanyue_local, builds Docker images,
@@ -22,6 +22,8 @@ Options:
   --project <name>           Override the Compose project name.
   --build                    Build images before test startup.
   --no-build                 Skip image builds during test startup.
+  --builder <name>           Dedicated BuildKit builder (default: kanyue-builder).
+  --build-cache-max <size>   Cache retained for that builder (default: 100mb).
   --confirm-production       Confirm a production state change.
   -h, --help                 Show this help.
 
@@ -68,6 +70,27 @@ compose() {
   else
     docker compose --env-file "$ENV_FILE" -p "$PROJECT" "$@"
   fi
+}
+
+ensure_dedicated_builder() {
+  if docker buildx inspect "$DOCKER_BUILDER" >/dev/null 2>&1; then
+    return
+  fi
+  docker buildx create --name "$DOCKER_BUILDER" --driver docker-container >/dev/null
+}
+
+cleanup_build_artifacts() {
+  docker image prune --force --filter "label=com.docker.compose.project=$PROJECT" >/dev/null
+  if docker buildx inspect "$DOCKER_BUILDER" >/dev/null 2>&1; then
+    docker buildx prune --builder "$DOCKER_BUILDER" --force \
+      --max-used-space "$DOCKER_BUILD_CACHE_MAX" >/dev/null
+  fi
+  echo "docker build artifacts pruned: builder=$DOCKER_BUILDER max=$DOCKER_BUILD_CACHE_MAX"
+}
+
+build_images() {
+  ensure_dedicated_builder
+  BUILDX_BUILDER="$DOCKER_BUILDER" compose build hono admin miniapp
 }
 
 wait_for_url() {
@@ -146,9 +169,20 @@ enable_local_batch_api() {
   const pb = new PocketBase(process.env.PB_URL);
   await pb.collection('_superusers').authWithPassword(process.env.PB_EMAIL, process.env.PB_PASSWORD);
   const settings = await pb.settings.getAll({ requestKey: null });
-  if (settings.batch?.enabled === true) return;
-  await pb.settings.update({ batch: { ...settings.batch, enabled: true } }, { requestKey: null });
-  console.log('enabled PocketBase Batch API');
+  const update = {};
+  if (settings.batch?.enabled !== true) {
+    update.batch = { ...settings.batch, enabled: true };
+  }
+  if (settings.s3?.enabled === true) {
+    update.s3 = { ...settings.s3, enabled: false };
+  }
+  if (settings.backups?.s3?.enabled === true) {
+    update.backups = { ...settings.backups, s3: { ...settings.backups.s3, enabled: false } };
+  }
+  if (Object.keys(update).length > 0) {
+    await pb.settings.update(update, { requestKey: null });
+  }
+  console.log('local PocketBase settings ready: batch enabled, file and backup S3 disabled');
 })().catch((error) => {
   console.error(error.message);
   process.exit(1);
@@ -269,6 +303,46 @@ const request = async (path, options = {}) => {
   process.exit(1);
 });
 NODE
+    env HONO_URL="$HONO_URL" TEACHER_CELLPHONE="13800000000" \
+      TEACHER_PASSWORD="$LOCAL_ADMIN_PASSWORD" node <<'NODE'
+const request = async (path, options = {}) => {
+  const response = await fetch(`${process.env.HONO_URL}${path}`, options);
+  const body = await response.json();
+  if (!response.ok || body?.code !== 10000) throw new Error(body?.message || `request failed: ${path}`);
+  return body.data;
+};
+
+(async () => {
+  const login = await request('/v1/user/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      cellphone: process.env.TEACHER_CELLPHONE,
+      password: process.env.TEACHER_PASSWORD,
+    }),
+  });
+  if (!login?.token || login.role !== 'teacher') throw new Error('local teacher login failed');
+  if (!login.courseCreditCapabilities?.includes('course_credit.teacher')) {
+    throw new Error('local teacher capability is missing');
+  }
+  const headers = { token: login.token };
+  const dashboard = await request('/v1/teacher/booking/dashboard', { headers });
+  if (!Array.isArray(dashboard?.offerings) || dashboard.offerings.length === 0) {
+    throw new Error('local teacher booking dashboard is empty');
+  }
+  const from = new Date(Date.now() - 86400000).toISOString();
+  const to = new Date(Date.now() + 7 * 86400000).toISOString();
+  const query = new URLSearchParams({ from, to, includeAvailability: 'true' });
+  const schedule = await request(`/v1/teacher/schedule?${query}`, { headers });
+  if (!Array.isArray(schedule?.items) || !Array.isArray(schedule?.availability)) {
+    throw new Error('local teacher schedule is invalid');
+  }
+  console.log(`local teacher booking: ok (${dashboard.offerings.length} offering, ${schedule.items.length} lessons)`);
+})().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});
+NODE
   fi
   echo "admin: $ADMIN_URL"
   echo "hono: $HONO_URL"
@@ -280,16 +354,18 @@ test_up() {
   require_command node
   require_command npm
   if [[ "$BUILD" == "1" ]]; then
-    compose build hono admin miniapp
+    build_images
   fi
   compose up -d --no-build pocketbase
   wait_for_url pocketbase "$PB_URL/api/health"
   bootstrap_test_data
-  compose up -d --no-build hono admin miniapp
+  compose up -d --no-build --force-recreate hono admin
+  compose up -d --no-build miniapp
   wait_for_url hono "$HONO_URL/"
   wait_for_url admin "$ADMIN_URL/"
   ensure_local_miniapp_output
   smoke
+  [[ "$BUILD" == "1" ]] && cleanup_build_artifacts
 }
 
 production_guard() {
@@ -298,6 +374,17 @@ production_guard() {
   [[ "$PB_EMAIL" != "admin@example.com" ]] || die "replace the default PB_EMAIL in $ENV_FILE"
   [[ "$PB_PASSWORD" != "change-me" && ${#PB_PASSWORD} -ge 12 ]] || \
     die "set a non-default production PB_PASSWORD with at least 12 characters"
+  [[ "$BIND_ADDR" == "127.0.0.1" || "$BIND_ADDR" == "::1" ]] || \
+    die "production services must bind to loopback; set BIND_ADDR=127.0.0.1"
+  [[ "$PB_DATA_SOURCE" == /* ]] || \
+    die "set PB_DATA_SOURCE to the absolute live PocketBase data directory"
+  [[ "$PB_PUBLIC_URL" == https://* ]] || die "PB_PUBLIC_URL must use https"
+  [[ -n "$WECHAT_APPID" && -n "$WECHAT_SECRET" ]] || \
+    die "WECHAT_APPID and WECHAT_SECRET are required in production"
+  for flag in "${COURSE_CREDIT_FLAGS[@]}"; do
+    [[ "$flag" == "true" || "$flag" == "false" ]] || \
+      die "course-credit production flags must be explicitly true or false"
+  done
 }
 
 MODE="${1:-}"
@@ -316,6 +403,8 @@ ENV_FILE=""
 PROJECT=""
 BUILD="$([[ "$MODE" == "test" ]] && echo 1 || echo 0)"
 CONFIRM_PRODUCTION=0
+DOCKER_BUILDER="kanyue-builder"
+DOCKER_BUILD_CACHE_MAX="100mb"
 CUSTOM_ENV_FILE=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -323,6 +412,8 @@ while [[ $# -gt 0 ]]; do
     --project) [[ $# -ge 2 ]] || die "--project requires a name"; PROJECT="$2"; shift 2 ;;
     --build) BUILD=1; shift ;;
     --no-build) BUILD=0; shift ;;
+    --builder) [[ $# -ge 2 ]] || die "--builder requires a name"; DOCKER_BUILDER="$2"; shift 2 ;;
+    --build-cache-max) [[ $# -ge 2 ]] || die "--build-cache-max requires a size"; DOCKER_BUILD_CACHE_MAX="$2"; shift 2 ;;
     --confirm-production) CONFIRM_PRODUCTION=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown option: $1" ;;
@@ -351,6 +442,19 @@ HONO_PORT="$(env_value HONO_PORT 1337)"
 POCKETBASE_PORT="$(env_value POCKETBASE_PORT "$([[ "$MODE" == "test" ]] && echo 18090 || echo 8090)")"
 PB_EMAIL="$(env_value PB_EMAIL)"
 PB_PASSWORD="$(env_value PB_PASSWORD)"
+BIND_ADDR="$(env_value BIND_ADDR 127.0.0.1)"
+PB_DATA_SOURCE="$(env_value PB_DATA_SOURCE)"
+PB_PUBLIC_URL="$(env_value PB_PUBLIC_URL)"
+WECHAT_APPID="$(env_value WECHAT_APPID)"
+WECHAT_SECRET="$(env_value WECHAT_SECRET)"
+COURSE_CREDIT_FLAGS=(
+  "$(env_value COURSE_CREDIT_GRANTS_ENABLED false)"
+  "$(env_value COURSE_CREDIT_RESERVATION_ENABLED false)"
+  "$(env_value COURSE_CREDIT_SETTLEMENT_ENABLED false)"
+  "$(env_value COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED false)"
+  "$(env_value COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED false)"
+  "$(env_value COURSE_CREDIT_MIGRATION_ENABLED false)"
+)
 ADMIN_URL="http://127.0.0.1:$ADMIN_PORT"
 HONO_URL="http://127.0.0.1:$HONO_PORT"
 PB_URL="http://127.0.0.1:$POCKETBASE_PORT"
@@ -392,5 +496,6 @@ case "$ACTION" in
     compose logs --tail=100
     ;;
   smoke) smoke ;;
-  *) die "action must be up, restart, down, status, logs, or smoke" ;;
+  cleanup) cleanup_build_artifacts ;;
+  *) die "action must be up, restart, down, status, logs, smoke, or cleanup" ;;
 esac

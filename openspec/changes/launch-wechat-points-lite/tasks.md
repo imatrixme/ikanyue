@@ -36,7 +36,7 @@
 - [x] 5.3 Enforce and run at least 95% coverage for affected Taro code.
 - [x] 5.4 Run local build/test/schema/E2E gates without Docker.
 - [x] 5.5 Run `openspec validate launch-wechat-points-lite --strict --no-interactive`.
-- [ ] 5.6 Before release only, run Docker compose verification and smoke-test login, student reward listing, admin add-points, and offline redemption.
+- [x] 5.6 Before release only, run Docker compose verification and smoke-test login, student reward listing, admin add-points, and offline redemption.
 
 ## 6. Local Three-Client Environment Hardening
 
