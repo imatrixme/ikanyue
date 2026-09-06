@@ -2,8 +2,8 @@
     <view class="credit-batch-row" @tap="$emit('select', batch)">
         <view class="credit-batch-row__header">
             <view>
-                <text class="credit-batch-row__title">{{ batch.creditType.name }}</text>
-                <text class="credit-batch-row__code">批次 {{ shortId }}</text>
+                <text class="credit-batch-row__title">{{ creditName }}</text>
+                <text class="credit-batch-row__code">{{ formatDate(batch.effectiveExpiresAt) }}到期</text>
             </view>
             <text class="credit-batch-row__status" :class="`credit-batch-row__status--${batch.status}`">
                 {{ batchStatusLabel(batch.status) }}
@@ -11,7 +11,7 @@
         </view>
         <view class="credit-batch-row__quantities">
             <view><text class="credit-batch-row__number">{{ batch.availableQuantity }}</text><text>可用</text></view>
-            <view><text class="credit-batch-row__number">{{ batch.frozenQuantity }}</text><text>冻结</text></view>
+            <view><text class="credit-batch-row__number">{{ batch.frozenQuantity }}</text><text>未来课程占用</text></view>
             <view><text class="credit-batch-row__number">{{ batch.consumedQuantity }}</text><text>已使用</text></view>
         </view>
         <view class="credit-batch-row__footer">
@@ -22,14 +22,14 @@
 </template>
 
 <script>
-import { batchRestrictionText, batchStatusLabel, formatDate } from '../pages/courseCredits/pageLogic';
+import { batchRestrictionText, batchStatusLabel, formatDate, normalizeCreditType } from '../pages/courseCredits/pageLogic';
 
 export default {
     name: 'CourseCreditBatchRow',
     emits: ['select'],
     props: { batch: { type: Object, required: true } },
     computed: {
-        shortId() { return String(this.batch.id || '').slice(-6).toUpperCase(); },
+        creditName() { return normalizeCreditType(this.batch.creditType).name; },
     },
     methods: { batchRestrictionText, batchStatusLabel, formatDate },
 };

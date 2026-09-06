@@ -1,7 +1,7 @@
 import { immersivePageChrome } from '../../styles/theme.mjs';
 
 export default definePageConfig({
-    navigationBarTitleText: '批次详情',
+    navigationBarTitleText: '课时来源',
     enablePullDownRefresh: true,
     ...immersivePageChrome,
 });

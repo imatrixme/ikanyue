@@ -2,8 +2,8 @@
     <page-chrome class="course-credit-page" tone="immersive">
         <page-header
             eyebrow="LESSON ELIGIBILITY"
-            subtitle="预约只会冻结课程点；上课结算后才会正式扣除。"
-            title="课次与预约"
+            subtitle="预约时只会占用所需课时；课程完成后才会记为已使用。"
+            title="课程与预约"
         />
         <view class="course-credit-content">
             <view v-if="state !== 'ready'" class="course-credit-state">
@@ -17,7 +17,7 @@
                 />
             </view>
             <template v-else>
-                <view class="course-credit-note course-credit-session-note">课程点不足时不会产生扣费；存在可用兑换路径时，会先展示当前权威预览并征得同意。</view>
+                <view class="course-credit-note course-credit-session-note">可用课时不足时不会扣减；可以兑换时，会先展示兑换结果并由你确认。</view>
                 <view class="course-credit-list">
                     <course-credit-session-row
                         v-for="record in items"
@@ -40,7 +40,7 @@
                 <text class="course-credit-popup__eyebrow">CURRENT CONSENT</text>
                 <text class="course-credit-popup__title">兑换后预约本次课程</text>
                 <text class="course-credit-popup__description">
-                    {{ activeSession.session?.title }}需要 {{ activeSession.requiredQuantity }} 点{{ activeSession.requiredCreditType?.name }}。
+                    {{ activeSession.session?.title }}需要 {{ activeSession.requiredQuantity }} 课时。
                 </text>
                 <view class="course-credit-facts course-credit-consent-facts">
                     <view v-for="fact in facts" :key="fact.label" class="course-credit-fact">
@@ -131,16 +131,16 @@ export default {
                     return;
                 }
                 if (result.creditStatus !== 'reserved') {
-                    throw Object.assign(new Error('当前课程点不足，请先兑换或联系老师'), { errorCode: 'CREDIT_INSUFFICIENT' });
+                    throw Object.assign(new Error('当前可用课时不足，请先兑换或联系老师'), { errorCode: 'CREDIT_INSUFFICIENT' });
                 }
-                Taro.showToast({ title: '课程点已预约', icon: 'success' });
+                Taro.showToast({ title: '预约成功，课时已占用', icon: 'success' });
                 await this.refresh();
             } catch (error) { Taro.showToast({ title: courseCreditErrorMessage(error, '预约失败'), icon: 'none' }); }
             finally { this.workingSessionId = ''; }
         },
         async openConsent(record, conversion) {
             const rule = findConversionRule(this.rules, conversion, record);
-            if (!rule) throw new Error('没有可用的课程点兑换规则');
+            if (!rule) throw new Error('没有可用的课时兑换方式');
             const preview = await Api.previewCourseCreditConversion({
                 ruleId: rule.id,
                 sourceQuantity: Number(conversion.sourceQuantity || rule.minSourceQuantity || rule.sourceQuantity),

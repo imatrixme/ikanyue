@@ -1,14 +1,14 @@
 <template>
     <page-chrome class="course-credit-page" tone="immersive">
-        <page-header eyebrow="CREDIT HISTORY" :subtitle="`${pagination.totalItems} 条不可变记录`" title="课程点明细" />
+        <page-header eyebrow="CREDIT HISTORY" :subtitle="`${pagination.totalItems} 条变动记录`" title="课时变动" />
         <view class="course-credit-content">
             <view v-if="state !== 'ready'" class="course-credit-state">
                 <async-state
                     :action-label="state === 'error' ? '重新加载' : ''"
-                    :description="state === 'error' ? errorMessage : '课程点到账、预约或扣除后会形成记录。'"
+                    :description="state === 'error' ? errorMessage : '课时到账、用于预约、上课使用或退回后会显示记录。'"
                     :kind="state === 'error' ? 'network' : 'points'"
                     :state="state"
-                    :title="state === 'empty' ? '暂无课程点记录' : ''"
+                    :title="state === 'empty' ? '暂无课时变动记录' : ''"
                     @action="refresh"
                 />
             </view>
@@ -62,7 +62,7 @@ export default {
                 const result = normalizePage(await Api.listCourseCreditEvents({ page, perPage: 20 }));
                 this.items = replace ? result.items : mergePage(this.items, result.items);
                 this.pagination = result;
-            } catch (error) { this.errorMessage = courseCreditErrorMessage(error, '课程点明细暂时无法加载'); }
+            } catch (error) { this.errorMessage = courseCreditErrorMessage(error, '课时变动暂时无法加载'); }
             finally { if (replace) this.loading = false; }
         },
     },

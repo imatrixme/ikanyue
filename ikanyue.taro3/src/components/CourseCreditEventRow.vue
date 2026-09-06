@@ -8,22 +8,22 @@
                 <text class="credit-event-row__title">{{ eventLabel(event.eventType) }}</text>
                 <text class="credit-event-row__time">{{ formatDateTime(event.businessTime || event.created) }}</text>
             </view>
-            <text class="credit-event-row__meta">{{ event.creditType.name }} · {{ eventSourceText(event.source) }}</text>
-            <text class="credit-event-row__meta">{{ event.reason || '课程点业务' }}</text>
-            <text v-if="event.reversalOfEventId" class="credit-event-row__linked">关联原事件 {{ shortReversalId }}</text>
+            <text class="credit-event-row__meta">{{ creditName }} · {{ eventSourceText(event.source) }}</text>
+            <text class="credit-event-row__meta">{{ event.reason || '系统记录' }}</text>
+            <text v-if="event.reversalOfEventId" class="credit-event-row__linked">已关联原扣减记录</text>
         </view>
     </view>
 </template>
 
 <script>
-import { eventLabel, eventSourceText, formatDateTime, signedEventQuantity } from '../pages/courseCredits/pageLogic';
+import { eventLabel, eventSourceText, formatDateTime, normalizeCreditType, signedEventQuantity } from '../pages/courseCredits/pageLogic';
 
 export default {
     name: 'CourseCreditEventRow',
     props: { event: { type: Object, required: true } },
     computed: {
+        creditName() { return normalizeCreditType(this.event.creditType).name; },
         delta() { return signedEventQuantity(this.event); },
-        shortReversalId() { return String(this.event.reversalOfEventId || '').slice(-6).toUpperCase(); },
     },
     methods: { eventLabel, eventSourceText, formatDateTime },
 };

@@ -11,21 +11,21 @@
                     {{ presentation.label }}
                 </text>
             </view>
-            <text class="credit-session-row__meta">{{ record.requiredCreditType.name }} · {{ record.requiredQuantity }} 点</text>
+            <text class="credit-session-row__meta">{{ creditName }} · {{ record.requiredQuantity }} 课时</text>
             <text class="credit-session-row__meta">{{ timeCopy }} · {{ record.session.location || '地点待定' }}</text>
             <view
                 v-if="presentation.action !== 'none'"
                 class="credit-session-row__action"
                 @tap.stop="$emit('action', record, presentation.action)"
             >
-                {{ presentation.action === 'consent' ? '查看兑换并预约' : '预约课程点' }}
+                {{ presentation.action === 'consent' ? '查看兑换并预约' : '预约这节课' }}
             </view>
         </view>
     </view>
 </template>
 
 <script>
-import { formatDateTime, sessionPresentation } from '../pages/courseCredits/pageLogic';
+import { formatDateTime, normalizeCreditType, sessionPresentation } from '../pages/courseCredits/pageLogic';
 
 export default {
     name: 'CourseCreditSessionRow',
@@ -33,6 +33,7 @@ export default {
     props: { record: { type: Object, required: true } },
     computed: {
         date() { return this.record.session?.startAt ? new Date(this.record.session.startAt) : null; },
+        creditName() { return normalizeCreditType(this.record.requiredCreditType).name; },
         day() { return this.date && !Number.isNaN(this.date.getTime()) ? String(this.date.getDate()).padStart(2, '0') : '--'; },
         month() { return this.date && !Number.isNaN(this.date.getTime()) ? `${this.date.getMonth() + 1}月` : '待定'; },
         presentation() { return sessionPresentation(this.record); },

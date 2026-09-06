@@ -12,19 +12,7 @@
         </page-header>
 
         <view class="appointments-content">
-            <scroll-view class="appointments-filters" scroll-x enhanced show-scrollbar="false">
-                <view class="appointments-filters__track">
-                    <view
-                        v-for="filter in filters"
-                        :key="filter.value"
-                        class="appointments-filter"
-                        :class="{ 'appointments-filter--active': filter.value === statusFilter }"
-                        @tap="selectFilter(filter.value)"
-                    >
-                        {{ filter.label }}
-                    </view>
-                </view>
-            </scroll-view>
+            <segmented-control :model-value="statusFilter" :options="filters" @change="selectFilter" />
 
             <view v-if="state !== 'ready'" class="appointments-state">
                 <async-state
@@ -60,6 +48,7 @@ import AppointmentRow from '../../components/AppointmentRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import PageHeader from '../../components/PageHeader.vue';
+import SegmentedControl from '../../components/SegmentedControl.vue';
 import {
     appointmentDetailUrl, bookingErrorMessage, hasNextPage, mergeAppointmentPage,
     normalizeAppointmentPage,
@@ -74,7 +63,7 @@ const FILTERS = Object.freeze([
 ]);
 
 export default {
-    components: { AppointmentRow, AsyncState, PageChrome, PageHeader },
+    components: { AppointmentRow, AsyncState, PageChrome, PageHeader, SegmentedControl },
     data() {
         return {
             errorMessage: '', filters: FILTERS, items: [], loading: false, loadingMore: false,

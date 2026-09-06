@@ -145,6 +145,8 @@ assert.deepEqual(appConfig.pages, [
     'pages/points/index',
     'pages/profile/index',
     'pages/courseDetail/index',
+    'pages/courseShop/index',
+    'pages/courseOrder/index',
     'pages/courseLessons/index',
     'pages/courseLessonDetail/index',
     'pages/teacherLessonDetail/index',
@@ -283,9 +285,19 @@ assertCompiledText(teacherLessonDetailOutput, '课堂信息');
 assertCompiledText(courseRecordsOutput, '课时记录');
 assert.equal(coursesOutput.includes('/api/collections/'), false);
 assert.equal(courseLessonsOutput.includes('studentId='), false);
+// Shared chunks also contain legitimate points-shop copy; check course sources
+// (including their shared components) and course-specific output instead.
+execFileSync(process.execPath, ['scripts/verify-student-course-boundary.mjs'], {
+    cwd: projectRoot,
+    stdio: 'pipe',
+});
+const courseOnlyOutput = [coursesBundle, coursesTemplate, courseDetailBundle, courseDetailTemplate,
+    courseLessonsBundle, courseLessonsTemplate, courseLessonDetailBundle, courseLessonDetailTemplate,
+    courseRecordsBundle, courseRecordsTemplate].join('\n');
 ['课程点', '批次', '冻结', '兑换', '充值'].forEach((forbiddenTerm) => {
+    const escaped = [...forbiddenTerm].map((character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`).join('');
     assert.equal(
-        `${coursesOutput}\n${courseDetailOutput}\n${courseLessonsOutput}\n${courseLessonDetailOutput}\n${courseRecordsOutput}`.includes(forbiddenTerm),
+        courseOnlyOutput.includes(forbiddenTerm) || courseOnlyOutput.toLowerCase().includes(escaped),
         false,
         `student course vocabulary leaked: ${forbiddenTerm}`,
     );

@@ -139,6 +139,7 @@ const listStudentBookingSlots = (params = {}) => iNet.get('/v1/student/booking-s
 const listStudentAppointments = (params = {}) => iNet.get('/v1/student/appointments', params);
 
 const getStudentAppointment = (appointmentId) => iNet.get(`/v1/student/appointments/${appointmentId}`);
+const previewStudentCancellation = (appointmentId) => iNet.get(`/v1/student/appointments/${appointmentId}/cancellation-preview`);
 
 const createStudentAppointment = (payload, idempotencyKey) => iNet.post(
     '/v1/student/appointments', payload, true, commandHeaders(idempotencyKey)
@@ -220,6 +221,7 @@ const Api = {
     listStudentBookingSlots,
     listStudentAppointments,
     getStudentAppointment,
+    previewStudentCancellation,
     createStudentAppointment,
     withdrawStudentAppointment,
     cancelStudentAppointment,

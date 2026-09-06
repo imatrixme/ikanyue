@@ -17,40 +17,10 @@
 .appointments-hero-count__value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
 .appointments-hero-count__label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 2px; }
 
-.appointments-content { padding: 0 $ky-space-3; }
+.appointments-content { padding: $ky-space-4; }
 
-.appointments-filters {
-    margin-top: -$ky-space-3;
-    position: relative;
-    white-space: nowrap;
-    z-index: 2;
-}
-
-.appointments-filters__track {
-    background: $ky-surface;
-    border: 1px solid $ky-line;
-    border-radius: $ky-radius-lg;
-    box-shadow: $ky-shadow-card;
-    display: inline-flex;
-    min-width: calc(100% - 2px);
-    padding: $ky-space-2;
-}
-
-.appointments-filter {
-    border-radius: $ky-radius-md;
-    color: $ky-text-secondary;
-    display: inline-flex;
-    flex: 1 0 auto;
-    font-size: $ky-font-size-body-sm;
-    font-weight: $ky-font-weight-semibold;
-    justify-content: center;
-    min-width: 72px;
-    padding: 9px $ky-space-3;
-}
-
-.appointments-filter--active {
-    background: $ky-primary-strong;
-    color: $ky-on-primary;
+@media (max-width: 350px) {
+    .appointments-content { padding-left: $ky-space-3; padding-right: $ky-space-3; }
 }
 
 .appointments-state {

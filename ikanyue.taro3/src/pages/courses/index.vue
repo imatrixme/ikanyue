@@ -19,6 +19,15 @@
         </page-header>
 
         <view class="courses-content">
+            <view v-if="isLogin" class="courses-action-list courses-shop-entry">
+                <account-row
+                    title="选课与订单"
+                    description="单节课、课包与购买记录"
+                    icon="course-book"
+                    interactive
+                    @select="goShop"
+                />
+            </view>
             <view v-if="!isLogin" class="courses-state">
                 <async-state
                     action-label="前往登录"
@@ -148,6 +157,7 @@ export default {
         } finally { Taro.stopPullDownRefresh(); }
     },
     methods: {
+        goShop() { Taro.navigateTo({ url: '/pages/courseShop/index' }); },
         goCourse(course) { Taro.navigateTo({ url: courseDetailUrl(course.courseId) }); },
         goBooking() { Taro.navigateTo({ url: '/pages/appointmentBooking/index' }); },
         goAppointments() { Taro.navigateTo({ url: '/pages/appointments/index' }); },

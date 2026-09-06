@@ -1,6 +1,6 @@
 const BATCH_STATUS_LABELS = Object.freeze({
     pending: '待生效',
-    unactivated: '待激活',
+    unactivated: '尚未生效',
     active: '可使用',
     depleted: '已用完',
     expired: '已过期',
@@ -8,31 +8,31 @@ const BATCH_STATUS_LABELS = Object.freeze({
 });
 
 const ACTIVATION_MODE_LABELS = Object.freeze({
-    GRANT_TIME: '发放时激活',
-    FIRST_RESERVATION: '首次预约后激活',
-    FIRST_CHECK_IN: '首次签到后激活',
-    FIRST_COMPLETED_SESSION: '首次完课后激活',
-    TERM_START: '学期开始时激活',
+    GRANT_TIME: '到账后立即生效',
+    FIRST_RESERVATION: '首次预约时生效',
+    FIRST_CHECK_IN: '首次签到时生效',
+    FIRST_COMPLETED_SESSION: '首次完课时生效',
+    TERM_START: '学期开始时生效',
 });
 
 const EVENT_LABELS = Object.freeze({
-    GRANT: '课程点到账',
+    GRANT: '课时到账',
     CONVERT_OUT: '兑换支出',
     CONVERT_IN: '兑换获得',
-    FREEZE: '预约冻结',
-    ACTIVATE: '批次激活',
-    CONSUME: '上课扣除',
-    RELEASE: '预约释放',
+    FREEZE: '用于未来课程',
+    ACTIVATE: '课时生效',
+    CONSUME: '上课使用',
+    RELEASE: '预约取消后退回',
     EXPIRE: '到期失效',
     EXTEND: '有效期延长',
-    REVERSE: '业务冲正',
+    REVERSE: '记录已更正',
     ADJUST: '人工调整',
 });
 
 const EXPIRY_POLICY_LABELS = Object.freeze({
     INHERIT_SOURCE: '继承来源有效期',
     RESET_ON_CONVERSION: '兑换时重新计算',
-    RESET_ON_ACTIVATION: '激活时开始计算',
+    RESET_ON_ACTIVATION: '生效时开始计算',
     MIN_SOURCE_AND_NEW: '取来源与新有效期较早者',
     TARGET_TERM_END: '目标学期结束',
     FIXED_DURATION: '固定有效期',
@@ -78,7 +78,7 @@ function normalizeCreditType(value = {}) {
         courseSpec: value.courseSpec || null,
         id: value.id || '',
         kind: value.kind || '',
-        name: value.name || value.courseSpec?.name || value.code || '课程点',
+        name: learnerCreditName(value.name || value.courseSpec?.name || value.code || '课时余额'),
     };
 }
 
@@ -130,25 +130,23 @@ function batchStatusLabel(status) {
 }
 
 function activationModeLabel(mode) {
-    return ACTIVATION_MODE_LABELS[mode] || '按规则激活';
+    return ACTIVATION_MODE_LABELS[mode] || '按课程规则生效';
 }
 
 function eventLabel(type) {
-    return EVENT_LABELS[type] || '课程点变动';
+    return EVENT_LABELS[type] || '课时变动';
 }
 
 function eventSourceText(source) {
-    if (!source) return '课程点账户';
+    if (!source) return '课时账户';
     const labels = {
-        order: '订单发放',
-        conversion_rule: '课程点兑换',
-        session: '课次结算',
-        session_student: '课次预约',
-        credit_batch: '批次调整',
+        order: '报课后到账',
+        conversion_rule: '课时兑换',
+        session: '上课结算',
+        session_student: '课程预约',
+        credit_batch: '课时调整',
     };
-    const label = labels[source.type] || '业务操作';
-    const reference = source.operationNo || source.id;
-    return reference ? `${label} · ${reference}` : label;
+    return labels[source.type] || '系统记录';
 }
 
 function expiryPolicyLabel(policy) {
@@ -162,11 +160,11 @@ function signedEventQuantity(event = {}) {
 }
 
 function batchRestrictionText(batch = {}) {
-    if (batch.creditType?.kind === 'universal') return '通用课程点仅用于兑换，不能直接抵扣课次';
+    if (batch.creditType?.kind === 'universal') return '通用兑换额度需先兑换为对应课程课时';
     if (batch.status === 'unactivated') return activationModeLabel(batch.activationMode);
-    if (batch.status === 'expired') return '该批次已失效，不能继续预约';
-    if (quantity(batch.frozenQuantity) > 0) return `${quantity(batch.frozenQuantity)} 点已用于未来课次`;
-    return '仅适用于对应课程，不与其他课程点混用';
+    if (batch.status === 'expired') return '这部分课时已过期，不能继续预约';
+    if (quantity(batch.frozenQuantity) > 0) return `${quantity(batch.frozenQuantity)} 课时已用于未来课程`;
+    return '仅适用于对应课程，不能与其他课程课时混用';
 }
 
 function conversionRuleText(rule = {}) {
@@ -188,23 +186,22 @@ function previewFacts(preview = {}) {
     return [
         { label: '兑换数量', value: `${quantity(preview.sourceQuantity)} → ${quantity(preview.targetQuantity)}` },
         { label: '有效期', value: formatDate(target.effectiveExpiresAt) },
-        { label: '激活方式', value: activationModeLabel(target.activationMode || preview.rule?.activationMode) },
-        { label: '有效期规则', value: expiryPolicyLabel(target.expiryPolicy || preview.rule?.expiryPolicy) },
-        { label: '可否撤回', value: preview.reversible ? '规则允许' : '兑换后不可撤回' },
-        { label: '规则版本', value: `V${quantity(preview.rule?.version) || 1}` },
+        { label: '何时生效', value: activationModeLabel(target.activationMode || preview.rule?.activationMode) },
+        { label: '有效期怎样计算', value: expiryPolicyLabel(target.expiryPolicy || preview.rule?.expiryPolicy) },
+        { label: '兑换后能否撤回', value: preview.reversible ? '可以撤回' : '兑换后不可撤回' },
     ];
 }
 
 function sessionPresentation(record = {}) {
     const status = record.creditStatus || 'pending';
     const mapping = {
-        pending: ['待预约', 'reserve', 'neutral'],
-        credit_insufficient: ['课程点不足', 'reserve', 'danger'],
+        pending: ['可以预约', 'reserve', 'neutral'],
+        credit_insufficient: ['可用课时不足', 'reserve', 'danger'],
         conversion_required: ['需要先兑换', 'consent', 'warning'],
-        reserved: ['已预约课程点', 'none', 'success'],
-        consumed: ['已完成扣点', 'none', 'muted'],
-        released: ['预约已释放', 'reserve', 'neutral'],
-        reversed: ['结算已冲正', 'reserve', 'warning'],
+        reserved: ['已用于本次预约', 'none', 'success'],
+        consumed: ['已上课并使用', 'none', 'muted'],
+        released: ['预约取消，课时已退回', 'reserve', 'neutral'],
+        reversed: ['扣减记录已更正', 'reserve', 'warning'],
     };
     const [label, action, tone] = mapping[status] || ['状态待确认', 'none', 'muted'];
     return { action, label, tone };
@@ -233,14 +230,14 @@ function createIdempotencyKey(scope, now = Date.now, random = Math.random) {
     return `${scope}:${timestamp}:${suffix}`;
 }
 
-function courseCreditErrorMessage(error, fallback = '课程点数据暂时无法加载') {
+function courseCreditErrorMessage(error, fallback = '课时数据暂时无法加载') {
     const messages = {
-        CREDIT_INSUFFICIENT: '当前课程点不足，请先兑换或联系老师',
+        CREDIT_INSUFFICIENT: '当前可用课时不足，请先兑换或联系老师',
         CONVERSION_PREVIEW_STALE: '兑换条件已变化，请重新预览',
         CONVERSION_RULE_INACTIVE: '该兑换规则已失效',
         SESSION_NOT_RESERVABLE: '当前课次暂不能预约',
         SESSION_ALREADY_SETTLED: '该课次已经结算',
-        BATCH_EXPIRED: '相关课程点已经过期',
+        BATCH_EXPIRED: '相关课时已经过期',
     };
     return messages[error?.errorCode] || error?.message || fallback;
 }
@@ -271,6 +268,13 @@ function pad(value) {
     return String(value).padStart(2, '0');
 }
 
+function learnerCreditName(value) {
+    return String(value || '课时余额')
+        .replaceAll('通用课程点', '通用兑换额度')
+        .replaceAll('课程点', '课时')
+        .replaceAll('课点', '课时');
+}
+
 export {
     activationModeLabel,
     batchRestrictionText,
@@ -288,6 +292,7 @@ export {
     formatDateTime,
     hasNextPage,
     mergePage,
+    learnerCreditName,
     normalizeCreditType,
     normalizePage,
     normalizeSummary,

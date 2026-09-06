@@ -88,6 +88,7 @@
             <view class="appointment-action-popup">
                 <view class="appointment-action-popup__bar" />
                 <text class="appointment-action-popup__title">{{ reasonActionTitle }}</text>
+                <text v-if="cancellationQuote && reasonAction === 'cancel'" class="appointment-action-popup__description">{{ cancellationQuote.mode === 'cash' ? `取消将扣减1课时，扣费 ¥${(cancellationQuote.fee / 100).toFixed(2)}，原路退款 ¥${(cancellationQuote.amount / 100).toFixed(2)}` : '取消后按原规则释放预约课时' }}</text>
                 <text class="appointment-action-popup__description">请填写简短原因，学员与教师都能看到处理结果。</text>
                 <textarea v-model="reason" class="appointment-action-popup__textarea" maxlength="500" placeholder="请输入至少 2 个字" />
                 <view class="appointment-action-popup__submit" :class="{ disabled: actionLoading || reason.trim().length < 2 }" @tap="submitReasonAction">
@@ -144,6 +145,7 @@ export default {
             actionLoading: false, appointment: normalizeAppointment(), appointmentId: '', errorMessage: '',
             loading: false, reason: '', reasonAction: '', reschedule: createRescheduleDraft(), role: 'student',
             showReasonPopup: false, showReschedulePopup: false,
+            cancellationQuote: null,
         };
     },
     computed: {
@@ -182,7 +184,15 @@ export default {
     methods: {
         formatAppointmentTime, formatDeadline,
         goLesson() { Taro.navigateTo({ url: `/pages/courseLessonDetail/index?id=${encodeURIComponent(this.appointment.lessonId)}` }); },
-        openReasonAction(action) {
+        async openReasonAction(action) {
+            if (this.actionLoading) return;
+            this.cancellationQuote = null;
+            if (action === 'cancel' && this.role === 'student') {
+                this.actionLoading = true;
+                try { this.cancellationQuote = await Api.previewStudentCancellation(this.appointmentId); }
+                catch (error) { Taro.showToast({ title: bookingErrorMessage(error, '取消金额暂时无法核实'), icon: 'none' }); return; }
+                finally { this.actionLoading = false; }
+            }
             this.reasonAction = action;
             this.reason = '';
             this.showReasonPopup = true;
@@ -227,7 +237,8 @@ export default {
                 cancel: () => this.role === 'teacher'
                     ? Api.cancelTeacherAppointment(this.appointmentId, { reason },
                         createCommandKey('cancel-appointment', this.appointmentId))
-                    : Api.cancelStudentAppointment(this.appointmentId, { reason },
+                    : Api.cancelStudentAppointment(this.appointmentId, { reason,
+                        expectedRefundAmount: this.cancellationQuote?.amount, expectedFee: this.cancellationQuote?.fee },
                         createCommandKey('cancel-appointment', this.appointmentId)),
             };
             if (await this.runAction(calls[this.reasonAction], '预约状态已更新')) this.showReasonPopup = false;

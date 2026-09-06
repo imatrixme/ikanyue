@@ -15,6 +15,7 @@ import {
     formatDate,
     formatDateTime,
     hasNextPage,
+    learnerCreditName,
     mergePage,
     normalizeCreditType,
     normalizePage,
@@ -76,29 +77,29 @@ describe('course-credit mini-program presentation logic', () => {
     it('maps batch, activation, event, and expiry policy copy', () => {
         expect(batchStatusLabel('active')).toBe('可使用');
         expect(batchStatusLabel('unknown')).toBe('状态未知');
-        expect(activationModeLabel('FIRST_CHECK_IN')).toBe('首次签到后激活');
-        expect(activationModeLabel('unknown')).toBe('按规则激活');
-        expect(eventLabel('CONSUME')).toBe('上课扣除');
-        expect(eventLabel('unknown')).toBe('课程点变动');
-        expect(eventSourceText(null)).toBe('课程点账户');
-        expect(eventSourceText({ type: 'order', operationNo: 'GRANT-1' })).toBe('订单发放 · GRANT-1');
-        expect(eventSourceText({ type: 'session', id: 'session' })).toBe('课次结算 · session');
-        expect(eventSourceText({ type: 'unknown' })).toBe('业务操作');
+        expect(activationModeLabel('FIRST_CHECK_IN')).toBe('首次签到时生效');
+        expect(activationModeLabel('unknown')).toBe('按课程规则生效');
+        expect(eventLabel('CONSUME')).toBe('上课使用');
+        expect(eventLabel('unknown')).toBe('课时变动');
+        expect(eventSourceText(null)).toBe('课时账户');
+        expect(eventSourceText({ type: 'order', operationNo: 'GRANT-1' })).toBe('报课后到账');
+        expect(eventSourceText({ type: 'session', id: 'session' })).toBe('上课结算');
+        expect(eventSourceText({ type: 'unknown' })).toBe('系统记录');
         expect(expiryPolicyLabel('NO_EXPIRY')).toBe('长期有效');
         expect(expiryPolicyLabel('unknown')).toBe('按当前规则计算');
     });
 
     it('explains batch restrictions without implying universal credits are consumable', () => {
-        expect(batchRestrictionText({ creditType: { kind: 'universal' } })).toContain('不能直接');
+        expect(batchRestrictionText({ creditType: { kind: 'universal' } })).toContain('需先兑换');
         expect(batchRestrictionText({ status: 'unactivated', activationMode: 'FIRST_RESERVATION' })).toContain('首次预约');
-        expect(batchRestrictionText({ status: 'expired' })).toContain('已失效');
-        expect(batchRestrictionText({ frozenQuantity: 2 })).toContain('2 点');
+        expect(batchRestrictionText({ status: 'expired' })).toContain('已过期');
+        expect(batchRestrictionText({ frozenQuantity: 2 })).toContain('2 课时');
         expect(batchRestrictionText({})).toContain('对应课程');
     });
 
     it('formats conversion rules, quantities, and authoritative preview facts', () => {
         const rule = conversionRule();
-        expect(conversionRuleText(rule)).toBe('100 通用课程点 → 1 声乐课点');
+        expect(conversionRuleText(rule)).toBe('100 通用兑换额度 → 1 声乐课时');
         expect(sourceQuantityForSteps(rule, 2)).toBe(200);
         expect(sourceQuantityForSteps({ ...rule, maxSourceQuantity: 150 }, 2)).toBe(150);
         expect(sourceQuantityForSteps({}, 0)).toBe(1);
@@ -113,8 +114,8 @@ describe('course-credit mini-program presentation logic', () => {
             reversible: true,
             rule: { activationMode: 'FIRST_CHECK_IN', expiryPolicy: 'TARGET_TERM_END', version: 0 },
             targets: [],
-        }).map((fact) => fact.value)).toEqual(expect.arrayContaining(['规则允许', '首次签到后激活', '目标学期结束', 'V1']));
-        expect(previewFacts({ targets: 'invalid' })).toHaveLength(6);
+        }).map((fact) => fact.value)).toEqual(expect.arrayContaining(['可以撤回', '首次签到时生效', '目标学期结束']));
+        expect(previewFacts({ targets: 'invalid' })).toHaveLength(5);
     });
 
     it('maps every lesson credit state to a stable action', () => {
@@ -122,11 +123,11 @@ describe('course-credit mini-program presentation logic', () => {
         expect(sessionPresentation({ creditStatus: 'credit_insufficient' })).toMatchObject({ tone: 'danger' });
         expect(sessionPresentation({ creditStatus: 'conversion_required' })).toMatchObject({ action: 'consent' });
         expect(sessionPresentation({ creditStatus: 'reserved' })).toMatchObject({ action: 'none' });
-        expect(sessionPresentation({ creditStatus: 'consumed' }).label).toContain('完成');
+        expect(sessionPresentation({ creditStatus: 'consumed' }).label).toContain('上课');
         expect(sessionPresentation({ creditStatus: 'released' })).toMatchObject({ action: 'reserve' });
         expect(sessionPresentation({ creditStatus: 'reversed' })).toMatchObject({ tone: 'warning' });
         expect(sessionPresentation({ creditStatus: 'other' })).toMatchObject({ action: 'none' });
-        expect(sessionPresentation()).toMatchObject({ action: 'reserve', label: '待预约' });
+        expect(sessionPresentation()).toMatchObject({ action: 'reserve', label: '可以预约' });
     });
 
     it('finds conversion paths and builds current-consent payloads', () => {
@@ -162,7 +163,9 @@ describe('course-credit mini-program presentation logic', () => {
         expect(signedEventQuantity({})).toBe('0');
         expect(normalizeCreditType({ courseSpec: { name: '课程名' } }).name).toBe('课程名');
         expect(normalizeCreditType({ code: 'CODE' }).name).toBe('CODE');
-        expect(normalizeCreditType().name).toBe('课程点');
+        expect(normalizeCreditType().name).toBe('课时余额');
+        expect(learnerCreditName('通用课程点')).toBe('通用兑换额度');
+        expect(learnerCreditName('声乐课点')).toBe('声乐课时');
         expect(quantity('3')).toBe(3);
         expect(quantity(-1)).toBe(0);
     });

@@ -7,6 +7,8 @@ export default defineAppConfig({
         'pages/points/index',
         'pages/profile/index',
         'pages/courseDetail/index',
+        'pages/courseShop/index',
+        'pages/courseOrder/index',
         'pages/courseLessons/index',
         'pages/courseLessonDetail/index',
         'pages/teacherLessonDetail/index',

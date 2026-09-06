@@ -7,19 +7,19 @@
             </view>
             <view class="credit-summary-row__amount">
                 <text class="credit-summary-row__number">{{ item.availableQuantity }}</text>
-                <text class="credit-summary-row__unit">点可用</text>
+                <text class="credit-summary-row__unit">{{ item.exchangeOnly ? '额度可用' : '课时可用' }}</text>
             </view>
         </view>
         <view class="credit-summary-row__metrics">
-            <text>{{ item.frozenQuantity }} 点冻结</text>
-            <text>{{ item.unactivatedQuantity }} 点待激活</text>
+            <text>{{ item.frozenQuantity }} 课时用于未来课程</text>
+            <text>{{ item.unactivatedQuantity }} 课时尚未生效</text>
             <text v-if="item.nearestExpiryAt" :class="`credit-summary-row__expiry--${expiryTone}`">
                 {{ expiryCopy }}
             </text>
             <text v-else>长期有效</text>
         </view>
         <view class="credit-summary-row__footer">
-            <text>{{ item.exchangeOnly ? '兑换后才能用于对应课程' : '查看批次与使用限制' }}</text>
+            <text>{{ item.exchangeOnly ? '兑换后才能用于对应课程' : '查看课时来源与使用限制' }}</text>
             <app-icon name="chevron-primary" size="sm" />
         </view>
     </view>
@@ -42,7 +42,7 @@ export default {
             return expiryState(this.item.nearestExpiryAt, Date.now(), this.warningDays);
         },
         expiryCopy() {
-            const quantity = this.item.expiringQuantity > 0 ? `${this.item.expiringQuantity} 点 ` : '';
+            const quantity = this.item.expiringQuantity > 0 ? `${this.item.expiringQuantity} 课时 ` : '';
             return `${quantity}${formatDate(this.item.nearestExpiryAt)} 到期`;
         },
     },

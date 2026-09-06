@@ -2,14 +2,14 @@
     <page-chrome class="course-credit-page" tone="immersive">
         <page-header
             eyebrow="CONVERSION DESK"
-            subtitle="兑换前会显示数量、激活方式、有效期和是否可撤回。"
-            title="课程点兑换"
+            subtitle="兑换前会显示数量、生效时间、有效期和是否可撤回。"
+            title="课时兑换"
         />
         <view class="course-credit-content">
             <view v-if="state !== 'ready'" class="course-credit-state">
                 <async-state
                     :action-label="state === 'error' ? '重新加载' : ''"
-                    :description="state === 'error' ? errorMessage : '当前没有可使用的课程点兑换规则。'"
+                    :description="state === 'error' ? errorMessage : '当前没有可用的课时兑换方式。'"
                     :kind="state === 'error' ? 'network' : 'points'"
                     :state="state"
                     :title="state === 'empty' ? '暂无兑换规则' : ''"
@@ -17,16 +17,15 @@
                 />
             </view>
             <template v-else>
-                <view class="course-credit-note">不同课程点价值不同，兑换只按当前发布规则进行，不能直接混用。</view>
-                <ticket-section subtitle="输入兑换份数后先查看权威预览" title="可用规则">
+                <view class="course-credit-note">不同课程的课时不能直接混用；兑换前会先显示数量、生效时间和有效期。</view>
+                <ticket-section subtitle="输入兑换份数后先查看结果" title="可用兑换方式">
                     <view v-for="rule in rules" :key="rule.id" class="conversion-rule">
                         <view class="conversion-rule__header">
                             <text class="conversion-rule__title">{{ conversionRuleText(rule) }}</text>
-                            <text class="conversion-rule__version">V{{ rule.version }}</text>
                         </view>
                         <text class="conversion-rule__meta">{{ expiryPolicyLabel(rule.expiryPolicy) }} · {{ activationModeLabel(rule.activationMode) }}</text>
                         <view class="conversion-rule__controls">
-                            <text class="conversion-rule__balance">当前 {{ sourceBalance(rule) }} 点</text>
+                            <text class="conversion-rule__balance">当前可用 {{ sourceBalance(rule) }}</text>
                             <input
                                 class="conversion-rule__input"
                                 type="number"
@@ -42,8 +41,8 @@
 
         <nut-popup position="bottom" :visible="Boolean(preview)" @close="closePreview" @click-overlay="closePreview">
             <view v-if="preview" class="course-credit-popup">
-                <text class="course-credit-popup__eyebrow">AUTHORITATIVE PREVIEW</text>
-                <text class="course-credit-popup__title">确认兑换课程点</text>
+                <text class="course-credit-popup__eyebrow">CONVERSION PREVIEW</text>
+                <text class="course-credit-popup__title">确认兑换课时</text>
                 <text class="course-credit-popup__description">{{ conversionRuleText(activeRule) }}</text>
                 <view class="course-credit-facts conversion-preview-facts">
                     <view v-for="fact in facts" :key="fact.label" class="course-credit-fact">

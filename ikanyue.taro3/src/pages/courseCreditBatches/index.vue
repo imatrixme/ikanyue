@@ -1,19 +1,19 @@
 <template>
     <page-chrome class="course-credit-page" tone="immersive">
-        <page-header eyebrow="CREDIT BATCHES" :subtitle="`${pagination.totalItems} 个批次`" :title="pageTitle" />
+        <page-header eyebrow="CREDIT SOURCES" :subtitle="`${pagination.totalItems} 个课时来源`" :title="pageTitle" />
         <view class="course-credit-content">
             <view v-if="state !== 'ready'" class="course-credit-state">
                 <async-state
                     :action-label="state === 'error' ? '重新加载' : ''"
-                    :description="state === 'error' ? errorMessage : '课程点到账后会生成独立批次。'"
+                    :description="state === 'error' ? errorMessage : '报课、兑换或补偿获得的课时会分别显示。'"
                     :kind="state === 'error' ? 'network' : 'points'"
                     :state="state"
-                    :title="state === 'empty' ? '暂无课程点批次' : ''"
+                    :title="state === 'empty' ? '暂无课时来源' : ''"
                     @action="refresh"
                 />
             </view>
             <template v-else>
-                <text class="course-credit-batches__count">按有效期优先排列，临近到期的批次会排在前面。</text>
+                <text class="course-credit-batches__count">按有效期优先排列，临近到期的课时会排在前面。</text>
                 <view class="course-credit-list">
                     <course-credit-batch-row v-for="batch in items" :key="batch.id" :batch="batch" @select="openBatch" />
                 </view>
@@ -44,7 +44,7 @@ export default {
     data() {
         return {
             creditTypeId: '', errorMessage: '', items: [], loading: false, loadingMore: false,
-            pageTitle: '全部课程点', pagination: normalizePage(),
+            pageTitle: '全部课时', pagination: normalizePage(),
         };
     },
     computed: {
@@ -54,7 +54,7 @@ export default {
     mounted() {
         const params = Taro.getCurrentInstance()?.router?.params || {};
         this.creditTypeId = decodeURIComponent(params.creditTypeId || '');
-        this.pageTitle = decodeURIComponent(params.name || '全部课程点');
+        this.pageTitle = decodeURIComponent(params.name || '全部课时');
         this.refresh();
     },
     async onPullDownRefresh() {

@@ -21,7 +21,7 @@
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"course-calendar:test:coverage": "vitest run --config vitest.course-calendar.config.mjs --coverage",
-		"test:e2e": "node tests/e2e/points-lite-build.test.mjs",
+		"test:e2e": "node tests/e2e/points-lite-build.test.mjs && node tests/e2e/commerce-build.test.mjs",
 		"verify:student-course-boundary": "node scripts/verify-student-course-boundary.mjs",
 		"build:weapp": "node scripts/verify-student-course-boundary.mjs && taro build --type weapp && node scripts/check-weapp-output.mjs",
 		"build:swan": "taro build --type swan",
