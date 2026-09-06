@@ -4,6 +4,7 @@ const opsRoutes = require('../routes/ops');
 const pointsRoutes = require('../routes/points');
 const courseCreditRoutes = require('../routes/courseCredits');
 const publicCourseCatalogRoutes = require('../routes/publicCourseCatalog');
+const { registerCommerceRoutes } = require('../routes/commerce');
 const { activityFindHandler } = require('../routes/activity/find');
 
 const registerBizRoutes = function (routes) {
@@ -14,6 +15,7 @@ const registerBizRoutes = function (routes) {
     pointsRoutes(routes);
     opsRoutes(routes);
     courseCreditRoutes(routes);
+    registerCommerceRoutes(routes);
 };
 
 module.exports = { registerBizRoutes };

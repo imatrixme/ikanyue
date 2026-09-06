@@ -19,6 +19,7 @@ const TRACE_ID = Symbol('courseCreditTraceId');
 const AUTHORIZATION_AUDIT = Symbol('courseCreditAuthorizationAudit');
 
 const AUTHORIZATION_ERRORS = new Set([
+    'COMMERCE_ORDER_FORBIDDEN',
     'COURSE_CREDIT_ADMIN_REQUIRED',
     'COURSE_CREDIT_CAPABILITY_REQUIRED',
     'COURSE_CREDIT_STUDENT_REQUIRED',

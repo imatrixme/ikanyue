@@ -15,6 +15,9 @@ async function verifyCourseCreditStorageAtStartup(client = pbClient) {
     const pocketBase = client.getClient();
     const settings = await assertPocketBaseBatchCapability(pocketBase);
     await assertRequiredStorageCollections(pocketBase);
+    if (process.env.COURSE_COMMERCE_ENABLED === 'true') {
+        await assertRequiredStorageCollections(pocketBase, require('../commerce/schema').COMMERCE_SCHEMA.map((schema) => schema.name));
+    }
     return settings;
 }
 

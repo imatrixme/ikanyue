@@ -65,6 +65,12 @@ function createCourseBookingHandlers(options) {
                 );
             });
         },
+        async previewStudentCancellation(c) {
+            return safeQuery(c, async () => {
+                const user = requireStudent(c.get('user'));
+                return (await loadServices()).appointmentCancellationService.preview(user.id, c.req.param('appointmentId'));
+            });
+        },
         createStudentAppointment: studentCommand('requestAppointment', (c, services, user, body, metadata) => (
             services.appointmentRequestService.createRequest({
                 ...body, ...metadata, studentId: user.id,
@@ -244,11 +250,12 @@ function createCourseBookingHandlers(options) {
                 })
             )
         ),
-        cancelOpsAppointment: opsCommand('cancelAppointment', (c, services, _user, body, metadata) => (
-            services.appointmentCancellationService.cancel({
+        cancelOpsAppointment: opsCommand('cancelAppointment', (c, services, user, body, metadata) => {
+            if (body.cancellationType === 'institution') requireCapability(user, capability.FINANCE);
+            return services.appointmentCancellationService.cancel({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),
-            })
-        )),
+            });
+        }),
         confirmOpsAppointment: opsCommand('confirmAppointment', (c, services, _user, body, metadata) => (
             services.appointmentDecisionService.confirm({
                 ...body, ...metadata, appointmentId: c.req.param('appointmentId'),

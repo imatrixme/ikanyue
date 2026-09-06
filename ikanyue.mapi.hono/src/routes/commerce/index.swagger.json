@@ -1,0 +1,403 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Course Commerce API",
+    "version": "1.0.0",
+    "description": "Feature-gated course commerce. Amounts are integer CNY fen. Personal/offline transfers cannot use automatic gateway refunds. Published cash-cancellation policies use immutable order snapshots and confirmed server quotes; legacy credits retain their existing cancellation rules. Live charging requires separate merchant acceptance."
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  },
+  "paths": {
+    "/v1/student/commerce/catalog": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Published fixed-price course offers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Current student orders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Create or replay checkout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "offerId",
+                  "key"
+                ],
+                "properties": {
+                  "offerId": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Student-owned order",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refresh": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Query trusted gateway result; never trust frontend success",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}/mock-pay": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Development/test only; simulate owned payment observation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refund-preview": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Preview unused paid principal; disclose reserved credits",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refunds": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Submit confirmed refund amount and withdraw entitlements",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "expectedAmount"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "expectedAmount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Confirmed preview amount in fen"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/refunds/{id}": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Student-owned refund processing/result",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/ops/commerce/finance": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Finance-capability-only cash, refunds and historical findings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      }
+    },
+    "/ops/commerce/reconcile": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Compare provider observations; finance capability required",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/ops/commerce/recover": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Recover paid grants and pending refunds; finance capability required",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/ops/commerce/refunds/{id}/mock-success": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Development/test finance-only refund simulation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

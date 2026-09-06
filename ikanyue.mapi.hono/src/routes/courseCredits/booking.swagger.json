@@ -2,6 +2,9 @@
   "openapi": "3.0.0",
   "info": { "title": "课程预约接口", "version": "2.1.0" },
   "paths": {
+    "/v1/student/appointments/{appointmentId}/cancellation-preview": {
+      "get": { "summary": "预览本人预约取消扣费及退款", "tags": ["StudentBooking"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }], "responses": { "200": { "description": "data contains mode=credit|cash, amount, fee, quantity and cash policyVersion/receivedAt. Cash cancellation must echo expectedRefundAmount and expectedFee. This route does not require the commerce feature flag." } } }
+    },
     "/v1/student/booking-options": {
       "get": { "summary": "查询本人可预约课程与教师", "tags": ["StudentBooking"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/StudentCourseIdQuery" }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
     },

@@ -12,6 +12,7 @@ const {
 } = require('../teachingCommand');
 const { releaseClaimPlan } = require('./claimPlanning');
 const { appointmentUpdatePlan } = require('./decisionService');
+const { reservationQuote, cashCancellationPlan, previewReservation } = require('../../commerce/reservationCancellation');
 
 class AppointmentCancellationService {
     constructor(repository, options = {}) {
@@ -20,15 +21,22 @@ class AppointmentCancellationService {
         this.idFactory = options.idFactory || createRecordId;
     }
 
+    preview(studentId, appointmentId) {
+        return previewReservation(this.repository, studentId, appointmentId, this.clock);
+    }
+
     async cancel(input = {}) {
         validateInput(input);
         const command = await prepareTeachingCommand(this, 'cancelAppointment', input, {
             appointmentId: input.appointmentId,
             reason: input.reason,
+            expectedRefundAmount: input.expectedRefundAmount,
+            expectedFee: input.expectedFee,
+            cancellationType: input.cancellationType,
         });
         if (command.replay) return command.replay;
         const appointment = await this.repository.get('appointment_requests', input.appointmentId);
-        authorizeCancellation(appointment, input, command.at);
+        authorizeCancellation(appointment, input, command.at, true);
         const session = await this.repository.get('sessions', relationId(appointment.sessionId));
         invariant(['scheduled', 'enrollment_closed'].includes(session.status),
             'APPOINTMENT_SESSION_NOT_CANCELLABLE', '关联课堂当前不能取消');
@@ -51,9 +59,12 @@ class AppointmentCancellationService {
                     await this.repository.get('credit_batches', relationId(allocation.batchId)));
             }
         }
+        const cashQuote = await reservationQuote(this.repository, appointment, allocations, batchesById, command.at,
+            input.actorRole === 'teacher' || (input.actorRole === 'admin' && input.cancellationType === 'institution'));
+        if (!cashQuote) authorizeCancellation(appointment, input, command.at);
         const result = cancellationResult(command.operationId, appointment, session);
         const context = { ...command, input, result };
-        const settlement = buildStudentSettlementRequests({
+        const settlement = cashQuote ? cashCancellationPlan(cashQuote, { appointment, student: roster[0], input, command, idFactory: this.idFactory }) : buildStudentSettlementRequests({
             actor: input,
             allocations,
             batchesById,
@@ -63,6 +74,7 @@ class AppointmentCancellationService {
             session: { ...session, status: 'cancelled' },
             sessionStudent: roster[0],
         });
+        if (settlement.refund) result.refund = settlement.refund;
         const sessionVersion = positiveVersion(session.version);
         const plan = [
             teachingOperation({
@@ -94,14 +106,14 @@ class AppointmentCancellationService {
     }
 }
 
-function authorizeCancellation(appointment, input, now) {
+function authorizeCancellation(appointment, input, now, deferCutoff = false) {
     invariant(appointment && ['confirmed', 'rescheduled'].includes(appointment.status),
         'APPOINTMENT_NOT_CANCELLABLE', '预约当前不能取消');
     if (input.actorRole === 'student') {
         invariant(relationId(appointment.studentId) === input.studentId,
             'APPOINTMENT_STUDENT_FORBIDDEN', '不能取消其他学员的预约');
         const cutoff = Number(appointment.policySnapshot?.cancellationCutoffMinutes || 0) * 60000;
-        invariant(Date.parse(appointment.requestedStartAt) - Date.parse(now) >= cutoff,
+        invariant(deferCutoff || Date.parse(appointment.requestedStartAt) - Date.parse(now) >= cutoff,
             'APPOINTMENT_CANCELLATION_CUTOFF_PASSED', '已超过学员自助取消截止时间');
     } else if (input.actorRole === 'teacher') {
         invariant(relationId(appointment.teacherId) === input.teacherId,

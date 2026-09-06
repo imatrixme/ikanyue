@@ -3095,6 +3095,1002 @@
         }
       }
     },
+    "/v1/student/commerce/catalog": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Published fixed-price course offers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Current student orders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Create or replay checkout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "offerId",
+                  "key"
+                ],
+                "properties": {
+                  "offerId": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Student-owned order",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refresh": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Query trusted gateway result; never trust frontend success",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}/mock-pay": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Development/test only; simulate owned payment observation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refund-preview": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Preview unused paid principal; disclose reserved credits",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/student/commerce/orders/{id}/refunds": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Submit confirmed refund amount and withdraw entitlements",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "expectedAmount"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "expectedAmount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Confirmed preview amount in fen"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/refunds/{id}": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Student-owned refund processing/result",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/ops/commerce/finance": {
+      "get": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Finance-capability-only cash, refunds and historical findings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        }
+      }
+    },
+    "/ops/commerce/reconcile": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Compare provider observations; finance capability required",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/ops/commerce/recover": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Recover paid grants and pending refunds; finance capability required",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/ops/commerce/refunds/{id}/mock-success": {
+      "post": {
+        "tags": [
+          "Commerce"
+        ],
+        "summary": "Development/test finance-only refund simulation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope: code=10000 success; code=400/403/404/500 failure, data plus human-readable message"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        }
+      }
+    },
+    "/ops/commerce/orders": {
+      "get": {
+        "summary": "Search business orders by learner name, phone, course or order ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "granting",
+                "completed",
+                "failed",
+                "refunding"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive Asia/Shanghai calendar date"
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/orders/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "get": {
+        "summary": "Order, credits, refund quote, gateway state and actor audit",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/orders/{id}/refunds": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Refund remaining unused package credits with authenticated actor audit",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceAdminRefund"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/orders/{id}/recover": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Reload trusted payment/refund results without fabricating success",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceRecovery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/refunds/{id}/retry": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Retry a definitively failed reservation refund; ambiguous outcomes cannot start another attempt",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceReason"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/offers": {
+      "get": {
+        "summary": "Offers, packages and immutable price references",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update an unpublished offer draft",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceOfferDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/offers/{id}/status": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Publish draft or withdraw active version; published rules cannot be edited",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CommerceReason"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "version",
+                      "status"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "integer"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "active",
+                          "inactive"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/cases": {
+      "get": {
+        "summary": "Current financial exceptions and saved case history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/cases/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Save case note or resolve only after underlying state is verified",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note",
+                  "status"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 500
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "resolved"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/recovery-work": {
+      "get": {
+        "summary": "Persistent exhausted payment recovery tasks",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/recovery-work/{id}/retry": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Audited reset of an exhausted task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceReason"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements": {
+      "get": {
+        "summary": "Imported trade statements, fees and provenance",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements/download": {
+      "post": {
+        "summary": "Download, verify and match a WeChat ALL bill; live dates must be historical",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "date"
+                ],
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements/import": {
+      "post": {
+        "summary": "Import a manually obtained ALL bill without claiming verified channel provenance",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceStatementImport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "get": {
+        "summary": "Matched lines, missing payments/refunds and bank evidence",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements/{id}/export": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "get": {
+        "summary": "CSV report in data.content; cells are formula-escaped",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statements/{id}/settlement": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Record finance-attested bank receipt, separately from trade totals",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommerceBankEvidence"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/ops/commerce/statement-lines/{id}/resolve": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Recheck a discrepancy and retain an immutable resolution audit",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CommerceResult"
+          }
+        }
+      }
+    },
+    "/v1/student/appointments/{appointmentId}/cancellation-preview": {
+      "get": {
+        "summary": "预览本人预约取消扣费及退款",
+        "tags": [
+          "StudentBooking"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AppointmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "data contains mode=credit|cash, amount, fee, quantity and cash policyVersion/receivedAt. Cash cancellation must echo expectedRefundAmount and expectedFee. This route does not require the commerce feature flag."
+          }
+        }
+      }
+    },
+    "/v1/student/commerce/orders/{id}/cashier": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CommerceId"
+        }
+      ],
+      "post": {
+        "summary": "Renew pending WeChat prepay for the authenticated original payer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business envelope data: {type:wechatpay,mock,parameters}. Only mock=false may invoke wx.requestPayment; client success never grants credits."
+          }
+        }
+      }
+    },
     "/ops/course-operations/course-specs": {
       "post": {
         "$ref": "#/components/x-operations/CreateResource"
@@ -6339,7 +7335,8 @@
         "tags": [
           "Course Calendar"
         ],
-        "summary": "Query the institution course calendar",
+        "summary": "Query the role-scoped operations course calendar",
+        "description": "Academic operators receive the institution calendar. Teacher-only operators receive only lessons assigned to the authenticated teacher.",
         "security": [
           {
             "BearerAuth": []
@@ -6409,7 +7406,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Institution calendar projection"
+            "description": "Role-scoped operations calendar projection"
           }
         }
       }
@@ -11461,6 +12458,181 @@
           }
         }
       },
+      "CommerceReason": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          }
+        }
+      },
+      "CommerceRecovery": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommerceReason"
+          },
+          {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "maxLength": 100
+              }
+            }
+          }
+        ]
+      },
+      "CommerceAdminRefund": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommerceRecovery"
+          },
+          {
+            "type": "object",
+            "required": [
+              "expectedAmount"
+            ],
+            "properties": {
+              "expectedAmount": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Unchanged server quote. Clients cannot set the refund amount."
+              }
+            }
+          }
+        ]
+      },
+      "CommerceOfferDraft": {
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "packageId",
+          "priceVersionId",
+          "policy"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "packageId": {
+            "type": "string"
+          },
+          "priceVersionId": {
+            "type": "string"
+          },
+          "policy": {
+            "type": "object",
+            "required": [
+              "version",
+              "packageRefund",
+              "cancellationTiers"
+            ],
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "packageRefund": {
+                "type": "string",
+                "enum": [
+                  "unused_paid_value"
+                ]
+              },
+              "reservationRefund": {
+                "type": "string",
+                "enum": [
+                  "cash"
+                ]
+              },
+              "cancellationTiers": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Descending beforeMinutes, nondecreasing feeBps, last threshold zero; start-time equality is inclusive.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "beforeMinutes",
+                    "feeBps"
+                  ],
+                  "properties": {
+                    "beforeMinutes": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "feeBps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CommerceStatementImport": {
+        "type": "object",
+        "required": [
+          "date",
+          "content"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "content": {
+            "type": "string",
+            "description": "Official ALL trade bill, up to 1MB. Manual imports retain unverified provenance."
+          }
+        }
+      },
+      "CommerceBankEvidence": {
+        "type": "object",
+        "required": [
+          "date",
+          "amount",
+          "reference",
+          "evidenceHash"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reference": {
+            "type": "string"
+          },
+          "evidenceHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Bank receipt SHA-256. Finance retains the original; not automatic bank verification."
+          }
+        }
+      },
       "StatusRequest": {
         "type": "object",
         "required": [
@@ -14146,199 +15318,22 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
-      }
-    },
-    "x-operations": {
-      "CreateResource": {
-        "summary": "创建课程运营资源",
-        "tags": [
-          "CourseOperations"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/CourseOperationResponse"
-          }
-        }
       },
-      "UpdateResource": {
-        "summary": "更新课程运营资源",
-        "tags": [
-          "CourseOperations"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/CourseOperationResponse"
-          }
-        }
-      },
-      "SetStatus": {
-        "summary": "变更课程运营资源状态",
-        "tags": [
-          "CourseOperations"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ResourceId"
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StatusRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/CourseOperationResponse"
-          }
-        }
-      },
-      "ListResource": {
-        "summary": "分页查询课程运营明细",
-        "tags": [
-          "CourseOperations"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "name": "perPage",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
-          },
-          {
-            "name": "studentId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "teacherId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "classId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "sessionId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "分页结果"
-          }
-        }
-      },
-      "GetResource": {
-        "summary": "查询课程运营明细",
-        "tags": [
-          "CourseOperations"
-        ],
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "详情结果"
-          }
-        }
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     },
     "parameters": {
+      "CommerceId": {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
       "ResourceId": {
         "name": "id",
         "in": "path",
@@ -14557,6 +15552,9 @@
       }
     },
     "responses": {
+      "CommerceResult": {
+        "description": "Business envelope: code=10000 success, other codes are failures; data contains the result. All monetary values are integer CNY fen. Ops routes require finance capability and a completed password change."
+      },
       "CourseOperationResponse": {
         "description": "课程运营命令结果或稳定业务错误",
         "content": {
@@ -14614,6 +15612,196 @@
             "schema": {
               "$ref": "#/components/schemas/WechatRoleEnvelope"
             }
+          }
+        }
+      }
+    },
+    "x-operations": {
+      "CreateResource": {
+        "summary": "创建课程运营资源",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "UpdateResource": {
+        "summary": "更新课程运营资源",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "SetStatus": {
+        "summary": "变更课程运营资源状态",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseOperationResponse"
+          }
+        }
+      },
+      "ListResource": {
+        "summary": "分页查询课程运营明细",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teacherId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "分页结果"
+          }
+        }
+      },
+      "GetResource": {
+        "summary": "查询课程运营明细",
+        "tags": [
+          "CourseOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "详情结果"
           }
         }
       }

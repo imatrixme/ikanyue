@@ -129,6 +129,8 @@ function studentBookingRoutes(routes, handlers) {
         .use(authMiddleware).handler(handlers.withdrawStudentAppointment);
     routes.post('/v1/student/appointments/:appointmentId/cancel')
         .use(authMiddleware).handler(handlers.cancelStudentAppointment);
+    routes.get('/v1/student/appointments/:appointmentId/cancellation-preview')
+        .use(authMiddleware).handler(handlers.previewStudentCancellation);
 }
 
 function teacherBookingRoutes(routes, handlers) {

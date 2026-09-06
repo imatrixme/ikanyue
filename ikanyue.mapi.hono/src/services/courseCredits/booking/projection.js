@@ -25,7 +25,7 @@ function studentAppointment(record) {
         responseDeadline: record.responseDeadline || null,
         lessonId: session.id || relationId(record.sessionId) || '',
         canWithdraw: record.status === 'pending',
-        canCancel: record.status === 'confirmed',
+        canCancel: ['confirmed', 'rescheduled'].includes(record.status),
     };
 }
 
