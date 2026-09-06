@@ -26,6 +26,8 @@ describe('course read model coverage', () => {
       { id: 'three', kind: 'duplicate', status: 'acknowledged', reason: 'DUPLICATE_EVENT' },
       { id: 'four', kind: 'failed_operation', status: 'failed', reason: '写入失败' },
       { id: 'five', kind: 'correction_pending', status: 'correction_pending', reason: '等待更正' },
+      { id: 'six', kind: 'custom_kind', status: 'custom_status', reason: '需要人工确认' },
+      { id: 'seven', kind: '', status: '', reason: '' },
     ])
     render(<ExceptionsWorkspace api={api} token="token" />)
 
@@ -34,6 +36,8 @@ describe('course read model coverage', () => {
     expect(screen.getByRole('table')).toHaveTextContent('重复写入')
     expect(screen.getByRole('table')).toHaveTextContent('操作失败')
     expect(screen.getByRole('table')).toHaveTextContent('等待更正')
+    expect(screen.getByRole('table')).toHaveTextContent('custom_kind')
+    expect(screen.getByRole('table')).toHaveTextContent('custom_status')
   })
 
   it('covers dashboard capability combinations, populated queues, and navigation callbacks', async () => {
@@ -94,17 +98,17 @@ describe('course read model coverage', () => {
       ],
     })
     const view = renderAccounts(api)
-    await user.click((await screen.findAllByRole('button', { name: '查看课时账户明细' }))[0])
+    await user.click((await screen.findAllByRole('button', { name: '查看张同学课时账户' }))[0])
     let drawer = screen.getByRole('dialog', { name: '课时账户明细' })
     expect(drawer).toHaveTextContent('综合声乐')
     expect(drawer).toHaveTextContent('credit_voice')
     expect(drawer).toHaveTextContent('batch_id')
     expect(drawer).toHaveTextContent('长期有效')
-    expect(drawer).toHaveTextContent('不可变流水')
+    expect(drawer).toHaveTextContent('课时变动记录')
     expect(drawer).toHaveTextContent('管理员报课')
     expect(drawer).toHaveTextContent('operation_2')
     await user.click(within(drawer).getByRole('button', { name: '关闭弹窗' }))
-    await user.click(screen.getAllByRole('button', { name: /学员 student_1/ }).at(-1)!)
+    await user.click(screen.getByRole('button', { name: /^张同学13900139001/ }))
     drawer = await screen.findByRole('dialog', { name: '课时账户明细' })
     await user.click(within(drawer).getByRole('button', { name: '关闭弹窗' }))
     view.unmount()
@@ -124,7 +128,7 @@ describe('course read model coverage', () => {
     const detailApi = createMockOpsApi()
     vi.spyOn(detailApi, 'getCourseResource').mockRejectedValueOnce(new Error('account detail failed'))
     renderAccounts(detailApi)
-    await user.click((await screen.findAllByRole('button', { name: '查看课时账户明细' }))[0])
+    await user.click((await screen.findAllByRole('button', { name: '查看张同学课时账户' }))[0])
     expect(await screen.findByText('account detail failed')).toBeInTheDocument()
   })
 
@@ -155,6 +159,13 @@ describe('course read model coverage', () => {
     mobileView.unmount()
   })
 
+  it('identifies a disabled student account in course details', async () => {
+    const user = userEvent.setup()
+    render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={mockProfiles.admin} students={[{ ...student, blocked: true }]} token="token" /></MemoryRouter>)
+    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
+    expect(await screen.findByRole('dialog', { name: '张同学 · 课程与班级' })).toHaveTextContent('账号已停用')
+  })
+
   it('covers sparse teacher relationships and student operation value fallbacks', async () => {
     const user = userEvent.setup()
     const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
@@ -172,11 +183,15 @@ describe('course read model coverage', () => {
       classAssignments: [{ id: 'class_sparse', classId: 'class_1', studentId: 'student_1', status: '' }],
       lessonAssignments: [{ id: 'lesson_sparse', sessionId: 'lesson_1', studentId: 'student_1', attendanceStatus: '' }],
     }
+    relationStudent.classAssignments?.push({ id: 'class_missing', studentId: 'student_1', status: '' })
+    relationStudent.lessonAssignments?.push({ id: 'lesson_missing', studentId: 'student_1', attendanceStatus: '' })
     const relationView = render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={teacherOnly} students={[relationStudent]} token="token" /></MemoryRouter>)
     await user.click((await screen.findAllByRole('button', { name: '查看13900009999课程与班级' }))[0])
     drawer = screen.getByRole('dialog', { name: /授课关系/ })
-    expect(drawer).toHaveTextContent('class_1 · active')
-    expect(drawer).toHaveTextContent('lesson_1 · 待上课')
+    expect(drawer).toHaveTextContent('未找到班级（class_1） · 启用')
+    expect(drawer).toHaveTextContent('未找到课堂（lesson_1） · 待上课')
+    expect(drawer).toHaveTextContent('班级信息缺失 · 启用')
+    expect(drawer).toHaveTextContent('课堂信息缺失 · 待上课')
     relationView.unmount()
 
     const api = createMockOpsApi()
@@ -191,9 +206,9 @@ describe('course read model coverage', () => {
     const adminView = renderStudentWorkspace(api)
     await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
     drawer = await screen.findByRole('dialog', { name: '张同学 · 课程与班级' })
-    expect(drawer).toHaveTextContent('ENR-BLANK · committed')
-    expect(drawer).toHaveTextContent('lesson_1 · 待上课 · -')
-    expect(drawer).toHaveTextContent('student.inspect · -')
+    expect(drawer).toHaveTextContent('课包信息缺失 · 报课处理中')
+    expect(drawer).toHaveTextContent('合唱排练 · 待上课 · 课时状态待确认')
+    expect(drawer).toHaveTextContent('student.inspect · 成功')
     adminView.unmount()
 
     const errorApi = createMockOpsApi()

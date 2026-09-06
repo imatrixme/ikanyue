@@ -13,6 +13,7 @@ export type AppView =
   | 'calendar'
   | 'appointments'
   | 'accounts'
+  | 'payments'
   | 'teachers'
   | 'exceptions'
   | 'audit'

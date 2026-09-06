@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import App from '../../App'
 import { createMockOpsApi } from '../../app/api'
@@ -9,7 +9,9 @@ import { mockProfiles } from '../../app/mockData'
 describe('admin course operations', () => {
   it('routes through catalog, automatic enrollment, and class workflows', async () => {
     const user = userEvent.setup()
-    render(<App api={createMockOpsApi()} />)
+    const api = createMockOpsApi()
+    const createEnrollment = vi.spyOn(api, 'createEnrollment')
+    render(<App api={api} />)
     await login(user)
 
     await open(user, '课程规格', '课程规格')
@@ -19,35 +21,35 @@ describe('admin course operations', () => {
     await user.type(within(courseDialog).getByLabelText('课程名称'), '精品一对一声乐')
     await user.type(within(courseDialog).getByLabelText('课程编码'), 'VOCAL-ONE')
     await user.selectOptions(within(courseDialog).getByLabelText('授课形式'), 'one_to_one')
-    await user.type(within(courseDialog).getByLabelText('教师等级'), 'senior')
-    await user.type(within(courseDialog).getByLabelText('默认课时类型编号'), 'credit_one')
+    await user.selectOptions(within(courseDialog).getByLabelText('教师要求'), 'senior')
+    await chooseReference(user, courseDialog, '默认扣减课时', '综合声乐')
     await user.click(within(courseDialog).getByRole('button', { name: '保存' }))
     expect((await screen.findAllByText('精品一对一声乐')).length).toBeGreaterThan(0)
 
     await open(user, '课包与价格', '课包管理')
-    await user.click(screen.getByRole('tab', { name: '价格版本' }))
+    await user.click(screen.getByRole('tab', { name: '价格与生效时间' }))
     expect(await screen.findByRole('heading', { name: '价格版本' })).toBeInTheDocument()
-    await user.click(screen.getByRole('tab', { name: '发放规则' }))
+    await user.click(screen.getByRole('tab', { name: '包含课时' }))
     expect(await screen.findByRole('heading', { name: '课时发放规则' })).toBeInTheDocument()
-    await user.click(screen.getByRole('tab', { name: '兑换规则' }))
+    await user.click(screen.getByRole('tab', { name: '课时兑换' }))
     expect(await screen.findByRole('heading', { name: '兑换规则' })).toBeInTheDocument()
-    expect(screen.getByRole('table')).toHaveTextContent('100 -> 1')
+    expect(screen.getByRole('table')).toHaveTextContent('100 课时可兑换 1 课时')
     await user.click(screen.getByRole('button', { name: '新增兑换规则' }))
     const conversionDialog = screen.getByRole('dialog', { name: '新增兑换规则' })
-    await user.type(within(conversionDialog).getByLabelText('来源课时类型编号'), 'credit_universal')
-    await user.type(within(conversionDialog).getByLabelText('目标课时类型编号'), 'credit_voice_advanced')
+    await chooseReference(user, conversionDialog, '用哪种课时兑换', '通用')
+    await chooseReference(user, conversionDialog, '兑换成哪种课时', '综合声乐')
     await user.click(within(conversionDialog).getByRole('button', { name: '保存' }))
-    expect((await screen.findAllByText('credit_voice_advanced')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('综合声乐课时')).length).toBeGreaterThan(0)
 
     await open(user, '报课管理', '报课管理')
     await user.click(screen.getByRole('button', { name: '新建报课' }))
     const enrollmentDialog = screen.getByRole('dialog', { name: '管理员报课' })
-    await user.selectOptions(within(enrollmentDialog).getByLabelText('学员'), 'student_1')
-    await user.selectOptions(within(enrollmentDialog).getByLabelText('课包'), 'package_1')
-    await user.selectOptions(within(enrollmentDialog).getByLabelText('价格版本'), 'price_1')
-    await user.selectOptions(within(enrollmentDialog).getByLabelText('班级（可选）'), 'class_1')
+    await chooseReference(user, enrollmentDialog, '学员', '张同学')
+    await chooseReference(user, enrollmentDialog, '所报课包', '综合声乐')
+    await chooseReference(user, enrollmentDialog, '本次售价', '2,800')
+    await chooseReference(user, enrollmentDialog, '进入班级（可选）', '周六')
     await user.click(within(enrollmentDialog).getByRole('button', { name: '确认报课' }))
-    await waitFor(() => expect(screen.getAllByText(/ENR-enrollment_/).length).toBeGreaterThan(0))
+    await waitFor(() => expect(createEnrollment).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ classId: 'class_1', packageId: 'package_1', priceVersionId: 'price_1', studentId: 'student_1' })))
 
     await user.click(screen.getAllByRole('button', { name: '同步名单' })[0])
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
@@ -58,12 +60,12 @@ describe('admin course operations', () => {
     await user.click(screen.getAllByRole('button', { name: '班级详情' })[0])
     const classDrawer = await screen.findByRole('dialog', { name: '周六综合声乐班' })
     expect(classDrawer).toHaveTextContent('班级成员')
-    await user.type(within(classDrawer).getByLabelText('教师编号'), 'teacher_2')
+    await chooseReference(user, classDrawer, '选择授课教师', '周老师')
     await user.click(within(classDrawer).getByRole('button', { name: '分配' }))
-    await waitFor(() => expect(classDrawer).toHaveTextContent('teacher_2'))
+    await waitFor(() => expect(classDrawer).toHaveTextContent('周老师'))
     await user.click(within(classDrawer).getByRole('button', { name: '为班级报课' }))
     expect(await screen.findByRole('dialog', { name: '管理员报课' })).toBeInTheDocument()
-  })
+  }, 10_000)
 
   it('handles lesson attendance, settlement, student detail, and read-only control views', async () => {
     const user = userEvent.setup()
@@ -74,12 +76,12 @@ describe('admin course operations', () => {
     await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
     let lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
     await user.click(within(lessonDrawer).getByRole('button', { name: '全部到课' }))
-    await waitFor(() => expect(within(lessonDrawer).getByLabelText('学员student_1出勤')).toHaveValue('present'))
-    await user.selectOptions(within(lessonDrawer).getByLabelText('教师teacher_1实际状态'), 'confirmed')
+    await waitFor(() => expect(within(lessonDrawer).getByLabelText('张同学出勤状态')).toHaveValue('present'))
+    await user.selectOptions(within(lessonDrawer).getByLabelText('林老师实际授课状态'), 'confirmed')
     await user.click(within(lessonDrawer).getByRole('button', { name: '结束课堂' }))
     expect(screen.getByRole('dialog', { name: '确认结束课堂' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '确认结束' }))
-    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('completed'))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('已完成'))
 
     await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
     lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
@@ -88,21 +90,21 @@ describe('admin course operations', () => {
     await user.click(screen.getByRole('button', { name: '进入确认' }))
     expect(screen.getByRole('dialog', { name: '确认课堂核销' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '确认核销' }))
-    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('settled'))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('已核销'))
 
     await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
     lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
     await user.click(within(lessonDrawer).getByRole('button', { name: '核销更正' }))
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: '确认更正' }))
-    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('correction_pending'))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('状态待确认'))
 
     await open(user, '课时账户', '课时账户')
-    await user.click(screen.getAllByRole('button', { name: '查看课时账户明细' })[0])
-    expect(await screen.findByRole('dialog', { name: '课时账户明细' })).toHaveTextContent('来源批次')
+    await user.click(screen.getAllByRole('button', { name: '查看张同学课时账户' })[0])
+    expect(await screen.findByRole('dialog', { name: '课时账户明细' })).toHaveTextContent('课时来源')
     await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
     await open(user, '教师工作量', '教师工作量')
-    expect(screen.getByRole('table')).toHaveTextContent('teacher_1')
+    expect(screen.getByRole('table')).toHaveTextContent('林老师')
     await open(user, '异常中心', '核销异常')
     await user.click(screen.getByRole('tab', { name: '对账异常' }))
     expect(await screen.findByRole('heading', { name: '对账异常' })).toBeInTheDocument()
@@ -153,8 +155,8 @@ describe('admin course operations', () => {
     expect(within(lessonDrawer).getByRole('button', { name: '全部到课' })).toBeInTheDocument()
     expect(within(lessonDrawer).queryByRole('button', { name: '核销预览' })).not.toBeInTheDocument()
     expect(within(lessonDrawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
-    await user.selectOptions(within(lessonDrawer).getByLabelText('教师teacher_1实际状态'), 'confirmed')
-    await waitFor(() => expect(within(lessonDrawer).getByLabelText('教师teacher_1实际状态')).toHaveValue('confirmed'))
+    await user.selectOptions(within(lessonDrawer).getByLabelText('林老师实际授课状态'), 'confirmed')
+    await waitFor(() => expect(within(lessonDrawer).getByLabelText('林老师实际授课状态')).toHaveValue('confirmed'))
     expect(screen.queryByRole('button', { name: '报课管理' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '课时账户' })).not.toBeInTheDocument()
   })
@@ -176,8 +178,8 @@ describe('admin course operations', () => {
     expect(within(lessonDrawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
     expect(within(lessonDrawer).queryByRole('button', { name: '取消课堂' })).not.toBeInTheDocument()
     expect(within(lessonDrawer).getByRole('button', { name: '核销预览' })).toBeInTheDocument()
-    expect(within(lessonDrawer).getByLabelText('学员student_1出勤')).toBeDisabled()
-    expect(within(lessonDrawer).getByLabelText('教师teacher_1实际状态')).toBeDisabled()
+    expect(within(lessonDrawer).getByLabelText('张同学出勤状态')).toBeDisabled()
+    expect(within(lessonDrawer).getByLabelText('林老师实际授课状态')).toBeDisabled()
   })
 })
 
@@ -191,4 +193,11 @@ async function login(user: ReturnType<typeof userEvent.setup>) {
 async function open(user: ReturnType<typeof userEvent.setup>, navigation: string, heading: string) {
   await user.click(screen.getByRole('button', { name: navigation }))
   await screen.findByRole('heading', { name: heading })
+}
+
+async function chooseReference(user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, label: string, query: string) {
+  const input = within(scope).getByLabelText(label)
+  await user.click(input)
+  await user.type(input, query)
+  await user.keyboard('{Enter}')
 }

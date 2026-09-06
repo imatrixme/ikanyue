@@ -18,6 +18,7 @@ import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
 import { StudentWorkspace } from './StudentWorkspace'
 import { TeacherWorkloadWorkspace } from './TeacherWorkloadWorkspace'
+import { PaymentsWorkspace } from './PaymentsWorkspace'
 
 interface AdminWorkspaceRoutesProps {
   api: OpsApi
@@ -56,6 +57,7 @@ export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
       <Route path="/calendar" element={<Gate profile={props.profile} view="calendar"><CourseCalendarWorkspace {...courseProps} profile={props.profile} /></Gate>} />
       <Route path="/appointments" element={<Gate profile={props.profile} view="appointments"><BookingWorkspace {...courseProps} /></Gate>} />
       <Route path="/lesson-hours" element={<Gate profile={props.profile} view="accounts"><AccountsWorkspace {...courseProps} /></Gate>} />
+      <Route path="/payments" element={<Gate profile={props.profile} view="payments"><PaymentsWorkspace token={props.token} /></Gate>} />
       <Route path="/teacher-workload" element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} />
       <Route path="/exceptions" element={<Gate profile={props.profile} view="exceptions"><ExceptionsWorkspace {...courseProps} /></Gate>} />
       <Route path="/audit" element={<Gate profile={props.profile} view="audit"><AuditWorkspace {...courseProps} /></Gate>} />

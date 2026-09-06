@@ -28,27 +28,26 @@ describe('enrollment workspace coverage', () => {
     renderEnrollments(api, '/enrollments?new=1&studentId=student_1&classId=class_1')
 
     const dialog = await screen.findByRole('dialog', { name: '管理员报课' })
-    await waitFor(() => expect(within(dialog).getByLabelText('学员')).toHaveValue('student_1'))
-    await waitFor(() => expect(within(dialog).getByLabelText('班级（可选）')).toHaveValue('class_1'))
-    await user.selectOptions(within(dialog).getByLabelText('课包'), 'package_1')
-    await user.selectOptions(within(dialog).getByLabelText('价格版本'), 'price_1')
-    await user.type(within(dialog).getByLabelText('实付金额（可选）'), '2680')
-    await user.type(within(dialog).getByLabelText('支付参考'), 'WX-20260723')
-    await user.type(within(dialog).getByLabelText('备注'), '前台报课')
+    await waitFor(() => expect(within(dialog).getByLabelText('学员')).toHaveValue('张同学'))
+    await waitFor(() => expect(within(dialog).getByLabelText('进入班级（可选）')).toHaveValue('周六综合声乐班'))
+    await chooseReference(user, dialog, '所报课包', '综合声乐')
+    await chooseReference(user, dialog, '本次售价', '2,800')
+    await user.type(within(dialog).getByLabelText('实际收款金额（可选）'), '2680')
+    await user.type(within(dialog).getByLabelText('支付流水号（可选）'), 'WX-20260723')
+    await user.type(within(dialog).getByLabelText('报课备注'), '前台报课')
     await user.click(within(dialog).getByRole('button', { name: '确认报课' }))
     await waitFor(() => expect(create).toHaveBeenCalledWith('token', expect.objectContaining({ classId: 'class_1', paidAmount: 2680, paymentReference: 'WX-20260723', reason: '前台报课', studentId: 'student_1' })))
 
-    expect((await screen.findAllByText('已完成有提醒')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('失败').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('处理中').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('reviewing').length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('报课完成，有事项需确认')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('报课失败').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('报课处理中').length).toBeGreaterThan(0)
 
     await user.click(screen.getAllByRole('button', { name: '查看报课详情' })[0])
-    expect(screen.getByRole('dialog', { name: '报课详情' })).toHaveTextContent('主订单')
+    expect(screen.getByRole('dialog', { name: '报课详情' })).toHaveTextContent('等待同步未来课堂名单')
     expect(screen.getByRole('dialog', { name: '报课详情' })).toHaveTextContent('source_sync')
     await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
     await user.click(screen.getAllByRole('button', { name: '详情' }).at(-1)!)
-    expect(screen.getByRole('dialog', { name: '报课详情' })).toHaveTextContent('reviewing')
+    expect(screen.getByRole('dialog', { name: '报课详情' })).toHaveTextContent('报课处理中')
     await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
 
     await user.click(screen.getAllByRole('button', { name: '同步名单' })[0])
@@ -86,10 +85,10 @@ describe('enrollment workspace coverage', () => {
     vi.spyOn(api, 'createEnrollment').mockRejectedValueOnce('enroll offline')
     await user.click(screen.getByRole('button', { name: '新建报课' }))
     let dialog = screen.getByRole('dialog', { name: '管理员报课' })
-    await user.selectOptions(within(dialog).getByLabelText('学员'), 'student_1')
-    await user.selectOptions(within(dialog).getByLabelText('课包'), 'package_1')
-    await user.selectOptions(within(dialog).getByLabelText('价格版本'), 'price_1')
-    await user.clear(within(dialog).getByLabelText('实付金额（可选）'))
+    await chooseReference(user, dialog, '学员', '张同学')
+    await chooseReference(user, dialog, '所报课包', '综合声乐')
+    await chooseReference(user, dialog, '本次售价', '2,800')
+    await user.clear(within(dialog).getByLabelText('实际收款金额（可选）'))
     await user.click(within(dialog).getByRole('button', { name: '确认报课' }))
     expect(await screen.findByText('报课失败')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: '取消' }))
@@ -117,6 +116,12 @@ describe('enrollment workspace coverage', () => {
     replaceResource(api, 'priceVersions', [
       { id: 'price_sparse', packageId: 'package_1', listAmount: 3000, saleAmount: null, currency: '', version: 0, status: 'active' },
     ])
+    replaceResource(api, 'packages', [
+      { id: 'package_1', name: '精简课包', code: '', validityDurationDays: 0, status: 'inactive' },
+    ])
+    replaceResource(api, 'classes', [
+      { id: 'class_1', name: '临时班', code: '', termStart: '', termEnd: '', location: '', status: 'draft' },
+    ])
     vi.spyOn(api, 'listManagedStudents').mockResolvedValue({
       items: [{ id: 'student_nickname', realName: '', nickName: '昵称学员', cellphone: '13800000000', avatar: '', blocked: false, created: '', updated: '', lastLoginAt: '' }],
       pagination: { page: 1, perPage: 100, totalItems: 1, totalPages: 1 },
@@ -124,8 +129,16 @@ describe('enrollment workspace coverage', () => {
 
     renderEnrollments(api, '/enrollments?new=1')
     const dialog = await screen.findByRole('dialog', { name: '管理员报课' })
-    expect(await within(dialog).findByRole('option', { name: '昵称学员 · 13800000000' })).toBeInTheDocument()
-    expect(await within(dialog).findByRole('option', { name: '3000 CNY · V1' })).toBeInTheDocument()
+    await userEvent.setup().click(within(dialog).getByLabelText('学员'))
+    expect(await within(dialog).findByRole('option', { name: /昵称学员.*13800000000/ })).toBeInTheDocument()
+    await userEvent.setup().click(within(dialog).getByLabelText('所报课包'))
+    await userEvent.setup().type(within(dialog).getByLabelText('所报课包'), '精简课包')
+    expect(await within(dialog).findByRole('option', { name: /精简课包.*未启用/ })).toBeInTheDocument()
+    await userEvent.setup().keyboard('{Enter}')
+    await userEvent.setup().click(within(dialog).getByLabelText('本次售价'))
+    expect(await within(dialog).findByRole('option', { name: /3,000/ })).toBeInTheDocument()
+    await userEvent.setup().click(within(dialog).getByLabelText('进入班级（可选）'))
+    expect(await within(dialog).findByRole('option', { name: /临时班/ })).toBeInTheDocument()
   })
 })
 
@@ -141,6 +154,13 @@ function enrollment(id: string, resultStatus: string, overrides: { classId?: str
     requestSnapshot: { packageId: id === 'processing' ? '' : 'package_1', classId: overrides.classId ?? 'class_1' },
     resultSnapshot: { orderId: overrides.orderId ?? `order_${id}`, status: resultStatus, sync: { futureLessonCount: id === 'processing' ? 0 : 2 } },
   }
+}
+
+async function chooseReference(user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, label: string, query: string) {
+  const input = within(scope).getByLabelText(label)
+  await user.click(input)
+  await user.type(input, query)
+  await user.keyboard('{Enter}')
 }
 
 function renderEnrollments(api: OpsApi, entry = '/enrollments') {

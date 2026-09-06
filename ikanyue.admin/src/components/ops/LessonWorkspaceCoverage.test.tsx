@@ -33,27 +33,28 @@ describe('lesson workspace coverage', () => {
     let dialog = screen.getByRole('dialog', { name: '编辑课堂' })
     await user.clear(within(dialog).getByLabelText('课堂名称'))
     await user.type(within(dialog).getByLabelText('课堂名称'), '编辑后的课堂')
-    await user.clear(within(dialog).getByLabelText('每人课时'))
-    await user.type(within(dialog).getByLabelText('每人课时'), '2')
+    await user.clear(within(dialog).getByLabelText('每名学员使用课时'))
+    await user.type(within(dialog).getByLabelText('每名学员使用课时'), '2')
     await user.click(within(dialog).getByRole('button', { name: '保存草稿' }))
     await waitFor(() => expect(update).toHaveBeenCalledWith('token', 'lessons', 'lesson_draft', expect.objectContaining({ title: '编辑后的课堂', requiredQuantity: 2 })))
 
     await user.click(screen.getByRole('button', { name: '发布' }))
     dialog = screen.getByRole('dialog', { name: /发布 编辑后的课堂/ })
-    await user.type(within(dialog).getByLabelText('班级编号'), ' class_1, class_2, ')
+    await chooseReference(user, dialog, '选择参与班级', '周六')
+    await user.click(within(dialog).getByRole('button', { name: '加入' }))
     await user.click(within(dialog).getByRole('button', { name: '发布课堂' }))
-    await waitFor(() => expect(publish).toHaveBeenCalledWith('token', 'lesson_draft', ['class_1', 'class_2']))
+    await waitFor(() => expect(publish).toHaveBeenCalledWith('token', 'lesson_draft', ['class_1']))
 
     await user.click(screen.getByRole('button', { name: '新增课堂' }))
     dialog = screen.getByRole('dialog', { name: '新增课堂' })
-    fillLesson(dialog)
+    await fillLesson(user, dialog)
     await user.click(within(dialog).getByRole('button', { name: '保存草稿' }))
     await waitFor(() => expect(create).toHaveBeenCalledWith('token', 'lessons', expect.objectContaining({ code: 'LESSON-NEW', title: '新课堂', requiredQuantity: 1 })))
 
     let drawer = await openLesson(user, '合唱排练')
-    await user.selectOptions(within(drawer).getByLabelText('学员student_1出勤'), 'late')
+    await user.selectOptions(within(drawer).getByLabelText('张同学出勤状态'), 'late')
     await waitFor(() => expect(attendance).toHaveBeenCalledWith('token', 'lesson_1', 'session_student_1', 'late'))
-    await user.selectOptions(within(drawer).getByLabelText('教师teacher_1实际状态'), 'absent')
+    await user.selectOptions(within(drawer).getByLabelText('林老师实际授课状态'), 'absent')
     await waitFor(() => expect(teacher).toHaveBeenCalledWith('token', 'lesson_1', 'session_teacher_1', 'absent'))
     await user.click(within(drawer).getByRole('button', { name: '调整时间' }))
     dialog = screen.getByRole('dialog', { name: '调整课堂时间' })
@@ -90,7 +91,7 @@ describe('lesson workspace coverage', () => {
     vi.spyOn(api, 'createCourseResource').mockRejectedValueOnce('save offline')
     await user.click(screen.getByRole('button', { name: '新增课堂' }))
     let dialog = screen.getByRole('dialog', { name: '新增课堂' })
-    fillLesson(dialog)
+    await fillLesson(user, dialog)
     await user.click(within(dialog).getByRole('button', { name: '保存草稿' }))
     expect(await screen.findByText('保存课堂失败')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: '取消' }))
@@ -100,7 +101,8 @@ describe('lesson workspace coverage', () => {
     vi.spyOn(api, 'publishLesson').mockRejectedValueOnce(new Error('publish failed'))
     await user.click(screen.getByRole('button', { name: '发布' }))
     dialog = screen.getByRole('dialog', { name: /发布 待发布课堂/ })
-    await user.type(within(dialog).getByLabelText('班级编号'), 'class_1')
+    await chooseReference(user, dialog, '选择参与班级', '周六')
+    await user.click(within(dialog).getByRole('button', { name: '加入' }))
     await user.click(within(dialog).getByRole('button', { name: '发布课堂' }))
     expect(await screen.findByText('publish failed')).toBeInTheDocument()
     await user.click(within(dialog).getByRole('button', { name: '取消' }))
@@ -170,16 +172,25 @@ describe('lesson workspace coverage', () => {
       return originalList<T>(token, resource, query)
     }
     const create = vi.spyOn(api, 'createCourseResource')
-    vi.spyOn(api, 'previewSettlement').mockResolvedValue({ sessionId: 'lesson_sparse' } as never)
+    vi.spyOn(api, 'previewSettlement').mockResolvedValue({
+      sessionId: 'lesson_sparse',
+      sessionStatus: 'completed',
+      canSettle: false,
+      students: [{
+        sessionStudentId: 'student_sparse', studentId: 'student_sparse', action: 'unknown', quantity: 0, exception: '课时不足',
+        allocations: [{ allocationId: '', batchId: 'batch_sparse', quantity: 0, effectiveExpiresAt: '' }],
+      }],
+      teachers: [{ sessionTeacherId: 'teacher_missing', teacherId: 'teacher_missing', role: '', action: 'unknown', quantity: 0 }],
+    } as never)
     const view = renderLessons(api)
     expect(await screen.findByText('1 节待核销')).toBeInTheDocument()
     expect(screen.getAllByText('时间待定').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('invalid-date').length).toBeGreaterThan(0)
+    expect(screen.queryByText('invalid-date')).not.toBeInTheDocument()
 
     let drawer = await openLesson(user, '无时间课堂')
-    expect(drawer).toHaveTextContent('课时状态 -')
-    fireEvent.change(within(drawer).getByLabelText('学员student_sparse出勤'), { target: { value: 'scheduled' } })
-    fireEvent.change(within(drawer).getByLabelText('教师teacher_1实际状态'), { target: { value: 'pending' } })
+    expect(drawer).toHaveTextContent('课时状态待确认')
+    fireEvent.change(within(drawer).getByLabelText('未找到人员（stud...arse）出勤状态'), { target: { value: 'scheduled' } })
+    fireEvent.change(within(drawer).getByLabelText('林老师实际授课状态'), { target: { value: 'pending' } })
     await user.click(within(drawer).getByRole('button', { name: '调整时间' }))
     let dialog = screen.getByRole('dialog', { name: '调整课堂时间' })
     expect(within(dialog).getByLabelText('新开始时间')).toHaveValue('')
@@ -189,15 +200,19 @@ describe('lesson workspace coverage', () => {
     drawer = await openLesson(user, '无时间课堂')
     await user.click(within(drawer).getByRole('button', { name: '核销预览' }))
     dialog = await screen.findByRole('dialog', { name: '课堂核销预览' })
-    expect(dialog).toHaveTextContent('学员变动0')
-    expect(dialog).toHaveTextContent('教师工作量0')
-    expect(dialog).toHaveTextContent('异常0')
+    expect(dialog).toHaveTextContent('学员课时变动1')
+    expect(dialog).toHaveTextContent('教师工作量1')
+    expect(dialog).toHaveTextContent('需要处理1')
+    expect(dialog).toHaveTextContent('记录变动 · 0 课时')
+    expect(dialog).toHaveTextContent('长期有效')
+    expect(within(dialog).getByRole('button', { name: '进入确认' })).toBeDisabled()
     await user.click(within(dialog).getByRole('button', { name: '返回检查' }))
 
     await user.click(screen.getByRole('button', { name: '新增课堂' }))
     dialog = screen.getByRole('dialog', { name: '新增课堂' })
     fireEvent.submit(dialog.querySelector('form')!)
-    await waitFor(() => expect(create).toHaveBeenCalledWith('token', 'lessons', expect.objectContaining({ startAt: '', endAt: '', status: 'draft' })))
+    expect(create).not.toHaveBeenCalled()
+    expect(within(dialog).getByRole('button', { name: '保存草稿' })).toBeDisabled()
     view.unmount()
 
     const teacherApi = createMockOpsApi()
@@ -215,8 +230,35 @@ describe('lesson workspace coverage', () => {
     render(<MemoryRouter><LessonsWorkspace api={teacherApi} profile={teacherOnly} token="token" /></MemoryRouter>)
     await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
     drawer = await screen.findByRole('dialog', { name: '双教师课堂' })
-    expect(within(drawer).getByLabelText('教师teacher_1实际状态')).not.toBeDisabled()
-    expect(within(drawer).getByLabelText('教师teacher_2实际状态')).toBeDisabled()
+    expect(within(drawer).getByLabelText('林老师实际授课状态')).not.toBeDisabled()
+    expect(within(drawer).getByLabelText('周老师实际授课状态')).toBeDisabled()
+  })
+
+  it('keeps sparse class choices understandable while publishing a lesson', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    await api.createCourseResource('token', 'lessons', draftLesson)
+    const original = api.listCourseResource.bind(api)
+    api.listCourseResource = async <T extends CourseRecord = CourseRecord>(token: string, resource: CourseResourceKey, query: CourseQuery = {}) => {
+      if (resource === 'classes') return page<T>([
+        { id: 'class-code', name: '', code: 'CODE-ONLY', termStart: '2026-09-01', termEnd: '', location: '', status: 'draft' },
+        { id: 'class-unnamed', name: '', code: '', termStart: '', termEnd: '', location: '', status: 'draft' },
+      ])
+      return original<T>(token, resource, query)
+    }
+    renderLessons(api)
+
+    await user.click(await screen.findByRole('button', { name: '发布' }))
+    const dialog = screen.getByRole('dialog', { name: /发布 待发布课堂/ })
+    await chooseReference(user, dialog, '选择参与班级', 'CODE-ONLY')
+    await user.click(within(dialog).getByRole('button', { name: '加入' }))
+    expect(dialog).toHaveTextContent('CODE-ONLY')
+    expect(dialog).toHaveTextContent('地点待定')
+    await user.click(within(dialog).getByRole('button', { name: '移除班级' }))
+
+    await chooseReference(user, dialog, '选择参与班级', '未命名班级')
+    await user.click(within(dialog).getByRole('button', { name: '加入' }))
+    expect(dialog).toHaveTextContent('班级信息待补充')
   })
 })
 
@@ -224,13 +266,20 @@ function renderLessons(api: OpsApi) {
   return render(<MemoryRouter><LessonsWorkspace api={api} profile={mockProfiles.admin} token="token" /></MemoryRouter>)
 }
 
-function fillLesson(dialog: HTMLElement) {
+async function fillLesson(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) {
   fireEvent.change(within(dialog).getByLabelText('课堂名称'), { target: { value: '新课堂' } })
   fireEvent.change(within(dialog).getByLabelText('课堂编码'), { target: { value: 'LESSON-NEW' } })
   fireEvent.change(within(dialog).getByLabelText('开始时间'), { target: { value: '2026-10-01T10:00' } })
   fireEvent.change(within(dialog).getByLabelText('结束时间'), { target: { value: '2026-10-01T11:00' } })
-  fireEvent.change(within(dialog).getByLabelText('地点'), { target: { value: '三号教室' } })
-  fireEvent.change(within(dialog).getByLabelText('课程课时类型编号'), { target: { value: 'credit_voice' } })
+  fireEvent.change(within(dialog).getByLabelText('上课地点'), { target: { value: '三号教室' } })
+  await chooseReference(user, dialog, '扣减哪种课时', '综合声乐')
+}
+
+async function chooseReference(user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, label: string, query: string) {
+  const input = within(scope).getByLabelText(label)
+  await user.click(input)
+  await user.type(input, query)
+  await user.keyboard('{Enter}')
 }
 
 async function openLesson(user: ReturnType<typeof userEvent.setup>, title: string) {

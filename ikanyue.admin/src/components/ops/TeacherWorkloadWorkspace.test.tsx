@@ -12,19 +12,19 @@ describe('teacher workload workspace', () => {
     const confirm = vi.spyOn(api, 'confirmTeacherCredit')
     render(<TeacherWorkloadWorkspace api={api} token="token" />)
 
-    expect(await screen.findByText('teacher_1')).toBeInTheDocument()
+    expect((await screen.findAllByText('林老师')).length).toBeGreaterThan(0)
     await user.click(screen.getAllByRole('button', { name: '复核确认' })[0])
     const dialog = screen.getByRole('dialog', { name: '确认教师工作量' })
-    expect(dialog).toHaveTextContent('session_teacher_1')
+    expect(dialog).toHaveTextContent('合唱排练')
     expect(dialog).toHaveTextContent('1')
-    await user.clear(within(dialog).getByLabelText('确认原因'))
-    await user.type(within(dialog).getByLabelText('确认原因'), '教务复核无误')
+    await user.clear(within(dialog).getByLabelText('确认说明'))
+    await user.type(within(dialog).getByLabelText('确认说明'), '教务复核无误')
     await user.click(within(dialog).getByRole('button', { name: '确认工作量' }))
 
     await waitFor(() => expect(confirm).toHaveBeenCalledWith('token', 'teacher_event_1', '教务复核无误'))
     expect(await screen.findByText('还没有待确认教师工作量')).toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: '已确认' }))
-    expect(await screen.findByText('teacher_1')).toBeInTheDocument()
+    expect((await screen.findAllByText('林老师')).length).toBeGreaterThan(0)
   })
 
   it('shows command and loading errors with retryable state', async () => {

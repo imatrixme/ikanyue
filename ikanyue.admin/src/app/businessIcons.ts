@@ -44,6 +44,7 @@ export const viewBusinessIcons: Record<AppView, string> = {
   calendar: businessIcons.calendar,
   appointments: businessIcons.bookings,
   accounts: businessIcons.validity,
+  payments: businessIcons.enrollments,
   teachers: businessIcons.teachers,
   exceptions: businessIcons.alert,
   audit: businessIcons.history,

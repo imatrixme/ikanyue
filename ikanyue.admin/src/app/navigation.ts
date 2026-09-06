@@ -12,6 +12,7 @@ export const viewPaths: Record<AppView, string> = {
   calendar: '/calendar',
   appointments: '/appointments',
   accounts: '/lesson-hours',
+  payments: '/payments',
   teachers: '/teacher-workload',
   exceptions: '/exceptions',
   audit: '/audit',
@@ -47,6 +48,7 @@ export const navigationGroups: Array<{
     label: '核销与审计',
     items: [
       { view: 'accounts', label: '课时账户', icon: viewBusinessIcons.accounts },
+      { view: 'payments', label: '收款与退款', icon: viewBusinessIcons.payments },
       { view: 'teachers', label: '教师工作量', icon: viewBusinessIcons.teachers },
       { view: 'exceptions', label: '异常中心', icon: viewBusinessIcons.exceptions },
       { view: 'audit', label: '操作审计', icon: viewBusinessIcons.audit },
@@ -73,6 +75,7 @@ export const viewEyebrows: Record<AppView, string> = {
   calendar: '全机构课程日历',
   appointments: '预约队列、开放时间与冲突',
   accounts: '学员课时余额与来源',
+  payments: '订单收款、原路退款与渠道核对',
   teachers: '教师授课工作量',
   exceptions: '待处理业务异常',
   audit: '关键操作追踪',

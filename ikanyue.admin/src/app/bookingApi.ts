@@ -58,7 +58,7 @@ export function createHttpBookingOpsApi(baseUrl: string): BookingOpsApi {
     getBookingAppointment: (token, id) => request(`${baseUrl}/course-bookings/appointments/${encodeURIComponent(id)}`, { token }),
     confirmBookingAppointment: (token, id) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/confirm`, {}),
     declineBookingAppointment: (token, id, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/decline`, { reason }),
-    cancelBookingAppointment: (token, id, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/cancel`, { reason }),
+    cancelBookingAppointment: (token, id, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/cancel`, { reason, cancellationType: 'institution' }),
     rescheduleBookingAppointment: (token, id, newStartAt, newEndAt, reason) => command(token, `/course-bookings/appointments/${encodeURIComponent(id)}/reschedule`, { newStartAt, newEndAt, reason }),
     listBookingPolicies: (token, query = {}) => request(`${baseUrl}/course-bookings/policies${toQuery(query)}`, { token }),
     createBookingPolicy: (token, data) => command(token, '/course-bookings/policies', data),
@@ -206,7 +206,11 @@ function createMockBookingStore() {
   const referenceData: BookingReferenceData = {
     teachers: [{ id: 'teacher_1', name: '林老师', cellphone: '13800138001', avatar: '' }, { id: 'teacher_2', name: '周老师', cellphone: '13800138002', avatar: '' }],
     courses: [{ id: 'course_1', code: 'VOICE-1V1', name: '一对一声乐课', durationMinutes: 60, defaultCreditTypeId: 'credit_1' }],
-    creditTypes: [{ id: 'credit_1', code: 'VOICE-HOUR', name: '一对一声乐课时', courseSpecId: 'course_1', unitLabel: '课时' }],
+    creditTypes: [
+      { id: 'credit_1', code: 'VOICE-HOUR', name: '一对一声乐课时', courseSpecId: 'course_1', unitLabel: '课时' },
+      { id: 'credit_voice', code: 'VOCAL-GROUP-HOUR', name: '综合声乐课时', courseSpecId: 'course_1', unitLabel: '课时' },
+      { id: 'credit_universal', code: 'UNIVERSAL-CREDIT', name: '通用兑换额度', courseSpecId: '', unitLabel: '额度' },
+    ],
     policies,
   }
   const offerings: BookingOffering[] = [{ id: 'offering_1', teacher: { teacherId: 'teacher_1', name: '林老师' }, course: { courseId: 'course_1', name: '一对一声乐课' }, creditTypeId: 'credit_1', policyId: 'policy_1', location: '二号琴房', availabilityMode: 'custom', status: 'active', version: 1 }]
