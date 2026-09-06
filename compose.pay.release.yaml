@@ -1,0 +1,47 @@
+# Opt-in release template. Live configuration requires an explicit release acceptance gate.
+services:
+  pay-pocketbase:
+    image: elestio/pocketbase:v0.32.0
+    restart: unless-stopped
+    entrypoint: ["/usr/local/bin/pocketbase", "serve", "--http=127.0.0.1:8090", "--dir=/pb_data"]
+    volumes:
+      - "${PAY_DATA_SOURCE:?Set the backed-up absolute payment data path}:/pb_data"
+    ports:
+      - "127.0.0.1:${PAY_RELEASE_PORT:-1340}:1340"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  gateway:
+    image: "${PAY_IMAGE:?Set an immutable qualified gateway image tag}"
+    build:
+      context: ./kanyue.pay
+    restart: unless-stopped
+    network_mode: service:pay-pocketbase
+    volumes:
+      - "${PAY_CREDENTIALS_DIR:?Read-only credential directory required}:/run/pay-secrets:ro"
+    depends_on:
+      pay-pocketbase:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PAY_PROVIDER: "${PAY_PROVIDER:?No mock provider is permitted in production}"
+      PAY_LIVE_ENABLED: "${PAY_LIVE_ENABLED:-false}"
+      PAY_RELEASE_APPROVAL: "${PAY_RELEASE_APPROVAL:-}"
+      PAY_WECHAT_CREDENTIALS_FILE: /run/pay-secrets/wechat.json
+      PAY_EVENT_URL: "${PAY_EVENT_URL:-}"
+      PAY_EVENT_TOKEN: "${PAY_EVENT_TOKEN:-}"
+      PAY_PB_URL: http://127.0.0.1:8090
+      PAY_PB_EMAIL: "${PAY_PB_EMAIL:?Required}"
+      PAY_PB_PASSWORD: "${PAY_PB_PASSWORD:?Required}"
+      PAY_SERVICE_TOKEN: "${PAY_SERVICE_TOKEN:?Required}"
+      PAY_CLIENT_ID: kanyue
+      PAY_HOST: 0.0.0.0
+      PAY_PORT: "1340"
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:1340/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12

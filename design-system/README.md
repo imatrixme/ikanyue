@@ -47,3 +47,12 @@ geometry, but colors, typography, states, shared control geometry, and repeated
 ticket patterns must use generated tokens. The parent remains dependency-neutral;
 the generator uses only Node.js standard-library APIs and does not create a root
 package or workspace.
+
+## Miniapp Course Navigation
+
+Course shop and booking-list tabs reuse `SegmentedControl`, as course schedules
+already do. Its compact tab height is separate from the touch-height action
+buttons; using the same tokens does not justify a second tab implementation.
+Course-shop entry rows use the existing `courses-action-list` container around
+`AccountRow`. Immersive pages must use both `PageHeader` and `immersivePageChrome`
+in the page config so the native navigation bar matches the content header.

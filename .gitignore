@@ -46,6 +46,8 @@ yarn-error.log*
 
 # API local data
 .local/
+.playwright-cli/
+output/playwright/
 **/.tmp/
 **/database/
 **/pb_data/

@@ -22,3 +22,7 @@
 	path = ikanyue.website
 	url = git@github.com:imatrixme/ikanyue.website.git
 	branch = feature/course-credit-system
+[submodule "kanyue.pay"]
+	path = kanyue.pay
+	url = git@github.com:imatrixme/ikanyue.pay.git
+	branch = master

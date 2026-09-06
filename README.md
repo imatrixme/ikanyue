@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | `ikanyue.taro3` | 微信小程序 | Taro / Vue |
 | `ikanyue.mapi.hono` | 后端 API | Hono / Node.js or Bun |
+| `kanyue.pay` | 独立支付网关（当前仅 mock） | Hono / Bun 1.4.1 / 独立 PocketBase |
 | `ikanyue.admin` | 运营后台 | React / Vite |
 | `ikanyue.website` | 看乐声乐官网 | Next.js |
 | `ikanyue.m.nuxt` | 活动页网站 | Nuxt |
@@ -16,6 +17,8 @@
 ## Usage
 
 这个仓库没有根 `package.json`，也没有根 workspace 配置。进入具体子模块后按该项目自己的 README、锁文件和脚本操作。
+
+`kanyue.pay` 保持独立仓库、依赖和锁文件，远程为 `git@github.com:imatrixme/ikanyue.pay.git`；根仓库通过 submodule 记录其提交引用。
 
 ```bash
 cd ikanyue.taro3
@@ -49,6 +52,7 @@ flutter run
 | --- | --- | --- |
 | `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `release/2.0.0` |
 | `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `release/2.0.0` |
+| `kanyue.pay` | `git@github.com:imatrixme/ikanyue.pay.git` | `master` |
 | `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `release/2.0.0` |
 | `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `release/2.0.0` |
 | `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
@@ -114,7 +118,10 @@ git commit -m "Update ikanyue.taro3 submodule"
 根目录使用同一个入口管理本地测试环境和正式 Compose 环境：
 
 ```bash
-# 本地测试：PocketBase、Hono、admin、小程序 watcher
+# 首次显式初始化：两个独立 PocketBase、课程和支付测试数据
+./scripts/kanyue-stack.sh test init
+
+# 日常启动：两个 PocketBase、支付网关、Hono、恢复 worker、admin、小程序 watcher
 ./scripts/kanyue-stack.sh test
 
 # 查看状态、日志、健康检查与关闭
@@ -124,15 +131,26 @@ git commit -m "Update ikanyue.taro3 submodule"
 ./scripts/kanyue-stack.sh test down
 ```
 
-首次运行会从 `.env.localdocker.example` 自动创建忽略提交的 `.env.localdocker`，构建 Docker 镜像、初始化 PocketBase schema 与本地测试数据，并将小程序输出到 `ikanyue.taro3/dist`。默认后台账号为 `admin / admin870329`，PocketBase 超级用户为 `admin@local.com / admin870329`，本地学员账号为 `13800000001 / admin870329`。每个未封禁学员首次会获得 10 节“成人声乐一对一”本地课时，可直接在小程序中选择教师和时段报课；重启不会重置已经消耗的课时。这些弱口令只允许配合 `BIND_ADDR=127.0.0.1` 使用。
+本地测试不使用 Docker。`init` 显式创建 `.local/native/environment.json`（权限 0600）、独立业务库和支付库，初始化 schema 与测试数据。普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷。业务库账号 `admin@local.com / admin870329`；Admin `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
 
-重复启动默认利用 Docker 构建缓存；只想启动现有镜像时使用：
+默认端口：Admin `18180`、业务 API `1437`、支付网关 `1440`、业务 PocketBase `18190`、支付 PocketBase `18192`。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。
+
+运行前分别安装各子项目依赖。支付网关固定 Bun 1.4.1，可在根目录独立安装工具链（不创建根 JS 工作区）：
 
 ```bash
-./scripts/kanyue-stack.sh test up --no-build
+npm install --prefix .local/toolchains/bun-1.4.1 bun@1.4.1
+# PocketBase 0.32.0 可执行文件放在 .local/bin/pocketbase
+# kanyue.pay 内使用上述 Bun 执行 install --frozen-lockfile
+./scripts/kanyue-stack.sh test restart gateway
+./scripts/kanyue-stack.sh test logs commerce-worker
+node scripts/commerce-smoke.mjs
 ```
 
-本地 schema/种子脚本需要先在 `ikanyue.mapi.hono` 安装依赖；小程序依赖由 Compose 的 `test` profile 单独安装和缓存。在微信开发者工具中打开生成的 `ikanyue.taro3/dist` 目录。
+在微信开发者工具中打开 `ikanyue.taro3` 项目目录，其 `project.config.json` 指向 `dist/` 构建产物。本地模拟支付不会扣真实款；`commerce-smoke` 会留下带联调标识的订单记录，不清空数据。真机不能访问 Mac 的 `127.0.0.1`，LAN 暴露需要另行显式配置。发布边界见 [支付架构决策](docs/architecture/payment-gateway.md)。
+
+支付运营入口是 Admin 的「收款与退款」：订单管理、课程商品、待处理异常、账单与到账。支持按姓名查订单、按原实付规则退款、发布分时间点取消政策、异常重试和账单核对。`node scripts/commerce-smoke.mjs --tiered` 验证分时点现金退费及失败重试。真实微信通道代码有显式上线门禁，本地仍为响应 mock；商户号、真机收银台和真实账单验收未完成前不要开启真实收款。
+
+当前本地支付模式为 `wechatpay-mock`：微信 API v3 请求签名、应答验签、通知解密实际执行，仅渠道 HTTP 响应和收银结果模拟，不访问真实微信支付。既有 `mock` 订单保留原渠道；支付 schema 升级需显式执行，不随普通启动迁移。接口与验收边界见 [支付网关说明](kanyue.pay/README.md)。
 
 ## 1Panel / OpenResty deploy
 

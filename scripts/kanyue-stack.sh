@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
-
 set -Eeuo pipefail
-
+if [[ "${1:-}" == "test" ]]; then
+  shift
+  exec node "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/native-stack.mjs" "${@:-up}"
+fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/ikanyue.mapi.hono"
 MINIAPP_DIR="$ROOT_DIR/ikanyue.taro3"
-
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/kanyue-stack.sh test [up|restart|down|status|logs|smoke|cleanup] [options]
+  ./scripts/kanyue-stack.sh test [init|up|restart|down|status|logs|smoke] [service]
   ./scripts/kanyue-stack.sh prod [up|restart|down|status|logs|smoke|cleanup] [options]
 
 Defaults:
-  test up     .env.localdocker, project kanyue_local, builds Docker images,
-              initializes local PocketBase data, and starts the miniapp watcher.
+  test up     Native processes; run test init explicitly once beforehand.
   prod up     .env.deploy, project kanyue_prod, starts the existing server stack.
 
 Options:
   --env-file <path>          Override the environment file.
   --project <name>           Override the Compose project name.
-  --build                    Build images before test startup.
-  --no-build                 Skip image builds during test startup.
+  --no-build                 Legacy native-start compatibility; no images built.
   --builder <name>           Dedicated BuildKit builder (default: kanyue-builder).
   --build-cache-max <size>   Cache retained for that builder (default: 100mb).
   --confirm-production       Confirm a production state change.
@@ -31,7 +30,6 @@ Production startup never applies schema, seeds test data, builds the miniapp,
 or changes OpenResty. Use the production deployment runbook for those actions.
 EOF
 }
-
 die() {
   echo "error: $*" >&2
   exit 1
