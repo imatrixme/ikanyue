@@ -4,7 +4,7 @@ useSeoMeta({ title: '隐私说明', description: '看乐艺术官网隐私与数
 
 <template>
   <div>
-    <LayoutPageHero eyebrow="PRIVACY" title="隐私说明" description="官网只展示公开课程与活动信息，不在站内直接提交咨询资料。" compact />
+    <LayoutPageHero title="隐私说明" description="官网只展示公开课程与活动信息，不在站内直接提交咨询资料。" compact />
     <section class="section-band">
       <article class="site-container prose-page">
         <h2>官网信息范围</h2>

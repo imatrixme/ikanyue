@@ -44,7 +44,7 @@
 }
 
 .home-hero h1 {
-  max-width: 13ch;
+  max-width: 10em;
   margin-top: var(--ky-space-5);
   font-size: var(--ky-web-display);
   line-height: var(--ky-web-display-line);
@@ -90,7 +90,7 @@
 }
 
 .faculty-feature__intro h2 {
-  max-width: 16ch;
+  max-width: 14em;
   margin-top: var(--ky-space-3);
   font-size: var(--ky-web-heading);
   line-height: var(--ky-web-title-line);
@@ -277,7 +277,7 @@
 }
 
 .activity-detail-hero h1 {
-  max-width: 18ch;
+  max-width: 14em;
   margin-top: var(--ky-space-4);
   font-size: var(--ky-web-display);
   line-height: var(--ky-web-display-line);
@@ -349,7 +349,7 @@
 }
 
 .journey-card h2 {
-  max-width: 20ch;
+  max-width: 16em;
   margin-top: var(--ky-space-3);
   color: var(--card-foreground);
   font-size: var(--ky-web-heading);
@@ -427,7 +427,7 @@
 
 .public-course-index {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   border-top: 2px solid var(--primary);
   border-bottom: 1px solid var(--border);
 }
@@ -442,15 +442,6 @@
 
 .public-course-index a:nth-child(3n) {
   border-right: 0;
-}
-
-.public-course-index span,
-.package-ledger-row header > p,
-.public-detail__facts > p,
-.package-detail__price > p {
-  color: var(--primary);
-  font-size: var(--ky-web-caption);
-  font-weight: var(--ky-font-weight-bold);
 }
 
 .public-course-index strong {
@@ -478,7 +469,6 @@
 }
 
 .package-ledger-row header h3 {
-  margin-top: var(--ky-space-2);
   color: var(--card-foreground);
   font-size: var(--ky-web-title-sm);
 }

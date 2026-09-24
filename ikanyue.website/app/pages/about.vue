@@ -8,7 +8,6 @@ useSeoMeta({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="ABOUT KANYUE"
       title="让声音成为能够长期使用与表达的能力"
       description="看乐艺术以年龄、身体状态与真实目标为起点，建立清楚、尊重差异，也能够走向合唱与舞台的声乐学习方式。"
       image="/images/vocal-community.webp"
@@ -16,7 +15,7 @@ useSeoMeta({
     />
     <section class="section-band section-band--paper">
       <div class="site-container about-story">
-        <UiSectionHeading eyebrow="OUR APPROACH" title="专业不是制造距离，而是把复杂变化解释清楚" />
+        <UiSectionHeading title="专业不是制造距离，而是把复杂变化解释清楚" />
         <div class="about-story__copy">
           <p>儿童需要被认真对待，成年人也不该因为起步较晚而降低对学习质量的要求。看乐遵守同一套健康与表达标准，再根据年龄、声音状态、经验和生活节奏调整训练内容。</p>
           <p>课程从听觉、呼吸、语言和身体协调出发。技术、作品理解、合唱与舞台实践并非独立模块，而是在解决具体声音问题时逐步连接起来。</p>

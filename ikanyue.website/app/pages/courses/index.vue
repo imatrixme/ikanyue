@@ -27,11 +27,10 @@ useHead({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="COURSES"
       title="声音会变化，训练路径也必须随年龄变化"
       description="我们从生理阶段、听觉经验、表达目标和可投入时间出发，建立能够被理解、被复习、也能够长期执行的声乐计划。"
-      image="/images/vocal-ensemble.webp"
-      image-alt="不同年龄段的学员使用谱架和声乐谱进行合唱排练"
+      image="/images/vocal-school-age.webp"
+      image-alt="少儿在钢琴辅助下对照谱架上的声乐谱进行视唱练耳"
     />
 
     <section class="section-band section-band--paper">
@@ -45,7 +44,6 @@ useHead({
     <section class="section-band">
       <div class="site-container public-catalog">
         <UiSectionHeading
-          eyebrow="CURRENT CATALOG"
           title="当前开放的课程规格与课包"
           description="价格、课点构成和有效期来自当前发布目录；提交前由教务确认适合的课程与教师。"
         />
@@ -70,9 +68,8 @@ useHead({
               :key="course.code"
               :to="`/courses/${encodeURIComponent(course.code)}`"
             >
-              <span>{{ course.code }}</span>
               <strong>{{ course.name }}</strong>
-              <small>{{ course.durationMinutes }} 分钟 · {{ course.deliveryMode }}</small>
+              <small>{{ course.durationMinutes }} 分钟 · {{ deliveryLabel(course.deliveryMode) }}</small>
             </NuxtLink>
           </nav>
           <div v-if="catalog.packages.length" class="package-ledger">
@@ -89,7 +86,7 @@ useHead({
 
     <section class="section-band section-band--paper">
       <div class="site-container learning-path">
-        <UiSectionHeading eyebrow="HOW IT WORKS" title="先判断声音阶段，再决定训练重点" />
+        <UiSectionHeading title="先判断声音阶段，再决定训练重点" />
         <ol>
           <li><span>01</span><div><h3>了解年龄、目标与声音经验</h3><p>确认当前用声状态、既往学习、喜欢的作品、可投入时间，以及最希望改善的具体问题。</p></div></li>
           <li><span>02</span><div><h3>在真实课堂中观察</h3><p>通过呼吸、模唱、语言和短句练习判断听觉、协调与表达状态，也判断师生沟通是否匹配。</p></div></li>

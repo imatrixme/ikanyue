@@ -10,7 +10,6 @@ useSeoMeta({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="ACTIVITIES"
       title="课堂之外，声音需要在真实空间里发生"
       description="开放课、合唱排练、工作坊与阶段展演让学习被听见，也帮助学员理解协作、空间和舞台。"
       image="/images/vocal-performance.webp"

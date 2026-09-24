@@ -6,8 +6,8 @@ const route = useRoute()
 const { activity, pending, error, refresh } = useActivity(() => String(route.params.id))
 
 const start = computed(() => activity.value ? new Date(activity.value.startTime) : null)
-const dateText = computed(() => start.value ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(start.value) : '')
-const timeText = computed(() => start.value ? new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(start.value) : '')
+const dateText = computed(() => start.value ? academyTime(start.value, { dateStyle: 'long' }) : '')
+const timeText = computed(() => start.value ? academyTime(start.value, { hour: '2-digit', minute: '2-digit', hour12: false }) : '')
 const image = computed(() => activity.value ? resolveActivityImage(activity.value) : '/images/vocal-performance.webp')
 const summary = computed(() => activity.value?.summary || activity.value?.description || '查看看乐艺术声乐活动详情。')
 

@@ -16,7 +16,7 @@
   }
 
   .faculty-feature__intro h2 {
-    max-width: 24ch;
+    max-width: 18em;
   }
 
   .story-preview__grid {
@@ -150,13 +150,38 @@
     font-size: var(--ky-web-title);
   }
 
+  .course-grid {
+    display: grid;
+    grid-auto-columns: 82%;
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    gap: var(--ky-space-4);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding-bottom: var(--ky-space-2);
+  }
+
   .course-card {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    scroll-snap-align: start;
   }
 
   .course-card__media {
     min-height: 0;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
+  }
+
+  .course-card__body {
+    padding: var(--ky-space-5);
+  }
+
+  .course-card__body > p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
   }
 
   .activity-ticket {
@@ -251,7 +276,7 @@
 @media (max-width: 420px) {
   .site-container,
   .site-header__inner {
-    width: min(calc(100% - var(--ky-space-4)), var(--ky-container-content));
+    width: min(calc(100% - var(--ky-space-8)), var(--ky-container-content));
   }
 
   .home-hero__brand {

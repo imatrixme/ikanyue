@@ -76,7 +76,7 @@
 }
 
 .contact-preparation h2 {
-  max-width: 18ch;
+  max-width: 14em;
   margin-top: var(--ky-space-3);
   color: var(--card-foreground);
   font-size: var(--ky-web-heading);

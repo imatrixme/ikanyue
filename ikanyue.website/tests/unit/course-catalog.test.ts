@@ -7,10 +7,14 @@ import {
 } from '../../server/utils/course-catalog'
 import {
   formatPackagePrice,
+  activationLabel,
+  deliveryLabel,
   formatPackageValidity,
+  grantQuantity,
   packageHandoffHref,
 } from '~/utils/course-catalog'
 import type { PublicCoursePackage } from '~/types/content'
+import { academyTime } from '~/utils/academy-time'
 
 describe('public course catalog boundary', () => {
   it('allowlists public course and package fields', () => {
@@ -67,7 +71,8 @@ describe('public package presentation', () => {
     const item = coursePackage()
     expect(formatPackagePrice(item)).toMatch(/2,800/)
     expect(formatPackagePrice({ ...item, price: { ...item.price, currency: '' } })).toMatch(/2,800/)
-    expect(formatPackageValidity(item)).toBe('激活后 180 天有效')
+    expect(formatPackageValidity(item)).toBe('生效后 180 天有效')
+    expect(formatPackageValidity({ ...item, validity: { ...item.validity, activationMode: 'GRANT_TIME' } })).toBe('购买后 180 天有效')
     expect(formatPackageValidity({
       ...item, validity: { ...item.validity, expiryPolicy: 'NO_EXPIRY' },
     })).toBe('长期有效')
@@ -89,6 +94,25 @@ describe('public package presentation', () => {
       .toBe('https://mini.example.com/open?package=VOCAL-10')
     expect(packageHandoffHref(mini, 'https://mini.example.com/open?scene=web'))
       .toBe('https://mini.example.com/open?scene=web&package=VOCAL-10')
+  })
+})
+
+describe('visitor-facing catalog labels', () => {
+  it('never shows raw catalog enums', () => {
+    expect(deliveryLabel('one_to_one')).toBe('一对一')
+    expect(deliveryLabel('unknown_mode')).toBe('面授课程')
+    expect(activationLabel('GRANT_TIME')).toBe('购买后立即生效')
+    expect(activationLabel('SOMETHING')).toBe('以确认单为准')
+    const grant = coursePackage().grants[0]
+    expect(grantQuantity({ ...grant, unitLabel: 'lesson' })).toBe('10 节')
+    expect(grantQuantity({ ...grant, unitLabel: 'mystery_unit' })).toBe('10 节')
+    expect(grantQuantity(grant)).toBe('10 课时')
+  })
+
+  it('formats activity times in the academy time zone', () => {
+    const start = new Date('2026-09-07T02:00:00.000Z')
+    expect(academyTime(start, { hour: '2-digit', minute: '2-digit', hour12: false })).toBe('10:00')
+    expect(academyTime(start, { day: '2-digit' }).replace(/\D/g, '')).toBe('07')
   })
 })
 

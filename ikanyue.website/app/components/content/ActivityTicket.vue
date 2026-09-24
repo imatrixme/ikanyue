@@ -6,10 +6,10 @@ import { resolveActivityImage } from '~/utils/activity-media'
 const props = defineProps<{ activity: Activity }>()
 
 const start = computed(() => new Date(props.activity.startTime))
-const month = computed(() => new Intl.DateTimeFormat('zh-CN', { month: 'short' }).format(start.value))
-const day = computed(() => String(start.value.getDate()).padStart(2, '0'))
-const weekday = computed(() => new Intl.DateTimeFormat('zh-CN', { weekday: 'short' }).format(start.value))
-const time = computed(() => new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(start.value))
+const month = computed(() => academyTime(start.value, { month: 'short' }))
+const day = computed(() => academyTime(start.value, { day: '2-digit' }).replace(/\D/g, ''))
+const weekday = computed(() => academyTime(start.value, { weekday: 'short' }))
+const time = computed(() => academyTime(start.value, { hour: '2-digit', minute: '2-digit', hour12: false }))
 const image = computed(() => resolveActivityImage(props.activity))
 const summary = computed(() => props.activity.summary || props.activity.description || '查看本场活动的时间、地点与参与信息。')
 </script>

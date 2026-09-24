@@ -12,7 +12,6 @@ defineProps<{ course: Course; index: number }>()
       <span>{{ String(index + 1).padStart(2, '0') }}</span>
     </div>
     <div class="course-card__body">
-      <p class="course-card__focus">{{ course.focus }}</p>
       <h3>{{ course.title }}</h3>
       <p>{{ course.description }}</p>
       <dl>

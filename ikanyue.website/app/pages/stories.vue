@@ -11,7 +11,6 @@ useSeoMeta({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="LEARNING PATHS"
       title="没有统一的起点，只有当前最值得解决的问题"
       description="以下内容依据年龄与学习目标归纳，用于理解训练顺序；每个人的实际进度以课堂评估为准。"
       image="/images/vocal-mature.webp"

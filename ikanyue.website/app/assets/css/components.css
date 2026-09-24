@@ -16,7 +16,7 @@
 }
 
 .section-heading h2 {
-  max-width: 22ch;
+  max-width: 20em;
   color: var(--card-foreground);
   font-size: var(--ky-web-heading);
   line-height: var(--ky-web-title-line);
@@ -84,13 +84,6 @@
   padding: var(--ky-space-6);
 }
 
-.course-card__focus {
-  color: var(--primary);
-  font-size: var(--ky-web-caption);
-  font-weight: var(--ky-font-weight-bold);
-  text-transform: uppercase;
-}
-
 .course-card h3,
 .faculty-card h3,
 .activity-ticket h3 {
@@ -100,7 +93,7 @@
   line-height: var(--ky-web-title-line);
 }
 
-.course-card__body > p:not(.course-card__focus) {
+.course-card__body > p {
   margin-top: var(--ky-space-3);
   color: var(--muted-foreground);
 }
@@ -124,7 +117,7 @@
 
 .course-card__body > a,
 .activity-ticket__body > a,
-.activity-detail__body > a {
+.activity-detail__body > a:not(.site-button) {
   display: inline-flex;
   align-items: center;
   gap: var(--ky-space-1);
@@ -134,6 +127,10 @@
   color: var(--primary-hover);
   font-size: var(--ky-web-body-sm);
   font-weight: var(--ky-font-weight-semibold);
+}
+
+.activity-detail__body > .site-button {
+  margin-top: var(--ky-space-6);
 }
 
 .activity-list {
@@ -223,7 +220,7 @@
   font-size: var(--ky-web-body-sm);
   line-height: 1.45rem;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 2;
 }
 
 .faculty-page-grid,
@@ -259,12 +256,18 @@
 .faculty-card ul {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ky-space-1) var(--ky-space-3);
+  gap: var(--ky-space-2);
   margin-top: var(--ky-space-4);
   list-style: none;
   color: var(--primary-hover);
   font-size: var(--ky-web-caption);
   font-weight: var(--ky-font-weight-semibold);
+}
+
+.faculty-card li {
+  padding: var(--ky-space-1) var(--ky-space-3);
+  border-radius: var(--ky-radius-pill);
+  background: var(--accent);
 }
 
 .faculty-card__statement {
@@ -294,7 +297,7 @@
 }
 
 .contact-band h2 {
-  max-width: 20ch;
+  max-width: 18em;
   margin-top: var(--ky-space-2);
   font-size: var(--ky-web-heading);
   line-height: var(--ky-web-title-line);

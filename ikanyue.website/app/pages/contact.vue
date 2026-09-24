@@ -10,7 +10,6 @@ useSeoMeta({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="CONTACT"
       title="先了解声音与目标，再讨论适合的课程"
       description="一次有效咨询不急于推荐课型。我们会先了解年龄、声音经验、可投入时间和最希望改善的问题。"
       image="/images/vocal-adult.webp"
@@ -39,7 +38,6 @@ useSeoMeta({
         </article>
 
         <div class="contact-preparation">
-          <p class="contact-preparation__eyebrow">BEFORE WE TALK</p>
           <h2>准备三项信息，沟通会更准确</h2>
           <ul>
             <li><Check :size="18" aria-hidden="true" /><span><strong>学习者年龄</strong>儿童与青少年的声音阶段会直接影响训练内容。</span></li>
@@ -52,7 +50,7 @@ useSeoMeta({
 
     <section class="section-band">
       <div class="site-container consultation-process">
-        <UiSectionHeading eyebrow="CONSULTATION" title="从咨询到开始学习" description="具体安排以双方沟通和实际课堂评估为准，不在咨询阶段承诺固定进度。" />
+        <UiSectionHeading title="从咨询到开始学习" description="具体安排以双方沟通和实际课堂评估为准，不在咨询阶段承诺固定进度。" />
         <ol>
           <li><span>01</span><Search :size="22" aria-hidden="true" /><div><h3>微信说明基本情况</h3><p>发送年龄、学习经历、目标和通常可上课时间。</p></div></li>
           <li><span>02</span><MessageCircle :size="22" aria-hidden="true" /><div><h3>确认试听或评估方式</h3><p>根据声音阶段安排适合的老师、课堂形式与观察重点。</p></div></li>

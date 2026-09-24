@@ -48,7 +48,6 @@ useHead({
     <section id="course-directory" class="section-band section-band--paper">
       <div class="site-container">
         <UiSectionHeading
-          eyebrow="COURSE DIRECTORY"
           title="每个年龄阶段，都有不同的声音任务"
           description="课程按生理阶段、学习经验与表达目标组织。我们不使用一套方法覆盖所有人，也不以短期高音或音量替代长期能力。"
         />
@@ -61,7 +60,7 @@ useHead({
     <section class="section-band">
       <div class="site-container">
         <div class="section-heading-row">
-          <UiSectionHeading eyebrow="UPCOMING" title="近期声乐活动" description="开放课、工作坊、合唱排练与学员展演，让课堂中的变化被听见，也让新的目标自然出现。" />
+          <UiSectionHeading title="近期声乐活动" description="开放课、工作坊、合唱排练与学员展演，让课堂中的变化被听见，也让新的目标自然出现。" />
           <UiSiteButton to="/activities" variant="quiet" arrow>全部活动</UiSiteButton>
         </div>
         <div class="activity-list">
@@ -74,7 +73,6 @@ useHead({
       <div class="site-container faculty-feature">
         <div class="faculty-feature__intro">
           <AudioLines :size="28" aria-hidden="true" />
-          <p>TEACHING TEAM</p>
           <h2>声乐教学的核心，是听见细微变化并给出可执行反馈</h2>
           <p>教学团队按年龄与声音阶段协作，关注身体感受、听觉判断、作品理解，以及下一次练习是否足够清楚。</p>
           <UiSiteButton to="/faculty" variant="secondary" arrow>认识教师团队</UiSiteButton>
@@ -87,7 +85,7 @@ useHead({
 
     <section class="section-band">
       <div class="site-container story-preview">
-        <UiSectionHeading eyebrow="LEARNING PATHS" title="声乐成长发生在一连串可感知的变化里" description="以下路径按年龄与学习目标归纳，用于帮助你判断当前阶段，不代表固定进度。" />
+        <UiSectionHeading title="声乐成长发生在一连串可感知的变化里" description="以下路径按年龄与学习目标归纳，用于帮助你判断当前阶段，不代表固定进度。" />
         <div class="story-preview__grid">
           <article v-for="journey in learnerJourneys.slice(0, 4)" :key="journey.stage">
             <span>{{ journey.stage }}</span>

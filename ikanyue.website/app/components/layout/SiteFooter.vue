@@ -23,7 +23,7 @@ import { primaryNav } from '~/data/site'
         <span>© {{ new Date().getFullYear() }} 看乐艺术</span>
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">沪ICP备2024042646号-1</a>
       </div>
-      <span>Voice learning for every stage.</span>
+      <span>页面图片为教学场景示意</span>
     </div>
   </footer>
 </template>

@@ -14,16 +14,15 @@ const validity = computed(() => formatPackageValidity(props.coursePackage))
 <template>
   <article class="package-ledger-row">
     <header>
-      <p>{{ coursePackage.code }}</p>
       <h3>{{ coursePackage.name }}</h3>
-      <p>{{ coursePackage.description }}</p>
+      <p v-if="coursePackage.description">{{ coursePackage.description }}</p>
     </header>
     <dl>
       <div><dt>当前价格</dt><dd>{{ price }}</dd></div>
       <div><dt>有效期</dt><dd>{{ validity }}</dd></div>
       <div>
         <dt>包含</dt>
-        <dd>{{ coursePackage.grants.map(grant => `${grant.quantity} ${grant.unitLabel} ${grant.creditName}`).join(' · ') }}</dd>
+        <dd>{{ coursePackage.grants.map(grant => `${grant.creditName} ${grantQuantity(grant)}`).join(' · ') }}</dd>
       </div>
     </dl>
     <NuxtLink :to="`/packages/${encodeURIComponent(coursePackage.code)}`" :aria-label="`查看${coursePackage.name}`">

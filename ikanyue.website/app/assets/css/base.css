@@ -56,7 +56,10 @@ h1,
 h2,
 h3 {
   letter-spacing: 0;
+  line-break: strict;
+  overflow-wrap: anywhere;
   text-wrap: balance;
+  word-break: keep-all;
 }
 
 p {
@@ -223,7 +226,18 @@ ol {
 }
 
 .site-header__contact {
-  color: var(--primary-hover);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 var(--ky-space-4);
+  border-radius: var(--ky-radius-pill);
+  color: var(--primary-foreground);
+  background: var(--primary);
+  transition: background var(--ky-motion-fast);
+}
+
+.site-header__contact:hover {
+  background: var(--primary-hover);
 }
 
 .site-header__menu,
@@ -302,10 +316,11 @@ ol {
 
 .page-hero__image {
   object-fit: cover;
+  object-position: center 28%;
 }
 
 .page-hero__shade {
-  background: color-mix(in srgb, var(--card-foreground) 58%, transparent);
+  background: color-mix(in srgb, var(--card-foreground) 48%, transparent);
 }
 
 .page-hero__inner {
@@ -322,7 +337,7 @@ ol {
 }
 
 .page-hero h1 {
-  max-width: 16ch;
+  max-width: 12em;
   font-size: var(--ky-web-display);
   line-height: var(--ky-web-display-line);
 }

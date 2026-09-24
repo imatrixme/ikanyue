@@ -13,7 +13,6 @@ useSeoMeta({
 <template>
   <div>
     <LayoutPageHero
-      eyebrow="COURSE PACKAGE"
       :title="coursePackage?.name || '课包详情'"
       :description="coursePackage?.description || '正在读取当前课包信息。'"
       image="/images/vocal-ensemble.webp"
@@ -31,10 +30,9 @@ useSeoMeta({
         />
         <template v-else>
           <header class="package-detail__price">
-            <p>{{ coursePackage.code }}</p>
             <strong>{{ formatPackagePrice(coursePackage) }}</strong>
             <span v-if="coursePackage.price.listAmount > coursePackage.price.saleAmount">
-              标准价 {{ coursePackage.price.listAmount }} {{ coursePackage.price.currency }}
+              原价 <s>{{ formatMoney(coursePackage.price.listAmount, coursePackage.price.currency || 'CNY') }}</s>
             </span>
             <a :href="packageHandoffHref(coursePackage, config.public.miniProgramUrl)" class="site-button site-button--primary">
               {{ coursePackage.purchaseMode === 'mini_program' ? '前往小程序' : '联系教务确认' }}
@@ -45,7 +43,7 @@ useSeoMeta({
               <h2>包含课程点</h2>
               <ul>
                 <li v-for="grant in coursePackage.grants" :key="`${grant.courseCode}-${grant.creditName}`">
-                  <strong>{{ grant.quantity }} {{ grant.unitLabel }}</strong>
+                  <strong>{{ grantQuantity(grant) }}</strong>
                   <span>{{ grant.creditName }}</span>
                   <NuxtLink v-if="grant.courseCode" :to="`/courses/${encodeURIComponent(grant.courseCode)}`">
                     {{ grant.courseName || '查看课程' }}
@@ -54,12 +52,12 @@ useSeoMeta({
               </ul>
             </section>
             <section>
-              <h2>激活与有效期</h2>
+              <h2>生效与有效期</h2>
               <dl>
                 <div><dt>有效期</dt><dd>{{ formatPackageValidity(coursePackage) }}</dd></div>
-                <div><dt>激活方式</dt><dd>{{ coursePackage.validity.activationMode }}</dd></div>
-                <div v-if="coursePackage.validity.activationDeadlineDays !== null">
-                  <dt>激活期限</dt><dd>{{ coursePackage.validity.activationDeadlineDays }} 天内</dd>
+                <div><dt>生效方式</dt><dd>{{ activationLabel(coursePackage.validity.activationMode) }}</dd></div>
+                <div v-if="coursePackage.validity.activationDeadlineDays">
+                  <dt>开始使用期限</dt><dd>购买后 {{ coursePackage.validity.activationDeadlineDays }} 天内</dd>
                 </div>
               </dl>
             </section>

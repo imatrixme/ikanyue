@@ -36,7 +36,7 @@ test('activity cards use compact summaries and details do not repeat them below 
     return { fontSize: style.fontSize, lineClamp: style.webkitLineClamp }
   })
   expect(Number.parseFloat(summaryStyle.fontSize)).toBeLessThan(16)
-  expect(summaryStyle.lineClamp).toBe('6')
+  expect(summaryStyle.lineClamp).toBe('2')
 
   await firstTicket.getByRole('link').click()
   await expect(page.locator('.activity-detail-hero h1')).toBeVisible()
