@@ -21,7 +21,13 @@ const logFile = (name) => join(state, 'logs', `${name}.log`);
 
 function settings() {
   if (!existsSync(configPath)) fail('Run test init first; normal startup never initializes data.');
-  return read(configPath);
+  const config = read(configPath);
+  // Older local configs predate JWT_SECRET; persist one so sessions survive restarts.
+  if (!config.JWT_SECRET) {
+    config.JWT_SECRET = randomBytes(32).toString('hex');
+    writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+  }
+  return config;
 }
 function environment(config) {
   return { ...process.env, ...config, NODE_ENV: 'development', KANYUE_ENV_FILE: '/dev/null',
@@ -131,6 +137,7 @@ async function initialize() {
       VITE_OPS_API_BASE: '/ops', VITE_OPS_API_MOCK: 'false',
       PB_EMAIL: 'admin@local.com', PAY_PB_EMAIL: 'admin@local.com',
       PB_PASSWORD: 'admin870329', PAY_PB_PASSWORD: randomBytes(24).toString('hex'),
+      JWT_SECRET: randomBytes(32).toString('hex'),
       PAY_SERVICE_TOKEN: randomBytes(32).toString('hex'), PAY_MOCK_TOKEN: randomBytes(32).toString('hex'),
       PAY_PROVIDER: 'wechatpay-mock', PAY_CLIENT_ID: 'kanyue', PAY_MOCK_ENABLED: 'true', COURSE_COMMERCE_ENABLED: 'true',
       COURSE_CREDIT_GRANTS_ENABLED: 'true', COURSE_CREDIT_RESERVATION_ENABLED: 'true',

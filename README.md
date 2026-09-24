@@ -50,11 +50,11 @@ flutter run
 
 | Path | Remote | Branch |
 | --- | --- | --- |
-| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `release/2.0.0` |
-| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `release/2.0.0` |
+| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `feature/course-credit-system` |
+| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `feature/course-credit-system` |
 | `kanyue.pay` | `git@github.com:imatrixme/ikanyue.pay.git` | `master` |
-| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `release/2.0.0` |
-| `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `release/2.0.0` |
+| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `feature/course-credit-system` |
+| `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `feature/course-credit-system` |
 | `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
 | `ikanyue.flutter` | `git@github.com:imatrixme/ikanyue.flutter.git` | `douyin` |
 
@@ -176,6 +176,8 @@ admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构�
 实物图片采用 PocketBase 托管写入、MinIO 公开读取：Admin 把 multipart 文件上传到 Hono，Hono 完成管理员鉴权和文件校验后写入 PocketBase 的 `reward_items.imageFile` 文件字段；PocketBase 再通过自身的 S3 存储配置写入 MinIO。Hono 返回记录时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接 `{collectionId}/{recordId}/{filename}`，Admin 和小程序直接访问公开 bucket URL，不经过 PocketBase 域名。`PUBLIC_ASSET_BASE_URL` 为空时仅用于本地开发，回退到 `${PB_PUBLIC_URL:-$PB_URL}/api/files/...`。
 
 S3 endpoint、bucket、access key 和 secret key 只在 PocketBase 管理配置中维护，Admin、Hono 和小程序都不持有这些凭据。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`，并确认公开 bucket 的只读访问策略及 `PUBLIC_ASSET_BASE_URL` 与实际对象路径一致。
+
+`JWT_SECRET`（至少 32 位随机字符）必须在 `.env.deploy` 中设置，否则 Hono 拒绝启动。首次设置或更换该值会让所有已签发令牌失效，学员、教师和后台用户各需重新登录一次。发布前先应用 `ikanyue.mapi.hono/pocketbase/pb_migrations`（含批处理容量迁移），Hono 启动检查发现 PocketBase 批处理容量低于 500 时会拒绝启动。
 
 `prod` 模式只负责启动、重启、停止和检查已经准备好的 Compose 服务，不自动构建发布镜像、不执行 PocketBase schema 迁移、不写入测试数据、不构建小程序，也不修改 OpenResty。正式发布仍须按 `.codex/skills/kanyue-deploy/references/deployment-runbook.md` 完成备份、旁路验证、schema 迁移和流量切换。
 
