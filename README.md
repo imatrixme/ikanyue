@@ -131,7 +131,7 @@ git commit -m "Update ikanyue.taro3 submodule"
 ./scripts/kanyue-stack.sh test down
 ```
 
-本地测试不使用 Docker。`init` 显式创建 `.local/native/environment.json`（权限 0600）、独立业务库和支付库，初始化 schema 与测试数据。普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷。业务库账号 `admin@local.com / admin870329`；Admin `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
+本地测试不使用 Docker。`init` 显式创建 `.local/native/environment.json`（权限 0600）、独立业务库和支付库，初始化 schema 与测试数据。普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷；两个 PocketBase 使用各自的迁移目录并关闭自动迁移。旧本地库若启动时 Hono 报批处理容量低于 500，重新执行一次 `init` 即可补齐。业务库账号 `admin@local.com / admin870329`；Admin `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
 
 默认端口：Admin `18180`、业务 API `1437`、支付网关 `1440`、业务 PocketBase `18190`、支付 PocketBase `18192`。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。
 

@@ -30,6 +30,10 @@ test('native definitions do not run Docker or schema initialization during start
     const service = definition(name, config);
     assert.doesNotMatch(service.command.join(' '), /docker|schema|seed|superuser|upsert/);
   }
+  const business = definition('pocketbase', config).command.join(' ');
+  const payment = definition('pay-pocketbase', config).command.join(' ');
+  assert.match(business, /--migrationsDir=\S+business-data-migrations --automigrate=false/);
+  assert.match(payment, /--migrationsDir=\S+payment-data-migrations --automigrate=false/);
   const env = environment(config);
   assert.equal(env.VITE_OPS_API_BASE, '/ops');
   assert.equal(env.KANYUE_LOCAL_API_ORIGIN, 'http://127.0.0.1:1437');

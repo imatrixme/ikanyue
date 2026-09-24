@@ -36,8 +36,10 @@ function environment(config) {
     PATH: `${dirname(config.BUN_BIN)}:${process.env.PATH || ''}` };
 }
 function definition(name, config) {
+  // Each instance gets its own migrations directory and no dashboard auto-migrations; schema comes from the ensure scripts.
   const pb = (port, directory) => ({ cwd: root, command: [config.POCKETBASE_BIN, 'serve',
-    `--http=127.0.0.1:${port}`, `--dir=${join(state, directory)}`], port: Number(port), url: `http://127.0.0.1:${port}/api/health` });
+    `--http=127.0.0.1:${port}`, `--dir=${join(state, directory)}`, `--migrationsDir=${join(state, `${directory}-migrations`)}`,
+    '--automigrate=false'], port: Number(port), url: `http://127.0.0.1:${port}/api/health` });
   const definitions = {
     pocketbase: pb(config.PB_PORT, 'business-data'),
     'pay-pocketbase': pb(config.PAY_PB_PORT, 'payment-data'),
