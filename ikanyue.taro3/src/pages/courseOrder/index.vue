@@ -2,30 +2,33 @@
   <page-chrome class="commerce-page commerce-order-page" tone="immersive">
     <page-header eyebrow="COURSE ORDER" title="课程订单" />
     <view class="commerce-content">
-    <view v-if="error || !order" class="commerce-state">
-      <async-state :state="error ? 'error' : 'loading'" :kind="error ? 'network' : 'default'" :description="error" :action-label="error ? '重新加载' : ''" @action="load" />
-    </view>
-    <template v-else>
-      <view v-if="order.mockPayment" class="commerce-notice">模拟支付环境，不会扣除真实款项</view>
-      <ticket-section :title="order.name" :subtitle="orderStatus(order)">
-        <view class="commerce-order-list">
-          <account-row :title="order.status === 'pending' || order.status === 'failed' ? '应付金额' : '实付金额'" :value="`¥${money(order.amount)}`" />
-          <account-row v-if="order.refunded" title="已退款" :value="`¥${money(order.refunded)}`" />
-          <account-row v-if="order.cancellationFees" title="取消预约扣费" :value="`¥${money(order.cancellationFees)}`" />
-        </view>
-      </ticket-section>
-      <ticket-section title="退费规则">
-        <text class="commerce-policy">{{ policyText(order.policy) }}</text>
-      </ticket-section>
-      <view class="commerce-actions">
-      <button v-if="order.mockPayment" :disabled="busy" class="commerce-primary" @tap="pay">模拟付款</button>
-      <button v-else-if="order.status === 'pending'" :disabled="busy" class="commerce-primary" @tap="wechatPay">微信支付</button>
-      <button v-if="order.status === 'completed' && order.availableQuantity > 0 && !order.refundPending" :disabled="busy" class="commerce-primary" @tap="book">选择时间预约</button>
-      <button :disabled="busy" class="commerce-secondary" @tap="refresh">查询最新状态</button>
-      <button v-if="order.status === 'completed' && order.availableQuantity > 0 && !order.refundPending" :disabled="busy" class="commerce-secondary" @tap="refund">退还剩余课时</button>
+      <view v-if="error || !order" class="commerce-state">
+        <async-state :state="error ? 'error' : 'loading'" :kind="error ? 'network' : 'default'" :description="error" :action-label="error ? '重新加载' : ''" @action="load" />
       </view>
-      <text v-if="order.refundPending" class="commerce-policy">退款结果确认期间，待退款的剩余课时暂停使用。</text>
-    </template>
+      <template v-else>
+        <view v-if="order.mockPayment" class="commerce-notice">模拟支付环境，不会扣除真实款项</view>
+        <ticket-section :title="order.name" :subtitle="orderStatus(order)">
+          <view class="commerce-order-list">
+            <account-row :title="order.status === 'pending' || order.status === 'failed' ? '应付金额' : '实付金额'" :value="`¥${money(order.amount)}`" />
+            <account-row v-if="order.refunded" title="已退款" :value="`¥${money(order.refunded)}`" />
+            <account-row v-if="order.cancellationFees" title="取消预约扣费" :value="`¥${money(order.cancellationFees)}`" />
+          </view>
+        </ticket-section>
+        <ticket-section title="退费规则">
+          <text class="commerce-policy">{{ policyText(order.policy) }}</text>
+        </ticket-section>
+        <view class="commerce-actions">
+          <template v-if="order.status === 'pending'">
+            <button v-if="order.mockPayment" :disabled="busy" class="commerce-primary" @tap="pay">模拟付款</button>
+            <button v-else :disabled="busy" class="commerce-primary" @tap="wechatPay">微信支付</button>
+          </template>
+          <button v-if="bookable" :disabled="busy" class="commerce-primary" @tap="book">选择时间预约</button>
+          <button v-if="order.status === 'failed'" :disabled="busy" class="commerce-primary" @tap="shop">重新选购</button>
+          <button v-if="settling" :disabled="busy" class="commerce-secondary" @tap="refresh">查询最新状态</button>
+          <button v-if="bookable" :disabled="busy" class="commerce-link" @tap="refund">申请退还剩余课时</button>
+        </view>
+        <text v-if="order.refundPending" class="commerce-policy">退款结果确认期间，待退款的剩余课时暂停使用。</text>
+      </template>
     </view>
   </page-chrome>
 </template>
@@ -44,12 +47,18 @@ import './index.scss';
 export default {
   components: { AccountRow, AsyncState, PageChrome, PageHeader, TicketSection },
   data: () => ({ id: '', order: null, busy: false, error: '' }),
+  computed: {
+    bookable() { return this.order?.status === 'completed' && this.order.availableQuantity > 0 && !this.order.refundPending; },
+    // Only unsettled orders can change after a manual check.
+    settling() { return ['pending', 'granting'].includes(this.order?.status) || Boolean(this.order?.refundPending); },
+  },
   onLoad(query) { this.id = query.id || ''; },
   onShow() { this.load(); },
   async onPullDownRefresh() { try { await this.refresh(); } finally { Taro.stopPullDownRefresh(); } },
   methods: {
     money, orderStatus, policyText,
     book() { Taro.navigateTo({ url: '/pages/appointmentBooking/index' }); },
+    shop() { Taro.redirectTo({ url: '/pages/courseShop/index' }); },
     async load() {
       this.error = '';
       try { this.order = await Commerce.order(this.id); }
@@ -73,7 +82,7 @@ export default {
           await Taro.showModal({ title: '暂时无法退款', content: preview.blocked ? preview.message : '没有可退的剩余课时', showCancel: false }); return;
         }
         const choice = await Taro.showModal({ title: `预计退款 ¥${money(preview.amount)}`,
-          content: `${preview.message}。提交后相应课时暂停使用。`, confirmText: '申请退款' });
+          content: '原路退回，确认前相应课时暂停使用。', confirmText: '申请退款' });
         if (!choice.confirm) return;
         const storageKey = `commerce-refund-${this.id}`;
         const key = Taro.getStorageSync(storageKey) || `refund-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

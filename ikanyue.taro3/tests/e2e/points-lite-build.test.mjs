@@ -260,7 +260,7 @@ assertCompiledText(rewardCatalogOutput, '未达到');
 assertCompiledText(rewardCatalogOutput, '已解锁全部实物');
 assertCompiledText(profileOutput, 'MUSICIAN PROFILE');
 assertCompiledText(profileOutput, 'MUSICIAN 01');
-assertCompiledText(profileOutput, '积分账户');
+assertCompiledText(profileOutput, '学习与积分');
 assertCompiledText(profileOutput, '账号资料');
 assertCompiledText(profileOutput, '登录你的看乐账户');
 assertCompiledText(profileOutput, '手机号登录');

@@ -10,24 +10,19 @@
 
             <view v-if="isLogin()" class="profile-member-pass" @tap="modifyInfo">
                 <view class="profile-member-pass__copy">
-                    <text class="profile-member-pass__eyebrow">KANYUE MUSIC ACADEMY</text>
                     <text class="profile-member-pass__name">{{ displayName }}</text>
                     <text class="profile-member-pass__meta">{{ accountRoleLabel }} {{ maskedPhone }}</text>
-                    <text class="profile-member-pass__meta">账户状态 已连接</text>
                 </view>
                 <view class="profile-member-pass__seal">
                     <text>K</text>
                     <text>MEMBER</text>
-                </view>
-                <view class="profile-member-pass__barcode" aria-hidden="true">
-                    <view v-for="line in 14" :key="line" class="profile-member-pass__barcode-line" />
                 </view>
             </view>
         </view>
 
         <view class="profile-content">
             <template v-if="isLogin()">
-                <ticket-section v-if="role === 'student'" subtitle="查看余额、可领取实物和积分记录" title="积分账户">
+                <ticket-section v-if="role === 'student'" subtitle="积分、剩余课时与课程预约" title="学习与积分">
                     <view class="profile-row-group">
                         <account-row
                             description="查看可领取实物和解锁进度"

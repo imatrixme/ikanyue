@@ -68,7 +68,7 @@
     box-sizing: border-box;
     color: $ky-ink-strong;
     margin-top: $ky-space-4;
-    min-height: 130px;
+    min-height: 98px;
     overflow: hidden;
     padding: $ky-space-4;
     position: relative;
@@ -80,22 +80,14 @@
     z-index: 2;
 }
 
-.profile-member-pass__eyebrow,
 .profile-member-pass__name,
 .profile-member-pass__meta {
     display: block;
 }
 
-.profile-member-pass__eyebrow {
-    color: $ky-primary-strong;
-    font-size: $ky-font-size-2xs;
-    font-weight: $ky-font-weight-black;
-}
-
 .profile-member-pass__name {
     font-size: $ky-font-size-heading;
     font-weight: $ky-font-weight-black;
-    margin-top: $ky-space-2;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -131,19 +123,6 @@
 .profile-member-pass__seal text:last-child {
     font-size: $ky-font-size-2xs;
     font-weight: $ky-font-weight-bold;
-}
-
-.profile-member-pass__barcode {
-    bottom: $ky-space-3;
-    display: flex;
-    gap: 3px;
-    height: 15px;
-    position: absolute;
-    right: $ky-space-4;
-}
-
-.profile-member-pass__barcode-line {
-    border-left: 1px solid $ky-text-muted;
 }
 
 .profile-content {

@@ -114,6 +114,20 @@
   &:active:not([disabled]) { background: $ky-primary-line; }
 }
 
+.commerce-link {
+  margin: 0;
+  padding: $ky-space-2;
+  border: 0;
+  background: transparent;
+  color: $ky-text-secondary;
+  font-size: $ky-font-size-body-sm;
+  line-height: $ky-leading-body;
+
+  &::after { border: 0; }
+  &:focus-visible { outline: 2px solid $ky-focus-ring; outline-offset: 2px; }
+  &[disabled] { opacity: $ky-disabled-opacity; }
+}
+
 .commerce-notice {
   padding: $ky-space-3;
   border: 1px solid $ky-gold-line;
