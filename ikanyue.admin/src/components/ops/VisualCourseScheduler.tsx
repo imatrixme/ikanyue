@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { dateKeyInShanghai } from '../../app/calendarLogic'
 import {
@@ -6,6 +6,7 @@ import {
   SCHEDULER_DAY_START,
   SCHEDULER_SLOT_COUNT,
   SCHEDULER_SLOT_MINUTES,
+  reachableSlot,
   selectionFromSlots,
   slotIsOccupied,
   slotTimeLabel,
@@ -34,6 +35,15 @@ const TIMELINE_WIDTH = SCHEDULER_SLOT_COUNT * SLOT_WIDTH
 export function VisualCourseScheduler({ dateKey, entries, onOpen, onSelect, teachers }: Props) {
   const dragRef = useRef<DragState | null>(null)
   const [drag, setDrag] = useState<DragState | null>(null)
+  const occupiedFor = (teacherId: string) => (slot: number) => slotIsOccupied(entries, teacherId, dateKey, slot)
+
+  // Releasing the pointer outside the grid ends the gesture instead of leaving a stuck highlight.
+  useEffect(() => {
+    const cancel = () => { dragRef.current = null; setDrag(null) }
+    window.addEventListener('pointerup', cancel)
+    window.addEventListener('pointercancel', cancel)
+    return () => { window.removeEventListener('pointerup', cancel); window.removeEventListener('pointercancel', cancel) }
+  }, [])
 
   function begin(teacher: CalendarFacet, slot: number) {
     const next = { teacher, anchor: slot, active: slot }
@@ -44,7 +54,7 @@ export function VisualCourseScheduler({ dateKey, entries, onOpen, onSelect, teac
   function extend(teacher: CalendarFacet, slot: number) {
     const current = dragRef.current
     if (!current || current.teacher.id !== teacher.id) return
-    const next = { ...current, active: slot }
+    const next = { ...current, active: reachableSlot(current.anchor, slot, occupiedFor(teacher.id)) }
     dragRef.current = next
     setDrag(next)
   }
@@ -54,7 +64,7 @@ export function VisualCourseScheduler({ dateKey, entries, onOpen, onSelect, teac
     dragRef.current = null
     setDrag(null)
     if (!current || current.teacher.id !== teacher.id) return
-    onSelect(selectionFromSlots(dateKey, teacher, current.anchor, current.active))
+    onSelect(selectionFromSlots(dateKey, teacher, current.anchor, current.active, occupiedFor(teacher.id)))
   }
 
   if (!teachers.length) return <p className="px-5 py-10 text-center text-sm text-[var(--muted-foreground)]">暂无可排课教师</p>
@@ -65,7 +75,7 @@ export function VisualCourseScheduler({ dateKey, entries, onOpen, onSelect, teac
         <div className="sticky top-0 z-30 flex h-12 border-y border-[var(--border)] bg-[var(--muted)]">
           <div className="sticky left-0 z-40 flex w-40 shrink-0 items-center border-r border-[var(--border)] bg-[var(--muted)] px-4 text-xs font-semibold">教师</div>
           <div className="relative shrink-0" style={{ width: TIMELINE_WIDTH }}>
-            {Array.from({ length: 13 }, (_, index) => <span className="absolute top-0 flex h-full items-center border-l border-[var(--border)] pl-2 text-xs tabular-nums text-[var(--muted-foreground)]" key={index} style={{ left: index * SLOT_WIDTH * 2 }}>{slotTimeLabel(index * 2)}</span>)}
+            {Array.from({ length: SCHEDULER_SLOT_COUNT / 2 + 1 }, (_, index) => <span className="absolute top-0 flex h-full items-center border-l border-[var(--border)] pl-2 text-xs tabular-nums text-[var(--muted-foreground)]" key={index} style={{ left: index * SLOT_WIDTH * 2 }}>{slotTimeLabel(index * 2)}</span>)}
           </div>
         </div>
         {teachers.map((teacher) => {
@@ -79,7 +89,7 @@ export function VisualCourseScheduler({ dateKey, entries, onOpen, onSelect, teac
                 {Array.from({ length: SCHEDULER_SLOT_COUNT }, (_, slot) => {
                   const occupied = slotIsOccupied(entries, teacher.id, dateKey, slot)
                   const selected = drag?.teacher.id === teacher.id && slot >= Math.min(drag.anchor, drag.active) && slot <= Math.max(drag.anchor, drag.active)
-                  return <button aria-label={`在${teacher.name} ${dateKey} ${slotTimeLabel(slot)}新增排课`} className={cn('h-20 border-r border-[var(--border)]/70 outline-none transition-colors hover:bg-[var(--brand-wash)] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]', slot % 2 === 0 && 'border-l border-l-[var(--border)]', occupied && 'cursor-default bg-[var(--muted)]/40', selected && 'bg-[var(--brand-soft)]')} disabled={occupied} key={slot} onClick={(event) => { if (event.detail === 0) onSelect(selectionFromSlots(dateKey, teacher, slot)) }} onPointerDown={() => begin(teacher, slot)} onPointerEnter={() => extend(teacher, slot)} onPointerUp={() => finish(teacher)} type="button" />
+                  return <button aria-label={`在${teacher.name} ${dateKey} ${slotTimeLabel(slot)}新增排课`} className={cn('h-20 border-r border-[var(--border)]/70 outline-none transition-colors hover:bg-[var(--brand-wash)] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]', slot % 2 === 0 && 'border-l border-l-[var(--border)]', occupied && 'cursor-default bg-[var(--muted)]/40', selected && 'bg-[var(--brand-soft)]')} disabled={occupied} key={slot} onClick={(event) => { if (event.detail === 0) onSelect(selectionFromSlots(dateKey, teacher, slot, slot, occupiedFor(teacher.id))) }} onPointerDown={() => begin(teacher, slot)} onPointerEnter={() => extend(teacher, slot)} onPointerUp={() => finish(teacher)} type="button" />
                 })}
                 {teacherEntries.map((entry) => <LessonBlock entry={entry} key={entry.lessonId} onOpen={onOpen} />)}
                 <CurrentTimeLine dateKey={dateKey} />

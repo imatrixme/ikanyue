@@ -1,16 +1,5 @@
 import { request } from './http'
 
-export interface MoneyRecord {
-  id: string
-  reference: string
-  amount: number
-  status: string
-  createdAt: string
-  name: string
-  student: { name: string; cellphone: string } | null
-  fulfillment?: string
-  refunded?: number
-}
 export interface FinanceSummary {
   provider: string
   captured: number
@@ -18,9 +7,6 @@ export interface FinanceSummary {
   refundReserved: number
   fees: number | null
   settled: number | null
-  payments: MoneyRecord[]
-  refunds: MoneyRecord[]
-  findings: Array<{ id: string; data: { targetId: string; reason: string; occurredAt: string } }>
   mockEnabled: boolean
 }
 const base = `${import.meta.env.VITE_OPS_API_BASE || '/ops'}/commerce`
@@ -71,10 +57,5 @@ export const commerceApi = {
 }
 export const orderLabel = (order: CommerceOrder) => order.refundPending ? '退款处理中' : ({ pending: '待付款', granting: '已付款，课时待到账', completed: order.refunded >= order.amount ? '已全额退款' : '已完成', failed: '付款未完成' } as Record<string, string>)[order.status] || '待核对'
 export const money = (value: number | null) => value === null ? '尚未提供' : `¥${(value / 100).toFixed(2)}`
-export function moneyStatus(record: MoneyRecord, refund = false) {
-  if (!refund && record.status === 'succeeded' && record.fulfillment !== 'completed') return '已收款，课时待到账'
-  return ({ pending: refund ? '退款处理中' : '待付款', processing: '退款处理中', succeeded: refund ? '退款成功' : '收款成功',
-    failed: refund ? '退款失败' : '付款失败', closed: '支付已关闭' } as Record<string, string>)[record.status] || '状态待核对'
-}
 export const findingLabel = (reason: string) => ({ LATE_PAYMENT_SUCCESS: '支付关闭后收到成功回执', AMOUNT_MISMATCH: '金额不一致', MISSING_GATEWAY_RECORD: '支付记录缺失',
   UNAPPLIED_SUCCESS: '渠道成功结果尚未同步', MISSING_PROVIDER_SUCCESS: '缺少渠道成功凭证' } as Record<string, string>)[reason] || '需要人工核对'

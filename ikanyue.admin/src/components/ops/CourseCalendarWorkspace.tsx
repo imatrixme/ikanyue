@@ -127,44 +127,40 @@ export function CourseCalendarWorkspace({ api, profile, token }: Props) {
     setScheduleError(''); setScheduleNotice(''); setSelection(next)
   }
 
-  async function saveSchedule(input: CourseScheduleInput, action: 'draft' | 'publish') {
+  // Sessions carry teacher and class only after publication, so the scheduler publishes each lesson it creates.
+  // A lesson whose publication fails is cancelled at once; earlier weeks stay published and are reported.
+  async function saveSchedule(input: CourseScheduleInput) {
     if (!selection) return
     const intervals = weeklyIntervals({ ...selection, startAt: input.startAt, endAt: input.endAt }, input.repeatCount)
-    let createdCount = 0
-    let publishedCount = 0
+    const published: string[] = []
     setLoading(true); setScheduleError(''); setScheduleNotice('')
     try {
-      for (const [index, interval] of intervals.entries()) {
+      for (const interval of intervals) {
         const created = await api.createCourseResource(token, 'lessons', {
-          attendanceRuleSnapshot: { version: 1 },
-          code: schedulerLessonCode(interval.startAt, index),
+          code: schedulerLessonCode(interval.startAt, input.teacherId),
           endAt: interval.endAt,
           location: input.location,
           originType: 'admin',
           requiredCreditTypeId: input.requiredCreditTypeId,
           requiredQuantity: input.requiredQuantity,
-          rosterVersion: 1,
-          settlementRuleSnapshot: { version: 1 },
           startAt: interval.startAt,
           status: 'draft',
-          teacherRuleSnapshot: { version: 1 },
           title: input.title,
-          version: 1,
         })
-        createdCount += 1
-        if (action === 'publish') {
+        try {
           await api.publishLesson(token, created.id, [input.classId], [{ teacherId: input.teacherId, role: 'lead' }])
-          publishedCount += 1
+        } catch (publishError) {
+          await api.setCourseResourceStatus(token, 'lessons', created.id, 'cancelled', '排课发布失败，自动撤销').catch(() => undefined)
+          throw publishError
         }
+        published.push(dayLabel(interval.startAt))
       }
-      setScheduleNotice(action === 'publish' ? `已创建并发布 ${publishedCount} 节课堂` : `已保存 ${createdCount} 个课堂草稿`)
+      setScheduleNotice(`已发布 ${published.length} 节课堂`)
       setSelection(null)
       await load()
     } catch (saveError) {
-      const progress = action === 'publish'
-        ? `已创建 ${createdCount}/${intervals.length} 个草稿，已发布 ${publishedCount} 个。`
-        : `已创建 ${createdCount}/${intervals.length} 个草稿。`
-      setScheduleError(`${progress}${message(saveError, '排课失败')}`)
+      const done = published.length ? `已发布 ${published.join('、')}；` : ''
+      setScheduleError(`${done}第 ${published.length + 1} 节未发布：${message(saveError, '排课失败')}。其余日期未创建。`)
       await load()
     } finally { setLoading(false) }
   }
@@ -197,6 +193,10 @@ function calendarDateLabel(view: CourseCalendarView, dateKey: string) {
   if (view === 'month') return `${date.getUTCFullYear()} 年 ${date.getUTCMonth() + 1} 月`
   if (view === 'week') { const days = visibleCalendarDays(view, dateKey); return `${days[0].slice(5).replace('-', '/')} - ${days[6].slice(5).replace('-', '/')}` }
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC' })
+}
+
+function dayLabel(value: string) {
+  return new Date(value).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Shanghai' })
 }
 
 function isVersionConflict(error: unknown) { return error instanceof Error && /版本|冲突|version|conflict/i.test(error.message) }

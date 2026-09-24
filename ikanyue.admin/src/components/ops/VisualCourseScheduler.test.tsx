@@ -31,6 +31,28 @@ describe('visual course scheduler', () => {
     expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({
       startAt: '2026-08-03T05:00:00.000Z', endAt: '2026-08-03T06:30:00.000Z',
     }))
+
+    // The existing lesson occupies 09:00-10:00: dragging back from 10:30 stops at 10:00, and 08:30 gets a 30-minute default.
+    const afterLesson = screen.getByRole('button', { name: '在周老师 2026-08-03 10:30新增排课' })
+    fireEvent.pointerDown(afterLesson)
+    fireEvent.pointerEnter(screen.getByRole('button', { name: '在周老师 2026-08-03 08:00新增排课' }))
+    fireEvent.pointerUp(afterLesson)
+    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({
+      startAt: '2026-08-03T02:00:00.000Z', endAt: '2026-08-03T03:00:00.000Z',
+    }))
+    const beforeLesson = screen.getByRole('button', { name: '在周老师 2026-08-03 08:30新增排课' })
+    fireEvent.pointerDown(beforeLesson)
+    fireEvent.pointerUp(beforeLesson)
+    expect(onSelect).toHaveBeenLastCalledWith(expect.objectContaining({
+      startAt: '2026-08-03T00:30:00.000Z', endAt: '2026-08-03T01:00:00.000Z',
+    }))
+
+    // Releasing outside the grid clears the pending gesture.
+    fireEvent.pointerDown(dragStart)
+    fireEvent.pointerUp(window)
+    const calls = onSelect.mock.calls.length
+    fireEvent.pointerUp(dragEnd)
+    expect(onSelect).toHaveBeenCalledTimes(calls)
   })
 
   it('derives named class configuration, repeats, and visible conflict behavior in the drawer', async () => {
@@ -47,14 +69,15 @@ describe('visual course scheduler', () => {
     expect(screen.getByLabelText('课时类型')).toHaveValue('随课程自动配置')
     expect(screen.getByLabelText('结束时间')).toHaveValue('2026-08-03T12:30')
     await user.selectOptions(screen.getByLabelText('重复'), '4')
-    await user.click(screen.getByRole('button', { name: '保存草稿' }))
-    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ classId: 'class_1', repeatCount: 4, teacherId: 'teacher_1' }), 'draft')
+    expect(screen.queryByRole('button', { name: '保存草稿' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '发布课堂' }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ classId: 'class_1', repeatCount: 4, teacherId: 'teacher_1' }))
     view.unmount()
 
     render(<CourseScheduleDrawer classes={classes} courses={courses} entries={[entry({ startAt: selection.startAt, endAt: selection.endAt })]} loading={false} onClose={vi.fn()} onSubmit={onSubmit} selection={selection} />)
     await user.selectOptions(screen.getByLabelText('班级'), 'class_1')
     expect(screen.getByRole('alert')).toHaveTextContent('时间冲突')
-    expect(screen.getByRole('button', { name: '创建并发布' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '发布课堂' })).toBeDisabled()
   })
 })
 

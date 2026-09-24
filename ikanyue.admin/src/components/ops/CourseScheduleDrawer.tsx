@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarPlus, Save } from 'lucide-react'
+import { AlertTriangle, CalendarPlus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { shanghaiLocalInput, shanghaiLocalInputToIso } from '../../app/calendarLogic'
@@ -32,7 +32,7 @@ interface Props {
   error?: string
   loading: boolean
   onClose: () => void
-  onSubmit: (input: CourseScheduleInput, action: 'draft' | 'publish') => Promise<void>
+  onSubmit: (input: CourseScheduleInput) => Promise<void>
   selection: CalendarScheduleSelection
 }
 
@@ -72,11 +72,11 @@ export function CourseScheduleDrawer(props: Props) {
     })
   }
 
-  async function submit(action: 'draft' | 'publish') {
-    const issue = validate(value, action, conflicts.length)
+  async function submit() {
+    const issue = validate(value, conflicts.length)
     setValidation(issue)
     if (issue) return
-    await props.onSubmit(value, action)
+    await props.onSubmit(value)
   }
 
   return (
@@ -90,7 +90,7 @@ export function CourseScheduleDrawer(props: Props) {
         </section>
 
         <section className="grid gap-4 border-t border-[var(--border)] pt-5 sm:grid-cols-2">
-          <Field label="班级"><Select allowEmpty aria-label="班级" onChange={(event) => chooseClass(event.target.value)} options={props.classes.map((item) => ({ label: item.name, value: item.id }))} placeholder="选择班级后可直接发布" value={value.classId} /></Field>
+          <Field label="班级"><Select allowEmpty aria-label="班级" onChange={(event) => chooseClass(event.target.value)} options={props.classes.map((item) => ({ label: item.name, value: item.id }))} placeholder="选择上课班级" value={value.classId} /></Field>
           <Field label="课程"><Select aria-label="课程" onChange={(event) => chooseCourse(event.target.value)} options={props.courses.map((item) => ({ label: item.name, value: item.id }))} value={value.courseSpecId} /></Field>
           <Field label="课堂名称"><Input aria-label="课堂名称" onChange={(event) => setValue({ ...value, title: event.target.value })} value={value.title} /></Field>
           <Field label="地点"><Input aria-label="地点" onChange={(event) => setValue({ ...value, location: event.target.value })} value={value.location} /></Field>
@@ -106,8 +106,7 @@ export function CourseScheduleDrawer(props: Props) {
           <Badge tone="neutral">{value.repeatCount} 次 · 每次 {duration || 0} 分钟</Badge>
           <div className="flex flex-wrap justify-end gap-2">
             <Button onClick={props.onClose} type="button" variant="secondary">取消</Button>
-            <Button disabled={props.loading} icon={<Save className="h-4 w-4" />} onClick={() => void submit('draft')} type="button" variant="secondary">保存草稿</Button>
-            <Button disabled={props.loading || conflicts.length > 0 || !value.classId} icon={<CalendarPlus className="h-4 w-4" />} onClick={() => void submit('publish')} type="button">创建并发布</Button>
+            <Button disabled={props.loading || conflicts.length > 0 || !value.classId} icon={<CalendarPlus className="h-4 w-4" />} onClick={() => void submit()} type="button">发布课堂</Button>
           </div>
         </div>
       </div>
@@ -123,13 +122,13 @@ function initialValue(selection: CalendarScheduleSelection): CourseScheduleInput
   }
 }
 
-function validate(value: CourseScheduleInput, action: 'draft' | 'publish', conflictCount: number): string {
+function validate(value: CourseScheduleInput, conflictCount: number): string {
   if (!value.title.trim()) return '请选择课程或填写课堂名称'
   if (!value.courseSpecId || !value.requiredCreditTypeId) return '请选择已配置课时类型的课程或班级'
   if (!durationMinutes(value.startAt, value.endAt)) return '结束时间必须晚于开始时间'
   if (!Number.isInteger(value.requiredQuantity) || value.requiredQuantity < 1) return '每人课时必须为正整数'
-  if (action === 'publish' && !value.classId) return '发布课堂前请选择班级'
-  if (action === 'publish' && conflictCount) return '当前时间存在冲突，可先保存草稿后再调整'
+  if (!value.classId) return '请选择上课班级'
+  if (conflictCount) return '当前时间存在冲突，请调整时间'
   return ''
 }
 

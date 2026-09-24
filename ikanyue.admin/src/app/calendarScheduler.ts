@@ -16,7 +16,7 @@ export interface ScheduleInterval {
 }
 
 export const SCHEDULER_DAY_START = 8 * 60
-export const SCHEDULER_DAY_END = 21 * 60
+export const SCHEDULER_DAY_END = 22 * 60
 export const SCHEDULER_SLOT_MINUTES = 30
 export const SCHEDULER_SLOT_COUNT = (SCHEDULER_DAY_END - SCHEDULER_DAY_START) / SCHEDULER_SLOT_MINUTES
 
@@ -32,16 +32,28 @@ export function calendarViewForContext(value: string | null, mode: CourseCalenda
   return explicit || 'week'
 }
 
+// Walks from the anchor toward the target and stops before the first occupied slot.
+export function reachableSlot(anchorSlot: number, targetSlot: number, occupied: (slot: number) => boolean = () => false): number {
+  const step = targetSlot >= anchorSlot ? 1 : -1
+  let reach = clampSlot(anchorSlot)
+  while (reach !== clampSlot(targetSlot) && !occupied(reach + step)) reach += step
+  return reach
+}
+
 export function selectionFromSlots(
   dayKey: string,
   teacher: { id: string; name: string },
   anchorSlot: number,
   activeSlot = anchorSlot,
+  occupied: (slot: number) => boolean = () => false,
 ): CalendarScheduleSelection {
-  const first = clampSlot(Math.min(anchorSlot, activeSlot))
-  const last = clampSlot(Math.max(anchorSlot, activeSlot))
+  const reach = reachableSlot(anchorSlot, activeSlot, occupied)
+  const first = Math.min(clampSlot(anchorSlot), reach)
+  const last = Math.max(clampSlot(anchorSlot), reach)
+  // A single click proposes one hour only when the following slot is free.
+  const extra = first === last && last + 1 < SCHEDULER_SLOT_COUNT && !occupied(last + 1) ? 2 : 1
   const startMinute = SCHEDULER_DAY_START + first * SCHEDULER_SLOT_MINUTES
-  const endMinute = Math.min(SCHEDULER_DAY_END, SCHEDULER_DAY_START + (last + (first === last ? 2 : 1)) * SCHEDULER_SLOT_MINUTES)
+  const endMinute = Math.min(SCHEDULER_DAY_END, SCHEDULER_DAY_START + (last + extra) * SCHEDULER_SLOT_MINUTES)
   return {
     teacherId: teacher.id,
     teacherName: teacher.name,
@@ -83,9 +95,10 @@ export function slotIsOccupied(entries: CourseCalendarEntry[], teacherId: string
     && overlaps(selection.startAt, slotEnd, entry.startAt, entry.endAt))
 }
 
-export function schedulerLessonCode(startAt: string, occurrence: number): string {
+// Unique per teacher and attempt, so parallel teachers and re-scheduled cancelled slots never collide.
+export function schedulerLessonCode(startAt: string, teacherId: string, nonce = crypto.randomUUID().slice(0, 6)): string {
   const local = shanghaiLocalInput(startAt).replace(/[-:T]/g, '')
-  return `SCH-${local}-${String(occurrence + 1).padStart(2, '0')}`
+  return `SCH-${local}-${teacherId.slice(-6)}-${nonce}`
 }
 
 export function durationMinutes(startAt: string, endAt: string): number {

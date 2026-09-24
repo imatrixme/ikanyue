@@ -140,6 +140,17 @@ describe('points lite app flow', () => {
     expect(screen.getByRole('heading', { name: '学员积分' })).toBeInTheDocument()
   })
 
+  it('discards an expired cached session before calling the API', async () => {
+    const claims = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 60 }))
+    localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: `h.${claims}.s`, profile: mockProfiles.admin }))
+    const api = createMockOpsApi()
+    api.listStudents = vi.fn(api.listStudents)
+    render(<App api={api} />)
+    expect(await screen.findByLabelText('账号或手机号')).toBeInTheDocument()
+    expect(localStorage.getItem('kanyue.points-lite.session')).toBeNull()
+    expect(api.listStudents).not.toHaveBeenCalled()
+  })
+
   it('restores a valid cached session and tolerates an empty first page', async () => {
     localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: 'cached-token', profile: mockProfiles.admin }))
     const api = createMockOpsApi()

@@ -5,6 +5,7 @@ import {
   calendarViewForContext,
   durationMinutes,
   normalizeCalendarMode,
+  reachableSlot,
   scheduleConflicts,
   schedulerLessonCode,
   selectionFromSlots,
@@ -35,6 +36,11 @@ describe('calendar scheduler logic', () => {
     })
     expect(slotTimeLabel(0)).toBe('08:00')
     expect(slotTimeLabel(25)).toBe('20:30')
+    expect(slotTimeLabel(27)).toBe('21:30')
+    const occupied = (slot: number) => slot === 4
+    expect(reachableSlot(2, 6, occupied)).toBe(3)
+    expect(reachableSlot(6, 0, occupied)).toBe(5)
+    expect(selectionFromSlots('2026-08-03', teacher, 3, 3, occupied)).toMatchObject({ endAt: '2026-08-03T02:00:00.000Z' })
   })
 
   it('creates supported weekly occurrences and stable lesson codes', () => {
@@ -44,7 +50,8 @@ describe('calendar scheduler logic', () => {
       '2026-08-17T01:00:00.000Z', '2026-08-24T01:00:00.000Z',
     ])
     expect(weeklyIntervals(selection, 3)).toHaveLength(1)
-    expect(schedulerLessonCode(selection.startAt, 0)).toBe('SCH-202608030900-01')
+    expect(schedulerLessonCode(selection.startAt, 'teacher-1', 'a1b2c3')).toBe('SCH-202608030900-cher-1-a1b2c3')
+    expect(schedulerLessonCode(selection.startAt, 'teacher-2')).not.toBe(schedulerLessonCode(selection.startAt, 'teacher-2'))
     expect(durationMinutes(selection.startAt, selection.endAt)).toBe(60)
   })
 

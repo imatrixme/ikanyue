@@ -3,6 +3,7 @@ import { BrowserRouter, MemoryRouter, useLocation, useNavigate } from 'react-rou
 
 import { createOpsApi, type OpsApi } from './app/api'
 import { viewFromPath, viewPaths } from './app/navigation'
+import { tokenExpiresAt } from './app/session'
 import { appReducer, canAccessView, initialState } from './app/state'
 import type { AppView, LoginResult, RewardItem, RewardItemInput, StudentInput, UploadProgressHandler } from './app/types'
 import { AdminWorkspaceRoutes } from './components/ops/AdminWorkspaceRoutes'
@@ -86,6 +87,18 @@ function AppContent({ api: injectedApi }: AppProps) {
       return null
     }
   }, [api, state.token])
+
+  useEffect(() => {
+    const expiresAt = tokenExpiresAt(state.token)
+    if (expiresAt === null) return
+    const timer = window.setTimeout(() => {
+      clearCachedSession()
+      dispatch({ type: 'logout' })
+      dispatch({ type: 'toast:set', payload: { type: 'error', message: '登录已过期，请重新登录' } })
+      navigate('/', { replace: true })
+    }, Math.min(Math.max(0, expiresAt - Date.now()), 2 ** 31 - 1))
+    return () => window.clearTimeout(timer)
+  }, [navigate, state.token])
 
   useEffect(() => {
     const cached = readCachedSession()
@@ -271,6 +284,11 @@ function readCachedSession(): LoginResult | null {
       return null
     }
     const parsed = JSON.parse(text) as LoginResult
+    const expiresAt = tokenExpiresAt(parsed?.token)
+    if (expiresAt !== null && expiresAt <= Date.now()) {
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+      return null
+    }
     return parsed?.token && parsed?.profile ? parsed : null
   } catch {
     localStorage.removeItem(SESSION_STORAGE_KEY)
