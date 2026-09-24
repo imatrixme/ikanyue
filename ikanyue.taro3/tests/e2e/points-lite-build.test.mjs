@@ -185,17 +185,17 @@ assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
     'imgs/icons/tab-profile-selected.png',
 ]);
 
-[activityConfig, pointsConfig, pointsHistoryConfig, rewardCatalogConfig].forEach((pageConfig) => {
+[activityConfig, pointsConfig, pointsHistoryConfig, rewardCatalogConfig, userinfoConfig, coursesConfig,
+    courseDetailConfig, courseLessonsConfig, courseLessonDetailConfig, teacherLessonDetailConfig,
+    courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.backgroundColorTop, '#f4f4f2');
     assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
     assert.equal(pageConfig.backgroundTextStyle, 'dark');
+    assert.equal(pageConfig.navigationBarBackgroundColor, undefined);
 });
-[profileConfig, userinfoConfig, coursesConfig, courseDetailConfig, courseLessonsConfig,
-    courseLessonDetailConfig, teacherLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
-    assert.equal(pageConfig.backgroundColorTop, '#006241');
-    assert.equal(pageConfig.backgroundColorBottom, '#f4f4f2');
-    assert.equal(pageConfig.backgroundTextStyle, 'light');
-});
+assert.equal(profileConfig.backgroundColorTop, '#006241');
+assert.equal(profileConfig.backgroundColorBottom, '#f4f4f2');
+assert.equal(profileConfig.backgroundTextStyle, 'light');
 assert.equal(activityConfig.enablePullDownRefresh, true);
 assert.equal(activityConfig.disableScroll, undefined);
 assert.equal(activityDetailConfig.enablePullDownRefresh, true);
@@ -209,7 +209,6 @@ assert.equal(userinfoConfig.enablePullDownRefresh, true);
 [coursesConfig, courseDetailConfig, courseLessonsConfig, courseLessonDetailConfig,
     teacherLessonDetailConfig, courseRecordsConfig].forEach((pageConfig) => {
     assert.equal(pageConfig.enablePullDownRefresh, true);
-    assert.equal(pageConfig.navigationBarBackgroundColor, '#006241');
 });
 assert.equal(courseLessonsConfig.onReachBottomDistance, 120);
 assert.equal(courseRecordsConfig.onReachBottomDistance, 120);
@@ -255,21 +254,21 @@ assertCompiledText(pointsHistoryOutput, '已显示全部记录');
 assertCompiledText(pointsHistoryOutput, '暂无积分记录');
 assertCompiledText(rewardCatalogOutput, '实物列表');
 assertCompiledText(rewardCatalogOutput, '全部');
-assertCompiledText(rewardCatalogOutput, '可兑换');
-assertCompiledText(rewardCatalogOutput, '未达到');
+assertCompiledText(rewardCatalogOutput, '可领取');
+assertCompiledText(rewardCatalogOutput, '未解锁');
 assertCompiledText(rewardCatalogOutput, '已解锁全部实物');
-assertCompiledText(profileOutput, 'MUSICIAN PROFILE');
-assertCompiledText(profileOutput, 'MUSICIAN 01');
-assertCompiledText(profileOutput, '学习与积分');
-assertCompiledText(profileOutput, '账号资料');
+assert.equal(profileOutput.includes('MUSICIAN'), false);
+assert.equal(profileOutput.includes('KANYUE ACCOUNT'), false);
+assertCompiledText(profileOutput, '我的预约');
+assertCompiledText(profileOutput, '选课与订单');
+assertCompiledText(profileOutput, '个人资料');
 assertCompiledText(profileOutput, '登录你的看乐账户');
 assertCompiledText(profileOutput, '手机号登录');
 assertCompiledText(profileOutput, '手机号密码登录');
-assertCompiledText(profileOutput, '进入修改');
 assertCompiledText(profileOutput, '了解看乐');
 assertCompiledText(profileOutput, '看乐教学');
 assertCompiledText(profileOutput, '关于看乐');
-assertCompiledText(profileOutput, '查看我的课程');
+assert.equal(profileOutput.includes('查看我的课程'), false, 'tab destinations are not repeated in profile');
 assertCompiledText(coursesOutput, '我的课程');
 assertCompiledText(coursesOutput, '即将上课');
 assertCompiledText(coursesOutput, '剩余课时');
@@ -350,7 +349,7 @@ assert.equal((pointsBundle.match(/reward-tile--more/g) || []).length, 0);
 assert.match(`${pageHeaderSource}\n${profileSource}`, /hero-music\.png/);
 assert.equal(heroTextureSource.includes('background-image'), false);
 assert.match(heroTextureSource, /ky-hero-texture-layer/);
-assert.match(pageHeaderSource, /page-header__texture/);
+assert.equal(pageHeaderSource.includes('page-header__texture'), false, 'content headers sit on the canvas');
 assert.match(profileSource, /profile-hero__texture/);
 assert.equal(heroTextureAsset.length > 0, true);
 assert.match(heroTextureArtworkSource, /opacity="0\.075"/);
@@ -375,7 +374,7 @@ accountIconNames.forEach((name, index) => {
         `legacy text icon remains: ${placeholder}`,
     );
 });
-assert.match(profileSource, /icon="account-points"/);
+assert.match(profileSource, /icon="booking-request"/);
 assert.match(profileSource, /:icon="link\.icon"/);
 assert.match(pointsSource, /icon="account-rewards"/);
 assert.match(userinfoSource, /icon="account-phone"/);
@@ -401,7 +400,7 @@ assert.equal(activityDetailHtmlSource.includes('font-size:20px'), false);
 assert.equal(`${sharedOutput}\n${activityDetailBundle}`.includes('margin-bottom:12px;line-height:1.75;'), true);
 assert.match(activityTicketSource, /ADMIT ONE/);
 assert.match(activityTicketSource, /activity-ticket__stub/);
-assert.match(pointsPassSource, /points-pass__seal/);
+assert.equal(pointsPassSource.includes('points-pass__seal'), false);
 assert.match(pointsPassSource, /points-pass__texture/);
 assert.match(pointsPassSource, /hero-music\.png/);
 assert.match(rewardVoucherSource, /reward-voucher__status/);
@@ -415,12 +414,12 @@ assert.equal(sectionHeaderSource.includes('section-header__icon'), false);
 assert.match(asyncStateSource, /<empty-state/);
 assert.match(formRowSource, /form-row__control/);
 assert.match(mediaThumbSource, /media-thumb__image/);
-assert.match(pageChromeSource, /page-chrome--immersive/);
-assert.match(pageChromeSource, /background: \$ky-immersive-surface/);
+assert.equal(pageChromeSource.includes('immersive'), false, 'page bodies sit on the canvas');
+assert.match(pageChromeSource, /background: \$ky-canvas/);
 assert.match(pageHeaderSource, /page-header__title/);
-assert.match(pageHeaderSource, /background-color: \$ky-immersive-surface/);
+assert.equal(pageHeaderSource.includes('immersive'), false);
 assert.equal(profileConfig.navigationBarBackgroundColor, '#006241');
-assert.equal(userinfoConfig.navigationBarBackgroundColor, '#006241');
+assert.equal(userinfoConfig.navigationBarBackgroundColor, undefined);
 assert.match(paginationStateSource, /已加载/);
 assert.match(pointEventRowSource, /point-event-row--spend/);
 assert.match(stickyActionBarSource, /safe-area-inset-bottom/);

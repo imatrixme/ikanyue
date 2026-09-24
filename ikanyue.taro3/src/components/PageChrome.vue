@@ -1,5 +1,5 @@
 <template>
-    <view class="page-chrome" :class="`page-chrome--${tone}`">
+    <view class="page-chrome">
         <slot />
     </view>
 </template>
@@ -7,9 +7,6 @@
 <script>
 export default {
     name: 'PageChrome',
-    props: {
-        tone: { type: String, default: 'canvas' },
-    },
 };
 </script>
 
@@ -17,15 +14,8 @@ export default {
 @import '../styles/tokens';
 
 .page-chrome {
+    background: $ky-canvas;
     box-sizing: border-box;
     min-height: 100vh;
-}
-
-.page-chrome--canvas {
-    background: $ky-canvas;
-}
-
-.page-chrome--immersive {
-    background: $ky-immersive-surface;
 }
 </style>

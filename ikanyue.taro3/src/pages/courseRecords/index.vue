@@ -1,6 +1,5 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
-        <page-header eyebrow="LESSON HOURS" subtitle="查看课程安排与完成形成的记录" title="课时记录" />
+    <page-chrome class="courses-page">
         <view class="courses-content">
             <view v-if="state !== 'ready'" class="courses-state">
                 <async-state
@@ -28,7 +27,6 @@ import { Api } from '../../../utils/apis';
 import AsyncState from '../../components/AsyncState.vue';
 import LessonRecordRow from '../../components/LessonRecordRow.vue';
 import PageChrome from '../../components/PageChrome.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import PaginationState from '../../components/PaginationState.vue';
 import {
     hasNextPage, learningErrorMessage, mergePage, normalizePage, normalizeRecord, pageState,
@@ -36,7 +34,7 @@ import {
 import './index.scss';
 
 export default {
-    components: { AsyncState, LessonRecordRow, PageChrome, PageHeader, PaginationState },
+    components: { AsyncState, LessonRecordRow, PageChrome, PaginationState },
     data() {
         return {
             courseId: '', errorMessage: '', loading: false, loadingMore: false,

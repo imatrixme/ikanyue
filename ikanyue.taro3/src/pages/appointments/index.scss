@@ -6,17 +6,6 @@
     padding-bottom: $ky-space-8;
 }
 
-.appointments-hero-count {
-    border-top: 1px solid $ky-on-primary-divider;
-    margin-top: $ky-space-5;
-    padding-top: $ky-space-4;
-}
-
-.appointments-hero-count__value,
-.appointments-hero-count__label { display: block; }
-.appointments-hero-count__value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
-.appointments-hero-count__label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 2px; }
-
 .appointments-content { padding: $ky-space-4; }
 
 @media (max-width: 350px) {

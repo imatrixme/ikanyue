@@ -1,6 +1,6 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
-        <page-header eyebrow="LESSON" :subtitle="lesson.course.name" :title="lesson.title" />
+    <page-chrome class="courses-page">
+        <page-header :subtitle="lesson.course.name" :title="lesson.title" />
         <view class="courses-content">
             <view v-if="state !== 'ready'" class="courses-state">
                 <async-state :action-label="state === 'error' ? '重新加载' : ''" :description="errorMessage" :kind="state === 'error' ? 'network' : 'default'" :state="state" :title="state === 'empty' ? '暂无课堂信息' : ''" @action="loadLesson" />

@@ -22,7 +22,7 @@ describe('role-aware schedule component contracts', () => {
             read('../courses/index.vue'), read('../../components/LessonRow.vue'),
         ]);
         expect(courses).toContain('v-for="(lesson, index) in overview.upcomingLessons"');
-        expect(courses).toContain('接下来 3 节已安排课程');
+        expect(courses).toContain('title="即将上课"');
         expect(row).toContain('lesson.teacherSummary');
         expect(row).toContain('lesson.classSummary');
         expect(row).toContain('lesson.participantSummary');

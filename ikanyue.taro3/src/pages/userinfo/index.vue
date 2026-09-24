@@ -1,11 +1,10 @@
 <template>
     <page-chrome class="userinfo-page">
-        <page-header centered class="userinfo-hero" subtitle="完善资料，便于我们提供更好的服务" title="编辑个人资料">
+        <page-header centered class="userinfo-hero">
             <template #leading>
                 <view class="userinfo-avatar">
                     <image v-if="avatarUrl" class="userinfo-avatar__image" :src="avatarUrl" mode="aspectFill" />
                     <text v-else>{{ displayInitial }}</text>
-                    <view class="userinfo-avatar__camera">+</view>
                 </view>
             </template>
         </page-header>
@@ -73,7 +72,7 @@
 
             <view class="userinfo-note">
                 <app-icon class="userinfo-note__marker" name="info-blue" size="sm" />
-                <text>档案资料仅用于学员身份识别、活动联系和线下服务，不会在积分商品列表中公开。</text>
+                <text>档案资料仅用于学员身份识别、活动联系和线下服务，不会对其他学员公开。</text>
             </view>
 
             <button class="userinfo-save" :loading="saving" :disabled="saving" @tap="saveInfo">保存资料</button>

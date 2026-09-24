@@ -1,17 +1,5 @@
 <template>
-    <page-chrome class="teacher-calendar" tone="immersive">
-        <page-header eyebrow="TEACHING CALENDAR" subtitle="查看正式课程安排与可预约时间" title="课程日历">
-            <view class="teacher-calendar__metrics">
-                <view class="teacher-calendar__metric">
-                    <text class="teacher-calendar__metric-value">{{ schedule.items.length }}</text>
-                    <text class="teacher-calendar__metric-label">本周课程</text>
-                </view>
-                <view class="teacher-calendar__metric">
-                    <text class="teacher-calendar__metric-value">{{ dailyLessons.length }}</text>
-                    <text class="teacher-calendar__metric-label">当日课程</text>
-                </view>
-            </view>
-        </page-header>
+    <page-chrome class="teacher-calendar">
 
         <view class="teacher-calendar__content">
             <view class="teacher-calendar__week-nav">
@@ -100,7 +88,6 @@ import AppIcon from './AppIcon.vue';
 import AsyncState from './AsyncState.vue';
 import LessonRow from './LessonRow.vue';
 import PageChrome from './PageChrome.vue';
-import PageHeader from './PageHeader.vue';
 import TicketSection from './TicketSection.vue';
 import {
     availabilityForDate, buildSevenDayStrip, dateKey, formatScheduleTime, lessonsForDate,
@@ -109,7 +96,7 @@ import {
 
 export default {
     name: 'TeacherCalendarHome',
-    components: { AppIcon, AsyncState, LessonRow, PageChrome, PageHeader, TicketSection },
+    components: { AppIcon, AsyncState, LessonRow, PageChrome, TicketSection },
     data() {
         return {
             errorMessage: '', hasLoaded: false, loading: false, primaryColor: themeColors.primaryStrong,
@@ -180,27 +167,20 @@ export default {
 @import '../styles/tokens';
 
 .teacher-calendar { background: $ky-canvas; min-height: 100vh; padding-bottom: $ky-space-8; }
-.teacher-calendar__metrics { border-top: 1px solid $ky-on-primary-divider; display: flex; margin-top: $ky-space-5; padding-top: $ky-space-4; }
-.teacher-calendar__metric { flex: 1; }
-.teacher-calendar__metric + .teacher-calendar__metric { border-left: 1px solid $ky-on-primary-divider; padding-left: $ky-space-4; }
-.teacher-calendar__metric-value,
-.teacher-calendar__metric-label { display: block; }
-.teacher-calendar__metric-value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
-.teacher-calendar__metric-label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 2px; }
-.teacher-calendar__content { padding: $ky-space-4 $ky-space-3 0; }
+.teacher-calendar__content { padding: $ky-space-4 $ky-space-4 0; }
 .teacher-calendar__week-nav { align-items: center; display: flex; justify-content: space-between; }
 .teacher-calendar__nav-button { align-items: center; background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-md; display: flex; height: 34px; justify-content: center; width: 34px; }
 .teacher-calendar__nav-button--previous .app-icon { transform: rotate(180deg); }
 .teacher-calendar__week-label { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
-.teacher-calendar__date-strip { background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-lg; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: $ky-space-3; overflow: hidden; }
-.teacher-calendar__day { align-items: center; display: flex; flex-direction: column; min-width: 0; padding: $ky-space-2 0; }
-.teacher-calendar__day--selected { background: $ky-primary-strong; }
+.teacher-calendar__date-strip { background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-lg; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: $ky-space-3; padding: $ky-space-2 0; }
+.teacher-calendar__day { align-items: center; display: flex; flex-direction: column; min-width: 0; }
+.teacher-calendar__day--selected .teacher-calendar__day-number { background: $ky-primary-strong; }
 .teacher-calendar__weekday,
 .teacher-calendar__day-number { display: block; }
 .teacher-calendar__weekday { color: $ky-text-muted; font-size: $ky-font-size-2xs; }
-.teacher-calendar__day-number { color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; margin-top: $ky-space-1; }
+.teacher-calendar__day-number { border-radius: 50%; color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; height: 34px; line-height: 34px; margin-top: $ky-space-1; text-align: center; width: 34px; }
 .teacher-calendar__day--today:not(.teacher-calendar__day--selected) .teacher-calendar__day-number { color: $ky-primary-strong; }
-.teacher-calendar__day--selected .teacher-calendar__weekday,
+.teacher-calendar__day--selected .teacher-calendar__weekday { color: $ky-primary-strong; font-weight: $ky-font-weight-bold; }
 .teacher-calendar__day--selected .teacher-calendar__day-number { color: $ky-on-primary; }
 .teacher-calendar__availability-toggle { align-items: center; background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-lg; display: flex; justify-content: space-between; margin-top: $ky-space-3; min-height: 64px; padding: 0 $ky-space-4; }
 .teacher-calendar__toggle-title,

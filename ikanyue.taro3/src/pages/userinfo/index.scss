@@ -1,5 +1,4 @@
 @import '../../styles/tokens';
-@import '../../styles/hero-texture';
 
 .userinfo-page {
     background: $ky-canvas;
@@ -9,14 +8,15 @@
 }
 
 .userinfo-hero {
-    min-height: 220px;
+    padding-bottom: $ky-space-4;
 }
 
 .userinfo-avatar {
     align-items: center;
     background: $ky-primary-soft;
-    border: 3px solid $ky-on-primary;
+    border: 3px solid $ky-surface;
     border-radius: 50%;
+    box-shadow: $ky-shadow-subtle;
     color: $ky-primary-strong;
     display: flex;
     font-size: $ky-font-size-display-md;
@@ -33,26 +33,9 @@
     width: 100%;
 }
 
-.userinfo-avatar__camera {
-    align-items: center;
-    background: $ky-primary;
-    border: 2px solid $ky-on-primary;
-    border-radius: 50%;
-    bottom: -2px;
-    color: $ky-on-primary;
-    display: flex;
-    font-size: $ky-font-size-title-sm;
-    font-weight: $ky-font-weight-black;
-    height: 24px;
-    justify-content: center;
-    position: absolute;
-    right: -2px;
-    width: 24px;
-}
-
 .userinfo-content {
     box-sizing: border-box;
-    padding: 0 $ky-space-3;
+    padding: 0 $ky-space-4;
 }
 
 .userinfo-form-sheet {
@@ -62,11 +45,14 @@
     overflow: hidden;
 }
 
+$userinfo-input-height: 42px;
+
 .userinfo-field__input {
     color: $ky-text-secondary;
     flex: 1;
     font-size: $ky-font-size-body;
-    height: 42px;
+    height: $userinfo-input-height;
+    line-height: $userinfo-input-height;
     text-align: right;
 }
 

@@ -1,17 +1,5 @@
 <template>
-    <page-chrome class="booking-page" tone="immersive">
-        <page-header eyebrow="LESSON BOOKING" subtitle="选择课程和授课教师，再查看可以预约的时间" title="预约课程">
-            <view class="booking-hero-metrics">
-                <view class="booking-hero-metric">
-                    <text class="booking-hero-value">{{ options.length }}</text>
-                    <text class="booking-hero-label">可预约课程</text>
-                </view>
-                <view class="booking-hero-metric">
-                    <text class="booking-hero-value">{{ pendingCount }}</text>
-                    <text class="booking-hero-label">待确认</text>
-                </view>
-            </view>
-        </page-header>
+    <page-chrome class="booking-page">
 
         <view class="booking-content">
             <view v-if="pageState !== 'ready'" class="booking-state">
@@ -68,7 +56,6 @@ import AppointmentRow from '../../components/AppointmentRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import BookingOptionCard from '../../components/BookingOptionCard.vue';
 import PageChrome from '../../components/PageChrome.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import TicketSection from '../../components/TicketSection.vue';
 import {
     appointmentDetailUrl, bookingErrorMessage, bookingSlotsUrl, normalizeAppointmentPage,
@@ -78,12 +65,12 @@ import './index.scss';
 
 export default {
     components: {
-        AppIcon, AppointmentRow, AsyncState, BookingOptionCard, PageChrome, PageHeader, TicketSection,
+        AppIcon, AppointmentRow, AsyncState, BookingOptionCard, PageChrome, TicketSection,
     },
     data() {
         return {
             errorMessage: '', isLogin: false, loading: false, options: [],
-            recentAppointments: [], pendingCount: 0, requestSerial: 0, role: 'student',
+            recentAppointments: [], requestSerial: 0, role: 'student',
         };
     },
     computed: {
@@ -137,7 +124,6 @@ export default {
                 this.loading = false;
                 this.options = [];
                 this.recentAppointments = [];
-                this.pendingCount = 0;
                 return;
             }
             if (this.loading && !force) return;
@@ -146,16 +132,14 @@ export default {
             this.loading = true;
             this.errorMessage = '';
             try {
-                const [options, appointments, pendingAppointments] = await Promise.all([
+                const [options, appointments] = await Promise.all([
                     Api.listStudentBookingOptions(),
                     Api.listStudentAppointments({ page: 1, perPage: 2 }),
-                    Api.listStudentAppointments({ page: 1, perPage: 1, status: 'pending' }),
                 ]);
                 if (requestId !== this.requestSerial) return;
                 this.options = (Array.isArray(options) ? options : []).map(normalizeBookingOption);
                 const page = normalizeAppointmentPage(appointments);
                 this.recentAppointments = page.items;
-                this.pendingCount = normalizeAppointmentPage(pendingAppointments).totalItems;
             } catch (error) {
                 if (requestId === this.requestSerial) this.errorMessage = bookingErrorMessage(error);
             } finally {

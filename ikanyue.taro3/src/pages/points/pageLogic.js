@@ -95,7 +95,7 @@ const formatPoints = (value) => `${Number(value || 0)} 分`;
 
 const getRewardStateText = (item, balance) => {
     const missing = Number(item?.pointsPrice || 0) - Number(balance || 0);
-    return missing <= 0 ? '可兑换' : `还差 ${missing} 分`;
+    return missing <= 0 ? '可领取' : `还差 ${missing} 分`;
 };
 
 const getRewardProgress = (item, balance) => {

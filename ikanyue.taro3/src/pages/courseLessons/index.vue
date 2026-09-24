@@ -1,6 +1,5 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
-        <page-header eyebrow="SCHEDULE" subtitle="查看即将开始和已经完成的课程" title="课程日程" />
+    <page-chrome class="courses-page">
         <view class="courses-content">
             <segmented-control v-model="scope" class="courses-filter" :options="scopeOptions" @change="changeScope" />
             <view v-if="state !== 'ready'" class="courses-state">
@@ -29,7 +28,6 @@ import { Api } from '../../../utils/apis';
 import AsyncState from '../../components/AsyncState.vue';
 import LessonRow from '../../components/LessonRow.vue';
 import PageChrome from '../../components/PageChrome.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import PaginationState from '../../components/PaginationState.vue';
 import SegmentedControl from '../../components/SegmentedControl.vue';
 import {
@@ -38,7 +36,7 @@ import {
 import './index.scss';
 
 export default {
-    components: { AsyncState, LessonRow, PageChrome, PageHeader, PaginationState, SegmentedControl },
+    components: { AsyncState, LessonRow, PageChrome, PaginationState, SegmentedControl },
     data() {
         return {
             courseId: '', errorMessage: '', lessons: [], loading: false, loadingMore: false,

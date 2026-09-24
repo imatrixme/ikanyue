@@ -15,14 +15,16 @@
 .empty-state__visual {
     align-items: center;
     display: flex;
-    height: 176px;
+    height: 128px;
     justify-content: center;
-    width: 220px;
+    width: 128px;
 }
 
 .empty-state__art {
     display: block;
     height: 100%;
+    // Taro H5 positions aspectFit images absolutely without `left`; a centred parent would shift them.
+    text-align: left;
     width: 100%;
 }
 
@@ -96,8 +98,8 @@
     text-align: center;
 
     .empty-state__visual {
-        height: 142px;
-        width: 176px;
+        height: 104px;
+        width: 104px;
     }
 
     .empty-state__content {

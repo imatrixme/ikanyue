@@ -2,7 +2,7 @@
     <view class="reward-voucher" :class="{ 'reward-voucher--ready': redeemable }" @tap="$emit('select')">
         <media-thumb
             class="reward-voucher__media"
-            :fallback="fallbackLabel"
+            fallback-icon="account-rewards"
             :show-image="showImage"
             :src="item.image"
             @error="$emit('image-error', item.id)"
@@ -34,11 +34,6 @@ export default {
         readyLabel: { type: String, default: '可领取' },
         redeemable: { type: Boolean, default: false },
         showImage: { type: Boolean, default: false },
-    },
-    computed: {
-        fallbackLabel() {
-            return String(this.item?.name || '礼').slice(0, 1);
-        },
     },
 };
 </script>

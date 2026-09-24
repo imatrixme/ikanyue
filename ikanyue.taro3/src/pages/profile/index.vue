@@ -2,88 +2,53 @@
     <page-chrome class="profile-page">
         <view class="profile-hero">
             <image class="profile-hero__texture" :src="heroTexture" mode="aspectFill" aria-hidden="true" />
-            <view class="profile-brand">
-                <text class="profile-brand__eyebrow">KANYUE MUSIC ACADEMY</text>
-                <text class="profile-brand__name">看乐艺术</text>
-                <text class="profile-brand__meta">MUSICIAN PROFILE</text>
-            </view>
+            <text class="profile-brand">看乐艺术</text>
 
             <view v-if="isLogin()" class="profile-member-pass" @tap="modifyInfo">
+                <view class="profile-member-pass__avatar">
+                    <image v-if="avatarUrl && !avatarFailed" class="profile-member-pass__avatar-image" :src="avatarUrl" mode="aspectFill" @error="avatarFailed = true" />
+                    <text v-else>{{ displayName.slice(0, 1) }}</text>
+                </view>
                 <view class="profile-member-pass__copy">
                     <text class="profile-member-pass__name">{{ displayName }}</text>
-                    <text class="profile-member-pass__meta">{{ accountRoleLabel }} {{ maskedPhone }}</text>
+                    <text class="profile-member-pass__meta">{{ accountRoleLabel }} · {{ maskedPhone }}</text>
                 </view>
-                <view class="profile-member-pass__seal">
-                    <text>K</text>
-                    <text>MEMBER</text>
-                </view>
+                <text class="profile-member-pass__edit">编辑</text>
             </view>
         </view>
 
         <view class="profile-content">
             <template v-if="isLogin()">
-                <ticket-section v-if="role === 'student'" subtitle="积分、剩余课时与课程预约" title="学习与积分">
+                <ticket-section v-if="role === 'student'" title="学习">
                     <view class="profile-row-group">
                         <account-row
-                            description="查看可领取实物和解锁进度"
-                            icon="account-points"
-                            interactive
-                            title="查看我的积分"
-                            @select="goPoints"
-                        />
-                        <account-row
-                            description="查看剩余课时、课程日程和上课记录"
-                            icon="course-book"
-                            interactive
-                            title="查看我的课程"
-                            @select="goCourses"
-                        />
-                        <account-row
-                            description="使用剩余课时选择教师和时间"
+                            description="查看申请状态与已确认课程"
                             icon="booking-request"
                             interactive
-                            title="课程预约"
-                            @select="goBooking"
+                            title="我的预约"
+                            @select="goAppointments"
+                        />
+                        <account-row
+                            description="购买课程与查看订单"
+                            icon="course-book"
+                            interactive
+                            title="选课与订单"
+                            @select="goShop"
                         />
                     </view>
                 </ticket-section>
 
-                <ticket-section v-else subtitle="处理预约申请并维护教学时间" title="预约教学">
+                <ticket-section title="账号">
                     <view class="profile-row-group">
                         <account-row
-                            description="确认或拒绝学员的预约申请"
-                            icon="teacher-workbench"
-                            interactive
-                            title="预约工作台"
-                            @select="goCourses"
-                        />
-                        <account-row
-                            description="查看已经确认的授课时间"
-                            icon="booking-confirm"
-                            interactive
-                            title="预约日历"
-                            @select="goPoints"
-                        />
-                    </view>
-                </ticket-section>
-
-                <ticket-section v-if="roleOptions.length > 1" subtitle="同一微信可在已验证身份之间切换" title="当前身份">
-                    <view class="profile-row-group">
-                        <account-row
-                            description="切换后导航和可用功能会同步变化"
+                            v-if="roleOptions.length > 1"
+                            description="同一微信可在已验证身份之间切换"
                             icon="teacher-role"
                             interactive
                             title="使用身份"
                             :value="role === 'teacher' ? '教师' : '学员'"
                             @select="openRoleSwitcher"
                         />
-                    </view>
-                </ticket-section>
-
-                <ticket-section action-label="进入修改" subtitle="用于身份识别与活动联系" title="账号资料" @action="modifyInfo">
-                    <view class="profile-row-group">
-                        <account-row icon="account-name" title="显示名称" :value="displayName" />
-                        <account-row icon="account-phone" title="绑定手机" :value="maskedPhone" />
                         <account-row
                             description="昵称、姓名、性别、年龄与地区"
                             icon="account-profile"
@@ -97,8 +62,6 @@
 
             <template v-else>
                 <view class="profile-welcome">
-                    <view class="profile-welcome__bar" />
-                    <text class="profile-welcome__eyebrow">MUSICIAN 01</text>
                     <text class="profile-welcome__title">登录你的看乐账户</text>
                     <text class="profile-welcome__desc">登录后，即可查看活动、课程安排、预约与账户信息。</text>
                     <view class="profile-primary-action" @tap="showLoginPopup">登录 / 注册</view>
@@ -137,7 +100,6 @@
                     <text>×</text>
                 </view>
                 <view class="login-popup__bar" />
-                <view class="login-eyebrow">KANYUE ACCOUNT</view>
                 <view class="login-title">登录看乐账户</view>
                 <segmented-control
                     v-model="loginMode"
@@ -204,7 +166,6 @@
         >
             <view class="role-popup">
                 <view class="login-popup__bar" />
-                <view class="login-eyebrow">ACCOUNT ROLE</view>
                 <view class="login-title">选择使用身份</view>
                 <view class="login-desc">
                     <text>学员身份用于查看课程与发起预约，教师身份用于确认预约和设置可预约时间。</text>
@@ -261,6 +222,7 @@ export default {
             showLogin: false,
             showRolePopup: false,
             kanyueInfoLinks: KANYUE_INFO_LINKS,
+            avatarFailed: false,
             userInfo: {},
             wechatLoginLoading: false,
             wechatProfileLoading: false,
@@ -281,6 +243,7 @@ export default {
             if (cellphone.length < 7) return cellphone || '已登录账号';
             return `${cellphone.slice(0, 3)}****${cellphone.slice(-4)}`;
         },
+        avatarUrl() { return this.userInfo.avatarUrl || this.userInfo.avatar || ''; },
         accountRoleLabel() { return this.role === 'teacher' ? '教师账号' : '学员账号'; },
         visibleRoleOptions() { return this.roleChallenge?.roles || this.roleOptions; },
     },
@@ -302,6 +265,7 @@ export default {
             return UserManager.isLogin();
         },
         async refreshUserInfo() {
+            this.avatarFailed = false;
             this.userInfo = UserManager.getUserInfo();
             this.role = UserManager.getRole();
             RoleManager.applyTabBar(this.role);
@@ -320,14 +284,11 @@ export default {
             try { this.roleOptions = await Api.listWechatRoles(); }
             catch { this.roleOptions = []; }
         },
-        goPoints() {
-            Taro.switchTab({ url: '/pages/points/index' });
+        goAppointments() {
+            Taro.navigateTo({ url: '/pages/appointments/index' });
         },
-        goCourses() {
-            Taro.switchTab({ url: '/pages/courses/index' });
-        },
-        goBooking() {
-            Taro.navigateTo({ url: '/pages/appointmentBooking/index' });
+        goShop() {
+            Taro.navigateTo({ url: '/pages/courseShop/index' });
         },
         openKanyueInfo(link) {
             const url = buildImageDetailUrl(link);

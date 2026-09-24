@@ -1,34 +1,52 @@
 @import '../../styles/tokens';
 
 .courses-page {
-    background: $ky-immersive-surface;
+    background: $ky-canvas;
     color: $ky-ink;
     min-height: 100vh;
 }
 
 .courses-content {
-    background: $ky-canvas;
     box-sizing: border-box;
-    min-height: 70vh;
     padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
 }
 
-.courses-state { min-height: 280px; padding-top: $ky-space-8; }
-
-.courses-hero-metrics {
-    border-top: 1px solid $ky-on-primary-divider;
-    display: grid;
-    gap: $ky-space-3;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-top: $ky-space-5;
-    padding-top: $ky-space-4;
+.courses-summary {
+    align-items: center;
+    background: $ky-primary-soft;
+    border-radius: $ky-radius-md;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    gap: $ky-space-4;
+    padding: $ky-space-3 $ky-space-4;
 }
 
-.courses-hero-metric + .courses-hero-metric { border-left: 1px solid $ky-on-primary-divider; padding-left: $ky-space-3; }
-.courses-hero-value,
-.courses-hero-label { display: block; }
-.courses-hero-value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
-.courses-hero-label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+.courses-summary__value {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+}
+
+.courses-shop-entry { margin-top: $ky-space-4; }
+
+.courses-state { min-height: 280px; padding-top: $ky-space-8; }
+
+.courses-metrics {
+    background: $ky-surface;
+    border: 1px solid $ky-line-tinted;
+    border-radius: $ky-radius-lg;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: $ky-space-4;
+    padding: $ky-space-3 $ky-space-4;
+}
+
+.courses-metric + .courses-metric { border-left: 1px solid $ky-line-tinted; padding-left: $ky-space-3; }
+.courses-metric__value,
+.courses-metric__label { display: block; }
+.courses-metric__value { color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; }
+.courses-metric__label { color: $ky-text-secondary; font-size: $ky-font-size-xs; margin-top: 2px; }
 
 .courses-list {
     border: 1px solid $ky-line-tinted;
@@ -81,6 +99,5 @@
 
 @media (max-width: 350px) {
     .courses-content { padding-left: $ky-space-3; padding-right: $ky-space-3; }
-    .courses-hero-metrics { gap: $ky-space-2; }
-    .courses-hero-metric + .courses-hero-metric { padding-left: $ky-space-2; }
+    .courses-metric + .courses-metric { padding-left: $ky-space-2; }
 }

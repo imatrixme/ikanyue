@@ -6,41 +6,8 @@
     padding-bottom: $ky-space-8;
 }
 
-.booking-hero-metrics {
-    border-top: 1px solid $ky-on-primary-divider;
-    display: flex;
-    margin-top: $ky-space-5;
-    padding-top: $ky-space-4;
-}
-
-.booking-hero-metric {
-    flex: 1;
-}
-
-.booking-hero-metric + .booking-hero-metric {
-    border-left: 1px solid $ky-on-primary-divider;
-    padding-left: $ky-space-4;
-}
-
-.booking-hero-value,
-.booking-hero-label {
-    display: block;
-}
-
-.booking-hero-value {
-    color: $ky-on-primary;
-    font-size: $ky-font-size-display-md;
-    font-weight: $ky-font-weight-black;
-}
-
-.booking-hero-label {
-    color: $ky-on-primary-muted;
-    font-size: $ky-font-size-xs;
-    margin-top: 2px;
-}
-
 .booking-content {
-    padding: 0 $ky-space-3;
+    padding: $ky-space-4;
 }
 
 .booking-state {

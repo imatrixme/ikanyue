@@ -1,10 +1,10 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
-        <page-header eyebrow="COURSE" :subtitle="validityText" :title="course.courseName">
-            <view class="courses-hero-metrics">
-                <view class="courses-hero-metric"><text class="courses-hero-value">{{ course.remainingLessons }}</text><text class="courses-hero-label">剩余课时</text></view>
-                <view class="courses-hero-metric"><text class="courses-hero-value">{{ course.scheduledLessons }}</text><text class="courses-hero-label">已安排</text></view>
-                <view class="courses-hero-metric"><text class="courses-hero-value">{{ course.completedLessons }}</text><text class="courses-hero-label">已完成</text></view>
+    <page-chrome class="courses-page">
+        <page-header :subtitle="validityText" :title="course.courseName">
+            <view class="courses-metrics">
+                <view class="courses-metric"><text class="courses-metric__value">{{ course.remainingLessons }}</text><text class="courses-metric__label">剩余课时</text></view>
+                <view class="courses-metric"><text class="courses-metric__value">{{ course.scheduledLessons }}</text><text class="courses-metric__label">已安排</text></view>
+                <view class="courses-metric"><text class="courses-metric__value">{{ course.completedLessons }}</text><text class="courses-metric__label">已完成</text></view>
             </view>
         </page-header>
         <view class="courses-content">

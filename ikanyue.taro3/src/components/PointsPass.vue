@@ -9,10 +9,6 @@
             </view>
             <text v-if="caption" class="points-pass__caption">{{ caption }}</text>
         </view>
-        <view class="points-pass__seal" aria-hidden="true">
-            <text class="points-pass__seal-mark">K</text>
-            <text class="points-pass__seal-copy">KANYUE</text>
-        </view>
         <view class="points-pass__staff" aria-hidden="true">
             <view v-for="line in 5" :key="line" class="points-pass__staff-line" />
         </view>
@@ -56,8 +52,7 @@ export default {
     @include ky-hero-texture-layer;
 }
 
-.points-pass__content,
-.points-pass__seal {
+.points-pass__content {
     position: relative;
     z-index: 2;
 }
@@ -99,44 +94,6 @@ export default {
     opacity: 0.68;
 }
 
-.points-pass__seal {
-    align-items: center;
-    border: 1px solid $ky-on-primary-divider;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    height: 76px;
-    justify-content: center;
-    position: absolute;
-    right: 18px;
-    top: 26px;
-    transform: rotate(-8deg);
-    width: 76px;
-}
-
-.points-pass__seal::before {
-    border: 1px dashed $ky-on-primary-divider;
-    border-radius: 50%;
-    bottom: 5px;
-    content: '';
-    left: 5px;
-    position: absolute;
-    right: 5px;
-    top: 5px;
-}
-
-.points-pass__seal-mark {
-    font-size: $ky-font-size-display-md;
-    font-weight: $ky-font-weight-black;
-    line-height: $ky-leading-none;
-}
-
-.points-pass__seal-copy {
-    font-size: $ky-font-size-2xs;
-    font-weight: $ky-font-weight-bold;
-    margin-top: $ky-space-1;
-}
-
 .points-pass__staff {
     bottom: 18px;
     left: 42%;
@@ -160,19 +117,5 @@ export default {
 
 .points-pass--compact .points-pass__value {
     font-size: $ky-font-size-balance-sm;
-}
-
-.points-pass--compact .points-pass__seal {
-    height: 64px;
-    right: 16px;
-    top: 22px;
-    width: 64px;
-}
-
-@media (max-width: 350px) {
-    .points-pass__seal {
-        opacity: 0.72;
-        right: 12px;
-    }
 }
 </style>

@@ -2,14 +2,12 @@
 
 .commerce-page {
   min-height: 100vh;
-  background: $ky-immersive-surface;
+  background: $ky-canvas;
   color: $ky-ink;
 }
 
 .commerce-content {
-  min-height: 70vh;
   box-sizing: border-box;
-  background: $ky-canvas;
   padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
 }
 
@@ -70,6 +68,14 @@
   font-size: $ky-font-size-title-sm;
   font-weight: $ky-font-weight-bold;
   line-height: $ky-leading-tight;
+}
+
+.commerce-policy-link {
+  display: inline-block;
+  margin-top: $ky-space-2;
+  color: $ky-primary-strong;
+  font-size: $ky-font-size-body-sm;
+  text-decoration: underline;
 }
 
 .commerce-muted,

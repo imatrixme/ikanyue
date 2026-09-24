@@ -20,7 +20,7 @@
         <view v-else-if="!isLogin" class="points-page__state">
             <async-state
                 action-label="登录 / 注册"
-                description="登录后可以查看积分、活动和当前可兑换实物。"
+                description="登录后可以查看积分、活动和当前可领取实物。"
                 kind="account"
                 state="empty"
                 title="登录后查看积分账户"
@@ -71,7 +71,7 @@
                         <app-icon name="account-rewards" size="xl" />
                     </view>
                     <view class="points-empty-row__copy">
-                        <text class="points-empty-row__title">暂无可兑换实物</text>
+                        <text class="points-empty-row__title">暂无可领取实物</text>
                         <text class="points-empty-row__description">继续积累积分，达到所需积分后即可线下领取。</text>
                     </view>
                 </view>
@@ -94,8 +94,7 @@
             </ticket-section>
 
             <ticket-section
-                :action-label="`全部 ${pointEventTotal}`"
-                subtitle="最近 2 条变动"
+                :action-label="pointEventTotal > pointEvents.length ? `全部 ${pointEventTotal} 条` : ''"
                 title="积分记录"
                 @action="goPointHistory"
             >

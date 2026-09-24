@@ -65,8 +65,8 @@ export default {
             activeView: 'redeemable',
             catalogOptions: [
                 { label: '全部', value: 'all' },
-                { label: '可兑换', value: 'redeemable' },
-                { label: '未达到', value: 'locked' },
+                { label: '可领取', value: 'redeemable' },
+                { label: '未解锁', value: 'locked' },
             ],
             balance: 0,
             errorMessage: '',
@@ -92,7 +92,7 @@ export default {
         },
         activeViewTitle() {
             if (this.activeView === 'all') return '全部实物';
-            return this.activeView === 'locked' ? '未达到' : '现在可领取';
+            return this.activeView === 'locked' ? '未解锁' : '现在可领取';
         },
         emptyStateDescription() {
             if (this.activeView === 'all') return '实物上架后会显示在这里。';
@@ -101,7 +101,7 @@ export default {
         },
         emptyStateTitle() {
             if (this.activeView === 'all') return '暂无实物';
-            return this.activeView === 'redeemable' ? '暂无可兑换实物' : '已解锁全部实物';
+            return this.activeView === 'redeemable' ? '暂无可领取实物' : '已解锁全部实物';
         },
     },
     onLoad(options = {}) {

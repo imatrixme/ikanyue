@@ -1,20 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { immersivePageChrome } from '../../src/styles/theme.mjs';
+import { canvasPageChrome } from '../../src/styles/theme.mjs';
 
 const common = await readFile(new URL('../../dist/common.js', import.meta.url), 'utf8');
 const config = JSON.parse(await readFile(new URL('../../dist/app.json', import.meta.url), 'utf8'));
 for (const name of ['courseShop', 'courseOrder']) {
     const path = `pages/${name}/index`;
     const page = await readFile(new URL(`../../src/${path}.vue`, import.meta.url), 'utf8');
-    assert.match(page, /<page-chrome[^>]+tone="immersive"/, `${name} must use the shared immersive page shell`);
-    for (const component of ['page-header', 'ticket-section', 'account-row', 'async-state']) {
+    assert.match(page, /<page-chrome[\s>]/, `${name} must use the shared page shell`);
+    assert.doesNotMatch(page, /<page-header/, `${name} relies on the native navigation title`);
+    for (const component of ['ticket-section', 'account-row', 'async-state']) {
         assert.ok(page.includes(`<${component}`), `${name} must reuse ${component}`);
     }
     assert.doesNotMatch(page, /commerce-heading/);
     const pageConfig = JSON.parse(await readFile(new URL(`../../dist/${path}.json`, import.meta.url), 'utf8'));
-    for (const [key, value] of Object.entries(immersivePageChrome)) {
-        assert.equal(pageConfig[key], value, `${name} native chrome must match the shared immersive header`);
+    for (const [key, value] of Object.entries(canvasPageChrome)) {
+        assert.equal(pageConfig[key], value, `${name} native chrome must match the shared canvas chrome`);
     }
     assert.ok(config.pages.includes(path));
     for (const extension of ['js', 'json', 'wxml', 'wxss']) {
@@ -24,8 +25,10 @@ for (const name of ['courseShop', 'courseOrder']) {
     }
 }
 const courses = await readFile(new URL('../../src/pages/courses/index.vue', import.meta.url), 'utf8');
-assert.match(courses, /<view v-if="isLogin" class="courses-action-list courses-shop-entry">\s*<account-row[\s\S]*?@select="goShop"\s*\/>\s*<\/view>/,
-    'commerce entry must use the existing course action list container');
+assert.match(courses, /<view v-if="state === 'empty'" class="courses-action-list courses-shop-entry">\s*<account-row[\s\S]*?@select="goShop"\s*\/>\s*<\/view>/,
+    'learners without courses reach the shop from the empty state');
+assert.match(courses, /<ticket-section title="预约与购买">\s*<view class="courses-action-list">[\s\S]*?@select="goShop"/,
+    'enrolled learners reach the shop from the shared action list');
 for (const name of ['courseShop', 'appointments', 'courseLessons']) {
     const page = await readFile(new URL(`../../src/pages/${name}/index.vue`, import.meta.url), 'utf8');
     assert.match(page, /<segmented-control/, `${name} must reuse the established compact tab geometry`);

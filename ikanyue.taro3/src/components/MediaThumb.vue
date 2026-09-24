@@ -1,16 +1,21 @@
 <template>
     <view class="media-thumb" :class="`media-thumb--${size}`">
         <image v-if="showImage && src" class="media-thumb__image" :src="src" mode="aspectFill" @error="$emit('error')" />
+        <app-icon v-else-if="fallbackIcon" :name="fallbackIcon" size="xl" />
         <text v-else class="media-thumb__fallback">{{ fallback }}</text>
     </view>
 </template>
 
 <script>
+import AppIcon from './AppIcon.vue';
+
 export default {
     name: 'MediaThumb',
+    components: { AppIcon },
     emits: ['error'],
     props: {
         fallback: { type: String, default: '乐' },
+        fallbackIcon: { type: String, default: '' },
         showImage: { type: Boolean, default: false },
         size: { type: String, default: 'md' },
         src: { type: String, default: '' },

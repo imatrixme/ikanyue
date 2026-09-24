@@ -1,6 +1,5 @@
 <template>
-  <page-chrome class="commerce-page commerce-order-page" tone="immersive">
-    <page-header eyebrow="COURSE ORDER" title="课程订单" />
+  <page-chrome class="commerce-page commerce-order-page">
     <view class="commerce-content">
       <view v-if="error || !order" class="commerce-state">
         <async-state :state="error ? 'error' : 'loading'" :kind="error ? 'network' : 'default'" :description="error" :action-label="error ? '重新加载' : ''" @action="load" />
@@ -39,13 +38,12 @@ import { launchCashier } from '../../../utils/cashier';
 import AccountRow from '../../components/AccountRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import TicketSection from '../../components/TicketSection.vue';
 import { money, orderStatus, policyText } from '../courseShop/presentation';
 import './index.scss';
 
 export default {
-  components: { AccountRow, AsyncState, PageChrome, PageHeader, TicketSection },
+  components: { AccountRow, AsyncState, PageChrome, TicketSection },
   data: () => ({ id: '', order: null, busy: false, error: '' }),
   computed: {
     bookable() { return this.order?.status === 'completed' && this.order.availableQuantity > 0 && !this.order.refundPending; },

@@ -1,15 +1,5 @@
 <template>
-    <page-chrome class="appointments-page" tone="immersive">
-        <page-header
-            :eyebrow="role === 'teacher' ? 'TEACHER BOOKINGS' : 'MY BOOKINGS'"
-            :subtitle="role === 'teacher' ? '处理预约申请并查看已确认课程' : '查看申请进度、已确认课程和历史记录'"
-            :title="role === 'teacher' ? '预约管理' : '我的预约'"
-        >
-            <view class="appointments-hero-count">
-                <text class="appointments-hero-count__value">{{ pagination.totalItems }}</text>
-                <text class="appointments-hero-count__label">{{ activeFilter.label }}</text>
-            </view>
-        </page-header>
+    <page-chrome class="appointments-page">
 
         <view class="appointments-content">
             <segmented-control :model-value="statusFilter" :options="filters" @change="selectFilter" />
@@ -47,7 +37,6 @@ import { RoleManager } from '../../../utils/rolemanager';
 import AppointmentRow from '../../components/AppointmentRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
-import PageHeader from '../../components/PageHeader.vue';
 import SegmentedControl from '../../components/SegmentedControl.vue';
 import {
     appointmentDetailUrl, bookingErrorMessage, hasNextPage, mergeAppointmentPage,
@@ -63,7 +52,7 @@ const FILTERS = Object.freeze([
 ]);
 
 export default {
-    components: { AppointmentRow, AsyncState, PageChrome, PageHeader, SegmentedControl },
+    components: { AppointmentRow, AsyncState, PageChrome, SegmentedControl },
     data() {
         return {
             errorMessage: '', filters: FILTERS, items: [], loading: false, loadingMore: false,
@@ -92,6 +81,7 @@ export default {
     onShow() {
         this.role = RoleManager.getRole();
         RoleManager.applyTabBar(this.role);
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '预约管理' : '我的预约' });
         this.loadPage(true);
     },
     async onPullDownRefresh() {

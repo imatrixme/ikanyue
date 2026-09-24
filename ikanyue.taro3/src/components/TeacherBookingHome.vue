@@ -1,17 +1,5 @@
 <template>
-    <page-chrome class="teacher-workbench" tone="immersive">
-        <page-header eyebrow="TEACHER WORKBENCH" subtitle="确认学员申请并维护你的可预约时间" title="预约工作台">
-            <view class="teacher-workbench__metrics">
-                <view class="teacher-workbench__metric">
-                    <text class="teacher-workbench__value">{{ dashboard.pendingCount }}</text>
-                    <text class="teacher-workbench__label">待处理申请</text>
-                </view>
-                <view class="teacher-workbench__metric">
-                    <text class="teacher-workbench__value">{{ dashboard.confirmed.length }}</text>
-                    <text class="teacher-workbench__label">近期已确认</text>
-                </view>
-            </view>
-        </page-header>
+    <page-chrome class="teacher-workbench">
 
         <view class="teacher-workbench__content">
             <upcoming-lessons ref="upcomingLessons" />
@@ -69,7 +57,6 @@ import AppIcon from './AppIcon.vue';
 import AppointmentRow from './AppointmentRow.vue';
 import AsyncState from './AsyncState.vue';
 import PageChrome from './PageChrome.vue';
-import PageHeader from './PageHeader.vue';
 import TicketSection from './TicketSection.vue';
 import UpcomingLessons from './UpcomingLessons.vue';
 import {
@@ -79,7 +66,7 @@ import {
 export default {
     name: 'TeacherBookingHome',
     components: {
-        AccountRow, AppIcon, AppointmentRow, AsyncState, PageChrome, PageHeader, TicketSection, UpcomingLessons,
+        AccountRow, AppIcon, AppointmentRow, AsyncState, PageChrome, TicketSection, UpcomingLessons,
     },
     data() {
         return { dashboard: normalizeTeacherDashboard(), errorMessage: '', loading: false, requestSerial: 0 };
@@ -129,14 +116,7 @@ export default {
 @import '../styles/tokens';
 
 .teacher-workbench { background: $ky-canvas; min-height: 100vh; padding-bottom: $ky-space-8; }
-.teacher-workbench__metrics { border-top: 1px solid $ky-on-primary-divider; display: flex; margin-top: $ky-space-5; padding-top: $ky-space-4; }
-.teacher-workbench__metric { flex: 1; }
-.teacher-workbench__metric + .teacher-workbench__metric { border-left: 1px solid $ky-on-primary-divider; padding-left: $ky-space-4; }
-.teacher-workbench__value,
-.teacher-workbench__label { display: block; }
-.teacher-workbench__value { color: $ky-on-primary; font-size: $ky-font-size-display-md; font-weight: $ky-font-weight-black; }
-.teacher-workbench__label { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 2px; }
-.teacher-workbench__content { padding: 0 $ky-space-3; }
+.teacher-workbench__content { padding: $ky-space-4; }
 .teacher-workbench__state { background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-lg; margin-top: $ky-space-4; min-height: 260px; }
 .teacher-workbench__list,
 .teacher-workbench__offerings { border: 1px solid $ky-line; border-radius: $ky-radius-lg; overflow: hidden; }

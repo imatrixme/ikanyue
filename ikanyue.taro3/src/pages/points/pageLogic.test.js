@@ -102,8 +102,8 @@ describe('points page logic', () => {
     it('formats point and reward state copy', () => {
         expect(formatPoints(30)).toBe('30 分');
         expect(formatPoints()).toBe('0 分');
-        expect(getRewardStateText(null, 30)).toBe('可兑换');
-        expect(getRewardStateText({ pointsPrice: 20 }, 30)).toBe('可兑换');
+        expect(getRewardStateText(null, 30)).toBe('可领取');
+        expect(getRewardStateText({ pointsPrice: 20 }, 30)).toBe('可领取');
         expect(getRewardStateText({ pointsPrice: 50 }, 30)).toBe('还差 20 分');
         expect(getRewardProgress({ pointsPrice: 50 }, 30)).toBe(60);
         expect(getRewardProgress({ pointsPrice: 50 }, 80)).toBe(100);

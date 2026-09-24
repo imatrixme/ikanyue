@@ -1,6 +1,6 @@
 <template>
-    <page-chrome class="courses-page" tone="immersive">
-        <page-header eyebrow="TEACHING LESSON" :subtitle="lesson.course.name" :title="lesson.title" />
+    <page-chrome class="courses-page">
+        <page-header :subtitle="lesson.course.name" :title="lesson.title" />
         <view class="courses-content">
             <view v-if="state !== 'ready'" class="courses-state">
                 <async-state
