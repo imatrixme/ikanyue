@@ -3,63 +3,57 @@
   "info": {
     "title": "用户统一登录接口",
     "version": "1.0.0",
-    "description": "统一的用户登录接口，支持学生和教师登录。先尝试学生登录，失败则尝试教师登录，如果都找不到则自动注册一个学生用户"
+    "description": "统一的用户登录接口，支持学生和教师登录。先查学生再查教师；未注册的手机号返回 401，不自动注册。返回数据不含密码哈希、tokenKey 和微信身份标识；同一手机号 15 分钟内失败 5 次返回 429。"
   },
   "paths": {
     "/v1/user/login": {
       "post": {
         "summary": "用户登录",
-        "description": "统一登录接口，支持学生和教师登录，自动注册新用户",
-        "tags": ["User"],
+        "description": "统一登录接口，支持学生和教师登录；未注册手机号返回 401",
+        "tags": [
+          "User"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
                 "type": "object",
-                "required": ["cellphone", "password"],
+                "required": [
+                  "cellphone",
+                  "password"
+                ],
                 "properties": {
                   "cellphone": {
                     "type": "string",
                     "description": "手机号，必传",
                     "example": "13800138000",
                     "pattern": "^1[3-9]\\d{9}$"
-                  },
-                  "password": {
-                    "type": "string",
-                    "description": "密码，必传",
-                    "example": "yourpassword",
-                    "minLength": 6
                   }
                 }
               },
               "example": {
-                "cellphone": "13800138000",
-                "password": "yourpassword"
+                "cellphone": "13800138000"
               }
             },
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["cellphone", "password"],
+                "required": [
+                  "cellphone",
+                  "password"
+                ],
                 "properties": {
                   "cellphone": {
                     "type": "string",
                     "description": "手机号，必传",
                     "example": "13800138000",
                     "pattern": "^1[3-9]\\d{9}$"
-                  },
-                  "password": {
-                    "type": "string",
-                    "description": "密码，必传",
-                    "example": "yourpassword",
-                    "minLength": 6
                   }
                 }
               },
               "example": {
-                "cellphone": "13800138000",
-                "password": "yourpassword"
+                "cellphone": "13800138000"
               }
             }
           }
@@ -103,7 +97,6 @@
                         "gender": 0,
                         "blocked": false,
                         "lastLoginAt": "2024-01-01T10:00:00.000Z",
-                        "lastLoginIp": "192.168.1.1",
                         "lastLoginMethod": "password"
                       }
                     }
@@ -125,30 +118,6 @@
                         "verified": true,
                         "blocked": false,
                         "lastLoginAt": "2024-01-01T10:00:00.000Z",
-                        "lastLoginIp": "192.168.1.1",
-                        "lastLoginMethod": "password"
-                      }
-                    }
-                  },
-                  "auto_register": {
-                    "summary": "自动注册新学生",
-                    "value": {
-                      "code": 10000,
-                      "message": null,
-                      "data": {
-                        "id": "new_student_id",
-                        "sn": "generated_unique_sn",
-                        "cellphone": "13800138002",
-                        "role": "student",
-                        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                        "isAdmin": false,
-                        "avatar": "https://example.com/default-avatar.jpg",
-                        "nickName": "用户8002",
-                        "gender": 0,
-                        "blocked": false,
-                        "tokenKey": "generated_token_key",
-                        "lastLoginAt": "2024-01-01T10:00:00.000Z",
-                        "lastLoginIp": "192.168.1.1",
                         "lastLoginMethod": "password"
                       }
                     }
@@ -313,7 +282,10 @@
           },
           "role": {
             "type": "string",
-            "enum": ["student", "teacher"],
+            "enum": [
+              "student",
+              "teacher"
+            ],
             "description": "用户角色",
             "example": "student"
           },
@@ -342,7 +314,11 @@
             "type": "integer",
             "description": "性别 (0: 未知, 1: 男, 2: 女)",
             "example": 0,
-            "enum": [0, 1, 2]
+            "enum": [
+              0,
+              1,
+              2
+            ]
           },
           "blocked": {
             "type": "boolean",
@@ -354,21 +330,11 @@
             "description": "是否已审核（仅教师）",
             "example": true
           },
-          "tokenKey": {
-            "type": "string",
-            "description": "JWT 密钥（新注册用户）",
-            "example": "generated_token_key"
-          },
           "lastLoginAt": {
             "type": "string",
             "format": "date-time",
             "description": "最后登录时间",
             "example": "2024-01-01T10:00:00.000Z"
-          },
-          "lastLoginIp": {
-            "type": "string",
-            "description": "最后登录IP",
-            "example": "192.168.1.1"
           },
           "lastLoginMethod": {
             "type": "string",
@@ -376,8 +342,15 @@
             "example": "password"
           }
         },
-        "required": ["id", "sn", "cellphone", "role", "token", "isAdmin"]
+        "required": [
+          "id",
+          "sn",
+          "cellphone",
+          "role",
+          "token",
+          "isAdmin"
+        ]
       }
     }
   }
-} 
+}

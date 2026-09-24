@@ -2,7 +2,7 @@
 
 ## 功能描述
 
-统一的用户登录接口，支持学生和教师登录。先尝试学生登录，失败则尝试教师登录，如果都找不到则自动注册一个学生用户。
+统一的用户登录接口，支持学生和教师登录。先查学生，再查教师；两边都没有该手机号时返回与密码错误相同的 401，不会自动注册（新用户通过微信手机号登录注册）。返回的用户记录经过 [publicUser](mdc:src/utils/publicUser.js) 脱敏，不含密码哈希、`tokenKey` 和微信身份标识。同一手机号 15 分钟内连续失败 5 次后返回 429。
 
 ## 登录流程
 
@@ -10,31 +10,28 @@
 flowchart TD
     A[请求登录] --> B{参数验证}
     B -->|失败| C[返回400错误]
-    B -->|成功| D[MD5加密密码]
-    D --> E[查询学生表]
+    B -->|成功| T{15分钟内失败≥5次?}
+    T -->|是| U[返回429]
+    T -->|否| E[按转义后的手机号查询学生表]
     E --> F{找到学生?}
     F -->|是| G{密码正确?}
     F -->|否| H[查询教师表]
+    G -->|否| J[记录失败并返回401]
     G -->|是| I{学生被封禁?}
-    G -->|否| J[返回401错误]
     I -->|是| K[返回403错误]
     I -->|否| L[更新登录信息]
     H --> M{找到教师?}
+    M -->|否| J
     M -->|是| N{密码正确?}
-    M -->|否| O[自动注册学生]
-    N -->|是| P{教师被封禁?}
     N -->|否| J
+    N -->|是| P{教师被封禁?}
     P -->|是| K
     P -->|否| Q{教师已审核?}
-    Q -->|是| R[更新教师登录信息]
     Q -->|否| S[返回403未审核]
-    O --> T[生成默认信息]
-    T --> U[创建学生记录]
-    U --> V[设置登录信息]
+    Q -->|是| R[更新教师登录信息]
     L --> W[生成JWT令牌]
     R --> W
-    V --> W
-    W --> X[返回登录成功]
+    W --> X[清除失败计数，返回脱敏后的用户]
 ```
 
 ## 接口信息
@@ -115,7 +112,7 @@ flowchart TD
 5. **教师登录尝试**: 如果学生登录失败，在 teachers 表中查找
 6. **教师密码验证**: 验证教师密码和账户状态
 7. **教师审核检查**: 验证教师账户是否已审核
-8. **自动注册**: 如果都找不到，自动创建学生用户
+8. **未注册手机号**: 如果都找不到，返回 401，不自动建号
 9. **登录信息更新**: 更新最后登录时间、IP、方式
 10. **JWT 生成**: 生成包含用户信息的 JWT 令牌
 
@@ -126,14 +123,9 @@ flowchart TD
 -   使用 MD5 算法对密码进行加密存储和验证
 -   前端传入明文密码，后端加密后与数据库比较
 
-#### 自动注册逻辑
+#### 失败限流
 
-如果既没有找到学生也没有找到教师记录：
-
--   自动创建学生用户
--   使用手机号后 4 位生成默认昵称：`用户${cellphone.substring(cellphone.length - 4)}`
--   设置默认头像和基本信息
--   生成唯一的 SN 和 tokenKey
+同一手机号 15 分钟内连续失败 5 次后返回 429，登录成功会清零计数。计数保存在进程内存中。
 
 #### 头像处理
 
@@ -152,17 +144,13 @@ flowchart TD
 
 ### 查询操作
 
--   **students 表查询**: `pb.collection('students').getList(1, 1, { filter: cellphone="${cellphone}" })`
--   **teachers 表查询**: `pb.collection('teachers').getList(1, 1, { filter: cellphone="${cellphone}" })`
+-   **students 表查询**: `pb.collection('students').getList(1, 1, { filter: cellphone=filterLiteral(cellphone) })`
+-   **teachers 表查询**: `pb.collection('teachers').getList(1, 1, { filter: cellphone=filterLiteral(cellphone) })`
 
 ### 更新操作
 
 -   **学生登录信息更新**: `pb.collection('students').update(student.id, updateData)`
 -   **教师登录信息更新**: `pb.collection('teachers').update(teacher.id, updateData)`
-
-### 创建操作
-
--   **自动注册学生**: `pb.collection('students').create(studentData)`
 
 ### 字段说明
 
@@ -292,13 +280,3 @@ curl -X POST http://localhost:1337/v1/user/login \
   }'
 ```
 
-### 自动注册测试
-
-```bash
-curl -X POST http://localhost:1337/v1/user/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "cellphone": "13700137000",
-    "password": "newuser123"
-  }'
-```

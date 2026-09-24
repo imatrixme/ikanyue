@@ -102,5 +102,5 @@ test('wechat login recovers duplicate creates from 409 status errors', async () 
 
     assert.equal(payload.code, 10000);
     assert.equal(payload.data.id, 'duplicate_by_wechat');
-    assert.equal(payload.data.wechatId, 'openid_1');
+    assert.equal(payload.data.wechatId, undefined);
 });

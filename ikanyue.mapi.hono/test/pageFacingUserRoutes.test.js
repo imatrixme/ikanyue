@@ -32,6 +32,8 @@ test('user routes cover miniapp profile login, refresh, and update flow', async 
         assert.equal(loginPayload.data.isAdmin, true);
         assert.equal(loginPayload.data.token, 'student:student_1:false');
         assert.equal(loginPayload.data.avatarUrl, 'https://pb.example.com/api/files/students/student_1/avatar.jpg');
+        assert.equal(loginPayload.data.password, undefined);
+        assert.equal(loginPayload.data.tokenKey, undefined);
         assert.equal(studentUpdateCalls[0].data.lastLoginMethod, 'password');
 
         const refreshPayload = await requestJson(app, '/v1/user/refresh/student/student_1', { method: 'POST' });
@@ -70,7 +72,7 @@ test('user routes cover miniapp profile login, refresh, and update flow', async 
 });
 
 test('user login route covers miniapp auth success and rejection paths', async () => {
-    await withUserRoutes(async (app) => {
+    await withUserRoutes(async (app, { createCalls }) => {
         assert.equal((await formPost(app, '/v1/user/login', { cellphone: '', password: '' })).code, 400);
         assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'student_wrong', password: 'wrong' })).code, 401);
         assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'blocked_student', password: 'secret' })).code, 403);
@@ -105,16 +107,9 @@ test('user login route covers miniapp auth success and rejection paths', async (
         assert.equal(teacherUpdateErrorPayload.code, 10000);
         assert.equal(teacherUpdateErrorPayload.data.isAdmin, false);
 
-        const createdPayload = await formPost(app, '/v1/user/login', {
-            cellphone: '13800000000',
-            password: 'secret',
-        });
-        assert.equal(createdPayload.code, 10000);
-        assert.equal(createdPayload.data.role, 'student');
-        assert.equal(createdPayload.data.isAdmin, false);
-        assert.equal(createdPayload.data.token, 'student:student_created:false');
-
-        assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'create_fail', password: 'secret' })).code, 500);
+        // Unknown numbers are rejected like a wrong password instead of silently creating an account.
+        assert.equal((await formPost(app, '/v1/user/login', { cellphone: '13800000000', password: 'secret' })).code, 401);
+        assert.equal(createCalls.length, 0);
         assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'throw_query', password: 'secret' })).code, 500);
     });
 });
@@ -202,3 +197,15 @@ function jsonPost(app, path, body) {
         body: JSON.stringify(body),
     });
 }
+
+test('user login escapes the account and throttles repeated failures', async () => {
+    await withUserRoutes(async (app, { studentFilters }) => {
+        await formPost(app, '/v1/user/login', { cellphone: 'x" || id != "', password: 'secret' });
+        assert.equal(studentFilters.at(-1), 'cellphone="x\\" || id != \\""');
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+            assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'guess_target', password: `p${attempt}` })).code, 401);
+        }
+        assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'guess_target', password: 'again' })).code, 401);
+        assert.equal((await formPost(app, '/v1/user/login', { cellphone: 'guess_target', password: 'secret' })).code, 429);
+    });
+});

@@ -1,7 +1,7 @@
 /**
  * user/login.js
  *
- * @description :: 统一登录接口，先尝试学生登录，失败则尝试教师登录，都找不到则自动注册学生用户
+ * @description :: 统一登录接口，先尝试学生登录，失败则尝试教师登录；未注册的手机号不会自动建号（新用户走微信登录）
  *
  * 示例请求:
  * POST /v1/user/login
@@ -31,7 +31,7 @@ const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
 const { jwtAuth } = require('../../utils/jwtAuth');
-const uuid = require('licia/uuid');
+const { filterLiteral, publicUser } = require('../../utils/publicUser');
 const { getFileUrl } = require('../../utils/fileUrl');
 const { authenticatePocketBaseTeacher } = require('../../services/ops/pocketbaseTeacherAuth');
 
@@ -40,6 +40,29 @@ async function matchesTeacherPassword(teacher, password, cellphone, authenticato
         return teacher.password === md5(password);
     }
     return authenticator(teacher, password, cellphone);
+}
+
+const FAILURE_LIMIT = 5;
+const FAILURE_WINDOW_MS = 15 * 60_000;
+const failures = new Map();
+
+// Per-account throttle against password guessing; process-local, which is enough for a single API instance.
+function throttled(cellphone, now = Date.now()) {
+    const entry = failures.get(cellphone);
+    if (entry && now - entry.since > FAILURE_WINDOW_MS) failures.delete(cellphone);
+    return (failures.get(cellphone)?.count || 0) >= FAILURE_LIMIT;
+}
+
+function recordFailure(cellphone, now = Date.now()) {
+    const entry = failures.get(cellphone) || { count: 0, since: now };
+    entry.count += 1;
+    failures.set(cellphone, entry);
+    if (failures.size > 10_000) failures.delete(failures.keys().next().value);
+}
+
+function rejectCredentials(c, cellphone) {
+    recordFailure(cellphone);
+    return c.error(401, '手机号或密码错误');
 }
 
 async function userLoginHandler(c) {
@@ -51,11 +74,14 @@ async function userLoginHandler(c) {
     if (!cellphone || !password) {
         return c.error(400, '手机号和密码不能为空');
     }
+    if (throttled(cellphone)) {
+        return c.error(429, '登录尝试次数过多，请 15 分钟后再试');
+    }
 
     try {
     // 先尝试查询学生记录
         const students = await pb.collection('students').getList(1, 1, {
-            filter: `cellphone="${cellphone}"`,
+            filter: `cellphone=${filterLiteral(cellphone)}`,
         });
 
         // 如果找到学生记录
@@ -63,8 +89,8 @@ async function userLoginHandler(c) {
             const student = students.items[0];
 
             // 验证密码
-            if (student.password !== md5(password)) {
-                return c.error(401, '手机号或密码错误');
+            if (!student.password || student.password !== md5(password)) {
+                return rejectCredentials(c, cellphone);
             }
 
             // 如果账户被封禁
@@ -115,12 +141,13 @@ async function userLoginHandler(c) {
             studentData.token = jwtAuth.sign(c.req, studentData.id, studentData.sn, 'student', false);
             studentData.role = 'student';
 
-            return c.data(studentData);
+            failures.delete(cellphone);
+            return c.data(publicUser(studentData));
         }
 
         // 如果没有找到学生记录，尝试查询教师记录
         const teachers = await pb.collection('teachers').getList(1, 1, {
-            filter: `cellphone="${cellphone}"`,
+            filter: `cellphone=${filterLiteral(cellphone)}`,
         });
 
         // 如果找到教师记录
@@ -129,7 +156,7 @@ async function userLoginHandler(c) {
 
             // 验证密码
             if (!(await matchesTeacherPassword(teacher, password, cellphone))) {
-                return c.error(401, '手机号或密码错误');
+                return rejectCredentials(c, cellphone);
             }
 
             // 如果账户被封禁
@@ -192,38 +219,12 @@ async function userLoginHandler(c) {
             teacherData.role = 'teacher';
             teacherData.isAdmin = isAdmin;
 
-            return c.data(teacherData);
+            failures.delete(cellphone);
+            return c.data(publicUser(teacherData));
         }
 
-        // 如果既没有找到学生也没有找到教师记录，自动创建一个学生用户
-        const studentData = {
-            cellphone: cellphone,
-            password: md5(password),
-            tokenKey: uuid(),
-            sn: uuid(),
-            nickName: `用户${cellphone.substring(cellphone.length - 4)}`,
-            gender: 0,
-            blocked: false,
-            avatar: process.env.DEFAULT_AVATAR || '', // 为新用户设置默认头像
-            lastLoginAt: new Date().toISOString(),
-            lastLoginIp: c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown',
-            lastLoginMethod: 'password',
-        };
-
-        console.log('studentData', studentData);
-        // 创建学生记录
-        const [createErr, newStudent] = await to(pb.collection('students').create(studentData));
-
-        if (createErr) {
-            return c.error(500, createErr.message || '创建学生失败');
-        }
-
-        // 生成 JWT token
-        newStudent.token = jwtAuth.sign(c.req, newStudent.id, newStudent.sn, 'student', false);
-        newStudent.role = 'student';
-        newStudent.isAdmin = false;
-
-        return c.data(newStudent);
+        // 未注册的手机号不自动建号，避免他人抢占手机号；返回与密码错误相同的提示，不暴露账号是否存在。
+        return rejectCredentials(c, cellphone);
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }

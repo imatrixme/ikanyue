@@ -75,7 +75,7 @@ test('wechat login reuses an existing student when create hits a duplicate const
         assert.equal(payload.code, 10000);
         assert.equal(payload.data.id, 'student_1');
         assert.equal(payload.data.cellphone, '13800138000');
-        assert.equal(payload.data.wechatId, 'openid_1');
+        assert.equal(payload.data.wechatId, undefined);
         assert.equal(payload.data.token, 'jwt-token');
         assert.equal(createCalled, 1);
         assert.equal(updateCalled, 1);
@@ -144,7 +144,7 @@ test('wechat login normalizes JSON string request bodies', async () => {
     });
 
     assert.equal(payload.code, 10000);
-    assert.equal(payload.data.wechatId, 'openid_1');
+    assert.equal(payload.data.wechatId, undefined);
 
     assert.deepEqual(await runWechatLoginWithMocks({ body: 'not valid json' }), {
         code: 400,

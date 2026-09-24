@@ -1,3 +1,4 @@
+const { publicUser } = require('../../../utils/publicUser');
 const { invariant } = require('../domain');
 const { jwtAuth } = require('../../../utils/jwtAuth');
 
@@ -71,7 +72,7 @@ class WechatIdentityService {
             wechatOpenId: identity.openid || '',
         });
         return {
-            ...record,
+            ...publicUser(record),
             role,
             isAdmin,
             courseCreditCapabilities: capabilities,

@@ -4,6 +4,7 @@
  * @description :: 更新教师记录
  */
 
+const { publicUser } = require('../../utils/publicUser');
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
@@ -56,7 +57,7 @@ async function teacherUpdateHandler(c) {
             return c.error(500, err.message || '更新教师信息失败');
         }
 
-        return c.data(teacher);
+        return c.data(publicUser(teacher));
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }

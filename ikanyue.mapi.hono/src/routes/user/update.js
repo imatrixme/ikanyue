@@ -27,6 +27,7 @@
  * }
  */
 
+const { publicUser } = require('../../utils/publicUser');
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 
@@ -137,7 +138,7 @@ async function userUpdateHandler(c) {
             updatedUser[legacyField] = persistedValue;
         }
 
-        return c.data(updatedUser);
+        return c.data(publicUser(updatedUser));
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }

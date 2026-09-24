@@ -49,8 +49,10 @@ function createUserRouteApp({ userLoginHandler, userRefreshHandler, userUpdateHa
 
 function createUserRouteMocks() {
     const studentUpdateCalls = [];
+    const createCalls = [];
+    const studentFilters = [];
     const pocketbaseMock = createCollectionMock({
-        students: createStudentsCollection(studentUpdateCalls),
+        students: createStudentsCollection(studentUpdateCalls, createCalls, studentFilters),
         teachers: createTeachersCollection(),
     });
 
@@ -58,13 +60,16 @@ function createUserRouteMocks() {
         jwtAuthMock: createJwtAuthMock(),
         pocketbaseMock,
         studentUpdateCalls,
+        createCalls,
+        studentFilters,
     };
 }
 
-function createStudentsCollection(studentUpdateCalls) {
+function createStudentsCollection(studentUpdateCalls, createCalls = [], studentFilters = []) {
     return {
         async getList(_page, _perPage, options = {}) {
             const filter = options.filter || '';
+            studentFilters.push(filter);
             if (filter.includes('throw_query')) {
                 throw new Error('student query failed');
             }
@@ -129,9 +134,7 @@ function createStudentsCollection(studentUpdateCalls) {
             });
         },
         async create(data) {
-            if (data.cellphone === 'create_fail') {
-                throw new Error('create failed');
-            }
+            createCalls.push(data);
             return { id: 'student_created', collectionId: 'students', ...data };
         },
     };

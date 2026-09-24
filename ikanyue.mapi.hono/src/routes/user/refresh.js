@@ -22,6 +22,7 @@
  * }
  */
 
+const { publicUser } = require('../../utils/publicUser');
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const { jwtAuth } = require('../../utils/jwtAuth');
@@ -132,7 +133,7 @@ async function userRefreshHandler(c) {
             return c.error(400, '无效的用户角色');
         }
 
-        return c.data(userData);
+        return c.data(publicUser(userData));
     } catch (error) {
         console.error('刷新用户信息失败:', error);
         return c.error(500, '服务器内部错误');

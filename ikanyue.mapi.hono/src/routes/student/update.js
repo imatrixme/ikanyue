@@ -21,6 +21,7 @@
  * }
  */
 
+const { publicUser } = require('../../utils/publicUser');
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const md5 = require('licia/md5');
@@ -69,7 +70,7 @@ module.exports = async function update(c) {
             return c.error(500, err.message || '更新学生信息失败');
         }
 
-        return c.data(student);
+        return c.data(publicUser(student));
     } catch (error) {
         return c.error(500, error.message || '服务器内部错误');
     }
