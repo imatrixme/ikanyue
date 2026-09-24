@@ -155,7 +155,7 @@ test('ops auth service and middleware cover validation, profile, token, and fail
     assert.equal((await jsonRequest(app, '/protected', {
         token: require('../src/utils/jwtAuth').jwtAuth.sign({ headers: {} }, 'student_1', 's1', 'student', false),
     })).code, 403);
-    const guardedToken = require('../src/utils/jwtAuth').jwtAuth.sign({ headers: {} }, 'teacher_1', 'sn', 'teacher', true, { passwordChangeRequired: true });
+    const guardedToken = require('../src/utils/jwtAuth').jwtAuth.sign({ headers: {} }, 'teacher_1', 'sn', 'teacher', true, { scope: 'ops', passwordChangeRequired: true });
     assert.equal((await jsonRequest(app, '/ops/auth/me', { token: guardedToken })).code, 10000);
     assert.equal((await jsonRequest(app, '/ops/reward-items', { token: guardedToken })).message, '首次登录必须先修改默认密码');
 });
@@ -208,3 +208,22 @@ function fakeBodyContext(contentType, json, parseBody) {
         },
     };
 }
+
+test('ops login filter treats the account as a literal value', () => {
+    const { buildTeacherLoginFilter } = require('../src/services/ops/authService');
+    assert.equal(buildTeacherLoginFilter('a" || id!="'),
+        '(cellphone="a\\" || id!=\\"" || username="a\\" || id!=\\"" || email="a\\" || id!=\\"")');
+    assert.equal(buildTeacherLoginFilter('a\\'), '(cellphone="a\\\\" || username="a\\\\" || email="a\\\\")');
+});
+
+test('ops tokens carry ops scope and a 12 hour expiry', async () => {
+    const repository = createOpsTestRepository(createOpsSeed());
+    const app = createOpsApp(repository);
+    const login = await jsonRequest(app, '/ops/auth/login', {
+        method: 'POST',
+        body: { cellphone: '13800138001', password: 'secret' },
+    });
+    const claims = require('../src/utils/jwtAuth').jwtAuth.check(login.data.token);
+    assert.equal(claims.scope, 'ops');
+    assert.equal(claims.exp - claims.iat, 12 * 3600);
+});

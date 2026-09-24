@@ -1,29 +1,42 @@
 'use strict';
-const dayjs = require('dayjs');
+const { randomBytes } = require('node:crypto');
 const jwt = require('jsonwebtoken');
 
-const authKey = 'V_NY6*rF-j.P';
+const APP_TOKEN_TTL = '30d';
+const OPS_TOKEN_TTL = '12h';
+const OPS_SCOPE = 'ops';
+let fallbackSecret = '';
 
-var sign = (req = { headers: {} }, id, sn, role = 'user', isAdmin = false, claims = {}) => {
-    var data_ = { id: id, sn: sn, role: role, isAdmin: isAdmin, ...claims };
-    if (req.headers?.['sec-fetch-mode'] && req.headers?.['sec-fetch-site']) {
-        let secondoft = dayjs().second() + 24 * 3600 * 7;
-        data_ = { ...data_, expiredAt: secondoft };
+// Production must supply JWT_SECRET; other environments get a per-process key so no key lives in source.
+function secret(env = process.env) {
+    const value = env.JWT_SECRET || '';
+    if (value.length >= 32) return value;
+    if (env.NODE_ENV === 'production') throw new Error('JWT_SECRET (>=32 chars) is required in production');
+    if (!fallbackSecret) {
+        fallbackSecret = randomBytes(32).toString('hex');
+        console.warn('JWT_SECRET is not configured; using an ephemeral development key.');
     }
-    let rst = jwt.sign(data_, authKey);
-    return rst;
+    return fallbackSecret;
+}
+
+var sign = (_req, id, sn, role = 'user', isAdmin = false, claims = {}, options = {}) => {
+    const data = { id, sn, role, isAdmin, ...claims };
+    return jwt.sign(data, secret(), { expiresIn: options.expiresIn || APP_TOKEN_TTL });
 };
 
 var check = (jwtToken) => {
     try {
-        let rst = jwt.verify(jwtToken, authKey);
-        return rst;
+        return jwt.verify(jwtToken, secret());
     } catch (error) {
+        if (!(error instanceof jwt.JsonWebTokenError)) throw error;
         return undefined;
     }
 };
 
 module.exports = {
+    APP_TOKEN_TTL,
+    OPS_SCOPE,
+    OPS_TOKEN_TTL,
     jwtAuth: {
         sign: sign,
         check: check,

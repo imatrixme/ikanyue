@@ -290,7 +290,7 @@ function createTemplateSchema(overrides = {}) {
 }
 
 function createToken(user) {
-    return jwtAuth.sign({ headers: {} }, user.id, user.sn, 'teacher', Boolean(user.isAdmin));
+    return jwtAuth.sign({ headers: {} }, user.id, user.sn, 'teacher', Boolean(user.isAdmin), { scope: 'ops' });
 }
 
 function createStudentToken(user) {

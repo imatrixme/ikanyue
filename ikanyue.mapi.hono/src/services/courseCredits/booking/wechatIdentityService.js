@@ -34,7 +34,7 @@ class WechatIdentityService {
             unionid: context.unionid || '',
             principals,
             roles,
-        });
+        }, { expiresIn: CHALLENGE_TTL_SECONDS });
         return {
             requiresRoleSelection: true,
             challenge,

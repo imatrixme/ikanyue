@@ -358,7 +358,7 @@ function token(user) {
         user.sn || user.id,
         user.role,
         Boolean(user.isAdmin),
-        user
+        { scope: 'ops', ...user }
     );
 }
 

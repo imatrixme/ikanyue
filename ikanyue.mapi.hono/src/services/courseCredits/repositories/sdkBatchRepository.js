@@ -5,6 +5,8 @@ const {
 } = require('../schema');
 
 const ACTIONS = new Set(['create', 'update', 'upsert', 'delete']);
+// One command must stay one transaction; storage is migrated to allow at least this many requests.
+const MAX_BATCH_PLAN_REQUESTS = 500;
 const VERSIONED_ENTITY_TYPES = new Map([
     ['credit_batches', 'credit_batch'],
     ['orders', 'order'],
@@ -47,6 +49,8 @@ class PocketBaseBatchRepository {
     async send(plan) {
         invariant(Array.isArray(plan) && plan.length > 0,
             'EMPTY_BATCH_PLAN', 'PocketBase batch plan cannot be empty');
+        invariant(plan.length <= MAX_BATCH_PLAN_REQUESTS, 'BATCH_PLAN_TOO_LARGE',
+            '单次操作涉及的记录过多，请拆分班级或缩短课堂时长后重试', { requests: plan.length });
         assertBatchPlanPolicy(plan);
         const batch = this.client.createBatch();
         for (const request of plan) queueRequest(batch, request);
@@ -125,6 +129,7 @@ function requestOptions(options = {}) {
 }
 
 module.exports = {
+    MAX_BATCH_PLAN_REQUESTS,
     PocketBaseBatchRepository,
     VERSIONED_ENTITY_TYPES,
     assertBatchPlanPolicy,

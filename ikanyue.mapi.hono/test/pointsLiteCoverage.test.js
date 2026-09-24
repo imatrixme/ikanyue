@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { Hono } = require('hono');
 const jwt = require('jsonwebtoken');
+const md5 = require('licia/md5');
 
 const { authMiddleware } = require('../src/middleware/auth');
 const { responseMiddleware } = require('../src/middleware/response');
@@ -38,10 +39,14 @@ test('student auth middleware covers token header, raw bearer, invalid, and expi
     app.get('/protected', authMiddleware(), (c) => c.data({ id: c.get('user').id, isWeb: c.get('isWeb') }));
 
     assert.equal((await jsonRequest(app, '/protected')).message, '未授权，请登录后操作');
-    assert.equal((await jsonRequest(app, '/protected', { token: 'bad-token' })).message, '非法授权，请正确登录');
+    assert.equal((await jsonRequest(app, '/protected', { token: 'bad-token' })).message, '登录已失效，请重新登录');
 
-    const expired = jwt.sign({ id: 'student_1', role: 'student', expiredAt: 1 }, 'V_NY6*rF-j.P');
-    assert.equal((await jsonRequest(app, '/protected', { token: expired })).message, '令牌过期，请重新登录');
+    const legacyKey = jwt.sign({ id: 'student_1', role: 'student' }, 'V_NY6*rF-j.P');
+    assert.equal((await jsonRequest(app, '/protected', { token: legacyKey })).message, '登录已失效，请重新登录');
+    const expired = jwtAuth.sign({}, 'student_1', 'sn', 'student', false, {}, { expiresIn: -10 });
+    assert.equal((await jsonRequest(app, '/protected', { token: expired })).message, '登录已失效，请重新登录');
+    const challenge = jwtAuth.sign({}, 'wechat-role', 'openid', 'role_challenge', false, { challengeType: 'wechat-role-selection' });
+    assert.equal((await jsonRequest(app, '/protected', { token: challenge })).message, '登录已失效，请重新登录');
 
     const token = jwtAuth.sign({ headers: {} }, 'student_1', 'student_sn', 'student', false);
     const tokenHeaderResponse = await app.request('/protected', { headers: { token, 'sec-fetch-mode': 'cors', 'sec-fetch-site': 'same-origin' } });
@@ -59,12 +64,16 @@ test('ops auth middleware covers expired teacher tokens', async () => {
     app.get('/ops/protected', require('../src/middleware/opsAuth').opsAuthMiddleware(), (c) => c.data({ ok: true }));
     app.post('/ops/auth/change-password', require('../src/middleware/opsAuth').opsAuthMiddleware(), require('../src/middleware/opsAuth').opsPasswordChangeGuard(), (c) => c.data({ ok: true }));
 
-    const expired = jwt.sign({ id: 'teacher_1', role: 'teacher', expiredAt: 1 }, 'V_NY6*rF-j.P');
+    const expired = jwtAuth.sign({}, 'teacher_1', 'sn', 'teacher', true, { scope: 'ops' }, { expiresIn: -10 });
     const response = await jsonRequest(app, '/ops/protected', { token: expired });
     assert.equal(response.code, 403);
-    assert.equal(response.message, '后台登录已过期');
+    assert.equal(response.message, '后台登录已过期，请重新登录');
+    const student = jwtAuth.sign({}, 'student_1', 'sn', 'student', false, { scope: 'ops' });
+    assert.equal((await jsonRequest(app, '/ops/protected', { token: student })).message, '后台仅允许教师或管理员访问');
+    const miniappTeacher = jwtAuth.sign({}, 'teacher_1', 'sn', 'teacher', true);
+    assert.equal((await jsonRequest(app, '/ops/protected', { token: miniappTeacher })).code, 403);
 
-    const guardedToken = jwtAuth.sign({ headers: {} }, 'teacher_1', 'sn', 'teacher', true, { passwordChangeRequired: true });
+    const guardedToken = jwtAuth.sign({ headers: {} }, 'teacher_1', 'sn', 'teacher', true, { scope: 'ops', passwordChangeRequired: true });
     const allowed = await jsonRequest(app, '/ops/auth/change-password', { method: 'POST', token: guardedToken });
     assert.equal(allowed.code, 10000);
 });
@@ -279,7 +288,8 @@ test('ops auth direct service branches cover registration validation, duplicate 
             newPassword: 'newSecret123',
             confirmPassword: 'newSecret123',
         })).code, undefined);
-        assert.equal(await service.matchesPassword({ id: 'teacher_without_identity', password: 'secret' }, 'secret', ''), true);
+        assert.equal(await service.matchesPassword({ id: 'teacher_without_identity', password: 'secret' }, 'secret', ''), false);
+        assert.equal(await service.matchesPassword({ id: 'teacher_without_identity', password: md5('secret') }, 'secret', ''), true);
         const authenticatedService = new OpsAuthService(repository, new AuditService(repository), async () => true);
         assert.equal(await authenticatedService.matchesPassword({ id: 'teacher_remote', password: 'not-local' }, 'secret', ''), true);
 
@@ -344,7 +354,7 @@ test('ops handlers cover status-only service errors and sendResult fallbacks', a
 
     assert.equal((await jsonRequest(app, '/ops/auth/login', { method: 'POST', body: {} })).message, '操作失败');
     assert.equal((await jsonRequest(app, '/ops/auth/register', { method: 'POST', body: {} })).code, 409);
-    const token = jwtAuth.sign({ headers: {} }, 'admin_1', 'sn', 'teacher', true);
+    const token = jwtAuth.sign({ headers: {} }, 'admin_1', 'sn', 'teacher', true, { scope: 'ops' });
     const failed = await jsonRequest(app, '/ops/points/students/student_1', { token });
     assert.equal(failed.code, 418);
     assert.equal(failed.message, '服务器内部错误');

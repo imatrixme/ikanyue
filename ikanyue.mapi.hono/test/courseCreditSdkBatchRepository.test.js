@@ -164,3 +164,10 @@ function assertCode(action, code) {
 function hasCode(code) {
     return (error) => error instanceof CourseCreditError && error.code === code;
 }
+
+test('oversize plans fail with a business message before reaching PocketBase', async () => {
+    const { PocketBaseBatchRepository, MAX_BATCH_PLAN_REQUESTS } = require('../src/services/courseCredits/repositories/sdkBatchRepository');
+    const repository = new PocketBaseBatchRepository({ createBatch() { throw new Error('storage must not be contacted'); } });
+    const plan = Array.from({ length: MAX_BATCH_PLAN_REQUESTS + 1 }, (_, index) => ({ action: 'create', collection: 'outbox_events', data: { id: `e${index}` } }));
+    await assert.rejects(repository.send(plan), (error) => error.code === 'BATCH_PLAN_TOO_LARGE');
+});

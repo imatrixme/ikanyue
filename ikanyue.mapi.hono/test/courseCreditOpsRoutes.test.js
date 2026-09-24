@@ -154,6 +154,6 @@ async function get(app, path, authorization) {
 
 function auth(user) {
     return `Bearer ${jwtAuth.sign(
-        { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user
+        { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user }
     )}`;
 }

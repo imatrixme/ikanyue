@@ -29,7 +29,8 @@ class GatewayClient {
             invariant(false, 'PAYMENT_RESULT_UNKNOWN', method === 'GET' || path.includes('statement')
                 ? '支付服务连接超时，请稍后刷新' : '支付结果正在确认，请稍后刷新，不要重复付款');
         }
-        const result = await response.json();
+        // Proxies may answer with HTML; treat an unreadable body as an empty error payload.
+        const result = await response.json().catch(() => null);
         const messages = {
             STATEMENT_DATE_CONFLICT: '该日期已导入内容不同的账单，请保留原始账单并人工核对',
             STATEMENT_DIFFERENCE_UNRESOLVED: '账单差异仍未消除，不能标记完成',

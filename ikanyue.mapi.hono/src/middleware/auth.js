@@ -1,5 +1,4 @@
 'use strict';
-const dayjs = require('dayjs');
 const { jwtAuth } = require('../utils/jwtAuth');
 
 /**
@@ -31,29 +30,16 @@ function authMiddleware() {
         const isWeb = !!(c.req.header('sec-fetch-mode') && c.req.header('sec-fetch-site'));
         const user = jwtAuth.check(token);
 
-        if (user === undefined) {
+        // 身份选择凭证只能用于完成选择，不能当作登录令牌。
+        if (user === undefined || user.challengeType) {
             return c.json(
                 {
                     code: 403,
-                    message: '非法授权，请正确登录',
+                    message: '登录已失效，请重新登录',
                     data: null,
                 },
                 200
             );
-        }
-
-        if (user.expiredAt) {
-            const nowTs = dayjs().unix();
-            if (user.expiredAt < nowTs) {
-                return c.json(
-                    {
-                        code: 403,
-                        message: '令牌过期，请重新登录',
-                        data: null,
-                    },
-                    200
-                );
-            }
         }
 
         // 将用户信息存储到上下文中

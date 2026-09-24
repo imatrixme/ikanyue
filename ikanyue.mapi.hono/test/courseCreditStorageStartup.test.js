@@ -20,7 +20,7 @@ test('course-credit startup waits for PocketBase auth and requires enabled Batch
                 settings: {
                     async getAll(options) {
                         calls.push(['settings', options]);
-                        return { batch: { enabled: true, maxRequests: 3, timeout: 1, maxBodySize: 64 } };
+                        return { batch: { enabled: true, maxRequests: 1000, timeout: 1, maxBodySize: 64 } };
                     },
                 },
                 collections: {
@@ -35,7 +35,7 @@ test('course-credit startup waits for PocketBase auth and requires enabled Batch
 
     const settings = await verifyCourseCreditStorageAtStartup(client);
 
-    assert.deepEqual(settings, { enabled: true, maxRequests: 3, timeout: 1, maxBodySize: 64 });
+    assert.deepEqual(settings, { enabled: true, maxRequests: 1000, timeout: 1, maxBodySize: 64 });
     assert.deepEqual(calls, [
         'ready',
         'auth',
@@ -48,6 +48,8 @@ test('course-credit startup waits for PocketBase auth and requires enabled Batch
 test('course-credit startup fails instead of serving with disabled or unavailable storage', async () => {
     const disabled = startupClient({ enabled: false });
     await assert.rejects(verifyCourseCreditStorageAtStartup(disabled), hasCode('POCKETBASE_BATCH_DISABLED'));
+    const small = startupClient({ enabled: true, maxRequests: 100, timeout: 10, maxBodySize: 0 });
+    await assert.rejects(verifyCourseCreditStorageAtStartup(small), hasCode('POCKETBASE_BATCH_CAPACITY_LOW'));
 
     const initializationError = new Error('PocketBase initialization failed');
     await assert.rejects(verifyCourseCreditStorageAtStartup({ ready: Promise.reject(initializationError) }), initializationError);

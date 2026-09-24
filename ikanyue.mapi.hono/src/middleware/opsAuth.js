@@ -1,5 +1,4 @@
-const dayjs = require('dayjs');
-const { jwtAuth } = require('../utils/jwtAuth');
+const { jwtAuth, OPS_SCOPE } = require('../utils/jwtAuth');
 const { getBearerToken } = require('../services/ops/opsUtils');
 
 function opsAuthMiddleware() {
@@ -10,11 +9,12 @@ function opsAuthMiddleware() {
         }
 
         const user = jwtAuth.check(token);
-        if (!user || user.role !== 'teacher') {
-            return c.error(403, '后台仅允许教师或管理员访问');
+        // Miniapp tokens live longer; only short-lived tokens issued by Admin login reach /ops.
+        if (!user || user.scope !== OPS_SCOPE) {
+            return c.error(403, '后台登录已过期，请重新登录');
         }
-        if (user.expiredAt && user.expiredAt < dayjs().unix()) {
-            return c.error(403, '后台登录已过期');
+        if (user.role !== 'teacher') {
+            return c.error(403, '后台仅允许教师或管理员访问');
         }
 
         c.set('user', user);

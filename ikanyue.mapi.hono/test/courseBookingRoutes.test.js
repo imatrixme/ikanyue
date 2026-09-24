@@ -187,6 +187,6 @@ async function request(app, method, path, auth, body) {
 
 function token(user) {
     return jwtAuth.sign(
-        { headers: {} }, user.id, user.sn || user.id, user.role, Boolean(user.isAdmin), user
+        { headers: {} }, user.id, user.sn || user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user }
     );
 }

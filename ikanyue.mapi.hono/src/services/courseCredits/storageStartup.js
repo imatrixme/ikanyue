@@ -3,6 +3,7 @@ const { OPS_COLLECTION_SCHEMAS } = require('../ops/schema');
 const { CourseCreditError } = require('./domain');
 const { assertPocketBaseBatchCapability } = require('./pocketBaseCapabilities');
 const { COURSE_CREDIT_COLLECTION_SCHEMAS } = require('./schema');
+const { MAX_BATCH_PLAN_REQUESTS } = require('./repositories/sdkBatchRepository');
 
 const REQUIRED_STORAGE_COLLECTIONS = [...new Set([
     ...OPS_COLLECTION_SCHEMAS,
@@ -14,6 +15,11 @@ async function verifyCourseCreditStorageAtStartup(client = pbClient) {
     await client.ensureAuth();
     const pocketBase = client.getClient();
     const settings = await assertPocketBaseBatchCapability(pocketBase);
+    if (!(settings.maxRequests >= MAX_BATCH_PLAN_REQUESTS)) {
+        throw new CourseCreditError('POCKETBASE_BATCH_CAPACITY_LOW',
+            `PocketBase batch maxRequests must be at least ${MAX_BATCH_PLAN_REQUESTS}; apply pb_migrations`,
+            { maxRequests: settings.maxRequests });
+    }
     await assertRequiredStorageCollections(pocketBase);
     if (process.env.COURSE_COMMERCE_ENABLED === 'true') {
         await assertRequiredStorageCollections(pocketBase, require('../commerce/schema').COMMERCE_SCHEMA.map((schema) => schema.name));

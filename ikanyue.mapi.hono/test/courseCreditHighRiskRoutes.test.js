@@ -151,7 +151,7 @@ async function post(app, path, headers, body) {
 function authHeaders(user) {
     return {
         authorization: `Bearer ${jwtAuth.sign(
-            { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user
+            { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user }
         )}`,
         'idempotency-key': 'high-risk-key',
         'x-trace-id': 'trace-high-risk',

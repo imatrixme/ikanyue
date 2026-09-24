@@ -140,6 +140,6 @@ async function post(app, path, headers, body) {
 
 function token(user) {
     return jwtAuth.sign(
-        { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user
+        { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user }
     );
 }

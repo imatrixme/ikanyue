@@ -14,15 +14,12 @@ flowchart TD
     C -->|token存在| E[检测请求来源]
     E --> F[验证JWT令牌]
     F --> G{令牌验证结果}
-    G -->|验证失败| H[返回403: 非法授权，请正确登录]
-    G -->|验证成功| I{检查令牌过期时间}
-    I -->|已过期| J[返回403: 令牌过期，请重新登录]
-    I -->|未过期| K[将用户信息注入上下文]
+    G -->|签名错误/已过期/身份选择凭证| H[返回403: 登录已失效，请重新登录]
+    G -->|验证成功| K[将用户信息注入上下文]
     K --> L[设置请求来源标志]
     L --> M[继续下一个中间件]
     D --> N[请求结束]
     H --> N
-    J --> N
     M --> O[执行后续处理]
 ```
 
@@ -91,9 +88,9 @@ jwtoken: jwt_token_here
 
 调用 `jwtAuth.check()` 方法验证令牌的有效性和完整性。
 
-### 4. 过期时间检查
+### 4. 过期与用途检查
 
-验证令牌的 `expiredAt` 字段，确保令牌未过期。
+过期由 `jwt.verify` 按标准 `exp` 判断。带 `challengeType` 的微信身份选择凭证不能作为登录令牌使用。
 
 ## 上下文注入
 
@@ -109,7 +106,7 @@ c.set('user', user);
 //     sn: "unique_sn",
 //     role: "student" | "teacher",
 //     isAdmin: boolean,
-//     expiredAt: number
+//     exp: number, iat: number
 // }
 ```
 
@@ -139,20 +136,13 @@ c.set('isWeb', isWeb);
 | 错误场景 | 错误代码 | 错误消息             |
 | -------- | -------- | -------------------- |
 | 缺少令牌 | 403      | 未授权，请登录后操作 |
-| 令牌无效 | 403      | 非法授权，请正确登录 |
-| 令牌过期 | 403      | 令牌过期，请重新登录 |
+| 令牌无效或过期 | 403 | 登录已失效，请重新登录 |
 
 ## 令牌生命周期
 
 ### 过期检查
 
-使用 `dayjs` 库进行时间比较：
-
-```javascript
-if (user.expiredAt && user.expiredAt < dayjs().second()) {
-    // 令牌已过期
-}
-```
+有效期见 [jwtAuth](mdc:src/utils/jwtAuth.js.md)，由 `jwt.verify` 统一校验。
 
 ### 刷新机制
 
@@ -169,9 +159,8 @@ if (user.expiredAt && user.expiredAt < dayjs().second()) {
 
 ### 时间安全
 
--   精确的过期时间检查
--   防止时钟偏移攻击
--   合理的令牌有效期设置
+-   标准 `exp` 过期检查
+-   小程序令牌 30 天、后台令牌 12 小时
 
 ## 兼容性说明
 
@@ -253,7 +242,7 @@ const user = c.get('user');
 console.log('认证用户:', {
     id: user.id,
     role: user.role,
-    expiredAt: new Date(user.expiredAt * 1000),
+    expiresAt: new Date(user.exp * 1000),
 });
 ```
 
@@ -262,3 +251,4 @@ console.log('认证用户:', {
 -   2024-01-XX: 从原 Sails.js 项目迁移，保持完全兼容
 -   2024-01-XX: 适配 Hono 框架的中间件模式
 -   2024-01-XX: 增强请求来源检测功能
+-   2026-09: 改用标准 `exp`，拒绝身份选择凭证，统一失效提示

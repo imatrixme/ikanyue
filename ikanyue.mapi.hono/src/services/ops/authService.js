@@ -1,5 +1,5 @@
 const md5 = require('licia/md5');
-const { jwtAuth } = require('../../utils/jwtAuth');
+const { jwtAuth, OPS_SCOPE, OPS_TOKEN_TTL } = require('../../utils/jwtAuth');
 const { normalizeBoolean, normalizeString } = require('./opsUtils');
 const { authenticatePocketBaseTeacher } = require('./pocketbaseTeacherAuth');
 
@@ -172,7 +172,8 @@ class OpsAuthService {
         if (await this.teacherAuthenticator(teacher, password, cellphone)) {
             return true;
         }
-        return teacher.password === md5(password) || teacher.password === password;
+        // Legacy teacher records store MD5 hashes; plaintext equality is never accepted.
+        return typeof teacher.password === 'string' && teacher.password === md5(password);
     }
 }
 
@@ -195,14 +196,16 @@ function projectOpsProfile(teacher = {}) {
 }
 
 function buildTeacherLoginFilter(account) {
-    return `(cellphone="${account}" || username="${account}" || email="${account}")`;
+    const value = String(account).replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+    return `(cellphone="${value}" || username="${value}" || email="${value}")`;
 }
 
 function signOpsToken(request, teacher, isAdmin, passwordChangeRequired) {
     return jwtAuth.sign(request, teacher.id, teacher.sn, 'teacher', isAdmin, {
+        scope: OPS_SCOPE,
         passwordChangeRequired: Boolean(passwordChangeRequired),
         courseCreditCapabilities: normalizeCapabilities(teacher.courseCreditCapabilities),
-    });
+    }, { expiresIn: OPS_TOKEN_TTL });
 }
 
 function normalizeCapabilities(value) {
@@ -264,4 +267,4 @@ function isDuplicateTeacherError(error = {}) {
     return error.status === 400 && /(cellphone|username|手机号).*?(unique|already)|(?:unique|already).*?(cellphone|username|手机号)/i.test(text);
 }
 
-module.exports = { OpsAuthService, isRegistrationEnabled, normalizeCapabilities, projectOpsProfile };
+module.exports = { OpsAuthService, buildTeacherLoginFilter, isRegistrationEnabled, normalizeCapabilities, projectOpsProfile };

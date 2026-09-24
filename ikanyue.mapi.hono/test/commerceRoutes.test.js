@@ -19,7 +19,7 @@ function app(env = {}, checkout = {}) {
     routes.finalize(); return instance;
 }
 async function call(instance, path, user, body) {
-    const token = user ? jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, !!user.isAdmin, user) : '';
+    const token = user ? jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, !!user.isAdmin, { scope: 'ops', ...user }) : '';
     const response = await instance.request(path, { method: body === undefined ? 'GET' : 'POST',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }) });

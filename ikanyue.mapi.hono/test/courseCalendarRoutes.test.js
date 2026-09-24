@@ -100,7 +100,7 @@ async function request(app, path, auth) {
 
 function token(user) {
     return jwtAuth.sign({ headers: {} }, user.id, user.sn || user.id, user.role,
-        Boolean(user.isAdmin), user);
+        Boolean(user.isAdmin), { scope: 'ops', ...user });
 }
 
 function hasCode(code) {

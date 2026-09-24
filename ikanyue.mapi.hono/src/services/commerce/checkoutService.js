@@ -141,7 +141,12 @@ class CheckoutService {
         invariant(row.status === 'pending' && row.data.paymentId, 'PAYMENT_NOT_READY', '当前订单无需再次付款');
         if (!this.gateway.mockEnabled) invariant(identity?.wechatOpenId && identity.wechatOpenId === row.data.payerId,
             'PAYMENT_WECHAT_IDENTITY_REQUIRED', '请使用下单时的微信身份支付');
-        return (await this.gateway.refreshPayment(row.data.paymentId)).action;
+        const payment = await this.gateway.refreshPayment(row.data.paymentId);
+        if (payment.status !== 'pending') {
+            await this.sync(orderId);
+            invariant(false, 'PAYMENT_WINDOW_CLOSED', '订单已超过支付时间，请重新选购');
+        }
+        return payment.action;
     }
     present(row) {
         const { name, amount, currency, policy, refunded, refundPending, createdAt } = row.data;
@@ -169,7 +174,8 @@ class CheckoutService {
             if (!event.data.type.startsWith('payment.')) continue;
             const row = await this.repo.findFirst('commerce_orders', `id="${escape(event.data.payload.reference)}"`);
             const handled = event.data.payload.status === 'succeeded' ? row?.status === 'completed' : row?.status === 'failed';
-            if (row && row.data.paymentId === event.data.targetId && handled) {
+            // Events for payments this service never created must not occupy the gateway's pending window.
+            if (!row || (row.data.paymentId === event.data.targetId && handled)) {
                 await this.gateway.request(`/v1/events/${event.id}/ack`, 'POST', {});
             }
         }

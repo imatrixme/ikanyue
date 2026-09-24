@@ -45,4 +45,4 @@ async function post(app, token, body) {
     })).json();
 }
 
-function auth(user) { return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, false, user); }
+function auth(user) { return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, false, { scope: 'ops', ...user }); }

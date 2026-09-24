@@ -141,7 +141,7 @@ async function request(app, method, path, headers, body) {
 function authHeaders(user) {
     return {
         authorization: `Bearer ${jwtAuth.sign(
-            { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user
+            { headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user }
         )}`,
         'idempotency-key': 'admin-command-key',
         'x-trace-id': 'admin-trace',

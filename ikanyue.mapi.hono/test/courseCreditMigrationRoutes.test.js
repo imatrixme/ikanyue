@@ -92,5 +92,5 @@ async function post(app, path, token, body) {
 }
 
 function auth(user) {
-    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user);
+    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user });
 }

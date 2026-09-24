@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const { CATALOG_SCHEMAS } = require('../src/services/courseCredits/schema/catalogSchemas');
 const { BOOKING_SCHEMAS } = require('../src/services/courseCredits/schema/bookingSchemas');
+const { COMMERCE_SCHEMA } = require('../src/services/commerce/schema');
 const { LEDGER_SCHEMAS } = require('../src/services/courseCredits/schema/ledgerSchemas');
 const {
     BASE_TEACHING_SCHEMAS,
@@ -17,6 +18,7 @@ const MIGRATIONS = [
     ['1784279200_course_credit_ledger.js', LEDGER_SCHEMAS],
     ['1784279300_course_credit_teaching.js', BASE_TEACHING_SCHEMAS],
     ['1784279400_course_booking.js', BOOKING_SCHEMAS],
+    ['1788739300_course_commerce.js', COMMERCE_SCHEMA],
 ];
 const INDEX_MIGRATIONS = [
     ['1785312000_role_aware_course_calendar_indexes.js', CALENDAR_INDEX_DEFINITIONS],

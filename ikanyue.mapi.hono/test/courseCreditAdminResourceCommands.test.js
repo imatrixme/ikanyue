@@ -339,3 +339,16 @@ function lastPlan(repository) {
 function hasCode(code) {
     return (error) => error?.code === code;
 }
+
+test('new lessons receive server-owned rule snapshots and versions', () => {
+    const data = normalizeResourceInput('lessons', {
+        code: 'SCH-1', title: '声乐课', status: 'draft', startAt: '2026-09-24T02:00:00.000Z', endAt: '2026-09-24T03:00:00.000Z',
+        requiredCreditTypeId: 'credit', requiredQuantity: 1,
+    });
+    assert.deepEqual(data.attendanceRuleSnapshot, { version: 1 });
+    assert.deepEqual(data.settlementRuleSnapshot, { version: 1 });
+    assert.deepEqual(data.teacherRuleSnapshot, { version: 1 });
+    assert.equal(data.rosterVersion, 1);
+    assert.equal(data.version, 1);
+    assert.equal(data.originType, 'admin');
+});

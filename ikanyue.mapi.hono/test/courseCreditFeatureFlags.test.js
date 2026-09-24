@@ -113,7 +113,7 @@ async function post(app, path, authorization, body) {
 }
 
 function auth(user) {
-    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), user);
+    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, Boolean(user.isAdmin), { scope: 'ops', ...user });
 }
 
 function hasCode(code) {

@@ -30,6 +30,14 @@ const RESOURCE_SCHEMAS = Object.freeze({
     ], ['draft', 'scheduled', 'enrollment_closed', 'in_progress', 'completed', 'cancelled'], validateLesson),
 });
 
+const LESSON_DEFAULTS = Object.freeze({
+    attendanceRuleSnapshot: { version: 1 },
+    settlementRuleSnapshot: { version: 1 },
+    teacherRuleSnapshot: { version: 1 },
+    rosterVersion: 1,
+    version: 1,
+});
+
 function schema(collection, fields, statuses, validate, revisioned = false) {
     return { collection, fields: new Set(fields), statuses: new Set(statuses), validate, revisioned };
 }
@@ -48,9 +56,11 @@ function normalizeResourceInput(name, input, current = null) {
         && (!current || current.originType === undefined)
         ? { ...input, originType: 'admin' }
         : input;
+    // Rule snapshots and versions are server-owned defaults; clients only send lesson facts.
+    const defaults = name === 'lessons' && !current ? LESSON_DEFAULTS : {};
     const unknown = Object.keys(normalizedInput).filter((key) => !config.fields.has(key));
     invariant(unknown.length === 0, 'ADMIN_RESOURCE_FIELD_INVALID', '请求包含不支持的字段', { fields: unknown });
-    const data = { ...(current ? pick(current, config.fields) : {}), ...normalizedInput };
+    const data = { ...defaults, ...(current ? pick(current, config.fields) : {}), ...normalizedInput };
     config.validate(data);
     return pick(data, config.fields);
 }

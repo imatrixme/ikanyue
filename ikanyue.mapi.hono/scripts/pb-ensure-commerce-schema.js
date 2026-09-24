@@ -9,7 +9,7 @@ async function main() {
     const pb = new PocketBase(process.env.PB_URL);
     await pb.collection('_superusers').authWithPassword(process.env.PB_EMAIL, process.env.PB_PASSWORD);
     await applyOpsSchemas(pb, COMMERCE_SCHEMA);
-    await pb.settings.update({ batch: { enabled: true, maxRequests: 100, timeout: 10, maxBodySize: 1048576 } });
+    await pb.settings.update({ batch: { enabled: true, maxRequests: 1000, timeout: 10, maxBodySize: 8388608 } });
     console.log('Business commerce schema ready. No sales or policies published.');
 }
 if (require.main === module) main().catch(() => { console.error('Commerce schema initialization failed.'); process.exitCode = 1; });

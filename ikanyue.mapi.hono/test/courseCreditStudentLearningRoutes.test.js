@@ -76,7 +76,7 @@ async function get(app, path, authorization) {
 }
 
 function token(user) {
-    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, false, user);
+    return jwtAuth.sign({ headers: {} }, user.id, user.id, user.role, false, { scope: 'ops', ...user });
 }
 
 function hasCode(code) {

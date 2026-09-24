@@ -166,7 +166,7 @@ class CommerceRefundService {
             if (!event.data.type.startsWith('refund.')) continue;
             const reference = escape(event.data.payload.reference);
             const row = await this.repo.findFirst('commerce_refunds', `(id="${reference}" || data.gatewayReference="${reference}")`);
-            if (row && row.data.gatewayId === event.data.targetId && row.status !== 'processing') {
+            if (!row || (row.data.gatewayId === event.data.targetId && row.status !== 'processing')) {
                 await this.gateway.request(`/v1/events/${event.id}/ack`, 'POST', {});
             }
         }
