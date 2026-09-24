@@ -1,6 +1,6 @@
 import PocketBase, { ClientResponseError } from 'pocketbase';
 import { Conflict, ensure, recordId } from './domain';
-import type { Kind, Mutation, Row, Store } from './types';
+import type { Kind, Mutation, Row, Store, Where } from './types';
 
 // Version claims and entity updates share one PB transaction; no read-then-write money updates.
 export class PocketBaseStore implements Store {
@@ -9,9 +9,16 @@ export class PocketBaseStore implements Store {
     try { return decode<T>(await this.pb.collection('pay_entities').getOne(id)); }
     catch (error) { if (error instanceof ClientResponseError && error.status === 404) return null; throw error; }
   }
-  async list<T>(kind: Kind, owner: string): Promise<Row<T>[]> {
+  async list<T>(kind: Kind, owner: string, where: Where = {}): Promise<Row<T>[]> {
+    const params: Record<string, unknown> = { kind, owner };
+    const clauses = Object.entries(where).map(([key, value], index) => {
+      ensure(/^[a-zA-Z]+$/.test(key), 'INVALID_FILTER');
+      const negated = typeof value === 'object';
+      params[`w${index}`] = negated ? value.not : value;
+      return `data.${key} ${negated ? '!=' : '='} {:w${index}}`;
+    });
     const records = await this.pb.collection('pay_entities').getFullList({
-      filter: this.pb.filter('kind={:kind} && owner={:owner}', { kind, owner }), sort: 'created,id',
+      filter: this.pb.filter(['kind={:kind} && owner={:owner}', ...clauses].join(' && '), params), sort: 'created,id',
     });
     return records.map((record) => decode<T>(record));
   }
@@ -46,8 +53,12 @@ export class MemoryStore implements Store {
   async get<T>(id: string): Promise<Row<T> | null> {
     return structuredClone(this.rows.get(id) as Row<T> || null);
   }
-  async list<T>(kind: Kind, owner: string): Promise<Row<T>[]> {
-    return structuredClone([...this.rows.values()].filter((r) => r.kind === kind && r.owner === owner) as Row<T>[]);
+  async list<T>(kind: Kind, owner: string, where: Where = {}): Promise<Row<T>[]> {
+    return structuredClone([...this.rows.values()].filter((r) => r.kind === kind && r.owner === owner
+      && Object.entries(where).every(([key, value]) => {
+        const actual = (r.data as Record<string, unknown>)[key];
+        return typeof value === 'object' ? actual !== value.not : actual === value;
+      })) as Row<T>[]);
   }
   async commit(changes: Mutation[]) {
     const seen = new Set<string>();

@@ -1,6 +1,12 @@
 import { digest, ensure, minorUnits, recordId, retry, text } from './domain';
 import type { Finding, GatewayEvent, Mutation, Observation, Payment, Refund, Row, Store } from './types';
 
+// Unpaid payments close after this window; the channel receives the same deadline.
+export const PAYMENT_TTL_MS = 30 * 60_000;
+export function paymentExpired(payment: Row<Payment>, now = Date.now()) {
+  return payment.data.status === 'pending' && now - Date.parse(payment.data.createdAt) >= PAYMENT_TTL_MS;
+}
+
 export class Gateway {
   constructor(readonly store: Store, readonly owner: string, readonly clock = () => new Date().toISOString(),
     readonly channel?: 'wechatpay') {}
@@ -47,7 +53,7 @@ export class Gateway {
       const provider = await this.owned<Observation>(recordId('provider', id), 'provider');
       ensure(provider.data.status !== 'succeeded', 'PAYMENT_ALREADY_CAPTURED', 409);
       const changed = next(payment, { status: 'closed' });
-      await this.store.commit([update(changed), update(next(provider, { status: 'closed', observedAt: this.clock() })),
+      await this.store.commit([update(changed), update(next(provider, { status: 'closed', observedAt: this.clock(), applied: true })),
         insert(this.event(changed, 'payment.closed'))]);
       return changed;
     });
@@ -93,16 +99,22 @@ export class Gateway {
       const amount = input.amount === undefined ? row.data.amount : minorUnits(input.amount);
       if (row.data.status === status && row.data.amount === amount) return row;
       ensure(row.data.status !== 'succeeded', 'CAPTURE_IS_IMMUTABLE', 409);
-      const changed = next(row, { status, amount, observedAt: this.clock() });
+      const changed = next(row, { status, amount, observedAt: this.clock(), applied: false });
       await this.store.commit([update(changed)]);
       return changed;
     });
   }
 
   // Pending work is derived from durable provider/entity state, not an in-memory callback queue.
+  // Only open work is read: expired pending payments and provider results not yet applied.
   async poll() {
-    const observations = await this.store.list<Observation>('provider', this.owner);
     const errors: { id: string; code: string }[] = [];
+    for (const payment of await this.store.list<Payment>('payment', this.owner, { status: 'pending' })) {
+      if (payment.data.channel || !paymentExpired(payment)) continue;
+      try { await this.closePayment(payment.id); }
+      catch (error) { errors.push({ id: payment.id, code: error instanceof Error && 'code' in error ? String(error.code) : 'PAYMENT_CLOSE_FAILED' }); }
+    }
+    const observations = await this.store.list<Observation>('provider', this.owner, { applied: { not: true }, status: { not: 'pending' } });
     for (const observation of observations) {
       if (!['succeeded', 'failed'].includes(observation.data.status)) continue;
       try { await retry(() => this.accept(observation.id)); }
@@ -117,25 +129,27 @@ export class Gateway {
   protected async accept(providerId: string) {
     const observation = await this.owned<Observation>(providerId, 'provider');
     const { targetId, targetKind, status, amount } = observation.data;
+    // Marking the observation applied in the same commit keeps polling bounded to unapplied results.
+    const applied = update(next(observation, { applied: true }));
     if (targetKind === 'payment') {
       const row = await this.owned<Payment>(targetId, 'payment');
-      if (row.data.status === 'succeeded' || row.data.status === status) return;
+      if (row.data.status === 'succeeded' || row.data.status === status) return this.store.commit([applied]);
       ensure(amount === row.data.amount, 'PROVIDER_AMOUNT_MISMATCH', 409);
       const succeeded = status === 'succeeded';
       const changed = next(row, succeeded ? { status: 'succeeded', paidAt: observation.data.observedAt,
         late: row.data.status !== 'pending' } : { status: status === 'closed' ? 'closed' : 'failed' });
-      await this.store.commit([update(changed), insert(this.event(changed, `payment.${changed.data.status}`)),
+      await this.store.commit([applied, update(changed), insert(this.event(changed, `payment.${changed.data.status}`)),
         ...(succeeded && changed.data.late ? [insert(this.fresh<Finding>(recordId('late', row.id), 'reconciliation', {
           targetId: row.id, reason: 'LATE_PAYMENT_SUCCESS', occurredAt: this.clock(),
         }))] : [])]);
     } else {
       const row = await this.owned<Refund>(targetId, 'refund');
-      if (row.data.status !== 'processing') return;
+      if (row.data.status !== 'processing') return this.store.commit([applied]);
       ensure(amount === row.data.amount, 'PROVIDER_AMOUNT_MISMATCH', 409);
       const payment = await this.owned<Payment>(row.data.paymentId, 'payment');
       ensure(payment.data.reserved >= amount, 'REFUND_RESERVATION_MISMATCH', 409);
       const changed = next(row, { status: status === 'succeeded' ? 'succeeded' : 'failed' });
-      await this.store.commit([update(changed), update(next(payment, {
+      await this.store.commit([applied, update(changed), update(next(payment, {
         reserved: payment.data.reserved - amount,
         refunded: payment.data.refunded + (status === 'succeeded' ? amount : 0),
       })), insert(this.event(changed, `refund.${changed.data.status}`))]);
@@ -143,8 +157,7 @@ export class Gateway {
   }
 
   async events() {
-    return (await this.store.list<GatewayEvent>('event', this.owner))
-      .filter((row) => !row.data.acknowledged).slice(0, 100);
+    return (await this.store.list<GatewayEvent>('event', this.owner, { acknowledged: false })).slice(0, 100);
   }
 
   async acknowledge(id: string) {

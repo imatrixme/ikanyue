@@ -1,4 +1,5 @@
 import { ensure } from '../domain';
+import { PAYMENT_TTL_MS } from '../gateway';
 import type { Observation, Payment, Refund, Row } from '../types';
 import { WechatClient } from './client';
 import { decodeNotification, launchParameters } from './crypto';
@@ -10,6 +11,7 @@ export class WechatAdapter {
     const result = await this.client.request<{ prepay_id: string }>('/v3/pay/transactions/jsapi', 'POST', {
       appid: appId, mchid: merchantId, out_trade_no: payment.id,
       description: payment.data.description, notify_url: notifyUrl,
+      time_expire: shanghaiTime(Date.parse(payment.data.createdAt) + PAYMENT_TTL_MS),
       amount: { total: payment.data.amount, currency: 'CNY' }, payer: { openid: payment.data.payerId },
     });
     launchParameters(result.prepay_id, this.client.credentials);
@@ -89,4 +91,8 @@ export function object(value: unknown): Record<string, unknown> {
 function identifier(value: unknown) {
   ensure(typeof value === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(value), 'WECHAT_INVALID_CHANNEL_ID', 502);
   return value;
+}
+// WeChat expects RFC 3339 with an explicit offset, e.g. 2026-09-24T10:30:00+08:00.
+export function shanghaiTime(ms: number) {
+  return `${new Date(ms + 8 * 3600_000).toISOString().slice(0, 19)}+08:00`;
 }

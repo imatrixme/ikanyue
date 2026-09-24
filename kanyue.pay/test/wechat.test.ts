@@ -9,6 +9,8 @@ import type { Payment, Refund } from '../src/types';
 import { WechatClient } from '../src/wechat/client';
 import { seconds, verifyResponse } from '../src/wechat/crypto';
 import { WechatGateway } from '../src/wechat/gateway';
+import { shanghaiTime } from '../src/wechat/adapter';
+import { next, PAYMENT_TTL_MS, update } from '../src/gateway';
 import { mockCredentials } from '../src/wechat/mock';
 
 const keys = mockCredentials();
@@ -110,10 +112,25 @@ describe('WeChat API v3 against a signed persistent HTTP peer', () => {
     expect((await gateway.owned<Payment>(payment.id, 'payment')).data.status).toBe('pending');
   });
 
+  test('prepay carries the payment window and expired payments are closed with the channel', async () => {
+    const gateway = setup(); const payment = await create(gateway);
+    const channel = await gateway.store.get<{ request: { time_expire: string }; state: string }>(recordId('wechat-mock', gateway.owner, payment.id));
+    expect(channel?.data.request.time_expire).toBe(shanghaiTime(Date.parse(payment.data.createdAt) + PAYMENT_TTL_MS));
+    expect(shanghaiTime(Date.parse('2026-09-24T02:30:00Z'))).toBe('2026-09-24T10:30:00+08:00');
+    const current = await gateway.owned<Payment>(payment.id, 'payment');
+    await gateway.store.commit([update(next(current, { createdAt: new Date(Date.now() - PAYMENT_TTL_MS - 1000).toISOString() }))]);
+    expect((await gateway.poll()).errors).toEqual([]);
+    expect((await gateway.owned<Payment>(payment.id, 'payment')).data.status).toBe('closed');
+    expect((await gateway.store.get<{ state: string }>(recordId('wechat-mock', gateway.owner, payment.id)))?.data.state).toBe('CLOSED');
+  });
+
   test('close verifies a signed empty response; late success remains visible', async () => {
     const gateway = setup(); const payment = await create(gateway);
     expect((await gateway.closePayment(payment.id)).data.status).toBe('closed');
-    await gateway.observe(payment.id, { status: 'succeeded' }); await gateway.poll();
+    // Polling no longer re-reads closed payments; a late capture arrives through the signed notification.
+    await gateway.observe(payment.id, { status: 'succeeded' });
+    const late = await gateway.mock.notification(payment.id);
+    await gateway.notification(late.headers, await late.text());
     expect((await gateway.owned<Payment>(payment.id, 'payment')).data.late).toBe(true);
     expect((await gateway.store.list<{ reason: string }>('reconciliation', gateway.owner))
       .some((row) => row.data.reason === 'LATE_PAYMENT_SUCCESS')).toBe(true);

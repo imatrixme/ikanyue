@@ -41,6 +41,16 @@ integration('native PocketBase transactional contract', () => {
   }, 15000);
   afterAll(async () => { processHandle?.kill(); if (processHandle) await processHandle.exited; });
 
+  test('data filters match booleans, strings and missing keys like the memory store', async () => {
+    const store = new PocketBaseStore(pb);
+    const row = (id: string, data: Record<string, unknown>) => ({ row: { id, kind: 'provider' as const, owner: 'filters', version: 1, data }, expected: 0 });
+    await store.commit([row('filterunapplied', { status: 'succeeded' }), row('filterapplied00', { status: 'succeeded', applied: true }),
+      row('filterpending00', { status: 'pending', applied: false })]);
+    const open = await store.list('provider', 'filters', { applied: { not: true }, status: { not: 'pending' } });
+    expect(open.map((item) => item.id)).toEqual(['filterunapplied']);
+    expect((await store.list('provider', 'filters', { applied: false })).map((item) => item.id)).toEqual(['filterpending00']);
+  });
+
   test('concurrent creation/refunds survive an actual PocketBase process restart', async () => {
     const input = { reference: 'persistent-order', amount: 10000, currency: 'CNY' };
     const attempts = await Promise.all([gateway.createPayment(input, 'one'), gateway.createPayment(input, 'one')]);

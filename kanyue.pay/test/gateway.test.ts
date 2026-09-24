@@ -3,9 +3,9 @@ import { createApp } from '../src/app';
 import { config } from '../src/config';
 import { Conflict, minorUnits, recordId } from '../src/domain';
 import { financialSummary, reconcile } from '../src/finance';
-import { Gateway } from '../src/gateway';
+import { Gateway, PAYMENT_TTL_MS } from '../src/gateway';
 import { MemoryStore } from '../src/store';
-import type { Payment } from '../src/types';
+import type { GatewayEvent, Observation, Payment } from '../src/types';
 
 const token = 'service-test-'.repeat(4);
 const mockToken = 'mock-test-'.repeat(5);
@@ -109,6 +109,31 @@ describe('gateway money lifecycle', () => {
     await expect(gateway.closePayment(p.id)).rejects.toThrow('PAYMENT_ALREADY_CAPTURED');
     await expect(new Gateway(store, 'other').owned(p.id, 'payment')).rejects.toThrow('NOT_FOUND');
     await expect(gateway.createRefund({ reference: 'r', paymentId: p.id, amount: 1 }, 'r')).rejects.toThrow('PAYMENT_NOT_CAPTURED');
+  });
+
+  test('unpaid payments close after the payment window and emit a closed event', async () => {
+    const store = new MemoryStore();
+    const old = new Date(Date.now() - PAYMENT_TTL_MS - 1000).toISOString();
+    const gateway = new Gateway(store, 'kanyue', () => old);
+    const stale = await gateway.createPayment({ reference: 'stale', amount: 100, currency: 'CNY' }, 'stale');
+    const fresh = await new Gateway(store, 'kanyue').createPayment({ reference: 'fresh', amount: 100, currency: 'CNY' }, 'fresh');
+    await gateway.poll();
+    expect((await gateway.owned<Payment>(stale.id, 'payment')).data.status).toBe('closed');
+    expect((await gateway.owned<Payment>(fresh.id, 'payment')).data.status).toBe('pending');
+    expect((await gateway.events()).map((row) => row.data.type)).toEqual(['payment.closed']);
+  });
+
+  test('polling only revisits unapplied provider results and unacknowledged events', async () => {
+    const { gateway, store } = setup();
+    const payment = await gateway.createPayment({ reference: 'applied', amount: 100, currency: 'CNY' }, 'applied');
+    await gateway.observe(payment.id, { status: 'succeeded' });
+    expect(await store.list<Observation>('provider', 'kanyue', { applied: { not: true }, status: { not: 'pending' } })).toHaveLength(1);
+    await gateway.poll();
+    expect(await store.list<Observation>('provider', 'kanyue', { applied: { not: true }, status: { not: 'pending' } })).toHaveLength(0);
+    const [event] = await gateway.events();
+    await gateway.acknowledge(event.id);
+    expect(await store.list<GatewayEvent>('event', 'kanyue', { acknowledged: false })).toHaveLength(0);
+    expect(await gateway.events()).toHaveLength(0);
   });
 
   test('memory store simulates all-or-nothing optimistic transactions', async () => {

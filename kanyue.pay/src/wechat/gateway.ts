@@ -1,5 +1,5 @@
 import { ensure, recordId, retry } from '../domain';
-import { Gateway, insert, next, update } from '../gateway';
+import { Gateway, insert, next, paymentExpired, update } from '../gateway';
 import type { Finding, Observation, Payment, Refund, Row, Store } from '../types';
 import { object, WechatAdapter } from './adapter';
 import { WechatApiError, WechatClient } from './client';
@@ -33,12 +33,13 @@ export class WechatGateway extends Gateway {
     if (payment.data.channel !== 'wechatpay') return { type: 'mock', paymentId: payment.id };
     return payment.data.prepayId ? this.adapter.launch(payment.data.prepayId) : { type: 'pending' };
   }
+  // A prepay id stays valid longer than the payment window, so it is requested once.
   private async prepare(payment: Row<Payment>) {
-    if (payment.data.status !== 'pending' || freshPrepay(payment)) return;
+    if (payment.data.status !== 'pending' || payment.data.prepayId || paymentExpired(payment)) return;
     const prepayId = await this.adapter.prepay(payment);
     await retry(async () => {
       const current = await this.owned<Payment>(payment.id, 'payment');
-      if (freshPrepay(current) || current.data.status !== 'pending') return;
+      if (current.data.prepayId || current.data.status !== 'pending') return;
       await this.store.commit([update(next(current, { prepayId, prepayAt: this.clock() }))]);
     });
   }
@@ -70,7 +71,7 @@ export class WechatGateway extends Gateway {
   }
   override async poll() {
     const errors: { id: string; code: string }[] = [];
-    const payments = await this.store.list<Payment>('payment', this.owner);
+    const payments = await this.store.list<Payment>('payment', this.owner, { status: 'pending' });
     for (const payment of payments.filter((row) => row.data.channel === 'wechatpay')) {
       if (this.work) {
         const result = await this.work.run('payment-query', payment.id, () => this.recoverTarget(payment.id, 'payment'));
@@ -86,12 +87,12 @@ export class WechatGateway extends Gateway {
           receipt = await this.adapter.payment(payment);
         }
         await this.receive(receipt);
-        if (receipt.status === 'pending') await this.prepare(await this.owned<Payment>(payment.id, 'payment'));
+        await this.closeIfExpired(payment.id);
       } catch (error) { errors.push(await this.issue(payment.id, error)); }
     }
-    for (const refund of await this.store.list<Refund>('refund', this.owner)) {
+    for (const refund of await this.store.list<Refund>('refund', this.owner, { status: 'processing' })) {
       const payment = await this.owned<Payment>(refund.data.paymentId, 'payment');
-      if (payment.data.channel !== 'wechatpay' || refund.data.status !== 'processing') continue;
+      if (payment.data.channel !== 'wechatpay') continue;
       if (this.work) {
         const result = await this.work.run('refund-query', refund.id, () => this.recoverTarget(refund.id, 'refund'));
         if (result.error) errors.push({ id: refund.id, code: result.error });
@@ -114,10 +115,15 @@ export class WechatGateway extends Gateway {
     if (payment.data.channel !== 'wechatpay') return true;
     try { await this.receive(await this.adapter.payment(payment)); }
     catch (error) { if (!missing(error)) throw error; await this.prepare(payment); }
+    await this.closeIfExpired(id);
+    return (await this.owned<Payment>(id, 'payment')).data.status !== 'pending';
+  }
+  // Closing with the channel prevents later payment; a capture that raced the close is picked up on the next query.
+  private async closeIfExpired(id: string) {
     const current = await this.owned<Payment>(id, 'payment');
-    if (current.data.status === 'pending') await this.prepare(current);
-    return current.data.status === 'succeeded' || (current.data.status !== 'pending'
-      && Date.now() - Date.parse(current.data.createdAt) > 8 * 86400000);
+    if (current.data.status !== 'pending') return;
+    if (paymentExpired(current)) await this.closePayment(id);
+    else await this.prepare(current);
   }
   private async syncRefund(refund: Row<Refund>, payment: Row<Payment>) {
     const source = await this.owned<Observation>(recordId('provider', payment.id), 'provider');
@@ -165,7 +171,7 @@ export class WechatGateway extends Gateway {
         'WECHAT_REFUND_CLOSED_IS_FINAL', 409);
       if (previous.data.status === receipt.status && previous.data.receiptId === receipt.receiptId
         && previous.data.exception === receipt.exception && (!receipt.acceptedAt || previous.data.acceptedAt === receipt.acceptedAt)) return;
-      await this.store.commit([update(next(previous, { ...receipt, exception: receipt.exception }))]);
+      await this.store.commit([update(next(previous, { ...receipt, exception: receipt.exception, applied: false }))]);
     });
     if (receipt.exception) await this.issue(receipt.targetId, new Error(receipt.exception));
     // No remote calls in the notification acknowledgement path; only durable local transitions.
@@ -183,9 +189,6 @@ export class WechatGateway extends Gateway {
     });
     return { id: targetId, code };
   }
-}
-function freshPrepay(row: Row<Payment>) {
-  return row.data.prepayId && row.data.prepayAt && Date.now() - Date.parse(row.data.prepayAt) < 110 * 60000;
 }
 function missing(error: unknown) {
   return error instanceof WechatApiError && error.httpStatus === 404

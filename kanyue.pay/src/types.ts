@@ -1,9 +1,11 @@
 export type Kind = 'payment' | 'refund' | 'event' | 'provider' | 'reconciliation' | 'idempotency' | 'wechat_mock' | 'work' | 'audit' | 'statement' | 'statement_line' | 'settlement';
 export interface Row<T = unknown> { id: string; kind: Kind; owner: string; version: number; data: T }
 export interface Mutation { row: Row; expected: number }
+// Equality filters on row data; `{ not }` matches every other value, including a missing key.
+export type Where = Record<string, string | boolean | { not: string | boolean }>;
 export interface Store {
   get<T>(id: string): Promise<Row<T> | null>;
-  list<T>(kind: Kind, owner: string): Promise<Row<T>[]>;
+  list<T>(kind: Kind, owner: string, where?: Where): Promise<Row<T>[]>;
   commit(changes: Mutation[]): Promise<void>;
 }
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'closed';
@@ -21,7 +23,7 @@ export interface Observation {
   targetId: string; targetKind: 'payment' | 'refund'; amount: number;
   status: 'pending' | 'succeeded' | 'failed' | 'closed'; observedAt: string;
   receiptId?: string; exception?: string;
-  acceptedAt?: string;
+  acceptedAt?: string; applied?: boolean;
 }
 export interface GatewayEvent {
   type: string; targetId: string; payload: Payment | Refund;
