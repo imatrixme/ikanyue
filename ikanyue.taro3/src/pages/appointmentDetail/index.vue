@@ -72,14 +72,14 @@
 
             <view v-if="hasActions" class="appointment-detail-section appointment-detail-section--actions">
                 <text class="appointment-detail-section__title">可用操作</text>
-                <view v-if="role === 'teacher' && appointment.canConfirm" class="appointment-detail-primary" :class="{ disabled: actionLoading }" @tap="confirmAppointment">
+                <view v-if="role === 'teacher' && appointment.canConfirm" class="appointment-detail-primary" :class="{ disabled: actionLoading }" aria-role="button" @tap="confirmAppointment">
                     确认预约并保留时间
                 </view>
                 <view class="appointment-detail-secondary-actions">
-                    <view v-if="role === 'teacher' && appointment.canDecline" @tap="openReasonAction('decline')">拒绝申请</view>
-                    <view v-if="role === 'student' && appointment.canWithdraw" @tap="openReasonAction('withdraw')">撤回申请</view>
-                    <view v-if="appointment.canCancel" @tap="openReasonAction('cancel')">取消预约</view>
-                    <view v-if="role === 'teacher' && ['confirmed', 'rescheduled'].includes(appointment.status)" @tap="openReschedule">调整时间</view>
+                    <view v-if="role === 'teacher' && appointment.canDecline" aria-role="button" @tap="openReasonAction('decline')">拒绝申请</view>
+                    <view v-if="role === 'student' && appointment.canWithdraw" aria-role="button" @tap="withdrawAppointment">撤回申请</view>
+                    <view v-if="appointment.canCancel" aria-role="button" @tap="openReasonAction('cancel')">取消预约</view>
+                    <view v-if="role === 'teacher' && ['confirmed', 'rescheduled'].includes(appointment.status)" aria-role="button" @tap="openReschedule">调整时间</view>
                 </view>
             </view>
         </template>
@@ -88,10 +88,10 @@
             <view class="appointment-action-popup">
                 <view class="appointment-action-popup__bar" />
                 <text class="appointment-action-popup__title">{{ reasonActionTitle }}</text>
-                <text v-if="cancellationQuote && reasonAction === 'cancel'" class="appointment-action-popup__description">{{ cancellationQuote.mode === 'cash' ? `取消将扣减1课时，扣费 ¥${(cancellationQuote.fee / 100).toFixed(2)}，原路退款 ¥${(cancellationQuote.amount / 100).toFixed(2)}` : '取消后按原规则释放预约课时' }}</text>
+                <text v-if="cancellationQuote && reasonAction === 'cancel'" class="appointment-action-popup__description">{{ cancellationCopy(cancellationQuote) }}</text>
                 <text class="appointment-action-popup__description">请填写简短原因，学员与教师都能看到处理结果。</text>
                 <textarea v-model="reason" class="appointment-action-popup__textarea" maxlength="500" placeholder="请输入至少 2 个字" />
-                <view class="appointment-action-popup__submit" :class="{ disabled: actionLoading || reason.trim().length < 2 }" @tap="submitReasonAction">
+                <view class="appointment-action-popup__submit" :class="{ disabled: actionLoading || reason.trim().length < 2 }" aria-role="button" @tap="submitReasonAction">
                     {{ actionLoading ? '正在提交' : '确认提交' }}
                 </view>
             </view>
@@ -101,12 +101,16 @@
             <view class="appointment-action-popup">
                 <view class="appointment-action-popup__bar" />
                 <text class="appointment-action-popup__title">调整预约时间</text>
-                <text class="appointment-action-popup__description">新时间仍需位于你的可预约时间内，且不能与其他课程冲突。</text>
+                <text class="appointment-action-popup__description">新时间需位于可预约时间内，且不能与其他课程冲突。</text>
                 <view class="appointment-action-popup__field">
                     <text>日期</text>
-                    <picker mode="date" :start="today" :value="reschedule.date" @change="reschedule.date = $event.detail.value">
+                    <picker mode="date" :start="today" :value="reschedule.date" @change="changeRescheduleDate($event.detail.value)">
                         <view>{{ reschedule.date }}</view>
                     </picker>
+                </view>
+                <view class="appointment-action-popup__windows">
+                    <text class="appointment-action-popup__windows-label">当天可预约</text>
+                    <text class="appointment-action-popup__windows-value">{{ rescheduleWindowsText }}</text>
                 </view>
                 <view class="appointment-action-popup__field">
                     <text>开始时间</text>
@@ -114,8 +118,12 @@
                         <view>{{ reschedule.startTime }}</view>
                     </picker>
                 </view>
+                <view class="appointment-action-popup__field">
+                    <text>结束时间</text>
+                    <text>{{ rescheduleEndText }}</text>
+                </view>
                 <input v-model="reschedule.reason" class="appointment-action-popup__input" maxlength="500" placeholder="改期原因（至少 2 个字）" />
-                <view class="appointment-action-popup__submit" :class="{ disabled: actionLoading || reschedule.reason.trim().length < 2 }" @tap="submitReschedule">
+                <view class="appointment-action-popup__submit" :class="{ disabled: actionLoading || reschedule.reason.trim().length < 2 }" aria-role="button" @tap="submitReschedule">
                     {{ actionLoading ? '正在提交' : '确认调整时间' }}
                 </view>
             </view>
@@ -135,9 +143,10 @@ import AsyncState from '../../components/AsyncState.vue';
 import BookingStatusBadge from '../../components/BookingStatusBadge.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import {
-    bookingErrorMessage, buildRescheduleWindow, createRescheduleDraft,
-    formatAppointmentTime, formatDeadline, normalizeAppointment,
+    REASON_REQUIRED_MESSAGE, bookingErrorMessage, buildRescheduleWindow, cancellationCopy, createRescheduleDraft,
+    formatAppointmentTime, formatDeadline, normalizeAppointment, rescheduleEndLabel, rescheduleWindowsLabel,
 } from '../appointments/pageLogic';
+import { availabilityForDate, dayRange, normalizeTeacherSchedule } from '../schedule/pageLogic';
 import './index.scss';
 
 export default {
@@ -147,7 +156,7 @@ export default {
             actionLoading: false, appointment: normalizeAppointment(), appointmentId: '', errorMessage: '',
             loading: false, reason: '', reasonAction: '', reschedule: createRescheduleDraft(), role: 'student',
             showReasonPopup: false, showReschedulePopup: false,
-            cancellationQuote: null,
+            cancellationQuote: null, rescheduleWindows: null, rescheduleSerial: 0,
         };
     },
     computed: {
@@ -166,7 +175,7 @@ export default {
         },
         personLabel() { return [this.personName, this.appointment.location].filter(Boolean).join(' · '); },
         reasonActionTitle() {
-            return { decline: '拒绝预约申请', withdraw: '撤回预约申请', cancel: '取消已确认预约' }[this.reasonAction] || '处理预约';
+            return { decline: '拒绝预约申请', cancel: '取消已确认预约' }[this.reasonAction] || '处理预约';
         },
         state() {
             if (this.loading) return 'loading';
@@ -174,6 +183,11 @@ export default {
             return 'ready';
         },
         today() { return academyDateKey(Date.now()); },
+        rescheduleEndText() { return rescheduleEndLabel(this.reschedule, this.appointment); },
+        rescheduleWindowsText() {
+            if (!this.rescheduleWindows) return '正在读取';
+            return rescheduleWindowsLabel(this.rescheduleWindows, this.appointment.course.courseId);
+        },
     },
     onLoad() { this.appointmentId = Taro.getCurrentInstance()?.router?.params?.id || ''; },
     onShow() {
@@ -184,7 +198,7 @@ export default {
         try { await this.loadData(true); } finally { Taro.stopPullDownRefresh(); }
     },
     methods: {
-        formatAppointmentTime, formatDeadline,
+        cancellationCopy, formatAppointmentTime, formatDeadline,
         goLesson() { Taro.navigateTo({ url: `/pages/courseLessonDetail/index?id=${encodeURIComponent(this.appointment.lessonId)}` }); },
         async openReasonAction(action) {
             if (this.actionLoading) return;
@@ -202,6 +216,38 @@ export default {
         openReschedule() {
             this.reschedule = createRescheduleDraft(this.appointment.startAt);
             this.showReschedulePopup = true;
+            this.loadRescheduleWindows();
+        },
+        changeRescheduleDate(value) {
+            this.reschedule.date = value;
+            this.loadRescheduleWindows();
+        },
+        async loadRescheduleWindows() {
+            const serial = this.rescheduleSerial + 1;
+            const date = this.reschedule.date;
+            this.rescheduleSerial = serial;
+            this.rescheduleWindows = null;
+            try {
+                const schedule = normalizeTeacherSchedule(
+                    await Api.getTeacherSchedule({ ...dayRange(date), includeAvailability: true })
+                );
+                if (serial === this.rescheduleSerial) this.rescheduleWindows = availabilityForDate(schedule.availability, date);
+            } catch {
+                // The sheet still works without the hint; the API validates the new time on submit.
+                if (serial === this.rescheduleSerial) this.rescheduleWindows = [];
+            }
+        },
+        async withdrawAppointment() {
+            if (this.actionLoading) return;
+            const modal = await Taro.showModal({
+                title: '撤回预约申请',
+                content: '撤回后老师不会再处理这条申请，可以重新选择时间预约。',
+                confirmText: '撤回',
+            });
+            if (!modal.confirm) return;
+            const id = this.appointmentId;
+            await this.runAction(() => withCommandKey(`withdraw-appointment:${id}`,
+                (key) => Api.withdrawStudentAppointment(id, {}, key)), '预约申请已撤回');
         },
         async loadData(force = false) {
             if (this.loading && !force) return;
@@ -228,12 +274,15 @@ export default {
                 (key) => Api.confirmTeacherAppointment(this.appointmentId, { reason: '教师确认预约' }, key)), '预约已确认');
         },
         async submitReasonAction() {
-            if (this.actionLoading || this.reason.trim().length < 2) return;
+            if (this.actionLoading) return;
+            if (this.reason.trim().length < 2) {
+                Taro.showToast({ title: REASON_REQUIRED_MESSAGE, icon: 'none' });
+                return;
+            }
             const reason = this.reason.trim();
             const id = this.appointmentId;
             const calls = {
                 decline: (key) => Api.declineTeacherAppointment(id, { reason }, key),
-                withdraw: (key) => Api.withdrawStudentAppointment(id, { reason }, key),
                 cancel: (key) => this.role === 'teacher'
                     ? Api.cancelTeacherAppointment(id, { reason }, key)
                     : Api.cancelStudentAppointment(id, { reason,
@@ -247,7 +296,11 @@ export default {
             if (success) this.showReasonPopup = false;
         },
         async submitReschedule() {
-            if (this.actionLoading || this.reschedule.reason.trim().length < 2) return;
+            if (this.actionLoading) return;
+            if (this.reschedule.reason.trim().length < 2) {
+                Taro.showToast({ title: REASON_REQUIRED_MESSAGE, icon: 'none' });
+                return;
+            }
             const window = buildRescheduleWindow(this.reschedule, this.appointment);
             if (!window) {
                 Taro.showToast({ title: '请选择有效的预约日期和时间', icon: 'none' });

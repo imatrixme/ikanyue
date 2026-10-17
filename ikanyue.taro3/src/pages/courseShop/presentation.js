@@ -19,3 +19,14 @@ export function policyText(policy) {
   return `${unused}${rules.join('；')}；开课后不退款。取消后对应课时不可再使用；机构取消不扣费。`;
 }
 function duration(minutes) { return minutes % 1440 === 0 ? `${minutes / 1440}天` : minutes % 60 === 0 ? `${minutes / 60}小时` : `${minutes}分钟`; }
+
+// Unpaid orders close after the gateway payment window (kanyue.pay PAYMENT_TTL_MS).
+export const PENDING_ORDER_NOTICE = '请在下单后 30 分钟内完成支付，超时订单会自动关闭。';
+
+const PAYMENT_WINDOW_MS = 30 * 60000;
+
+// An unpaid order for the same offer is resumed instead of creating another one, while its payment window is open.
+export function pendingOrderFor(orders, offerId, now = Date.now()) {
+  return (orders || []).find((order) => order.status === 'pending' && order.offerId === offerId
+    && now - Date.parse(order.createdAt) < PAYMENT_WINDOW_MS) || null;
+}

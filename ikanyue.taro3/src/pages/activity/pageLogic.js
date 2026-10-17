@@ -1,17 +1,19 @@
-import { IMAGE_DETAIL_URLS, KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import {
     WEEKDAY_LABELS, academyDateKey, academyDateTime, academyParts, academyTimeLabel, addAcademyDays,
 } from '../../../utils/academyTime';
 
 const DAY_MS = 86400000;
+const STRIP_DAYS = 7;
 
 // Activity days follow the academy clock (Asia/Shanghai), independent of the device timezone.
+// The query covers exactly the date strip so older activities never crowd out upcoming ones.
 const createActivityQueryParams = (baseDate = new Date()) => {
-    const nextYear = academyParts(baseDate).year + 1;
+    const today = academyDateKey(baseDate);
 
     return {
-        start_time_gte: new Date('2020-01-01').toISOString(),
-        start_time_lte: new Date(academyDateTime(`${nextYear + 1}-01-01`).getTime() - 1).toISOString(),
+        start_time_gte: academyDateTime(today).toISOString(),
+        start_time_lte: new Date(academyDateTime(addAcademyDays(today, STRIP_DAYS)).getTime() - 1).toISOString(),
+        sort: 'startTime',
         perPage: 100,
     };
 };
@@ -20,7 +22,7 @@ const createDateGroups = (baseDate = new Date()) => {
     const groups = [];
     const today = academyDateKey(baseDate);
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < STRIP_DAYS; i++) {
         const dateKey = addAcademyDays(today, i);
         const start = academyDateTime(dateKey);
         const parts = academyParts(start);
@@ -36,15 +38,6 @@ const createDateGroups = (baseDate = new Date()) => {
         });
     }
 
-    groups.push(...KANYUE_INFO_LINKS.map((link) => ({
-        title: '',
-        dateText: link.title,
-        type: 'navigation',
-        action: 'navigate-image',
-        imageUrl: link.imageUrl,
-        detailTitle: link.detailTitle,
-    })));
-
     return groups;
 };
 
@@ -56,7 +49,7 @@ const formatDateOnly = (timestamp) => {
 const formatTimeOnly = (timestamp) => academyTimeLabel(timestamp);
 
 const filterActivitiesByDateGroup = (activities = [], group) => {
-    if (!group || group.action === 'navigate-image') {
+    if (!group) {
         return [];
     }
 
@@ -71,6 +64,16 @@ const filterActivitiesByDateGroup = (activities = [], group) => {
         return !Number.isNaN(start) && start >= groupStart && start <= groupEnd;
     });
 };
+
+// Indexes of strip days that have at least one activity, for the day markers.
+const daysWithActivities = (groups = [], activities = []) => groups
+    .map((group, index) => (filterActivitiesByDateGroup(activities, group).length ? index : -1))
+    .filter((index) => index >= 0);
+
+// First day after `fromIndex` that has an activity, or -1 when the rest of the strip is empty.
+const nextDayWithActivities = (groups = [], activities = [], fromIndex = 0) => (
+    daysWithActivities(groups, activities).find((index) => index > fromIndex) ?? -1
+);
 
 const mapActivityDetail = (currentActivity, response) => {
     if (!response) {
@@ -96,13 +99,13 @@ const mapActivityDetail = (currentActivity, response) => {
 };
 
 export {
-    IMAGE_DETAIL_URLS,
     WEEKDAY_LABELS,
-    buildImageDetailUrl,
     createActivityQueryParams,
     createDateGroups,
+    daysWithActivities,
     filterActivitiesByDateGroup,
     formatDateOnly,
     formatTimeOnly,
     mapActivityDetail,
+    nextDayWithActivities,
 };

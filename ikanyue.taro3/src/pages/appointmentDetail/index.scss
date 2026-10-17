@@ -28,7 +28,7 @@
 .appointment-detail-primary { align-items: center; background: $ky-primary-strong; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-black; height: 48px; justify-content: center; margin-top: $ky-space-4; }
 .appointment-detail-primary.disabled { opacity: $ky-disabled-opacity; }
 .appointment-detail-secondary-actions { display: grid; gap: $ky-space-2; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: $ky-space-3; }
-.appointment-detail-secondary-actions view { align-items: center; border: 1px solid $ky-primary-line; border-radius: $ky-radius-md; color: $ky-primary-strong; display: flex; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; height: 42px; justify-content: center; }
+.appointment-detail-secondary-actions view { align-items: center; border: 1px solid $ky-primary-line; border-radius: $ky-radius-md; color: $ky-primary-strong; display: flex; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; height: 44px; justify-content: center; }
 .appointment-action-popup-shell { border-radius: $ky-radius-lg $ky-radius-lg 0 0; }
 .appointment-action-popup { box-sizing: border-box; padding: $ky-space-5 $ky-space-5 calc(env(safe-area-inset-bottom) + 32px); }
 .appointment-action-popup__bar { background: $ky-primary; height: 5px; margin-bottom: $ky-space-4; width: 44px; }
@@ -39,7 +39,13 @@
 .appointment-action-popup__textarea { background: $ky-primary-wash; border: 1px solid $ky-input-line; border-radius: $ky-radius-md; box-sizing: border-box; font-size: $ky-font-size-body; height: 112px; margin-top: $ky-space-4; padding: $ky-space-3; width: 100%; }
 .appointment-action-popup__field { align-items: center; border-bottom: 1px solid $ky-line; display: flex; font-size: $ky-font-size-body; justify-content: space-between; min-height: 50px; }
 .appointment-action-popup__field > text { color: $ky-text-secondary; }
-.appointment-action-popup__field picker { color: $ky-ink-strong; font-weight: $ky-font-weight-semibold; }
+.appointment-action-popup__field picker,
+.appointment-action-popup__field > text + text { color: $ky-ink-strong; font-weight: $ky-font-weight-semibold; }
+.appointment-action-popup__windows { border-bottom: 1px solid $ky-line; padding: $ky-space-3 0; }
+.appointment-action-popup__windows-label,
+.appointment-action-popup__windows-value { display: block; }
+.appointment-action-popup__windows-label { color: $ky-text-secondary; font-size: $ky-font-size-body-sm; }
+.appointment-action-popup__windows-value { color: $ky-primary-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-semibold; margin-top: $ky-space-1; }
 .appointment-action-popup__input { background: $ky-primary-wash; border: 1px solid $ky-input-line; border-radius: $ky-radius-md; box-sizing: border-box; font-size: $ky-font-size-body; height: 44px; margin-top: $ky-space-4; padding: 0 $ky-space-3; width: 100%; }
 .appointment-action-popup__submit { align-items: center; background: $ky-primary-strong; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-black; height: 48px; justify-content: center; margin-top: $ky-space-5; }
 .appointment-action-popup__submit.disabled { opacity: $ky-disabled-opacity; }

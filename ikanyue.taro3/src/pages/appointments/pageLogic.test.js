@@ -6,6 +6,7 @@ import {
     mergeAppointmentPage, minutesToTime, normalizeAppointment, normalizeAppointmentPage,
     normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, statusMeta,
     timeToMinutes, validateAvailabilityRules, weekdayName,
+    cancellationCopy, rescheduleEndLabel, rescheduleWindowsLabel, weeklySnapshot,
 } from './pageLogic';
 
 const START = '2026-08-03T09:00:00+08:00';
@@ -193,5 +194,32 @@ describe('booking presentation logic', () => {
         expect(minutesToTime(2000)).toBe('00:00');
         expect(timeToMinutes('23:60')).toBeNull();
         expect(bookingErrorMessage({ errorCode: 'BOOKING_WINDOWS_OVERLAP' })).toContain('重叠');
+    });
+});
+
+describe('booking sheet copy', () => {
+    it('states the cash fee or that the credit returns', () => {
+        expect(cancellationCopy({ mode: 'cash', fee: 4800, amount: 19200 })).toBe('取消将扣减1课时，扣费 ¥48.00，原路退款 ¥192.00');
+        expect(cancellationCopy({ mode: 'credit' })).toContain('退回课程，不扣费');
+    });
+
+    it('shows the course windows of the day and the computed end time', () => {
+        const windows = [
+            { course: { courseId: 'vocal' }, startAt: '2026-08-04T09:00:00+08:00', endAt: '2026-08-04T12:00:00+08:00' },
+            { course: { courseId: 'piano' }, startAt: '2026-08-04T13:00:00+08:00', endAt: '2026-08-04T15:00:00+08:00' },
+            { course: { courseId: 'vocal' }, startAt: '2026-08-04T14:00:00+08:00', endAt: '2026-08-04T18:00:00+08:00' },
+        ];
+        expect(rescheduleWindowsLabel(windows, 'vocal')).toBe('09:00-12:00、14:00-18:00');
+        expect(rescheduleWindowsLabel([], 'vocal')).toBe('当天没有开放时段');
+        expect(rescheduleEndLabel({ date: '2026-08-04', startTime: '10:30' }, { startAt: START, endAt: END })).toBe('11:30');
+        expect(rescheduleEndLabel({ date: '', startTime: '' }, {})).toBe('--:--');
+    });
+
+    it('detects unsaved weekly availability edits', () => {
+        const rules = [{ weekday: 1, startMinute: 540, endMinute: 660, localId: 'a' }];
+        const saved = weeklySnapshot('custom', rules);
+        expect(weeklySnapshot('custom', [{ ...rules[0], localId: 'b' }])).toBe(saved);
+        expect(weeklySnapshot('custom', [{ ...rules[0], endMinute: 720 }])).not.toBe(saved);
+        expect(weeklySnapshot('default', rules)).toBe(weeklySnapshot('default', []));
     });
 });

@@ -3,11 +3,11 @@
 
         <view class="teacher-calendar__content">
             <view class="teacher-calendar__week-nav">
-                <view class="teacher-calendar__nav-button teacher-calendar__nav-button--previous" aria-label="上一周" @tap="moveWeek(-1)">
+                <view class="teacher-calendar__nav-button teacher-calendar__nav-button--previous" aria-role="button" aria-label="上一周" @tap="moveWeek(-1)">
                     <app-icon name="chevron-primary" size="sm" />
                 </view>
                 <text class="teacher-calendar__week-label">{{ weekLabel }}</text>
-                <view class="teacher-calendar__nav-button" aria-label="下一周" @tap="moveWeek(1)">
+                <view class="teacher-calendar__nav-button" aria-role="button" aria-label="下一周" @tap="moveWeek(1)">
                     <app-icon name="chevron-primary" size="sm" />
                 </view>
             </view>
@@ -169,7 +169,7 @@ export default {
 .teacher-calendar { background: $ky-canvas; min-height: 100vh; padding-bottom: $ky-space-8; }
 .teacher-calendar__content { padding: $ky-space-4 $ky-space-4 0; }
 .teacher-calendar__week-nav { align-items: center; display: flex; justify-content: space-between; }
-.teacher-calendar__nav-button { align-items: center; background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-md; display: flex; height: 34px; justify-content: center; width: 34px; }
+.teacher-calendar__nav-button { align-items: center; background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-md; display: flex; height: 44px; justify-content: center; width: 44px; }
 .teacher-calendar__nav-button--previous .app-icon { transform: rotate(180deg); }
 .teacher-calendar__week-label { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
 .teacher-calendar__date-strip { background: $ky-surface; border: 1px solid $ky-line; border-radius: $ky-radius-lg; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: $ky-space-3; padding: $ky-space-2 0; }
@@ -178,7 +178,7 @@ export default {
 .teacher-calendar__weekday,
 .teacher-calendar__day-number { display: block; }
 .teacher-calendar__weekday { color: $ky-text-muted; font-size: $ky-font-size-2xs; }
-.teacher-calendar__day-number { border-radius: 50%; color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; height: 34px; line-height: 34px; margin-top: $ky-space-1; text-align: center; width: 34px; }
+.teacher-calendar__day-number { border-radius: 50%; color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; align-items: center; display: flex; height: 34px; justify-content: center; margin-top: $ky-space-1; width: 34px; }
 .teacher-calendar__day--today:not(.teacher-calendar__day--selected) .teacher-calendar__day-number { color: $ky-primary-strong; }
 .teacher-calendar__day--selected .teacher-calendar__weekday { color: $ky-primary-strong; font-weight: $ky-font-weight-bold; }
 .teacher-calendar__day--selected .teacher-calendar__day-number { color: $ky-on-primary; }

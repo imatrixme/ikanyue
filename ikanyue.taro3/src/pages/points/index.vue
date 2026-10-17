@@ -2,6 +2,7 @@
     <teacher-calendar-home v-if="role === 'teacher'" ref="teacherCalendar" />
     <page-chrome v-else class="points-page">
         <points-pass
+            v-if="isLogin"
             :balance="balance"
             :caption="`${redeemableRewards.length} 件可领取 · ${lockedRewards.length} 件待解锁`"
         />

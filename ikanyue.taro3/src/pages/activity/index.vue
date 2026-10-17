@@ -1,23 +1,26 @@
 <template>
     <page-chrome class="activity-page">
+        <view class="activity-upcoming">
+            <upcoming-lessons ref="upcomingLessons" />
+        </view>
+
         <view class="activity-calendar">
             <view class="activity-calendar__month">{{ calendarMonth }}</view>
             <view class="activity-calendar__days">
                 <view
-                    v-for="(group, index) in dayGroups"
-                    :key="index"
+                    v-for="(group, index) in dateGroups"
+                    :key="group.dateKey"
                     class="activity-day"
                     :class="{ 'activity-day--active': selectedGroupIndex === index }"
+                    aria-role="button"
+                    :aria-label="`${group.dateText}${markedDays.includes(index) ? '，有活动' : ''}`"
                     @tap="selectDateGroup(index)"
                 >
                     <text class="activity-day__weekday">{{ group.title }}</text>
-                    <text class="activity-day__number">{{ getCalendarDay(group) }}</text>
+                    <text class="activity-day__number">{{ group.day }}</text>
+                    <view class="activity-day__marker" :class="{ 'activity-day__marker--on': markedDays.includes(index) }" />
                 </view>
             </view>
-        </view>
-
-        <view class="activity-upcoming">
-            <upcoming-lessons ref="upcomingLessons" />
         </view>
 
         <view class="activity-content">
@@ -37,11 +40,13 @@
 
             <view v-else-if="!activities.length" class="activity-state">
                 <async-state
+                    :action-label="nextDayIndex >= 0 ? `查看${dateGroups[nextDayIndex].dateText}的活动` : ''"
                     compact
-                    description="新的活动发布后会显示在这里。"
+                    :description="nextDayIndex >= 0 ? '最近的活动在后面几天。' : '新的活动发布后会显示在这里。'"
                     kind="activities"
                     state="empty"
-                    title="暂无近期活动"
+                    :title="markedDays.length ? '这天没有活动' : '近 7 天暂无活动'"
+                    @action="selectDateGroup(nextDayIndex)"
                 />
             </view>
 
@@ -63,18 +68,6 @@
                 />
             </view>
         </view>
-
-        <view class="activity-links">
-            <view
-                v-for="group in navigationGroups"
-                :key="group.dateText"
-                class="activity-link"
-                @tap="goToImageDetail(group)"
-            >
-                <text>{{ group.dateText }}</text>
-                <app-icon name="chevron-primary" size="sm" />
-            </view>
-        </view>
     </page-chrome>
 </template>
 
@@ -82,22 +75,22 @@
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import ActivityTicket from '../../components/ActivityTicket.vue';
-import AppIcon from '../../components/AppIcon.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import UpcomingLessons from '../../components/UpcomingLessons.vue';
 import { RoleManager } from '../../../utils/rolemanager';
 import {
-    buildImageDetailUrl,
     createActivityQueryParams,
     createDateGroups,
+    daysWithActivities,
     filterActivitiesByDateGroup,
     formatDateOnly as formatActivityDateOnly,
     formatTimeOnly as formatActivityTimeOnly,
+    nextDayWithActivities,
 } from './pageLogic';
 
 export default {
-    components: { ActivityTicket, AppIcon, AsyncState, PageChrome, UpcomingLessons },
+    components: { ActivityTicket, AsyncState, PageChrome, UpcomingLessons },
     data() {
         return {
             // 原始活动数据
@@ -117,13 +110,13 @@ export default {
     },
     computed: {
         calendarMonth() {
-            return this.dayGroups[0]?.month || '';
+            return this.dateGroups[0]?.month || '';
         },
-        dayGroups() {
-            return this.dateGroups.filter((group) => group.type === 'day');
+        markedDays() {
+            return daysWithActivities(this.dateGroups, this.allActivities);
         },
-        navigationGroups() {
-            return this.dateGroups.filter((group) => group.action === 'navigate-image');
+        nextDayIndex() {
+            return nextDayWithActivities(this.dateGroups, this.allActivities, this.selectedGroupIndex);
         },
     },
     onLoad() {
@@ -272,20 +265,9 @@ export default {
                 .filter(Boolean);
         },
 
-        getCalendarDay(group) {
-            return group?.day || '';
-        },
-
         // 选择日期组
         selectDateGroup(index) {
-            const group = this.dateGroups[index];
-
-            if (!group) {
-                return;
-            }
-
-            if (group.action === 'navigate-image') {
-                this.goToImageDetail(group);
+            if (!this.dateGroups[index]) {
                 return;
             }
 
@@ -303,17 +285,6 @@ export default {
         goToDetail(id) {
             Taro.navigateTo({
                 url: `/pages/activityDetail/index?id=${id}`,
-            });
-        },
-
-        goToImageDetail(group) {
-            const url = buildImageDetailUrl(group);
-            if (!url) {
-                return;
-            }
-
-            Taro.navigateTo({
-                url,
             });
         },
     },

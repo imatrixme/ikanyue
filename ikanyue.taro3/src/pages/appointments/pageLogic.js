@@ -191,6 +191,36 @@ function buildRescheduleWindow(draft = {}, appointment = {}) {
     };
 }
 
+const REASON_REQUIRED_MESSAGE = '请填写至少 2 个字的原因';
+
+// Comparable form of the weekly availability editor; default mode ignores leftover rules.
+function weeklySnapshot(mode, rules = []) {
+    const kept = mode === 'default' ? [] : (rules || []).map(({ weekday, startMinute, endMinute }) => [weekday, startMinute, endMinute]);
+    return JSON.stringify([mode, kept]);
+}
+
+function rescheduleEndLabel(draft = {}, appointment = {}) {
+    const window = buildRescheduleWindow(draft, appointment);
+    return window ? academyTimeLabel(window.newEndAt) : '--:--';
+}
+
+// Open windows of the appointment's course on the chosen day, as shown in the reschedule sheet.
+function rescheduleWindowsLabel(windows = [], courseId = '') {
+    const labels = (windows || [])
+        .filter((item) => !courseId || item.course?.courseId === courseId)
+        .map((item) => `${academyTimeLabel(item.startAt)}-${academyTimeLabel(item.endAt)}`)
+        .filter((label) => label !== '-');
+    return labels.length ? labels.join('、') : '当天没有开放时段';
+}
+
+function cancellationCopy(quote = {}) {
+    if (quote.mode === 'cash') {
+        const yuan = (minor) => (Number(minor || 0) / 100).toFixed(2);
+        return `取消将扣减1课时，扣费 ¥${yuan(quote.fee)}，原路退款 ¥${yuan(quote.amount)}`;
+    }
+    return '取消后这节课占用的 1 课时会退回课程，不扣费。';
+}
+
 function createOverrideDraft(now = Date.now()) {
     return {
         type: 'unavailable',
@@ -344,10 +374,10 @@ function minuteOfDay(date) {
 function pad(value) { return String(value).padStart(2, '0'); }
 
 export {
-    appointmentDetailUrl, availabilityUrl, bookingDateRange, bookingErrorMessage, bookingSlotsUrl,
-    buildAvailabilityOverride, buildRescheduleWindow, createOverrideDraft,
+    REASON_REQUIRED_MESSAGE, appointmentDetailUrl, availabilityUrl, bookingDateRange, bookingErrorMessage,
+    bookingSlotsUrl, buildAvailabilityOverride, buildRescheduleWindow, cancellationCopy, createOverrideDraft,
     createRescheduleDraft, formatAppointmentTime, formatDeadline, groupSlots, hasNextPage,
     mergeAppointmentPage, minutesToTime, normalizeAppointment, normalizeAppointmentPage,
-    normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, statusMeta,
-    timeToMinutes, validateAvailabilityRules, weekdayName,
+    normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, rescheduleEndLabel,
+    rescheduleWindowsLabel, statusMeta, timeToMinutes, validateAvailabilityRules, weekdayName, weeklySnapshot,
 };

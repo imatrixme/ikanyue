@@ -26,6 +26,7 @@
           <button v-if="settling" :disabled="busy" class="commerce-secondary" @tap="refresh">查询最新状态</button>
           <button v-if="bookable" :disabled="busy" class="commerce-link" @tap="refund">申请退还剩余课时</button>
         </view>
+        <text v-if="order.status === 'pending'" class="commerce-policy">{{ pendingNotice }}</text>
         <text v-if="order.refundPending" class="commerce-policy">退款结果确认期间，待退款的剩余课时暂停使用。</text>
       </template>
     </view>
@@ -40,12 +41,12 @@ import AccountRow from '../../components/AccountRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import TicketSection from '../../components/TicketSection.vue';
-import { money, orderStatus, policyText } from '../courseShop/presentation';
+import { PENDING_ORDER_NOTICE, money, orderStatus, policyText } from '../courseShop/presentation';
 import './index.scss';
 
 export default {
   components: { AccountRow, AsyncState, PageChrome, TicketSection },
-  data: () => ({ id: '', order: null, busy: false, error: '' }),
+  data: () => ({ id: '', order: null, busy: false, error: '', pendingNotice: PENDING_ORDER_NOTICE }),
   computed: {
     bookable() { return this.order?.status === 'completed' && this.order.availableQuantity > 0 && !this.order.refundPending; },
     // Only unsettled orders can change after a manual check.
@@ -56,8 +57,13 @@ export default {
   async onPullDownRefresh() { try { await this.refresh(); } finally { Taro.stopPullDownRefresh(); } },
   methods: {
     money, orderStatus, policyText,
-    book() { Taro.navigateTo({ url: '/pages/appointmentBooking/index' }); },
-    shop() { Taro.redirectTo({ url: '/pages/courseShop/index' }); },
+    // Replace the order page so back from booking returns to the shop instead of a settled order.
+    book() { Taro.redirectTo({ url: '/pages/appointmentBooking/index' }); },
+    shop() {
+      const pages = Taro.getCurrentPages();
+      if (pages[pages.length - 2]?.route === 'pages/courseShop/index') Taro.navigateBack();
+      else Taro.redirectTo({ url: '/pages/courseShop/index' });
+    },
     async load() {
       this.error = '';
       try { this.order = await Commerce.order(this.id); }

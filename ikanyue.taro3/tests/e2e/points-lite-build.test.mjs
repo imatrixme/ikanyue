@@ -162,6 +162,7 @@ assert.deepEqual(appConfig.pages, [
     'pages/activityDetail/index',
     'pages/imageDetail/index',
     'pages/webview/index',
+    'pages/agreement/index',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.pagePath), [
     'pages/activity/index',
@@ -227,11 +228,14 @@ assert.match(commonBundle, /\/v1\/student\/learning\/records/);
 assert.match(commonBundle, /\/v1\/schedule\/upcoming/);
 assert.match(commonBundle, /\/v1\/teacher\/schedule/);
 assert.equal(commonBundle.includes('/v1/course-credits'), false);
-assertCompiledText(activityOutput, '暂无近期活动');
+assertCompiledText(activityOutput, '这天没有活动');
+assertCompiledText(activityOutput, '天暂无活动');
+assertCompiledText(profileOutput, '退出登录');
+assertCompiledText(profileOutput, '我已阅读并同意');
+assert.equal(profileOutput.includes('getUserProfile'), false, 'login must not request getUserProfile');
 assertCompiledText(activityOutput, '活动暂时无法加载');
 assertCompiledText(activityOutput, '近期课程');
-assertCompiledText(commonBundle, '看乐教学');
-assertCompiledText(commonBundle, '关于看乐');
+assert.equal(activityTemplate.includes('activity-link'), false, 'brand info links live on the profile tab only');
 assert.equal(pointsOutput.includes('看乐积分'), false);
 assert.equal(pointsOutput.includes('刷新积分'), false);
 assert.equal(pointsOutput.includes('打开个人资料'), false);

@@ -262,12 +262,12 @@
     color: $ky-text-muted;
     display: flex;
     font-size: $ky-font-size-display-md;
-    height: 36px;
+    height: 44px;
     justify-content: center;
     position: absolute;
     right: $ky-space-2;
     top: $ky-space-2;
-    width: 36px;
+    width: 44px;
 }
 
 .login-popup__bar {
@@ -367,6 +367,50 @@
 .password-login-btn[disabled='disabled'],
 .password-login-btn:disabled {
     opacity: 0.6;
+}
+
+.login-consent {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: $ky-font-size-body-sm;
+    margin-top: $ky-space-3;
+    min-height: 44px;
+}
+
+.login-consent__toggle {
+    align-items: center;
+    display: flex;
+    min-height: 44px;
+}
+
+.login-consent__check {
+    align-items: center;
+    border: 1px solid $ky-input-line;
+    border-radius: $ky-radius-sm;
+    box-sizing: border-box;
+    color: $ky-on-primary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    height: 18px;
+    justify-content: center;
+    margin-right: $ky-space-2;
+    width: 18px;
+}
+
+.login-consent__check--on {
+    background: $ky-primary-strong;
+    border-color: $ky-primary-strong;
+}
+
+.login-consent__text {
+    color: $ky-text-secondary;
+}
+
+.login-consent__link {
+    color: $ky-primary-strong;
+    font-weight: $ky-font-weight-semibold;
+    padding: $ky-space-3 0;
 }
 
 @media (max-width: 350px) {

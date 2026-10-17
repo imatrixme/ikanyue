@@ -19,4 +19,10 @@ const validatePasswordLogin = ({ cellphone, password } = {}) => {
     return { credentials, error: '' };
 };
 
-export { LOGIN_MODE_OPTIONS, normalizeCellphone, validatePasswordLogin };
+const AGREEMENT_REQUIRED_MESSAGE = '请先阅读并同意用户协议和隐私政策';
+
+const agreementUrl = (type) => `/pages/agreement/index?type=${type === 'privacy' ? 'privacy' : 'user'}`;
+
+export {
+    AGREEMENT_REQUIRED_MESSAGE, LOGIN_MODE_OPTIONS, agreementUrl, normalizeCellphone, validatePasswordLogin,
+};

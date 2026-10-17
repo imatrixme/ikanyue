@@ -19,7 +19,8 @@
                         class="userinfo-field__input"
                         maxlength="24"
                         placeholder="请输入昵称"
-                        type="text"
+                        type="nickname"
+                        @blur="form.nickName = $event?.detail?.value ?? form.nickName"
                     />
                 </form-row>
 

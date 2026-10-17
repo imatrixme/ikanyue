@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { money, orderStatus, policyText } from './presentation';
+import { PENDING_ORDER_NOTICE, money, orderStatus, pendingOrderFor, policyText } from './presentation';
 
 it('discloses each inclusive cash-cancellation threshold before checkout', () => {
   const text = policyText({ packageRefund: 'unused_paid_value', reservationRefund: 'cash', cancellationTiers: [
@@ -23,5 +23,22 @@ describe('commerce presentation', () => {
     expect(money(1)).toBe('0.01');
     expect(policyText({ packageRefund: 'unused_paid_value' })).toContain('不会超过实际付款');
     expect(policyText(null)).toBe('退费规则尚未发布');
+  });
+});
+
+describe('pending orders', () => {
+  it('resumes the pending order of the same offer only', () => {
+    const now = Date.parse('2026-10-16T10:00:00+08:00');
+    const orders = [
+      { id: 'paid', offerId: 'a', status: 'completed', createdAt: '2026-10-16T09:50:00+08:00' },
+      { id: 'stale', offerId: 'a', status: 'pending', createdAt: '2026-10-16T09:20:00+08:00' },
+      { id: 'open', offerId: 'a', status: 'pending', createdAt: '2026-10-16T09:45:00+08:00' },
+      { id: 'other', offerId: 'b', status: 'pending', createdAt: '2026-10-16T09:55:00+08:00' },
+    ];
+    expect(pendingOrderFor(orders, 'a', now).id).toBe('open');
+    expect(pendingOrderFor(orders.slice(0, 2), 'a', now)).toBeNull();
+    expect(pendingOrderFor(orders, 'c', now)).toBeNull();
+    expect(pendingOrderFor(null, 'a', now)).toBeNull();
+    expect(PENDING_ORDER_NOTICE).toContain('30 分钟');
   });
 });

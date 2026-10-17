@@ -58,7 +58,13 @@
             </view>
         </template>
 
-        <view class="slot-action" :class="{ 'slot-action--disabled': !canSubmit }" @tap="submitBooking">
+        <view
+            v-if="state === 'ready'"
+            class="slot-action"
+            :class="{ 'slot-action--disabled': !canSubmit }"
+            aria-role="button"
+            @tap="submitBooking"
+        >
             <text>{{ submitting ? '正在提交' : selectedSlot ? `申请 ${selectedSlot.label}` : '请选择预约时间' }}</text>
         </view>
     </page-chrome>

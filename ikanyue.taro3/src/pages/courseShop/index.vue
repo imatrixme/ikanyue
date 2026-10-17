@@ -2,7 +2,7 @@
   <page-chrome class="commerce-page commerce-shop-page">
     <view class="commerce-content">
       <segmented-control v-model="mode" :options="modeOptions" />
-      <view v-if="error || loading" class="commerce-state">
+      <view v-if="error || !loaded" class="commerce-state">
         <async-state :state="error ? 'error' : 'loading'" :kind="error ? 'network' : 'default'" :description="error" :action-label="error ? '重新加载' : ''" @action="load" />
       </view>
       <template v-else-if="mode === 'catalog'">
@@ -12,7 +12,7 @@
             <view class="commerce-item-heading"><app-icon name="course-book" size="xl" /><text class="commerce-title">{{ offer.name }}</text></view>
             <text class="commerce-muted">{{ offer.quantity }}课时 · {{ offer.validityDays ? `购买后${offer.validityDays}天有效` : '有效期以订单为准' }}</text>
             <text class="commerce-price">¥{{ money(offer.amount) }}</text>
-            <text class="commerce-policy-link" @tap="showPolicy(offer)">退费规则</text>
+            <text class="commerce-policy-link" aria-role="button" @tap="showPolicy(offer)">退费规则</text>
             <button :disabled="busy" class="commerce-primary" @tap="buy(offer)">购买</button>
           </view>
         </ticket-section>
@@ -38,24 +38,30 @@ import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import SegmentedControl from '../../components/SegmentedControl.vue';
 import TicketSection from '../../components/TicketSection.vue';
-import { money, orderStatus, policyText } from './presentation';
+import { money, orderStatus, pendingOrderFor, policyText } from './presentation';
 import './index.scss';
 
 export default {
   components: { AccountRow, AppIcon, AsyncState, PageChrome, SegmentedControl, TicketSection },
   data: () => ({
-    mode: 'catalog', offers: [], orders: [], loading: false, busy: false, error: '', keys: {},
+    mode: 'catalog', offers: [], orders: [], loaded: false, loading: false, busy: false, error: '',
     modeOptions: [{ label: '选课购买', value: 'catalog' }, { label: '我的订单', value: 'orders' }],
   }),
   onShow() { this.load(); },
   async onPullDownRefresh() { try { await this.load(); } finally { Taro.stopPullDownRefresh(); } },
   methods: {
     money, orderStatus, policyText,
+    // Only the first load shows a loading state; later refreshes keep the current list on screen.
     async load() {
-      this.loading = true; this.error = '';
-      try { [this.offers, this.orders] = await Promise.all([Commerce.catalog(), Commerce.orders()]); }
-      catch (error) { this.error = error.message || '课程暂时无法加载'; }
-      finally { this.loading = false; }
+      if (this.loading) return;
+      this.loading = true;
+      try {
+        [this.offers, this.orders] = await Promise.all([Commerce.catalog(), Commerce.orders()]);
+        this.error = ''; this.loaded = true;
+      } catch (error) {
+        if (this.loaded) Taro.showToast({ title: '刷新失败，请稍后重试', icon: 'none' });
+        else this.error = error.message || '课程暂时无法加载';
+      } finally { this.loading = false; }
     },
     showPolicy(offer) {
       Taro.showModal({ title: '退费规则', content: policyText(offer.policy), showCancel: false, confirmText: '知道了' });
@@ -63,6 +69,12 @@ export default {
     openOrder(id) { Taro.navigateTo({ url: `/pages/courseOrder/index?id=${encodeURIComponent(id)}` }); },
     async buy(offer) {
       if (this.busy) return;
+      const pending = pendingOrderFor(this.orders, offer.id);
+      if (pending) {
+        Taro.showToast({ title: '你有一笔待付款订单，继续完成支付', icon: 'none' });
+        this.openOrder(pending.id);
+        return;
+      }
       const decision = await Taro.showModal({ title: `应付 ¥${money(offer.amount)}`, content: `${offer.name} · ${offer.quantity}课时\n${policyText(offer.policy)}`, confirmText: '确认下单' });
       if (!decision.confirm) return;
       this.busy = true;

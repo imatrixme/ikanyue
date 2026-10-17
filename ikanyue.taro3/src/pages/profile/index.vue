@@ -4,7 +4,7 @@
             <image class="profile-hero__texture" :src="heroTexture" mode="aspectFill" aria-hidden="true" />
             <text class="profile-brand">看乐艺术</text>
 
-            <view v-if="isLogin()" class="profile-member-pass" @tap="modifyInfo">
+            <view v-if="isLogin()" class="profile-member-pass" aria-role="button" @tap="modifyInfo">
                 <view class="profile-member-pass__avatar">
                     <image v-if="avatarUrl && !avatarFailed" class="profile-member-pass__avatar-image" :src="avatarUrl" mode="aspectFill" @error="avatarFailed = true" />
                     <text v-else>{{ displayName.slice(0, 1) }}</text>
@@ -56,6 +56,13 @@
                             title="个人资料"
                             @select="modifyInfo"
                         />
+                        <account-row
+                            description="退出后需要重新登录"
+                            icon="logout-red"
+                            interactive
+                            title="退出登录"
+                            @select="confirmLogout"
+                        />
                     </view>
                 </ticket-section>
             </template>
@@ -64,7 +71,7 @@
                 <view class="profile-welcome">
                     <text class="profile-welcome__title">登录你的看乐账户</text>
                     <text class="profile-welcome__desc">登录后，即可查看活动、课程安排、预约与账户信息。</text>
-                    <view class="profile-primary-action" @tap="showLoginPopup">登录 / 注册</view>
+                    <view class="profile-primary-action" aria-role="button" @tap="showLoginPopup">登录 / 注册</view>
                 </view>
                 <view class="profile-note">
                     <view class="profile-note__dot" />
@@ -96,7 +103,7 @@
             @click-overlay="handleLoginPopupClose"
         >
             <view class="login-popup">
-                <view class="login-popup__close" aria-label="关闭登录弹窗" @tap="handleLoginPopupClose">
+                <view class="login-popup__close" aria-role="button" aria-label="关闭登录弹窗" @tap="handleLoginPopupClose">
                     <text>×</text>
                 </view>
                 <view class="login-popup__bar" />
@@ -107,20 +114,21 @@
                     :options="loginModeOptions"
                 />
                 <view class="login-desc">
-                    <text v-if="loginMode === 'wechat'">授权微信头像、昵称和手机号，用于同步课程与账户信息。</text>
+                    <text v-if="loginMode === 'wechat'">使用微信绑定的手机号登录，用于同步课程与账户信息。</text>
                     <text v-else>使用手机号和密码进入课程与预约服务。</text>
                 </view>
                 <template v-if="loginMode === 'wechat'">
                     <button
+                        v-if="agreed"
                         class="wechat-login-btn"
                         open-type="getPhoneNumber"
-                        :loading="wechatLoginLoading || wechatProfileLoading"
-                        :disabled="wechatLoginLoading || wechatProfileLoading"
-                        @tap="handleWechatTap"
+                        :loading="wechatLoginLoading"
+                        :disabled="wechatLoginLoading"
                         @getphonenumber="handleWechatPhone"
                     >
                         使用微信手机号一键登录
                     </button>
+                    <button v-else class="wechat-login-btn" @tap="requireAgreement">使用微信手机号一键登录</button>
                 </template>
                 <view v-else class="password-login-form">
                     <view class="password-login-field">
@@ -152,6 +160,23 @@
                     >
                         手机号密码登录
                     </button>
+                </view>
+                <view class="login-consent">
+                    <view
+                        class="login-consent__toggle"
+                        aria-role="checkbox"
+                        :aria-checked="agreed"
+                        aria-label="同意用户协议和隐私政策"
+                        @tap="agreed = !agreed"
+                    >
+                        <view class="login-consent__check" :class="{ 'login-consent__check--on': agreed }">
+                            <text v-if="agreed">✓</text>
+                        </view>
+                        <text class="login-consent__text">我已阅读并同意</text>
+                    </view>
+                    <text class="login-consent__link" aria-role="link" @tap="openAgreement('user')">《用户协议》</text>
+                    <text class="login-consent__text">和</text>
+                    <text class="login-consent__link" aria-role="link" @tap="openAgreement('privacy')">《隐私政策》</text>
                 </view>
             </view>
         </nut-popup>
@@ -206,7 +231,10 @@ import TicketSection from '../../components/TicketSection.vue';
 import { KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import heroTexture from '../../imgs/textures/hero-music.png';
 import { RoleManager } from '../../../utils/rolemanager';
-import { LOGIN_MODE_OPTIONS, normalizeCellphone, validatePasswordLogin } from './pageLogic';
+import { themeColors } from '../../styles/theme.mjs';
+import {
+    AGREEMENT_REQUIRED_MESSAGE, LOGIN_MODE_OPTIONS, agreementUrl, normalizeCellphone, validatePasswordLogin,
+} from './pageLogic';
 import './index.scss';
 
 export default {
@@ -225,8 +253,7 @@ export default {
             avatarFailed: false,
             userInfo: {},
             wechatLoginLoading: false,
-            wechatProfileLoading: false,
-            wechatUserInfo: null,
+            agreed: false,
             role: 'student',
             roleChallenge: null,
             roleOptions: [],
@@ -318,8 +345,6 @@ export default {
             this.showRolePopup = false;
         },
         resetWechatAuthState() {
-            this.wechatUserInfo = null;
-            this.wechatProfileLoading = false;
             this.wechatLoginLoading = false;
         },
         resetPasswordAuthState() {
@@ -332,6 +357,10 @@ export default {
         },
         async handlePasswordLogin() {
             if (this.passwordLoginLoading) return;
+            if (!this.agreed) {
+                this.requireAgreement();
+                return;
+            }
             const { credentials, error } = validatePasswordLogin({
                 cellphone: this.passwordCellphone,
                 password: this.passwordValue,
@@ -354,23 +383,23 @@ export default {
                 this.passwordLoginLoading = false;
             }
         },
-        async handleWechatTap() {
-            if (this.wechatUserInfo || this.wechatProfileLoading) {
-                return;
-            }
-            if (!Taro.getUserProfile) {
-                Taro.showToast({ title: '当前基础库版本过低，无法授权', icon: 'none' });
-                return;
-            }
-            this.wechatProfileLoading = true;
-            try {
-                const result = await Taro.getUserProfile({ desc: '用于完善个人资料' });
-                this.wechatUserInfo = result.userInfo || null;
-            } catch (error) {
-                Taro.showToast({ title: '已取消授权', icon: 'none' });
-            } finally {
-                this.wechatProfileLoading = false;
-            }
+        requireAgreement() {
+            Taro.showToast({ title: AGREEMENT_REQUIRED_MESSAGE, icon: 'none' });
+        },
+        openAgreement(type) {
+            Taro.navigateTo({ url: agreementUrl(type) });
+        },
+        async confirmLogout() {
+            const result = await Taro.showModal({
+                title: '退出登录',
+                content: '退出后需要重新使用手机号登录。',
+                confirmText: '退出',
+                confirmColor: themeColors.danger,
+            });
+            if (!result.confirm) return;
+            UserManager.logout();
+            await this.refreshUserInfo();
+            Taro.showToast({ title: '已退出', icon: 'none' });
         },
         async ensureWechatCode() {
             const loginResult = await Taro.login();
@@ -388,10 +417,6 @@ export default {
                 Taro.showToast({ title: '未获取到手机号', icon: 'none' });
                 return;
             }
-            if (!this.wechatUserInfo) {
-                Taro.showToast({ title: '请先允许获取头像昵称', icon: 'none' });
-                return;
-            }
             if (!detail.encryptedData || !detail.iv) {
                 Taro.showToast({ title: '微信未返回手机号信息', icon: 'none' });
                 return;
@@ -400,7 +425,6 @@ export default {
             try {
                 const result = await Api.loginWithWechat({
                     code: await this.ensureWechatCode(),
-                    userInfo: this.wechatUserInfo,
                     phone: {
                         encryptedData: detail.encryptedData,
                         iv: detail.iv,

@@ -10,6 +10,7 @@
 .activity-calendar {
     background: $ky-surface;
     border-bottom: 1px solid $ky-line;
+    border-top: 1px solid $ky-line;
     padding: $ky-space-3 $ky-space-4 $ky-space-4;
 }
 
@@ -77,12 +78,23 @@
     color: $ky-on-primary;
 }
 
+.activity-day__marker {
+    border-radius: 50%;
+    height: 5px;
+    margin-top: $ky-space-1;
+    width: 5px;
+}
+
+.activity-day__marker--on {
+    background: $ky-primary;
+}
+
 .activity-content {
     padding: $ky-space-4 $ky-space-3 0;
 }
 
 .activity-upcoming {
-    padding: 0 $ky-space-3;
+    padding: 0 $ky-space-3 $ky-space-4;
 }
 
 .activity-state {
@@ -116,31 +128,6 @@
     to { transform: rotate(360deg); }
 }
 
-.activity-links {
-    display: grid;
-    gap: $ky-space-2;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: $ky-space-5 $ky-space-3 0;
-}
-
-.activity-link {
-    align-items: center;
-    background: $ky-surface;
-    border: 1px solid $ky-line;
-    border-radius: $ky-radius-md;
-    color: $ky-primary-strong;
-    display: flex;
-    font-size: $ky-font-size-body-sm;
-    font-weight: $ky-font-weight-bold;
-    justify-content: space-between;
-    min-height: 44px;
-    padding: 0 $ky-space-3;
-}
-
-.activity-link:active {
-    background: $ky-primary-wash;
-}
-
 @media (max-width: 350px) {
     .activity-calendar {
         padding-left: $ky-space-3;
@@ -148,8 +135,7 @@
     }
 
     .activity-content,
-    .activity-upcoming,
-    .activity-links {
+    .activity-upcoming {
         padding-left: $ky-space-2;
         padding-right: $ky-space-2;
     }

@@ -22,7 +22,7 @@ export default {
     display: inline-flex;
     font-size: $ky-font-size-xs;
     font-weight: $ky-font-weight-bold;
-    line-height: 1;
+    line-height: $ky-leading-none;
     padding: 5px $ky-space-2;
     white-space: nowrap;
 }

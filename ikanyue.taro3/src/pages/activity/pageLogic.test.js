@@ -1,47 +1,55 @@
 import { describe, expect, it } from 'vitest';
+import { buildImageDetailUrl } from '../../data/kanyueInfoLinks';
 import {
-    buildImageDetailUrl,
     createActivityQueryParams,
     createDateGroups,
+    daysWithActivities,
     filterActivitiesByDateGroup,
     formatDateOnly,
     formatTimeOnly,
     mapActivityDetail,
+    nextDayWithActivities,
 } from './pageLogic';
 
 describe('activity page logic', () => {
-    it('creates the page-facing activity query range', () => {
+    it('queries exactly the seven-day strip, earliest first', () => {
         const params = createActivityQueryParams(new Date('2026-05-14T10:00:00Z'));
 
         expect(params).toEqual({
-            start_time_gte: new Date('2020-01-01').toISOString(),
-            start_time_lte: '2027-12-31T15:59:59.999Z',
+            start_time_gte: '2026-05-13T16:00:00.000Z',
+            start_time_lte: '2026-05-20T15:59:59.999Z',
+            sort: 'startTime',
             perPage: 100,
         });
 
         expect(createActivityQueryParams().perPage).toBe(100);
     });
 
-    it('builds seven date groups and two image navigation groups', () => {
+    it('builds seven date groups without navigation links', () => {
         const groups = createDateGroups(new Date('2026-05-14T08:00:00+08:00'));
 
-        expect(groups).toHaveLength(9);
+        expect(groups).toHaveLength(7);
         expect(groups[0]).toMatchObject({
             title: '今天',
             dateText: '5月14日',
             type: 'day',
         });
-        expect(groups[7]).toMatchObject({
-            dateText: '看乐教学',
-            action: 'navigate-image',
-            detailTitle: '看乐教学',
-        });
-        expect(groups[8]).toMatchObject({
-            dateText: '关于看乐',
-            action: 'navigate-image',
-            detailTitle: '关于看乐',
-        });
-        expect(createDateGroups()).toHaveLength(9);
+        expect(groups.every((group) => group.type === 'day')).toBe(true);
+        expect(createDateGroups()).toHaveLength(7);
+    });
+
+    it('marks days with activities and finds the next one', () => {
+        const groups = createDateGroups(new Date('2026-05-14T08:00:00+08:00'));
+        const activities = [
+            { id: 'sat', startTime: '2026-05-16T19:00:00+08:00' },
+            { id: 'tue', startTime: '2026-05-19T09:00:00+08:00' },
+        ];
+
+        expect(daysWithActivities(groups, activities)).toEqual([2, 5]);
+        expect(nextDayWithActivities(groups, activities, 0)).toBe(2);
+        expect(nextDayWithActivities(groups, activities, 2)).toBe(5);
+        expect(nextDayWithActivities(groups, activities, 5)).toBe(-1);
+        expect(nextDayWithActivities(groups, [], 0)).toBe(-1);
     });
 
     it('filters activities by the selected date group', () => {
@@ -57,7 +65,6 @@ describe('activity page logic', () => {
         );
 
         expect(filtered).toEqual([{ id: 'same-day', startTime: '2026-05-14T10:30:00+08:00' }]);
-        expect(filterActivitiesByDateGroup([{ id: 'x' }], { action: 'navigate-image' })).toEqual([]);
         expect(filterActivitiesByDateGroup([{ id: 'x' }], null)).toEqual([]);
         expect(filterActivitiesByDateGroup(undefined, group)).toEqual([]);
         expect(

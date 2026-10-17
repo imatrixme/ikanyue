@@ -1,5 +1,10 @@
 <template>
-    <view class="account-row" :class="{ 'account-row--interactive': interactive }" @tap="handleTap">
+    <view
+        class="account-row"
+        :class="{ 'account-row--interactive': interactive }"
+        :aria-role="interactive ? 'button' : undefined"
+        @tap="handleTap"
+    >
         <view v-if="icon || iconText" class="account-row__leading">
             <app-icon v-if="icon" :name="icon" size="xl" />
             <text v-else>{{ iconText }}</text>

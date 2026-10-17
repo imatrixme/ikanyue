@@ -33,7 +33,6 @@ const loginWithPassword = (cellphone, password) => {
  * 微信授权登录
  * @param {Object} payload - 微信登录参数
  * @param {string} payload.code - wx.login 返回的 code
- * @param {Object} payload.userInfo - getUserProfile 返回的用户资料
  * @param {Object} payload.phone - 微信加密手机号数据
  * @returns {Promise}
  */

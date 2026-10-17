@@ -118,7 +118,7 @@ export default {
     onShow() {
         this.role = RoleManager.getRole();
         RoleManager.applyTabBar(this.role);
-        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '预约工作台' : '我的课程' });
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '工作台' : '我的课程' });
         if (this.role === 'teacher') this.$nextTick(() => this.$refs.teacherHome?.refresh());
         else this.loadData();
     },

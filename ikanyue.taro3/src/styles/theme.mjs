@@ -29,9 +29,9 @@ const richTextStyles = Object.freeze({
     heading1: 'font-size:20px;font-weight:800;line-height:1.35;margin:16px 0 8px;',
     heading2: 'font-size:18px;font-weight:800;line-height:1.35;margin:16px 0 8px;',
     heading3: 'font-size:16px;font-weight:700;line-height:1.45;margin:16px 0 8px;',
-    heading4: 'font-size:15px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
-    heading5: 'font-size:14px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
-    heading6: 'font-size:13px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
+    heading4: 'font-size:16px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
+    heading5: 'font-size:15px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
+    heading6: 'font-size:14px;font-weight:700;line-height:1.45;margin:12px 0 8px;',
     list: 'padding-left:20px;margin-bottom:16px;line-height:1.75;',
     listItem: 'margin-bottom:4px;',
 });

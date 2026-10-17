@@ -24,6 +24,7 @@ export default defineAppConfig({
         'pages/activityDetail/index',
         'pages/imageDetail/index',
         'pages/webview/index',
+        'pages/agreement/index',
     ],
     window: {
         backgroundTextStyle: 'light',

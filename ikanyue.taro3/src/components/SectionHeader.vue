@@ -6,7 +6,7 @@
                 <text v-if="subtitle" class="section-header__subtitle">{{ subtitle }}</text>
             </view>
         </view>
-        <view v-if="actionLabel" class="section-header__action" @tap="$emit('action')">
+        <view v-if="actionLabel" class="section-header__action" aria-role="button" @tap="$emit('action')">
             <text>{{ actionLabel }}</text>
             <app-icon name="chevron-primary" size="sm" />
         </view>
@@ -74,7 +74,9 @@ export default {
     font-size: $ky-font-size-sm;
     font-weight: $ky-font-weight-bold;
     gap: $ky-space-1;
-    min-height: 30px;
+    // 44px hit area; the negative margin keeps the header height unchanged.
+    margin: -7px 0;
+    min-height: 44px;
     padding-left: $ky-space-3;
 }
 </style>

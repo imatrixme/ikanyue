@@ -17,7 +17,7 @@
 .availability-section__title { color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; }
 .availability-section__subtitle { color: $ky-text-muted; font-size: $ky-font-size-xs; margin-top: 4px; }
 .availability-mode { background: $ky-muted-surface; border: 1px solid $ky-line; border-radius: $ky-radius-md; display: flex; flex-shrink: 0; margin-left: $ky-space-2; padding: 2px; }
-.availability-mode__item { border-radius: $ky-radius-sm; color: $ky-text-secondary; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; padding: 7px 9px; }
+.availability-mode__item { border-radius: $ky-radius-sm; color: $ky-text-secondary; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; padding: 0 $ky-space-3; min-height: 40px; display: flex; align-items: center; }
 .availability-mode__item--active { background: $ky-primary-strong; color: $ky-on-primary; }
 .availability-default { align-items: center; background: $ky-primary-wash; border: 1px solid $ky-line-tinted; border-radius: $ky-radius-md; display: flex; gap: $ky-space-3; margin-top: $ky-space-4; min-height: 72px; padding: $ky-space-3; }
 .availability-default__title,
@@ -25,14 +25,14 @@
 .availability-default__title { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
 .availability-default__meta { color: $ky-text-muted; font-size: $ky-font-size-xs; line-height: $ky-leading-readable; margin-top: 3px; }
 .availability-rules { margin-top: $ky-space-4; }
-.availability-rule { align-items: center; border-bottom: 1px solid $ky-line; display: grid; gap: $ky-space-2; grid-template-columns: 64px 1fr 18px 1fr 28px; min-height: 54px; }
+.availability-rule { align-items: center; border-bottom: 1px solid $ky-line; display: grid; gap: $ky-space-2; grid-template-columns: 64px 1fr 18px 1fr 44px; min-height: 54px; }
 .availability-rule__control { background: $ky-primary-wash; border: 1px solid $ky-input-line; border-radius: $ky-radius-sm; color: $ky-ink; font-size: $ky-font-size-body-sm; padding: 8px 5px; text-align: center; }
 .availability-rule__dash { color: $ky-text-muted; font-size: $ky-font-size-xs; text-align: center; }
-.availability-rule__remove { align-items: center; color: $ky-danger; display: flex; font-size: $ky-font-size-heading; height: 28px; justify-content: center; width: 28px; }
+.availability-rule__remove { align-items: center; color: $ky-danger; display: flex; font-size: $ky-font-size-heading; height: 44px; justify-content: center; width: 44px; }
 .availability-add,
 .availability-add-small { color: $ky-primary-strong; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; }
 .availability-add { padding: $ky-space-4 0 $ky-space-2; text-align: center; }
-.availability-add-small { flex-shrink: 0; padding: 7px $ky-space-2; }
+.availability-add-small { flex-shrink: 0; align-items: center; display: flex; min-height: 44px; padding: 0 $ky-space-3; }
 .availability-save { align-items: center; background: $ky-primary-strong; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-black; height: 46px; justify-content: center; margin-top: $ky-space-4; }
 .availability-save--disabled { opacity: $ky-disabled-opacity; }
 .availability-overrides { border: 1px solid $ky-line; border-radius: $ky-radius-md; margin-top: $ky-space-4; overflow: hidden; }
@@ -46,7 +46,7 @@
 .availability-override__title { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
 .availability-override__meta,
 .availability-override__reason { color: $ky-text-muted; font-size: $ky-font-size-xs; margin-top: 3px; }
-.availability-override__cancel { color: $ky-danger; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; padding: $ky-space-2; }
+.availability-override__cancel { color: $ky-danger; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; align-items: center; display: flex; min-height: 44px; padding: 0 $ky-space-3; }
 .availability-popup-shell { border-radius: $ky-radius-lg $ky-radius-lg 0 0; }
 .availability-popup { box-sizing: border-box; padding: $ky-space-5 $ky-space-5 calc(env(safe-area-inset-bottom) + 30px); }
 .availability-popup__bar { background: $ky-primary; height: 5px; margin-bottom: $ky-space-4; width: 44px; }
@@ -62,5 +62,5 @@
 .availability-popup__submit.disabled { opacity: $ky-disabled-opacity; }
 
 @media (max-width: 350px) {
-    .availability-rule { gap: 4px; grid-template-columns: 56px 1fr 16px 1fr 24px; }
+    .availability-rule { gap: 4px; grid-template-columns: 56px 1fr 16px 1fr 44px; }
 }

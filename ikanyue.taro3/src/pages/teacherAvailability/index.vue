@@ -53,12 +53,12 @@
                         <picker mode="time" :value="minutesToTime(rule.endMinute)" @change="updateRuleTime(index, 'endMinute', $event)">
                             <view class="availability-rule__control">{{ minutesToTime(rule.endMinute) }}</view>
                         </picker>
-                        <view class="availability-rule__remove" aria-label="移除时段" @tap="removeRule(index)">×</view>
+                        <view class="availability-rule__remove" aria-role="button" aria-label="移除时段" @tap="removeRule(index)">×</view>
                     </view>
-                    <view class="availability-add" @tap="addRule">添加每周时段</view>
+                    <view class="availability-add" aria-role="button" @tap="addRule">添加每周时段</view>
                 </view>
 
-                <view class="availability-save" :class="{ 'availability-save--disabled': saving }" @tap="saveWeekly">
+                <view class="availability-save" :class="{ 'availability-save--disabled': saving }" aria-role="button" @tap="saveWeekly">
                     {{ saving ? '正在保存' : '保存每周时间' }}
                 </view>
             </view>
@@ -69,7 +69,7 @@
                         <text class="availability-section__title">临时调整</text>
                         <text class="availability-section__subtitle">为特定日期临时开放或关闭一段时间</text>
                     </view>
-                    <view class="availability-add-small" @tap="openOverride">新增</view>
+                    <view class="availability-add-small" aria-role="button" aria-label="新增临时调整" @tap="openOverride">新增</view>
                 </view>
                 <view v-if="availability.overrides.length" class="availability-overrides">
                     <view v-for="item in availability.overrides" :key="item.id" class="availability-override">
@@ -81,7 +81,7 @@
                             <text class="availability-override__meta">{{ formatAppointmentTime(item.startAt, item.endAt) }}</text>
                             <text v-if="item.reason" class="availability-override__reason">{{ item.reason }}</text>
                         </view>
-                        <view class="availability-override__cancel" @tap="cancelOverride(item)">撤销</view>
+                        <view class="availability-override__cancel" aria-role="button" aria-label="撤销临时调整" @tap="cancelOverride(item)">撤销</view>
                     </view>
                 </view>
                 <view v-else class="availability-default">
@@ -140,7 +140,7 @@ import PageChrome from '../../components/PageChrome.vue';
 import {
     bookingErrorMessage, buildAvailabilityOverride, createOverrideDraft,
     formatAppointmentTime, minutesToTime, normalizeAvailability, timeToMinutes,
-    validateAvailabilityRules, weekdayName,
+    validateAvailabilityRules, weekdayName, weeklySnapshot,
 } from '../appointments/pageLogic';
 import './index.scss';
 
@@ -152,7 +152,7 @@ export default {
         return {
             availability: normalizeAvailability(), errorMessage: '', loading: false, mode: 'default',
             offeringId: '', overrideCancellingId: '', overrideForm: createOverrideDraft(),
-            overrideSaving: false, rules: [], saving: false, showOverride: false, weekdays: WEEKDAYS,
+            overrideSaving: false, rules: [], saved: '', saving: false, showOverride: false, weekdays: WEEKDAYS,
         };
     },
     computed: {
@@ -168,9 +168,17 @@ export default {
                 : '09:00-11:00 · 14:00-19:00';
         },
         today() { return academyDateKey(Date.now()); },
+        dirty() { return Boolean(this.saved) && weeklySnapshot(this.mode, this.rules) !== this.saved; },
+    },
+    watch: {
+        dirty(value) {
+            // Back navigation cannot be intercepted, so the platform prompt guards unsaved weekly edits.
+            if (value) Taro.enableAlertBeforeUnload?.({ message: '每周可预约时间还没保存，确定离开吗？' });
+            else Taro.disableAlertBeforeUnload?.();
+        },
     },
     onLoad() { this.offeringId = Taro.getCurrentInstance()?.router?.params?.offeringId || ''; },
-    onShow() { this.loadData(); },
+    onShow() { if (!this.dirty) this.loadData(); },
     async onPullDownRefresh() {
         try { await this.loadData(true); } finally { Taro.stopPullDownRefresh(); }
     },
@@ -203,8 +211,12 @@ export default {
             this.errorMessage = '';
             try {
                 this.availability = normalizeAvailability(await Api.getTeacherAvailability(this.offeringId));
-                this.rules = this.availability.rules.map((rule, index) => ({ ...rule, localId: rule.id || `rule-${index}` }));
-                this.mode = this.rules.length ? 'custom' : 'default';
+                // Reloading after an override keeps unsaved weekly edits on screen.
+                if (!this.dirty) {
+                    this.rules = this.availability.rules.map((rule, index) => ({ ...rule, localId: rule.id || `rule-${index}` }));
+                    this.mode = this.rules.length ? 'custom' : 'default';
+                    this.saved = weeklySnapshot(this.mode, this.rules);
+                }
             } catch (error) {
                 this.errorMessage = bookingErrorMessage(error, '可预约时间暂时无法加载');
             } finally { this.loading = false; }
@@ -225,6 +237,7 @@ export default {
             try {
                 await withCommandKey(`save-availability:${this.offeringId}`,
                     (key) => Api.saveTeacherAvailability(this.offeringId, { mode: this.mode, rules }, key));
+                this.saved = weeklySnapshot(this.mode, this.rules);
                 Taro.showToast({ title: '可预约时间已保存', icon: 'success' });
                 await this.loadData(true);
             } catch (error) {

@@ -18,6 +18,7 @@
 - 课程、预约、活动、积分的时间一律经 `utils/academyTime.js` 按看乐时间（UTC+08:00，与 API 一致）显示和拼装，不用 `getHours()` 等设备时区方法。
 - 带 `Idempotency-Key` 的写操作（预约、教师处理、可预约时间、下单、退款）经 `utils/commandKeys.js` 的 `withCommandKey(draft, send)`，同一用户同一草稿重试复用同一个键。
 - 样式只用 `src/styles/_tokens.scss` 与 `theme.mjs` 的 token；不写裸色值和裸字号/字重/行高（e2e 守卫会拦截）。`_brand.generated.scss` 由根目录 `scripts/sync-design-tokens.mjs` 生成，不手改。
+- 可点击控件的点击区域不小于 44px；用 `view` 模拟的按钮加 `aria-role="button"`，纯图标按钮再加 `aria-label`。登录前必须勾选用户协议与隐私政策（`pages/agreement`），微信登录只取手机号，不调用 `getUserProfile`。
 - 页面配置用 `theme.mjs` 的 `canvasPageChrome`（“我的”页用 `immersivePageChrome`）。
 - 线性图标由 `assets-src/imagegen/icons-v2/*.svg` 经 `pnpm icons:generate` 生成；空状态图在 `src/imgs/empty/*-brand.png`。
 
