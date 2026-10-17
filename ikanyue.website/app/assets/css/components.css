@@ -218,7 +218,7 @@
   margin-top: var(--ky-space-3);
   color: var(--muted-foreground);
   font-size: var(--ky-web-body-sm);
-  line-height: 1.45rem;
+  line-height: var(--ky-web-body-line);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
