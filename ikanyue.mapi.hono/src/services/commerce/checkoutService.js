@@ -149,8 +149,8 @@ class CheckoutService {
         return payment.action;
     }
     present(row) {
-        const { name, amount, currency, policy, refunded, refundPending, createdAt } = row.data;
-        return { id: row.id, name, amount, currency, policy, refunded, refundPending, createdAt,
+        const { offerId, name, amount, currency, policy, refunded, refundPending, createdAt } = row.data;
+        return { id: row.id, offerId, name, amount, currency, policy, refunded, refundPending, createdAt,
             cancellationFees: row.data.cancellationFees || 0,
             status: row.status, mockPayment: this.gateway.mockEnabled && row.status === 'pending' };
     }

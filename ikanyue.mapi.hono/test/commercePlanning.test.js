@@ -69,3 +69,11 @@ test('recovery acknowledges orphan events and cashier rejects closed payment win
     checkout.sync = async () => {};
     await assert.rejects(checkout.cashier('student', 'order'), { code: 'PAYMENT_WINDOW_CLOSED' });
 });
+
+test('student order payload names its offer so clients can reuse a pending order', () => {
+    const { CheckoutService } = require('../src/services/commerce/checkoutService');
+    const checkout = new CheckoutService({ repository: {} }, { mockEnabled: false });
+    const view = checkout.present({ id: 'order', status: 'pending', data: { offerId: 'offer', name: '单节课', amount: 24000 } });
+    assert.equal(view.offerId, 'offer');
+    assert.equal(view.mockPayment, false);
+});
