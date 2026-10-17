@@ -1,34 +1,38 @@
 import { IMAGE_DETAIL_URLS, KANYUE_INFO_LINKS, buildImageDetailUrl } from '../../data/kanyueInfoLinks';
+import {
+    WEEKDAY_LABELS, academyDateKey, academyDateTime, academyParts, academyTimeLabel, addAcademyDays,
+} from '../../../utils/academyTime';
 
-const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const DAY_MS = 86400000;
 
+// Activity days follow the academy clock (Asia/Shanghai), independent of the device timezone.
 const createActivityQueryParams = (baseDate = new Date()) => {
-    const now = new Date(baseDate);
-    const startDate = new Date('2020-01-01');
-    const endDate = new Date(now.getFullYear() + 1, 11, 31);
+    const nextYear = academyParts(baseDate).year + 1;
 
     return {
-        start_time_gte: startDate.toISOString(),
-        start_time_lte: endDate.toISOString(),
+        start_time_gte: new Date('2020-01-01').toISOString(),
+        start_time_lte: new Date(academyDateTime(`${nextYear + 1}-01-01`).getTime() - 1).toISOString(),
         perPage: 100,
     };
 };
 
 const createDateGroups = (baseDate = new Date()) => {
     const groups = [];
-    const now = new Date(baseDate);
-    now.setHours(0, 0, 0, 0);
+    const today = academyDateKey(baseDate);
 
     for (let i = 0; i < 7; i++) {
-        const date = new Date(now);
-        date.setDate(date.getDate() + i);
+        const dateKey = addAcademyDays(today, i);
+        const start = academyDateTime(dateKey);
+        const parts = academyParts(start);
         groups.push({
-            title: i === 0 ? '今天' : WEEKDAY_LABELS[date.getDay()],
-            dateText: `${date.getMonth() + 1}月${date.getDate()}日`,
-            date,
+            title: i === 0 ? '今天' : WEEKDAY_LABELS[parts.weekday],
+            dateText: `${parts.month}月${parts.day}日`,
+            dateKey,
+            day: String(parts.day).padStart(2, '0'),
+            month: `${String(parts.month).padStart(2, '0')}月`,
             type: 'day',
-            startTime: date,
-            endTime: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999),
+            startTime: start,
+            endTime: new Date(start.getTime() + DAY_MS - 1),
         });
     }
 
@@ -45,67 +49,26 @@ const createDateGroups = (baseDate = new Date()) => {
 };
 
 const formatDateOnly = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) return '';
-    return `${date.getMonth() + 1}月${date.getDate()}日`;
+    const parts = academyParts(timestamp);
+    return parts ? `${parts.month}月${parts.day}日` : '';
 };
 
-const formatTimeOnly = (timestamp) => {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) return '';
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-};
+const formatTimeOnly = (timestamp) => academyTimeLabel(timestamp);
 
 const filterActivitiesByDateGroup = (activities = [], group) => {
     if (!group || group.action === 'navigate-image') {
         return [];
     }
 
-    const groupStart = new Date(group.startTime);
-    const groupEnd = new Date(group.endTime);
-    if (Number.isNaN(groupStart.getTime()) || Number.isNaN(groupEnd.getTime())) {
+    const groupStart = new Date(group.startTime).getTime();
+    const groupEnd = new Date(group.endTime).getTime();
+    if (Number.isNaN(groupStart) || Number.isNaN(groupEnd)) {
         return [];
     }
 
-    const groupStartUtc = Date.UTC(
-        groupStart.getFullYear(),
-        groupStart.getMonth(),
-        groupStart.getDate(),
-        groupStart.getHours(),
-        groupStart.getMinutes(),
-        groupStart.getSeconds()
-    );
-    const groupEndUtc = Date.UTC(
-        groupEnd.getFullYear(),
-        groupEnd.getMonth(),
-        groupEnd.getDate(),
-        groupEnd.getHours(),
-        groupEnd.getMinutes(),
-        groupEnd.getSeconds()
-    );
-
-    return activities.filter((activity) => {
-        if (!activity.startTime) {
-            return false;
-        }
-
-        const activityDate = new Date(activity.startTime);
-        if (Number.isNaN(activityDate.getTime())) {
-            return false;
-        }
-
-        const activityUtc = Date.UTC(
-            activityDate.getFullYear(),
-            activityDate.getMonth(),
-            activityDate.getDate(),
-            activityDate.getHours(),
-            activityDate.getMinutes(),
-            activityDate.getSeconds()
-        );
-
-        return activityUtc >= groupStartUtc && activityUtc <= groupEndUtc;
+    return (activities || []).filter((activity) => {
+        const start = activity?.startTime ? new Date(activity.startTime).getTime() : NaN;
+        return !Number.isNaN(start) && start >= groupStart && start <= groupEnd;
     });
 };
 

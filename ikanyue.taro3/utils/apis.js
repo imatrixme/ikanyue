@@ -18,7 +18,6 @@ const loginWithPassword = (cellphone, password) => {
             false
         )
             .then((res) => {
-                console.log('登录API返回结果:', res);
                 // 登录成功，更新用户信息缓存
                 UserManager.updateUserInfoCache(res);
                 resolve(res);
@@ -42,7 +41,6 @@ const loginWithWechat = (payload) => {
     return new Promise((resolve, reject) => {
         iNet.post('/v1/user/wechat-login', payload, false)
             .then((res) => {
-                console.log('微信登录API返回结果:', res);
                 if (res?.token) UserManager.updateUserInfoCache(res);
                 resolve(res);
             })
@@ -85,15 +83,12 @@ const updateUserInfo = async (userInfo) => {
 const refreshLogin = () => {
     return new Promise((resolve, reject) => {
         if (!UserManager.isLogin()) {
-            console.log('未登录状态，无法刷新登录');
             reject(new Error('未登录状态'));
             return;
         }
 
-        console.log('开始刷新登录状态');
         iNet.post('/v1/user/refresh')
             .then((res) => {
-                console.log('刷新登录API返回:', res);
                 // 登录成功，缓存用户信息
                 UserManager.updateUserInfoCache(res);
                 resolve(res);
@@ -102,7 +97,6 @@ const refreshLogin = () => {
                 console.error('刷新登录API错误:', err);
                 // 如果刷新失败，清除登录状态
                 if ([401, 403, 404, 10401, 10403, 10404].includes(Number(err.code))) {
-                    console.log('Token无效，清除登录状态');
                     UserManager.logout();
                 }
                 reject(err);

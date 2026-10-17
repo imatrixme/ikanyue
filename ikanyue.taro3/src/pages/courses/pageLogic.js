@@ -1,3 +1,5 @@
+import { academyParts, academyTimeLabel } from '../../../utils/academyTime';
+
 const LESSON_STATUS = Object.freeze({
     draft: '待安排',
     scheduled: '已安排',
@@ -147,24 +149,24 @@ function hasNextPage(page = {}) {
 }
 
 function formatDate(value) {
-    const date = validDate(value);
+    const date = academyParts(value);
     if (!date) return '长期有效';
-    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+    return `${date.year}.${pad(date.month)}.${pad(date.day)}`;
 }
 
 function formatDateTime(value) {
-    const date = validDate(value);
+    const date = academyParts(value);
     if (!date) return '时间待定';
-    return `${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${pad(date.month)}.${pad(date.day)} ${academyTimeLabel(value)}`;
 }
 
 function formatLessonTime(startAt, endAt) {
-    const start = validDate(startAt);
-    const end = validDate(endAt);
+    const start = academyParts(startAt);
     if (!start) return '时间待定';
-    const date = `${pad(start.getMonth() + 1)}.${pad(start.getDate())}`;
-    const startTime = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
-    return end ? `${date} ${startTime}-${pad(end.getHours())}:${pad(end.getMinutes())}` : `${date} ${startTime}`;
+    const date = `${pad(start.month)}.${pad(start.day)}`;
+    const startTime = academyTimeLabel(startAt);
+    const endTime = academyTimeLabel(endAt);
+    return endTime ? `${date} ${startTime}-${endTime}` : `${date} ${startTime}`;
 }
 
 function courseValidityText(course = {}) {
@@ -239,12 +241,6 @@ function count(value) {
 function positive(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? number : fallback;
-}
-
-function validDate(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function pad(value) {

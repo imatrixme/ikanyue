@@ -31,6 +31,7 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Commerce } from '../../../utils/commerce';
+import { withCommandKey } from '../../../utils/commandKeys';
 import AppIcon from '../../components/AppIcon.vue';
 import AccountRow from '../../components/AccountRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
@@ -65,12 +66,9 @@ export default {
       const decision = await Taro.showModal({ title: `应付 ¥${money(offer.amount)}`, content: `${offer.name} · ${offer.quantity}课时\n${policyText(offer.policy)}`, confirmText: '确认下单' });
       if (!decision.confirm) return;
       this.busy = true;
-      const storageKey = `commerce-checkout-${offer.id}`;
-      const key = Taro.getStorageSync(storageKey) || `buy-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      Taro.setStorageSync(storageKey, key);
       try {
-        const order = await Commerce.checkout(offer.id, key);
-        Taro.removeStorageSync(storageKey); this.openOrder(order.id);
+        const order = await withCommandKey(`checkout:${offer.id}`, (key) => Commerce.checkout(offer.id, key));
+        this.openOrder(order.id);
       } catch (error) { Taro.showToast({ title: error.message || '下单结果正在确认，请重试', icon: 'none' }); }
       finally { this.busy = false; }
     },

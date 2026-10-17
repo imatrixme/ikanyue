@@ -117,8 +117,7 @@ export default {
     },
     computed: {
         calendarMonth() {
-            const date = this.dayGroups[0]?.date;
-            return date ? `${String(date.getMonth() + 1).padStart(2, '0')}月` : '';
+            return this.dayGroups[0]?.month || '';
         },
         dayGroups() {
             return this.dateGroups.filter((group) => group.type === 'day');
@@ -220,7 +219,6 @@ export default {
 
             try {
                 const res = await Api.findActivities(createActivityQueryParams());
-                console.log('获取活动数据:', res);
 
                 // 保存所有活动数据
                 this.allActivities = res.items || [];
@@ -275,7 +273,7 @@ export default {
         },
 
         getCalendarDay(group) {
-            return group?.date ? String(group.date.getDate()).padStart(2, '0') : '';
+            return group?.day || '';
         },
 
         // 选择日期组

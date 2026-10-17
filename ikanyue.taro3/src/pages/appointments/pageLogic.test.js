@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     appointmentDetailUrl, availabilityUrl, bookingDateRange, bookingErrorMessage, bookingSlotsUrl,
-    buildAvailabilityOverride, buildRescheduleWindow, createCommandKey, createOverrideDraft,
+    buildAvailabilityOverride, buildRescheduleWindow, createOverrideDraft,
     createRescheduleDraft, formatAppointmentTime, formatDeadline, groupSlots, hasNextPage,
     mergeAppointmentPage, minutesToTime, normalizeAppointment, normalizeAppointmentPage,
     normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, statusMeta,
@@ -78,7 +78,6 @@ describe('booking presentation logic', () => {
         expect(bookingSlotsUrl({
             offeringId: 'offer', course: { name: '声乐课' }, teacher: { name: '林老师' }, location: '一号教室',
         })).toContain('courseName=%E5%A3%B0%E4%B9%90%E8%AF%BE');
-        expect(createCommandKey('confirm', 'a', 1000, 0.5)).toBe('confirm:a:rs:89oqgw');
         expect(hasNextPage({ page: 1, totalPages: 2 })).toBe(true);
         expect(hasNextPage({ page: 2, totalPages: 2 })).toBe(false);
         expect(bookingDateRange(Date.parse('2026-08-01T00:00:00Z'), 1)).toEqual({
@@ -186,7 +185,6 @@ describe('booking presentation logic', () => {
         expect(buildAvailabilityOverride({
             date: '2026-08-02', startTime: '09:00', endTime: '10:60',
         }, windows, Date.parse('2026-08-01T08:00:00+08:00')).error).toContain('有效');
-        expect(createCommandKey('request', '', 1, 0)).toBe('request:new:1:0');
         expect(bookingSlotsUrl()).toContain('offeringId=');
         expect(appointmentDetailUrl('')).toContain('id=');
         expect(availabilityUrl('')).toContain('offeringId=');

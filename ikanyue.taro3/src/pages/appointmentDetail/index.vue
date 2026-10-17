@@ -126,6 +126,8 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+import { academyDateKey } from '../../../utils/academyTime';
+import { withCommandKey } from '../../../utils/commandKeys';
 import { RoleManager } from '../../../utils/rolemanager';
 import AccountRow from '../../components/AccountRow.vue';
 import AppIcon from '../../components/AppIcon.vue';
@@ -133,7 +135,7 @@ import AsyncState from '../../components/AsyncState.vue';
 import BookingStatusBadge from '../../components/BookingStatusBadge.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import {
-    bookingErrorMessage, buildRescheduleWindow, createCommandKey, createRescheduleDraft,
+    bookingErrorMessage, buildRescheduleWindow, createRescheduleDraft,
     formatAppointmentTime, formatDeadline, normalizeAppointment,
 } from '../appointments/pageLogic';
 import './index.scss';
@@ -171,7 +173,7 @@ export default {
             if (this.errorMessage || !this.appointmentId) return 'error';
             return 'ready';
         },
-        today() { return localDate(new Date()); },
+        today() { return academyDateKey(Date.now()); },
     },
     onLoad() { this.appointmentId = Taro.getCurrentInstance()?.router?.params?.id || ''; },
     onShow() {
@@ -222,26 +224,27 @@ export default {
             if (this.actionLoading) return;
             const modal = await Taro.showModal({ title: '确认预约', content: '确认后会创建正式课程并保留该时间。' });
             if (!modal.confirm) return;
-            await this.runAction(() => Api.confirmTeacherAppointment(
-                this.appointmentId, { reason: '教师确认预约' }, createCommandKey('confirm-appointment', this.appointmentId)
-            ), '预约已确认');
+            await this.runAction(() => withCommandKey(`confirm-appointment:${this.appointmentId}`,
+                (key) => Api.confirmTeacherAppointment(this.appointmentId, { reason: '教师确认预约' }, key)), '预约已确认');
         },
         async submitReasonAction() {
             if (this.actionLoading || this.reason.trim().length < 2) return;
             const reason = this.reason.trim();
+            const id = this.appointmentId;
             const calls = {
-                decline: () => Api.declineTeacherAppointment(this.appointmentId, { reason },
-                    createCommandKey('decline-appointment', this.appointmentId)),
-                withdraw: () => Api.withdrawStudentAppointment(this.appointmentId, { reason },
-                    createCommandKey('withdraw-appointment', this.appointmentId)),
-                cancel: () => this.role === 'teacher'
-                    ? Api.cancelTeacherAppointment(this.appointmentId, { reason },
-                        createCommandKey('cancel-appointment', this.appointmentId))
-                    : Api.cancelStudentAppointment(this.appointmentId, { reason,
-                        expectedRefundAmount: this.cancellationQuote?.amount, expectedFee: this.cancellationQuote?.fee },
-                        createCommandKey('cancel-appointment', this.appointmentId)),
+                decline: (key) => Api.declineTeacherAppointment(id, { reason }, key),
+                withdraw: (key) => Api.withdrawStudentAppointment(id, { reason }, key),
+                cancel: (key) => this.role === 'teacher'
+                    ? Api.cancelTeacherAppointment(id, { reason }, key)
+                    : Api.cancelStudentAppointment(id, { reason,
+                        expectedRefundAmount: this.cancellationQuote?.amount, expectedFee: this.cancellationQuote?.fee }, key),
             };
-            if (await this.runAction(calls[this.reasonAction], '预约状态已更新')) this.showReasonPopup = false;
+            const send = calls[this.reasonAction];
+            if (!send) return;
+            const success = await this.runAction(
+                () => withCommandKey(`${this.reasonAction}-appointment:${id}`, send), '预约状态已更新'
+            );
+            if (success) this.showReasonPopup = false;
         },
         async submitReschedule() {
             if (this.actionLoading || this.reschedule.reason.trim().length < 2) return;
@@ -250,9 +253,12 @@ export default {
                 Taro.showToast({ title: '请选择有效的预约日期和时间', icon: 'none' });
                 return;
             }
-            const success = await this.runAction(() => Api.rescheduleTeacherAppointment(this.appointmentId, {
-                ...window, reason: this.reschedule.reason.trim(),
-            }, createCommandKey('reschedule-appointment', this.appointmentId)), '预约时间已调整');
+            const success = await this.runAction(() => withCommandKey(
+                `reschedule-appointment:${this.appointmentId}:${window.newStartAt}`,
+                (key) => Api.rescheduleTeacherAppointment(this.appointmentId, {
+                    ...window, reason: this.reschedule.reason.trim(),
+                }, key)
+            ), '预约时间已调整');
             if (success) this.showReschedulePopup = false;
         },
         async runAction(run, successTitle) {
@@ -273,8 +279,4 @@ export default {
         },
     },
 };
-
-function localDate(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
 </script>

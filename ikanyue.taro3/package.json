@@ -19,6 +19,7 @@
 		"visual:styles": "sass tests/visual/inclusive-design-fixture.scss output/playwright/inclusive-design-fixture.css --style=expanded --no-source-map",
 		"lint": "eslint src utils scripts tests --ext .js,.mjs,.vue --max-warnings=0",
 		"test": "vitest run",
+		"test:tz": "TZ=America/New_York vitest run",
 		"test:coverage": "vitest run --coverage",
 		"course-calendar:test:coverage": "vitest run --config vitest.course-calendar.config.mjs --coverage",
 		"test:e2e": "node tests/e2e/points-lite-build.test.mjs && node tests/e2e/commerce-build.test.mjs",

@@ -117,6 +117,26 @@ describe('iNet request wrapper', () => {
         expect(taroMock.request.mock.calls[0][0].header['Idempotency-Key']).toBe('key');
     });
 
+    it('drops the local session only when the server reports an invalid session', async () => {
+        taroMock.request.mockImplementation(({ success }) => {
+            success({ data: { code: 403, errorCode: 'AUTH_SESSION_INVALID', message: '登录已失效，请重新登录', data: null } });
+        });
+        await expect(iNet.get('/v1/points/me')).rejects.toMatchObject({ code: 403, errorCode: 'AUTH_SESSION_INVALID' });
+        expect(taroMock.removeStorageSync).toHaveBeenCalledWith('com.ikanyue.cache.userinfo');
+
+        taroMock.removeStorageSync.mockClear();
+        taroMock.request.mockImplementation(({ success }) => {
+            success({ data: { code: 403, message: '权限不足', data: null } });
+        });
+        await expect(iNet.get('/v1/teacher/calendar')).rejects.toMatchObject({ code: 403 });
+        expect(taroMock.removeStorageSync).not.toHaveBeenCalledWith('com.ikanyue.cache.userinfo');
+    });
+
+    it('rejects non-envelope HTTP failures instead of throwing inside the success callback', async () => {
+        taroMock.request.mockImplementation(({ success }) => success({ data: null, statusCode: 502 }));
+        await expect(iNet.get('/v1/points/me')).rejects.toMatchObject({ httpStatus: 502 });
+    });
+
     it('supports PUT and PATCH commands with caller-provided headers', async () => {
         taroMock.request.mockImplementation(({ success }) => success({ data: { ready: true } }));
 

@@ -231,24 +231,6 @@ export default {
                 .filter(Boolean);
         },
 
-        // 格式化日期时间
-        formatDateTime(timestamp) {
-            if (!timestamp) return '';
-
-            const date = new Date(timestamp);
-
-            // 检查日期是否有效
-            if (isNaN(date.getTime())) return '';
-
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString();
-            const day = date.getDate().toString();
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            return `${year}年${month}月${day}日 ${hours}:${minutes}`;
-        },
-
         // 预览图片
         previewImage(current, urls) {
             Taro.previewImage({

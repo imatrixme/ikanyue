@@ -482,4 +482,11 @@ if (process.env.EXPECTED_SERVICE_URL) {
     assert.equal(commonBundle.includes(legacyToken), false, `legacy token leaked: ${legacyToken}`);
 });
 
+// App code must not log tokens, cached users or response bodies; only framework bundles may keep debug logging.
+for (const page of appConfig.pages) {
+    const pageBundle = await readFile(new URL(`../../dist/${page}.js`, import.meta.url), 'utf8');
+    assert.equal(pageBundle.includes('console.log('), false, `page logs at runtime: ${page}`);
+}
+assert.equal(commonBundle.includes('console.log('), false, 'shared app code logs at runtime');
+
 console.log('points-lite build e2e passed');

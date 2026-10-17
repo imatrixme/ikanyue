@@ -1,6 +1,8 @@
 import { UserManager } from './usermanager';
 import Taro from '@tarojs/taro';
 
+const SESSION_INVALID = 'AUTH_SESSION_INVALID';
+
 const requestWithFetch = ({ data, fail, header, method, success, url }) => {
     const requestUrl = new URL(url);
     const normalizedMethod = String(method || 'GET').toUpperCase();
@@ -46,26 +48,33 @@ const Request = (method = 'GET', url, data = {}, header = {}, authcheck = true) 
             header: headers_,
             method: method,
             success: (res) => {
-                console.log(res.data);
-                if (res.data.code !== undefined && res.data.message !== undefined) {
-                    if (parseInt(res.data.code) === 10000) {
-                        resolve(res.data.data);
+                const body = res.data;
+                if (body && body.code !== undefined && body.message !== undefined) {
+                    if (parseInt(body.code) === 10000) {
+                        resolve(body.data);
                         return;
                     } else {
-                        const err = new Error(res.data.message);
-                        err.code = res.data.code;
-                        err.errorCode = res.data.errorCode || '';
-                        err.details = res.data.details || {};
-                        err.operationId = res.data.operationId || null;
-                        err.traceId = res.data.traceId || null;
+                        const err = new Error(body.message);
+                        err.code = body.code;
+                        err.errorCode = body.errorCode || '';
+                        err.details = body.details || {};
+                        err.operationId = body.operationId || null;
+                        err.traceId = body.traceId || null;
+                        // The server no longer recognises this session; drop it so pages fall back to signed-out.
+                        if (authcheck && err.errorCode === SESSION_INVALID) UserManager.logout();
                         reject(err);
                         return;
                     }
                 }
-                resolve(res.data);
+                if (Number(res.statusCode) >= 400) {
+                    const err = new Error('服务暂时不可用，请稍后重试');
+                    err.httpStatus = Number(res.statusCode);
+                    reject(err);
+                    return;
+                }
+                resolve(body);
             },
             fail: (err) => {
-                // console.log('请求失败:', err);
                 reject(err);
                 return;
             },

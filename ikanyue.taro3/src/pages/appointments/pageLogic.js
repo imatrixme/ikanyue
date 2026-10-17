@@ -1,3 +1,7 @@
+import {
+    academyDateKey, academyDateTime, academyParts, academyTimeLabel, academyWeekday,
+} from '../../../utils/academyTime';
+
 const STATUS_META = Object.freeze({
     pending: { label: '待教师确认', tone: 'pending' },
     confirmed: { label: '已确认', tone: 'success' },
@@ -116,19 +120,19 @@ function groupSlots(slots = []) {
         const start = validDate(slot.startAt);
         const end = validDate(slot.endAt);
         if (!start || !end) return;
-        const key = localDateKey(start);
+        const key = academyDateKey(start);
         if (!groups.has(key)) {
             groups.set(key, {
                 dateKey: key,
-                dateLabel: `${start.getMonth() + 1}月${start.getDate()}日`,
-                weekday: weekdayLabel(start),
+                dateLabel: monthDayLabel(start),
+                weekday: academyWeekday(start),
                 slots: [],
             });
         }
         groups.get(key).slots.push({
             startAt: slot.startAt,
             endAt: slot.endAt,
-            label: `${timeLabel(start)}-${timeLabel(end)}`,
+            label: `${academyTimeLabel(start)}-${academyTimeLabel(end)}`,
         });
     });
     return [...groups.values()];
@@ -150,34 +154,31 @@ function formatAppointmentTime(startAt, endAt) {
     const start = validDate(startAt);
     const end = validDate(endAt);
     if (!start) return '时间待定';
-    const prefix = `${start.getMonth() + 1}月${start.getDate()}日 ${weekdayLabel(start)}`;
-    return end ? `${prefix} ${timeLabel(start)}-${timeLabel(end)}` : `${prefix} ${timeLabel(start)}`;
+    const prefix = `${monthDayLabel(start)} ${academyWeekday(start)}`;
+    return end ? `${prefix} ${academyTimeLabel(start)}-${academyTimeLabel(end)}` : `${prefix} ${academyTimeLabel(start)}`;
 }
 
 function formatDeadline(value) {
     const date = validDate(value);
-    return date ? `${date.getMonth() + 1}月${date.getDate()}日 ${timeLabel(date)} 前确认` : '';
+    return date ? `${monthDayLabel(date)} ${academyTimeLabel(date)} 前确认` : '';
 }
 
 function bookingDateRange(now = Date.now(), days = 30) {
-    const from = new Date(now);
-    const to = new Date(now);
-    to.setDate(to.getDate() + days);
-    return { from: from.toISOString(), to: to.toISOString() };
+    return { from: new Date(now).toISOString(), to: new Date(now + days * 86400000).toISOString() };
 }
 
 function createRescheduleDraft(value, now = Date.now()) {
     const existing = validDate(value);
     const date = existing || new Date(now + 86400000);
     return {
-        date: localDateKey(date),
-        startTime: existing ? timeLabel(existing) : '09:00',
+        date: academyDateKey(date),
+        startTime: existing ? academyTimeLabel(existing) : '09:00',
         reason: '',
     };
 }
 
 function buildRescheduleWindow(draft = {}, appointment = {}) {
-    const start = localDateTime(draft.date, draft.startTime);
+    const start = academyDateTime(draft.date, draft.startTime);
     if (!start) return null;
     const originalStart = validDate(appointment.startAt);
     const originalEnd = validDate(appointment.endAt);
@@ -193,7 +194,7 @@ function buildRescheduleWindow(draft = {}, appointment = {}) {
 function createOverrideDraft(now = Date.now()) {
     return {
         type: 'unavailable',
-        date: localDateKey(new Date(now + 86400000)),
+        date: academyDateKey(now + 86400000),
         startTime: '09:00',
         endTime: '11:00',
         reason: '',
@@ -223,12 +224,12 @@ function validateAvailabilityRules(rules = [], policyWindows = []) {
 }
 
 function buildAvailabilityOverride(form = {}, policyWindows = [], now = Date.now()) {
-    const start = localDateTime(form.date, form.startTime);
-    const end = localDateTime(form.date, form.endTime);
+    const start = academyDateTime(form.date, form.startTime);
+    const end = academyDateTime(form.date, form.endTime);
     if (!start || !end || end <= start) return { error: '请选择有效的开始和结束时间' };
     if (start.getTime() <= now) return { error: '临时调整必须设置在未来时间' };
-    const startMinute = start.getHours() * 60 + start.getMinutes();
-    const endMinute = end.getHours() * 60 + end.getMinutes();
+    const startMinute = minuteOfDay(start);
+    const endMinute = minuteOfDay(end);
     if (form.type === 'available' && !array(policyWindows).some((window) => startMinute >= Number(window.startMinute)
         && endMinute <= Number(window.endMinute))) return { error: '临时开放不能超出机构开放时间' };
     return {
@@ -240,10 +241,6 @@ function buildAvailabilityOverride(form = {}, policyWindows = [], now = Date.now
             reason: String(form.reason || '').trim(),
         },
     };
-}
-
-function createCommandKey(scope, id = '', now = Date.now(), random = Math.random()) {
-    return [scope, id || 'new', now.toString(36), Math.floor(random * 1e9).toString(36)].join(':');
 }
 
 function bookingErrorMessage(error, fallback = '预约服务暂时无法使用') {
@@ -334,33 +331,21 @@ function validDate(value) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function localDateKey(date) {
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+function monthDayLabel(date) {
+    const parts = academyParts(date);
+    return `${parts.month}月${parts.day}日`;
 }
 
-function localDateTime(dateValue, timeValue) {
-    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || ''));
-    const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(String(timeValue || ''));
-    if (!dateMatch || !timeMatch) return null;
-    const [, year, month, day] = dateMatch.map(Number);
-    const [, hour, minute] = timeMatch.map(Number);
-    if (hour > 23 || minute > 59) return null;
-    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
-        && date.getHours() === hour && date.getMinutes() === minute ? date : null;
+function minuteOfDay(date) {
+    const parts = academyParts(date);
+    return parts.hour * 60 + parts.minute;
 }
-
-function weekdayLabel(date) {
-    return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
-}
-
-function timeLabel(date) { return `${pad(date.getHours())}:${pad(date.getMinutes())}`; }
 
 function pad(value) { return String(value).padStart(2, '0'); }
 
 export {
     appointmentDetailUrl, availabilityUrl, bookingDateRange, bookingErrorMessage, bookingSlotsUrl,
-    buildAvailabilityOverride, buildRescheduleWindow, createCommandKey, createOverrideDraft,
+    buildAvailabilityOverride, buildRescheduleWindow, createOverrideDraft,
     createRescheduleDraft, formatAppointmentTime, formatDeadline, groupSlots, hasNextPage,
     mergeAppointmentPage, minutesToTime, normalizeAppointment, normalizeAppointmentPage,
     normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, statusMeta,

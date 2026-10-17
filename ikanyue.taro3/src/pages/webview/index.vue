@@ -1,6 +1,6 @@
 <template>
     <view v-if="!loadError" class="webview-container">
-        <web-view :src="url" @message="handleMessage" @error="handleError"></web-view>
+        <web-view :src="url" @error="handleError"></web-view>
     </view>
     <view v-else class="webview-error">
         <empty-state
@@ -43,11 +43,6 @@ export default {
         }
     },
     methods: {
-        // 处理网页消息
-        handleMessage(e) {
-            console.log('WebView消息:', e.detail);
-        },
-
         // 处理网页错误
         handleError(e) {
             console.error('WebView错误:', e.detail);

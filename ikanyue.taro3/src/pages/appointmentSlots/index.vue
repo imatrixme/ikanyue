@@ -67,12 +67,13 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+import { withCommandKey } from '../../../utils/commandKeys';
 import { UserManager } from '../../../utils/usermanager';
 import AppIcon from '../../components/AppIcon.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import {
-    appointmentDetailUrl, bookingDateRange, bookingErrorMessage, createCommandKey, groupSlots,
+    appointmentDetailUrl, bookingDateRange, bookingErrorMessage, groupSlots,
     normalizeBookingOption,
 } from '../appointments/pageLogic';
 import './index.scss';
@@ -157,12 +158,14 @@ export default {
             if (!this.canSubmit) return;
             this.submitting = true;
             try {
-                const result = await Api.createStudentAppointment({
-                    offeringId: this.offeringId,
-                    startAt: this.selectedSlot.startAt,
-                    endAt: this.selectedSlot.endAt,
-                    note: this.note.trim(),
-                }, createCommandKey('request-appointment', this.offeringId));
+                const slot = this.selectedSlot;
+                const result = await withCommandKey(`request-appointment:${this.offeringId}:${slot.startAt}`,
+                    (key) => Api.createStudentAppointment({
+                        offeringId: this.offeringId,
+                        startAt: slot.startAt,
+                        endAt: slot.endAt,
+                        note: this.note.trim(),
+                    }, key));
                 if (!result?.appointmentId) throw new Error('预约已提交，但未返回预约编号');
                 Taro.showToast({ title: '预约申请已发送', icon: 'success' });
                 setTimeout(() => Taro.redirectTo({ url: appointmentDetailUrl(result.appointmentId) }), 350);

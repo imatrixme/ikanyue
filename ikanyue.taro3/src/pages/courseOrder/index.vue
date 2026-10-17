@@ -34,6 +34,7 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Commerce } from '../../../utils/commerce';
+import { withCommandKey } from '../../../utils/commandKeys';
 import { launchCashier } from '../../../utils/cashier';
 import AccountRow from '../../components/AccountRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
@@ -82,10 +83,7 @@ export default {
         const choice = await Taro.showModal({ title: `预计退款 ¥${money(preview.amount)}`,
           content: '原路退回，确认前相应课时暂停使用。', confirmText: '申请退款' });
         if (!choice.confirm) return;
-        const storageKey = `commerce-refund-${this.id}`;
-        const key = Taro.getStorageSync(storageKey) || `refund-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-        Taro.setStorageSync(storageKey, key);
-        await Commerce.refund(this.id, key, preview.amount); Taro.removeStorageSync(storageKey);
+        await withCommandKey(`refund:${this.id}:${preview.amount}`, (key) => Commerce.refund(this.id, key, preview.amount));
       });
     },
   },

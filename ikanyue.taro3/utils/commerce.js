@@ -3,7 +3,6 @@ import { iNet } from './request';
 const base = '/v1/student/commerce';
 export const Commerce = {
   cashier: (id) => iNet.post(`${base}/orders/${id}/cashier`, {}),
-  cancellationPreview: (id) => iNet.get(`${base}/appointments/${id}/cancellation-preview`),
   catalog: () => iNet.get(`${base}/catalog`),
   orders: () => iNet.get(`${base}/orders`),
   checkout: (offerId, key) => iNet.post(`${base}/orders`, { offerId, key }),

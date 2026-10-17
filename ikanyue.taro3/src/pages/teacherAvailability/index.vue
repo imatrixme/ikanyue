@@ -132,11 +132,13 @@
 <script>
 import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
+import { academyDateKey } from '../../../utils/academyTime';
+import { withCommandKey } from '../../../utils/commandKeys';
 import AppIcon from '../../components/AppIcon.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import PageChrome from '../../components/PageChrome.vue';
 import {
-    bookingErrorMessage, buildAvailabilityOverride, createCommandKey, createOverrideDraft,
+    bookingErrorMessage, buildAvailabilityOverride, createOverrideDraft,
     formatAppointmentTime, minutesToTime, normalizeAvailability, timeToMinutes,
     validateAvailabilityRules, weekdayName,
 } from '../appointments/pageLogic';
@@ -165,7 +167,7 @@ export default {
                 ? windows.map((window) => `${minutesToTime(window.startMinute)}-${minutesToTime(window.endMinute)}`).join(' · ')
                 : '09:00-11:00 · 14:00-19:00';
         },
-        today() { return localDate(new Date()); },
+        today() { return academyDateKey(Date.now()); },
     },
     onLoad() { this.offeringId = Taro.getCurrentInstance()?.router?.params?.offeringId || ''; },
     onShow() { this.loadData(); },
@@ -221,8 +223,8 @@ export default {
             }
             this.saving = true;
             try {
-                await Api.saveTeacherAvailability(this.offeringId, { mode: this.mode, rules },
-                    createCommandKey('save-availability', this.offeringId));
+                await withCommandKey(`save-availability:${this.offeringId}`,
+                    (key) => Api.saveTeacherAvailability(this.offeringId, { mode: this.mode, rules }, key));
                 Taro.showToast({ title: '可预约时间已保存', icon: 'success' });
                 await this.loadData(true);
             } catch (error) {
@@ -240,8 +242,9 @@ export default {
             }
             this.overrideSaving = true;
             try {
-                await Api.createTeacherAvailabilityOverride(this.offeringId, result.payload,
-                    createCommandKey('availability-override', this.offeringId));
+                const { payload } = result;
+                await withCommandKey(`availability-override:${this.offeringId}:${payload.startAt}:${payload.endAt}`,
+                    (key) => Api.createTeacherAvailabilityOverride(this.offeringId, payload, key));
                 this.showOverride = false;
                 Taro.showToast({ title: '临时调整已保存', icon: 'success' });
                 await this.loadData(true);
@@ -258,8 +261,8 @@ export default {
             if (!modal.confirm) return;
             this.overrideCancellingId = item.id;
             try {
-                await Api.cancelTeacherAvailabilityOverride(item.id,
-                    createCommandKey('cancel-availability-override', item.id));
+                await withCommandKey(`cancel-availability-override:${item.id}`,
+                    (key) => Api.cancelTeacherAvailabilityOverride(item.id, key));
                 Taro.showToast({ title: '临时调整已撤销', icon: 'success' });
                 await this.loadData(true);
             } catch (error) {
@@ -268,9 +271,5 @@ export default {
         },
     },
 };
-
-function localDate(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
 
 </script>

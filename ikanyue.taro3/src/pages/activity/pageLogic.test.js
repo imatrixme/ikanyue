@@ -15,7 +15,7 @@ describe('activity page logic', () => {
 
         expect(params).toEqual({
             start_time_gte: new Date('2020-01-01').toISOString(),
-            start_time_lte: new Date(2027, 11, 31).toISOString(),
+            start_time_lte: '2027-12-31T15:59:59.999Z',
             perPage: 100,
         });
 

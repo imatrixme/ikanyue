@@ -12,6 +12,7 @@ Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers
 - `pnpm build:weapp` — student-course boundary check → production build → output check
 - `pnpm lint` — ESLint over `src utils scripts tests`, zero warnings
 - `TZ=Asia/Shanghai pnpm test` — Vitest (`*.test.js` next to the code)
+- `pnpm test:tz` — the same unit tests under America/New_York, guarding device-timezone independence
 - `pnpm test:e2e` — compiled-output contracts and design-token guards (run after `build:weapp`)
 - `pnpm visual:styles` — compiles the inclusive-design style fixture
 - `pnpm icons:generate` — regenerates line icons from `assets-src/imagegen/icons-v2`
@@ -22,7 +23,7 @@ Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers
 - `src/pages/<camelCase>/` — `index.vue`, `index.scss`, `index.config.js`, optional `pageLogic.js` (pure logic with tests).
 - `src/components/` — shared PascalCase components (`EmptyState`, `AsyncState`, `StickyActionBar`, teacher calendar/booking homes, …).
 - `src/styles/` — `_tokens.scss` (imports `_brand.generated.scss`, generated from the root `design-system/brand-tokens.json`), `theme.mjs` (`canvasPageChrome`, `immersivePageChrome`, `themeColors`, `iconSizes`).
-- `utils/` (repo root, not `src/`) — `request` (envelope + auth handling), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `commerce`, `cashier`.
+- `utils/` (repo root, not `src/`) — `request` (envelope, auth header, clears the session on `AUTH_SESSION_INVALID`), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `commerce`, `cashier`, `academyTime` (academy clock, UTC+08:00), `commandKeys` (retry-safe idempotency keys).
 - `config/` — Taro config; `SERVICE_URL` is `https://mapi.ikanyue.com` in prod and `KANYUE_LOCAL_API_URL` (default `http://127.0.0.1:1337`) in dev.
 - `scripts/` — build guards (`verify-student-course-boundary.mjs`, weapp output checks), icon generation.
 - `tests/e2e/` — Node scripts asserting on `dist/` output.

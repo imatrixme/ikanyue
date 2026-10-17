@@ -1,3 +1,5 @@
+import { academyParts, academyTimeLabel } from '../../../utils/academyTime';
+
 const normalizeRewardItem = (item = {}) => ({
     description: item.description || '',
     id: item.id || '',
@@ -50,10 +52,10 @@ const formatPointEventDelta = (value) => {
 
 const formatPointEventDate = (value) => {
     if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
+    const date = academyParts(value);
+    if (!date) return value;
     const pad = (part) => String(part).padStart(2, '0');
-    return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    return `${date.year}.${pad(date.month)}.${pad(date.day)} ${academyTimeLabel(value)}`;
 };
 
 const mergePointEvents = (current = [], incoming = []) => {
