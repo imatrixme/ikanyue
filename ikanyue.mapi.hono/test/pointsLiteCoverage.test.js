@@ -38,13 +38,17 @@ test('student auth middleware covers token header, raw bearer, invalid, and expi
     app.use('*', responseMiddleware());
     app.get('/protected', authMiddleware(), (c) => c.data({ id: c.get('user').id, isWeb: c.get('isWeb') }));
 
-    assert.equal((await jsonRequest(app, '/protected')).message, '未授权，请登录后操作');
+    const missing = await jsonRequest(app, '/protected');
+    assert.equal(missing.message, '未授权，请登录后操作');
+    assert.equal(missing.errorCode, 'AUTH_SESSION_INVALID');
     assert.equal((await jsonRequest(app, '/protected', { token: 'bad-token' })).message, '登录已失效，请重新登录');
 
     const legacyKey = jwt.sign({ id: 'student_1', role: 'student' }, 'V_NY6*rF-j.P');
     assert.equal((await jsonRequest(app, '/protected', { token: legacyKey })).message, '登录已失效，请重新登录');
     const expired = jwtAuth.sign({}, 'student_1', 'sn', 'student', false, {}, { expiresIn: -10 });
-    assert.equal((await jsonRequest(app, '/protected', { token: expired })).message, '登录已失效，请重新登录');
+    const expiredPayload = await jsonRequest(app, '/protected', { token: expired });
+    assert.equal(expiredPayload.message, '登录已失效，请重新登录');
+    assert.equal(expiredPayload.errorCode, 'AUTH_SESSION_INVALID');
     const challenge = jwtAuth.sign({}, 'wechat-role', 'openid', 'role_challenge', false, { challengeType: 'wechat-role-selection' });
     assert.equal((await jsonRequest(app, '/protected', { token: challenge })).message, '登录已失效，请重新登录');
 

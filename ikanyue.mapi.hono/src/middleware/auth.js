@@ -20,6 +20,7 @@ function authMiddleware() {
             return c.json(
                 {
                     code: 403,
+                    errorCode: 'AUTH_SESSION_INVALID',
                     message: '未授权，请登录后操作',
                     data: null,
                 },
@@ -35,6 +36,7 @@ function authMiddleware() {
             return c.json(
                 {
                     code: 403,
+                    errorCode: 'AUTH_SESSION_INVALID',
                     message: '登录已失效，请重新登录',
                     data: null,
                 },

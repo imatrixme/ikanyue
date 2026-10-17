@@ -7,6 +7,7 @@
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 const { processVideoMaterialFiles, processBatchFiles } = require('../../utils/fileUrl.js');
+const { filterLiteral } = require('../../utils/publicUser');
 
 /**
  * 视频材料查询处理器
@@ -76,25 +77,25 @@ async function videoMaterialFindHandler(c) {
 
         // 状态过滤
         if (status && status !== 'all') {
-            filters.push(`status = "${status}"`);
+            filters.push(`status = ${filterLiteral(status)}`);
         }
 
         // 标签过滤
         if (tags.trim()) {
             const tagArray = tags.split(',').map((tag) => tag.trim());
             for (const tag of tagArray) {
-                filters.push(`tags ~ "${tag}"`);
+                filters.push(`tags ~ ${filterLiteral(tag)}`);
             }
         }
 
         // 类型过滤
         if (type.trim()) {
-            filters.push(`type = "${type.trim()}"`);
+            filters.push(`type = ${filterLiteral(type.trim())}`);
         }
 
         // 语言过滤
         if (language.trim()) {
-            filters.push(`language = "${language.trim()}"`);
+            filters.push(`language = ${filterLiteral(language.trim())}`);
         }
 
         // 难度等级过滤
@@ -104,12 +105,12 @@ async function videoMaterialFindHandler(c) {
 
         // 分辨率过滤
         if (resolution.trim()) {
-            filters.push(`resolution = "${resolution.trim()}"`);
+            filters.push(`resolution = ${filterLiteral(resolution.trim())}`);
         }
 
         // 作者过滤
         if (author.trim()) {
-            filters.push(`author ~ "${author.trim()}"`);
+            filters.push(`author ~ ${filterLiteral(author.trim())}`);
         }
 
         const filter = filters.length > 0 ? filters.join(' && ') : '';

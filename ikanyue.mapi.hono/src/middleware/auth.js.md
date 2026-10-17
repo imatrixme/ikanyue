@@ -126,6 +126,7 @@ c.set('isWeb', isWeb);
 ```json
 {
     "code": 403,
+    "errorCode": "AUTH_SESSION_INVALID",
     "message": "错误描述",
     "data": null
 }
@@ -137,6 +138,8 @@ c.set('isWeb', isWeb);
 | -------- | -------- | -------------------- |
 | 缺少令牌 | 403      | 未授权，请登录后操作 |
 | 令牌无效或过期 | 403 | 登录已失效，请重新登录 |
+
+`errorCode: AUTH_SESSION_INVALID` 只表示“没有有效会话”，客户端据此清除本地登录态；同为 403 的权限不足、封禁、审核中不带这个字段，不应清除会话。
 
 ## 令牌生命周期
 

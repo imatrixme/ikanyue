@@ -7,6 +7,7 @@ const to = require('await-to-js').default;
 const dayjs = require('dayjs');
 const pb = require('../../utils/pocketbase');
 const { mapAttendanceRecord, resolveRelationId } = require('../../utils/recordMappers');
+const { filterLiteral } = require('../../utils/publicUser');
 
 const ALLOWED_STATUS = ['pending', 'signed', 'missed', 'abnormal'];
 
@@ -54,7 +55,7 @@ async function findExistingAttendance(userId, lessonId) {
     }
     const [err, result] = await to(
         pb.collection('attendance_records').getList(1, 1, {
-            filter: `userId = "${userId}" && lessonId = "${lessonId}"`,
+            filter: `userId = ${filterLiteral(userId)} && lessonId = ${filterLiteral(lessonId)}`,
             sort: '-created',
         })
     );

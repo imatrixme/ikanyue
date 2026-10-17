@@ -6,6 +6,7 @@
 const to = require('await-to-js').default;
 const pb = require('../../utils/pocketbase');
 const { mapAttendanceRecord } = require('../../utils/recordMappers');
+const { filterLiteral } = require('../../utils/publicUser');
 
 /**
  * 构建 PocketBase 过滤字符串
@@ -32,12 +33,12 @@ async function attendanceFindHandler(c) {
         return c.error(400, '分页参数不合法');
     }
 
-    const filters = [`userId = "${user.id}"`];
+    const filters = [`userId = ${filterLiteral(user.id)}`];
     if (status && status !== 'all') {
-        filters.push(`status = "${status}"`);
+        filters.push(`status = ${filterLiteral(status)}`);
     }
     if (lessonId) {
-        filters.push(`lessonId = "${lessonId}"`);
+        filters.push(`lessonId = ${filterLiteral(lessonId)}`);
     }
 
     const baseQuery = {

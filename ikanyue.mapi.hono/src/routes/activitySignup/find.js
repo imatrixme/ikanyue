@@ -6,6 +6,7 @@
 const to = require('await-to-js').default;
 const pb = require('../../utils/pocketbase');
 const { mapActivitySignupRecord } = require('../../utils/activitySignupMappers');
+const { filterLiteral } = require('../../utils/publicUser');
 
 const SIGNUP_COLLECTION = 'activity_signups';
 
@@ -29,12 +30,12 @@ async function activitySignupFindHandler(c) {
         return c.error(400, '分页参数不合法');
     }
 
-    const filters = [`userId = "${user.id}"`];
+    const filters = [`userId = ${filterLiteral(user.id)}`];
     if (status && status !== 'all') {
-        filters.push(`status = "${status}"`);
+        filters.push(`status = ${filterLiteral(status)}`);
     }
     if (activityId) {
-        filters.push(`activityId = "${activityId}"`);
+        filters.push(`activityId = ${filterLiteral(activityId)}`);
     }
 
     const baseQuery = {

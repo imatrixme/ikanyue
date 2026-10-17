@@ -10,7 +10,9 @@
       "get": {
         "summary": "查询活动信息",
         "description": "支持单个活动查询和分页列表查询，具有丰富的过滤条件",
-        "tags": ["Activity"],
+        "tags": [
+          "Activity"
+        ],
         "parameters": [
           {
             "name": "id",
@@ -48,21 +50,9 @@
             }
           },
           {
-            "name": "status",
-            "in": "query",
-            "description": "活动状态过滤",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": ["active", "inactive", "cancelled", "completed", "all"],
-              "default": "active",
-              "example": "active"
-            }
-          },
-          {
             "name": "sort",
             "in": "query",
-            "description": "排序字段，支持PocketBase排序语法",
+            "description": "排序：created / updated / startTime / sequence，可加 - 前缀，逗号分隔；其他值回退为 -created",
             "required": false,
             "schema": {
               "type": "string",
@@ -160,10 +150,16 @@
                         "price": 299,
                         "type": "workshop",
                         "status": "active",
-                        "tags": ["编程", "教育"],
+                        "tags": [
+                          "编程",
+                          "教育"
+                        ],
                         "coverImage": "cover.jpg",
                         "coverImageUrl": "https://example.com/api/files/activities/123/cover.jpg",
-                        "images": ["img1.jpg", "img2.jpg"],
+                        "images": [
+                          "img1.jpg",
+                          "img2.jpg"
+                        ],
                         "imageUrls": [
                           "https://example.com/api/files/activities/123/img1.jpg",
                           "https://example.com/api/files/activities/123/img2.jpg"
@@ -357,7 +353,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["active", "inactive", "cancelled", "completed"],
+            "enum": [
+              "active",
+              "inactive",
+              "cancelled",
+              "completed"
+            ],
             "example": "active"
           },
           "tags": {
@@ -365,7 +366,10 @@
             "items": {
               "type": "string"
             },
-            "example": ["编程", "教育"]
+            "example": [
+              "编程",
+              "教育"
+            ]
           },
           "coverImage": {
             "type": "string",
@@ -381,7 +385,10 @@
             "items": {
               "type": "string"
             },
-            "example": ["img1.jpg", "img2.jpg"]
+            "example": [
+              "img1.jpg",
+              "img2.jpg"
+            ]
           },
           "imageUrls": {
             "type": "array",
@@ -485,7 +492,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["active", "inactive", "cancelled", "completed"],
+            "enum": [
+              "active",
+              "inactive",
+              "cancelled",
+              "completed"
+            ],
             "example": "active"
           },
           "coverImageUrl": {
@@ -505,4 +517,4 @@
       }
     }
   }
-} 
+}

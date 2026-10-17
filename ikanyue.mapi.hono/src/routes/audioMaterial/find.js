@@ -7,6 +7,7 @@
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 const { processAudioMaterialFiles, processBatchFiles } = require('../../utils/fileUrl.js');
+const { filterLiteral } = require('../../utils/publicUser');
 
 /**
  * 音频材料查询处理器
@@ -76,37 +77,37 @@ async function audioMaterialFindHandler(c) {
 
         // 标题搜索
         if (title.trim()) {
-            filters.push(`title ~ "${title.trim()}"`);
+            filters.push(`title ~ ${filterLiteral(title.trim())}`);
         }
 
         // 类型过滤
         if (type.trim()) {
-            filters.push(`type = "${type.trim()}"`);
+            filters.push(`type = ${filterLiteral(type.trim())}`);
         }
 
         // 作者过滤
         if (author.trim()) {
-            filters.push(`author ~ "${author.trim()}"`);
+            filters.push(`author ~ ${filterLiteral(author.trim())}`);
         }
 
         // 状态过滤
         if (status && status !== 'all') {
-            filters.push(`status = "${status}"`);
+            filters.push(`status = ${filterLiteral(status)}`);
         }
 
         // 语言过滤
         if (language.trim()) {
-            filters.push(`language = "${language.trim()}"`);
+            filters.push(`language = ${filterLiteral(language.trim())}`);
         }
 
         // 难度过滤
         if (difficulty.trim() && !isNaN(difficulty)) {
-            filters.push(`difficulty = ${difficulty}`);
+            filters.push(`difficulty = ${Number(difficulty) || 0}`);
         }
 
         // 标签过滤
         if (tags.trim()) {
-            filters.push(`tags ~ "${tags.trim()}"`);
+            filters.push(`tags ~ ${filterLiteral(tags.trim())}`);
         }
 
         const filter = filters.length > 0 ? filters.join(' && ') : '';

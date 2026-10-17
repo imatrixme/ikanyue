@@ -28,9 +28,6 @@ function registerCommerceRoutes(routes, load = loadCommerce, env = process.env) 
     });
     routes.get('/v1/student/commerce/catalog').use(authMiddleware)
         .handler(student((c, user, { checkout }) => checkout.catalog()));
-    routes.get('/v1/student/commerce/appointments/:id/cancellation-preview').use(authMiddleware)
-        .handler(student((c, user, { checkout }) => require('../../services/commerce/reservationCancellation')
-            .previewReservation(checkout.repo, user, c.req.param('id'), checkout.clock)));
     routes.get('/v1/student/commerce/orders').use(authMiddleware)
         .handler(student((c, user, { checkout }) => checkout.list(user)));
     routes.post('/v1/student/commerce/orders').use(authMiddleware)

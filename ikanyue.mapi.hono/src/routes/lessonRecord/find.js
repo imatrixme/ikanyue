@@ -6,6 +6,7 @@
 const to = require('await-to-js').default;
 const pb = require('../../utils/pocketbase');
 const { mapLessonRecord } = require('../../utils/recordMappers');
+const { filterLiteral } = require('../../utils/publicUser');
 
 async function lessonRecordFindHandler(c) {
     const user = c.get('user');
@@ -22,9 +23,9 @@ async function lessonRecordFindHandler(c) {
         return c.error(400, '分页参数不合法');
     }
 
-    const filters = [`userId = "${user.id}"`];
+    const filters = [`userId = ${filterLiteral(user.id)}`];
     if (status && status !== 'all') {
-        filters.push(`status = "${status}"`);
+        filters.push(`status = ${filterLiteral(status)}`);
     }
 
     const baseQuery = {

@@ -37,7 +37,7 @@ test('activity find route supports miniapp list params and detail requests', asy
                 },
                 async getOne(id) {
                     assert.equal(id, 'activity_1');
-                    return { collectionId: 'activities', id, title: '公开课', coverImage: 'cover.jpg' };
+                    return { collectionId: 'activities', id, title: '公开课', coverImage: 'cover.jpg', status: 'active' };
                 },
             },
         });
@@ -51,7 +51,7 @@ test('activity find route supports miniapp list params and detail requests', asy
 
             assert.equal(listPayload.code, 10000);
             assert.equal(calls[0].page, 1);
-            assert.equal(calls[0].limit, '100');
+            assert.equal(calls[0].limit, 100);
             assert.equal(calls[0].options.sort, '-sequence');
             assert.match(calls[0].options.filter, /status = "active"/);
             assert.match(calls[0].options.filter, /tags ~ "声乐"/);
@@ -78,6 +78,37 @@ test('activity find route covers miniapp validation and failure flows', async ()
         assert.equal((await requestJson(app, '/v1/activity/find?id=missing')).code, 404);
         assert.equal((await requestJson(app, '/v1/activity/find?id=broken')).code, 500);
         assert.equal((await requestJson(app, '/v1/activity/find?page=9')).code, 500);
+    });
+});
+
+test('activity find route only exposes published activities and matches values literally', async () => {
+    const calls = [];
+    const pocketbaseMock = createCollectionMock({
+        activities: {
+            async getList(page, limit, options) {
+                calls.push(options);
+                return { items: [], totalItems: 0, totalPages: 0, page, perPage: limit };
+            },
+            async getOne(id) {
+                return { collectionId: 'activities', id, status: 'draft' };
+            },
+        },
+    });
+
+    await withMockedFindRouteModule(activityFindModulePath, 'activityFindHandler', pocketbaseMock, async (activityFindHandler) => {
+        const app = createRouteApp('/v1/activity/find', 'get', activityFindHandler);
+        const injection = encodeURIComponent('x" || @collection.users.password ~ "a');
+
+        assert.equal((await requestJson(app, `/v1/activity/find?status=all&type=${injection}&location=${injection}&tags=${injection}&sort=password`)).code, 10000);
+        const literal = String.raw`"x\" || @collection.users.password ~ \"a"`;
+        assert.equal(calls[0].filter,
+            `status = "active" && tags ~ ${literal} && type = ${literal} && location ~ ${literal}`);
+        assert.equal(calls[0].sort, '-created');
+
+        assert.equal((await requestJson(app, `/v1/activity/find?start_time_gte=${injection}`)).code, 400);
+        assert.equal((await requestJson(app, '/v1/activity/find?sort=-startTime,sequence')).code, 10000);
+        assert.equal(calls[1].sort, '-startTime,sequence');
+        assert.equal((await requestJson(app, '/v1/activity/find?id=draft_1')).code, 404);
     });
 });
 
@@ -214,7 +245,7 @@ function createFindCollectionMock(collectionName, missingId, listErrorMessage, d
     return createCollectionMock({
         [collectionName]: {
             async getList(page, limit) {
-                if (page === '9') {
+                if (String(page) === '9') {
                     throw new Error(listErrorMessage);
                 }
                 return { items: [], totalItems: 0, totalPages: 0, page, perPage: limit };

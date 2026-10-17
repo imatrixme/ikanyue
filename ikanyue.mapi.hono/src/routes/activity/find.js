@@ -1,12 +1,18 @@
 /**
- * 活动查询接口
- * 分页查询活动列表或获取单个活动详情，支持多种过滤条件
+ * 活动查询接口（公开）
+ * 分页查询已发布活动或获取单个已发布活动；调用方参数一律按字面量匹配
  * 对应原项目: api/controllers/activity/find.js
  */
 
 const pb = require('../../utils/pocketbase.js');
 const to = require('await-to-js').default;
 const { processActivityFiles, processBatchFiles } = require('../../utils/fileUrl.js');
+const { filterLiteral } = require('../../utils/publicUser.js');
+
+// Public callers only ever see published activities; the status filter is not caller-controlled.
+const PUBLISHED_FILTER = `status = ${filterLiteral('active')}`;
+const SORTABLE_FIELDS = new Set(['created', 'updated', 'startTime', 'sequence']);
+const DEFAULT_SORT = '-created';
 
 /**
  * 活动查询处理器
@@ -16,11 +22,10 @@ async function activityFindHandler(c) {
     const query = c.req.query();
     const {
         id = '',
-        page = 1,
+        page: rawPage = '1',
         limit: rawLimit,
         perPage,
-        status = 'active',
-        sort = '-created',
+        sort: rawSort = DEFAULT_SORT,
         tags = '',
         type = '',
         location = '',
@@ -29,7 +34,8 @@ async function activityFindHandler(c) {
         startTimeGte: camelStartTimeGte,
         startTimeLte: camelStartTimeLte,
     } = query;
-    const limit = rawLimit || perPage || 20;
+    const page = Number(rawPage);
+    const limit = Number(rawLimit || perPage || 20);
 
     try {
     // 查询单个活动
@@ -43,6 +49,9 @@ async function activityFindHandler(c) {
                 console.error('活动查询失败:', err);
                 return c.error(500, '查询失败，请稍后重试');
             }
+            if (record.status !== 'active') {
+                return c.error(404, '活动不存在');
+            }
 
             // 处理图片URL
             const processedRecord = processActivityFiles(record);
@@ -51,7 +60,7 @@ async function activityFindHandler(c) {
         }
 
         // 参数验证
-        if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
+        if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1) {
             return c.error(400, '页码和每页数量必须为正整数');
         }
 
@@ -59,49 +68,41 @@ async function activityFindHandler(c) {
             return c.error(400, '每页数量不能超过100');
         }
 
-        // 构建过滤条件
-        let filters = [];
-
-        // 状态过滤
-        if (status && status !== 'all') {
-            filters.push(`status = "${status}"`);
-        }
+        const filters = [PUBLISHED_FILTER];
 
         // 标签过滤
-        if (tags.trim()) {
-            const tagArray = tags.split(',').map((tag) => tag.trim());
-            for (const tag of tagArray) {
-                filters.push(`tags ~ "${tag}"`);
-            }
-        }
+        tags.split(',').map((tag) => tag.trim()).filter(Boolean).forEach((tag) => {
+            filters.push(`tags ~ ${filterLiteral(tag)}`);
+        });
 
         // 类型过滤
         if (type.trim()) {
-            filters.push(`type = "${type.trim()}"`);
+            filters.push(`type = ${filterLiteral(type.trim())}`);
         }
 
         // 地点过滤
         if (location.trim()) {
-            filters.push(`location ~ "${location.trim()}"`);
+            filters.push(`location ~ ${filterLiteral(location.trim())}`);
         }
 
-        const startTimeLowerBound = startTimeGte || camelStartTimeGte || '';
-        if (startTimeLowerBound.trim()) {
-            filters.push(`startTime >= "${startTimeLowerBound.trim()}"`);
+        const bounds = [
+            ['>=', startTimeGte || camelStartTimeGte || ''],
+            ['<=', startTimeLte || camelStartTimeLte || ''],
+        ];
+        for (const [operator, raw] of bounds) {
+            if (!raw.trim()) continue;
+            const time = Date.parse(raw.trim());
+            if (Number.isNaN(time)) {
+                return c.error(400, '活动时间范围无效');
+            }
+            filters.push(`startTime ${operator} ${filterLiteral(new Date(time).toISOString())}`);
         }
-
-        const startTimeUpperBound = startTimeLte || camelStartTimeLte || '';
-        if (startTimeUpperBound.trim()) {
-            filters.push(`startTime <= "${startTimeUpperBound.trim()}"`);
-        }
-
-        const filter = filters.length > 0 ? filters.join(' && ') : '';
 
         // 查询活动列表
         const [err, result] = await to(
             pb.collection('activities').getList(page, limit, {
-                filter: filter,
-                sort: sort
+                filter: filters.join(' && '),
+                sort: safeSort(rawSort),
             })
         );
 
@@ -127,6 +128,12 @@ async function activityFindHandler(c) {
         console.error('活动查询异常:', error);
         return c.error(500, '服务器内部错误');
     }
+}
+
+function safeSort(value) {
+    const fields = String(value).split(',').map((field) => field.trim());
+    const valid = fields.length > 0 && fields.every((field) => SORTABLE_FIELDS.has(field.replace(/^[-+]/, '')));
+    return valid ? fields.join(',') : DEFAULT_SORT;
 }
 
 module.exports = { activityFindHandler };

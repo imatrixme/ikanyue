@@ -22,7 +22,7 @@
  * }
  */
 
-const { publicUser } = require('../../utils/publicUser');
+const { filterLiteral, publicUser } = require('../../utils/publicUser');
 const { default: to } = require('await-to-js');
 const pb = require('../../utils/pocketbase');
 const uuid = require('licia/uuid');
@@ -42,7 +42,7 @@ async function teacherCreateHandler(c) {
     try {
     // 检查手机号是否已存在
         const existingTeachers = await pb.collection('teachers').getList(1, 1, {
-            filter: `cellphone="${data.cellphone}"`,
+            filter: `cellphone=${filterLiteral(data.cellphone)}`,
         });
 
         if (existingTeachers.items.length > 0) {

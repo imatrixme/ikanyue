@@ -12,18 +12,21 @@ flowchart TD
     B --> C{是否查询单个活动}
     C -->|有ID| D[查询单个活动]
     C -->|无ID| E[参数验证]
-    D --> F{活动是否存在}
-    F -->|不存在| G[返回404: 活动不存在]
-    F -->|存在| H[处理图片URL]
+    D --> F{活动存在且 status=active}
+    F -->|否| G[返回404: 活动不存在]
+    F -->|是| H[处理图片URL]
     E --> I{参数是否合法}
     I -->|page/limit非法| J[返回400: 参数错误]
     I -->|limit > 100| K[返回400: 数量超限]
     I -->|参数正确| L[构建查询条件]
-    L --> M[添加状态过滤]
+    L --> M[固定 status=active]
     M --> N[添加标签过滤]
     N --> O[添加类型过滤]
     O --> P[添加地点过滤]
-    P --> Q[执行PocketBase查询]
+    P --> P2{时间范围合法}
+    P2 -->|否| J
+    P2 -->|是| P3[排序字段白名单]
+    P3 --> Q[执行PocketBase查询]
     Q --> R{查询结果}
     R -->|成功| S[处理图片URL]
     R -->|失败| T[返回500: 查询失败]
@@ -52,7 +55,6 @@ flowchart TD
 | id       | string | 活动 ID  | ""         | "record_123" |
 | page     | number | 页码     | 1          | 2            |
 | limit    | number | 每页数量 | 20         | 10           |
-| status   | string | 活动状态 | "active"   | "inactive"   |
 | sort     | string | 排序字段 | "-created" | "-sequence"  |
 | tags     | string | 标签过滤 | ""         | "教育,培训"  |
 | type     | string | 活动类型 | ""         | "workshop"   |
@@ -61,9 +63,10 @@ flowchart TD
 ### 参数说明
 
 - `id`: 如果提供则返回单个活动详情，忽略其他参数
-- `status`: 可选值为 "active"、"inactive"、"all"
+- 只返回 `status="active"` 的活动；`status` 参数被忽略，按 id 查询未发布活动返回 404
+- 所有过滤值经 `filterLiteral()` 按字面量匹配；`start_time_gte` / `start_time_lte` 必须是可解析的时间，否则 400
 - `tags`: 多个标签用逗号分隔，支持模糊匹配
-- `sort`: 支持 PocketBase 排序语法，如 "-created"、"sequence"
+- `sort`: 仅允许 `created`、`updated`、`startTime`、`sequence`（可加 `-`，逗号分隔），其他值回退为 `-created`
 
 ## 响应格式
 
@@ -149,7 +152,7 @@ flowchart TD
 
 ### 过滤条件
 
-- **状态过滤**: 支持按活动状态筛选
+- **状态过滤**: 固定为已发布（active），调用方不可更改
 - **标签过滤**: 支持多标签组合查询
 - **类型过滤**: 按活动类型精确匹配
 - **地点过滤**: 按地点模糊匹配
@@ -184,13 +187,11 @@ flowchart TD
 
 ### 认证需求
 
-- 需要通过基础认证中间件
-- 学生和教师都可以查询活动
-- 管理员具有完整查询权限
+- 公开接口，无需认证（后端以服务账号查询，因此必须固定状态并转义参数）
 
 ### 数据访问
 
-- 所有认证用户都可以查看已发布的活动
+- 任何访客只能看到已发布的活动
 - 活动状态控制可见性
 
 ## 图片处理特性
