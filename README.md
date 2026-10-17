@@ -10,7 +10,7 @@
 | `ikanyue.mapi.hono` | 后端 API | Hono / Node.js or Bun |
 | `kanyue.pay` | 独立支付网关（当前仅 mock） | Hono / Bun 1.4.1 / 独立 PocketBase |
 | `ikanyue.admin` | 运营后台 | React / Vite |
-| `ikanyue.website` | 看乐声乐官网 | Next.js |
+| `ikanyue.website` | 看乐声乐官网 | Nuxt 4 |
 | `ikanyue.m.nuxt` | 活动页网站 | Nuxt |
 | `ikanyue.flutter` | 规划中的 Flutter App | Flutter |
 
@@ -50,10 +50,10 @@ flutter run
 
 | Path | Remote | Branch |
 | --- | --- | --- |
-| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `feature/course-credit-system` |
-| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `feature/course-credit-system` |
+| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `feature/payment-gateway-commerce` |
+| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `feature/payment-gateway-commerce` |
 | `kanyue.pay` | `git@github.com:imatrixme/ikanyue.pay.git` | `master` |
-| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `feature/course-credit-system` |
+| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `feature/payment-gateway-commerce` |
 | `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `feature/course-credit-system` |
 | `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
 | `ikanyue.flutter` | `git@github.com:imatrixme/ikanyue.flutter.git` | `douyin` |
@@ -62,6 +62,7 @@ flutter run
 
 - 稳定基线：`release/2.0.0`
 - 课程点系统：`feature/course-credit-system`
+- 支付网关与课程购买（当前）：`feature/payment-gateway-commerce`（官网仍在 `feature/course-credit-system` 上开发）
 
 ## Course credit system documents
 
