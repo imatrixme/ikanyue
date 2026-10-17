@@ -88,7 +88,7 @@ export const designTokens = Object.freeze({
     "ink": "#31443e",
     "inkStrong": "#1e3932",
     "textSecondary": "#5f6f69",
-    "textMuted": "#87928e",
+    "textMuted": "#66726d",
     "canvas": "#f4f4f2",
     "surface": "#ffffff",
     "secondarySurface": "#edf4f1",
