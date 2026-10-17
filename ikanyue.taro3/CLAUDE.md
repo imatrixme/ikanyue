@@ -1,102 +1,28 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Architecture reference for the 看乐 WeChat mini program. Working rules, verification and boundaries live in `AGENTS.md` (this directory) and the root `AGENTS.md` / `GEB.MD`.
 
-## Project Overview
+## Overview
 
-"看乐艺术" (ikanyue) is a Taro-based mini-program for art activities, built with Vue 3 and NutUI-Taro. The project supports multiple platforms including WeChat mini-program, H5, Alipay mini-program, and others.
+Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers. WeChat (`weapp`) is the shipping target; H5 builds are used only for local preview. All data comes from the Hono API (`ikanyue.mapi.hono`).
 
-## Development Commands
+## Commands
 
-### Development (Watch Mode)
-- `npm run dev:weapp` - WeChat mini-program development
-- `npm run dev:h5` - H5 development  
-- `npm run dev:alipay` - Alipay mini-program development
-- `npm run dev:tt` - ByteDance mini-program development
+- `pnpm dev:weapp` — watch build into `dist/` for WeChat devtools
+- `pnpm build:weapp` — student-course boundary check → production build → output check
+- `pnpm lint` — ESLint over `src utils scripts tests`, zero warnings
+- `TZ=Asia/Shanghai pnpm test` — Vitest (`*.test.js` next to the code)
+- `pnpm test:e2e` — compiled-output contracts and design-token guards (run after `build:weapp`)
+- `pnpm visual:styles` — compiles the inclusive-design style fixture
+- `pnpm icons:generate` — regenerates line icons from `assets-src/imagegen/icons-v2`
 
-### Production Build
-- `npm run build:weapp` - Build for WeChat mini-program
-- `npm run build:h5` - Build for H5
-- `npm run build:alipay` - Build for Alipay mini-program
-- `npm run build:tt` - Build for ByteDance mini-program
+## Structure
 
-### Linting and Type Checking
-No dedicated lint/typecheck commands found in package.json - project uses basic ESLint setup.
-
-## Architecture Overview
-
-### Tech Stack
-- **Framework**: Taro 4.0.9 + Vue 3 Composition API
-- **UI Library**: NutUI-Taro 3.3.8  
-- **Build Tool**: Webpack 5
-- **Styling**: SCSS with NutUI variables
-- **Design Width**: 375px
-
-### Core Structure
-```
-src/
-├── app.js              # Application entry
-├── app.config.js       # App config (pages, tabBar, etc.)
-├── pages/              # Page components
-├── data/               # Static data files
-├── imgs/               # Image assets
-└── index.html          # H5 entry
-
-utils/
-├── request.js          # Network request wrapper
-├── apis.js            # API definitions
-├── usermanager.js     # User state management  
-└── favoriteManager.js # Favorites functionality
-```
-
-### Page Structure Convention
-Each page directory contains:
-- `index.vue` - Vue 3 component with Composition API
-- `index.config.js` - Page configuration (navigation, pull-to-refresh)
-- `index.scss` - Page styles with NutUI variables
-
-### Key Configuration Files
-- `config/index.js` - Main Taro configuration
-- `config/dev.js` - Development environment config
-- `config/prod.js` - Production environment config
-- `src/app.config.js` - App pages and tabBar configuration
-
-## Development Patterns
-
-### API Management
-- Network requests use centralized `utils/request.js` wrapper
-- API endpoints defined in `utils/apis.js`
-- User authentication/state managed via `utils/usermanager.js`
-- Follow Promise-based pattern with proper error handling
-
-### Styling Guidelines
-- Import NutUI variables: `@import "@nutui/nutui-taro/dist/styles/variables.scss"`
-- NutUI component classes (`nut-*`) excluded from px transformation
-- Use SCSS for all styling
-- Follow mobile-first responsive design
-
-### Vue 3 Patterns
-- Use `<script setup>` syntax exclusively
-- Leverage Composition API features
-- Component naming: PascalCase
-- Use `definePageConfig` for page configurations
-
-### Multi-Platform Considerations
-- Test changes across WeChat mini-program and H5 platforms
-- Platform-specific configurations in `mini` and `h5` config sections
-- Be aware of platform API differences and limitations
-
-## Current Features
-
-### Tab Navigation
-- 活动 (Activity) - Main activities page
-- 音频 (Audio) - Audio materials with player
-- 视频 (Video) - Video materials with player  
-- 我的 (Profile) - User profile and settings
-
-### Core Functionality
-- User authentication and profile management
-- Audio/video material browsing and playback
-- Activity listings and details
-- Favorites management
-- WebView integration for external content
+- `src/app.config.js` — pages and tab bar: 活动 / 课程 / 积分 / 我的. Teachers get a different tab bar at runtime via `RoleManager.applyTabBar`.
+- `src/pages/<camelCase>/` — `index.vue`, `index.scss`, `index.config.js`, optional `pageLogic.js` (pure logic with tests).
+- `src/components/` — shared PascalCase components (`EmptyState`, `AsyncState`, `StickyActionBar`, teacher calendar/booking homes, …).
+- `src/styles/` — `_tokens.scss` (imports `_brand.generated.scss`, generated from the root `design-system/brand-tokens.json`), `theme.mjs` (`canvasPageChrome`, `immersivePageChrome`, `themeColors`, `iconSizes`).
+- `utils/` (repo root, not `src/`) — `request` (envelope + auth handling), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `commerce`, `cashier`.
+- `config/` — Taro config; `SERVICE_URL` is `https://mapi.ikanyue.com` in prod and `KANYUE_LOCAL_API_URL` (default `http://127.0.0.1:1337`) in dev.
+- `scripts/` — build guards (`verify-student-course-boundary.mjs`, weapp output checks), icon generation.
+- `tests/e2e/` — Node scripts asserting on `dist/` output.
