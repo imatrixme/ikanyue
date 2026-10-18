@@ -9,7 +9,7 @@ test('local admin uses real Hono and PocketBase through row dialogs', async ({ p
   await page.getByLabel('账号或手机号').fill(account)
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^今天/ })).toBeVisible()
   await openView(page, '学员积分')
 
   const managedName = testInfo.project.name === 'chromium' ? '现场学员桌面' : '现场学员移动'
@@ -55,12 +55,17 @@ test('local admin uses real Hono and PocketBase through row dialogs', async ({ p
 })
 
 async function openView(page: import('@playwright/test').Page, name: string) {
+  const [section, tab] = views[name]
   const mobileMenu = page.getByRole('button', { name: '打开导航' })
-  if (await mobileMenu.isVisible()) {
-    await mobileMenu.click()
-    await page.getByRole('button', { name }).last().click()
-  } else {
-    await page.getByRole('button', { name }).click()
-  }
+  if (await mobileMenu.isVisible()) await mobileMenu.click()
+  await page.getByRole('navigation', { name: '后台导航' }).last().getByRole('button', { name: section, exact: true }).click()
+  if (tab) await page.getByRole('navigation', { name: '分区导航' }).getByRole('button', { name: tab, exact: true }).click()
   await expect(page.getByRole('heading', { name })).toBeVisible()
+}
+
+// Page heading -> navigation section and optional section tab.
+const views: Record<string, [string, string?]> = {
+  '学员积分': ['积分', '学员积分'],
+  '实物管理': ['积分', '实物'],
+  '学员管理': ['学员'],
 }

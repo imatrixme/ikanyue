@@ -86,7 +86,7 @@ describe('course CRUD workspaces', () => {
       { id: 'by_student', studentId: 'student_fallback', status: 'inactive' },
       { id: 'by_id' },
     ])
-    const readOnly = render(<CourseResourceWorkspace api={fallbackApi} columns={columns} description="只读说明" eyebrow="只读" noun="课程规格" resource="courseSpecs" title="只读课程资源" token="token" />)
+    const readOnly = render(<CourseResourceWorkspace api={fallbackApi} columns={columns} noun="课程规格" resource="courseSpecs" title="只读课程资源" token="token" />)
     expect(await screen.findByRole('heading', { name: '只读课程资源' })).toBeInTheDocument()
     expect(await screen.findByRole('table')).toHaveTextContent('请在技术信息中查看')
     expect(screen.getByRole('table')).not.toHaveTextContent('{"level":1}')
@@ -215,7 +215,7 @@ describe('course CRUD workspaces', () => {
 })
 
 function renderResource(api: OpsApi, onChanged?: () => void) {
-  return render(<CourseResourceWorkspace api={api} columns={columns} defaultValues={{ status: 'draft', deliveryMode: 'group' }} description="覆盖资源工作区交互" eyebrow="课程配置" fields={fields} noun="课程规格" onChanged={onChanged} resource="courseSpecs" statusOptions={[{ label: '启用', value: 'active' }, { label: '停用', value: 'inactive' }]} title="课程资源测试" token="token" writableResource="course-specs" />)
+  return render(<CourseResourceWorkspace api={api} columns={columns} defaultValues={{ status: 'draft', deliveryMode: 'group' }} fields={fields} noun="课程规格" onChanged={onChanged} resource="courseSpecs" statusOptions={[{ label: '启用', value: 'active' }, { label: '停用', value: 'inactive' }]} title="课程资源测试" token="token" writableResource="course-specs" />)
 }
 
 async function fillClass(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement, name: string, code: string) {

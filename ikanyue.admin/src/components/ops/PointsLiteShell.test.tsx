@@ -29,8 +29,8 @@ describe('points lite shell and login components', () => {
     expect(screen.getByText('错误消息')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '打开导航' }))
     expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(2)
-    await user.click(screen.getAllByRole('button', { name: '实物管理' })[1])
-    expect(onViewChange).toHaveBeenCalledWith('rewards')
+    await user.click(screen.getAllByRole('button', { name: '积分' })[1])
+    expect(onViewChange).toHaveBeenCalledWith('points')
     expect(screen.getAllByRole('navigation', { name: '后台导航' })).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: '打开导航' }))
     await user.click(screen.getByRole('button', { name: '关闭导航遮罩' }))
@@ -53,9 +53,13 @@ describe('points lite shell and login components', () => {
       </Shell>,
     )
     expect(screen.getByText('提示消息')).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: '分区导航' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '学员积分' }))
+    expect(onViewChange).toHaveBeenLastCalledWith('points')
+    expect(screen.getByRole('button', { name: '实物' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('labels the calendar as a personal week view for teacher-only accounts', () => {
+  it('labels the schedule section as personal for teacher-only accounts', () => {
     render(
       <Shell
         activeView="calendar"
@@ -68,8 +72,14 @@ describe('points lite shell and login components', () => {
       </Shell>,
     )
 
-    expect(screen.getByText('个人授课周日历')).toBeInTheDocument()
-    expect(screen.queryByText('全机构课程日历')).not.toBeInTheDocument()
+    expect(screen.getAllByText('我的课表').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: '账务' })).not.toBeInTheDocument()
+  })
+
+  it('hides registration unless the deployment enables it', () => {
+    render(<LoginView api={createMockOpsApi()} loading={false} onSuccess={vi.fn()} onError={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: '切换到注册' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '看乐教学运营中心' })).toBeInTheDocument()
   })
 
   it('registers a pending account and reports registration errors', async () => {
@@ -77,7 +87,7 @@ describe('points lite shell and login components', () => {
     const api = createMockOpsApi()
     const onSuccess = vi.fn()
     const onError = vi.fn()
-    render(<LoginView api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
+    render(<LoginView allowRegistration api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
 
     await user.click(screen.getByRole('button', { name: '切换到注册' }))
     await user.type(screen.getByLabelText('手机号'), '13900000000')
@@ -106,10 +116,10 @@ describe('points lite shell and login components', () => {
       },
       register: async () => ({ status: 'pending_activation' as const, message: '', profile: mockProfiles.teacher }),
     }
-    const { rerender } = render(<LoginView api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
+    const { rerender } = render(<LoginView allowRegistration api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
     expect(screen.getByRole('button', { name: '登录中' })).toBeDisabled()
 
-    rerender(<LoginView api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
+    rerender(<LoginView allowRegistration api={api} loading={false} onSuccess={onSuccess} onError={onError} />)
     await user.type(screen.getByLabelText('账号或手机号'), 'admin')
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
@@ -121,7 +131,7 @@ describe('points lite shell and login components', () => {
     await user.click(screen.getByRole('button', { name: '提交注册' }))
     expect(await screen.findByText('注册成功，请等待管理员激活')).toBeInTheDocument()
 
-    rerender(<LoginView api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
+    rerender(<LoginView allowRegistration api={api} loading={true} onSuccess={onSuccess} onError={onError} />)
     await user.click(screen.getByRole('button', { name: '切换到注册' }))
     expect(screen.getByRole('button', { name: '注册中' })).toBeDisabled()
   })

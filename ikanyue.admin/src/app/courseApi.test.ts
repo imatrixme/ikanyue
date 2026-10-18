@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi, createOpsApi } from './api'
-import { viewFromPath, viewPaths } from './navigation'
+import { mockProfiles } from './mockData'
+import { navigationSections, sectionLabel, sectionOf, viewFromPath, viewPaths } from './navigation'
 
 describe('course operations api', () => {
   it('supports the complete mock operations workflow', async () => {
@@ -37,6 +38,7 @@ describe('course operations api', () => {
     expect((await api.previewSettlement(token, 'lesson_1')).students).toHaveLength(1)
     expect(await api.publishLesson(token, 'lesson_1', ['class_1'], [{ teacherId: 'teacher_1', role: 'lead' }])).toMatchObject({ status: 'scheduled', teacherOverrides: [{ teacherId: 'teacher_1', role: 'lead' }] })
     expect(await api.rescheduleLesson(token, 'lesson_1', '2026-08-09T10:00:00.000Z', '2026-08-09T11:00:00.000Z', '调整')).toMatchObject({ reason: '调整' })
+    expect(await api.cancelLesson(token, 'lesson_1', '教师请假')).toMatchObject({ status: 'cancelled' })
     expect(await api.settleLesson(token, 'lesson_1')).toMatchObject({ status: 'settled' })
     expect(await api.reverseSettlement(token, 'lesson_1', '更正')).toMatchObject({ status: 'correction_pending' })
     expect(await api.confirmTeacherCredit(token, 'teacher_event_1', '教务确认课堂工作量')).toMatchObject({ earningEventId: 'teacher_event_1', quantity: 1 })
@@ -75,9 +77,12 @@ describe('course operations api', () => {
       api.setClassMembership('token', 'class 1', 'student 1', 'active'),
       api.transferClassStudent('token', 'class 1', 'student 1', 'class 2'),
       api.setClassTeacher('token', 'class 1', 'teacher 1', 'lead', 'active'),
+      api.cancelLesson('token', 'lesson 1', '教师请假'),
     ]
     await Promise.all(calls)
     const urls = fetchMock.mock.calls.map(([url]) => url)
+    expect(urls).toContain('/ops/course-credits/sessions/lesson%201/cancel')
+    expect(JSON.parse(fetchMock.mock.calls.at(-1)?.[1].body)).toMatchObject({ reason: '教师请假', cancellationType: 'institution' })
     expect(urls).toContain('/ops/course-credits/sessions?page=1&perPage=20&status=scheduled')
     expect(urls).toContain('/ops/course-credits/accounts/student%201')
     expect(urls).toContain('/ops/course-operations/conversion-rules/rule%201/status')
@@ -88,18 +93,26 @@ describe('course operations api', () => {
     expect(commands.every((options) => options.headers.authorization === 'Bearer token')).toBe(true)
     expect(commands.every((options) => options.headers['Idempotency-Key'])).toBe(true)
     expect(JSON.parse(fetchMock.mock.calls[13][1].body)).toMatchObject({ teacherOverrides: [{ teacherId: 'teacher_1', role: 'lead' }] })
-    expect(JSON.parse(fetchMock.mock.calls.at(-2)?.[1].body)).toMatchObject({ toClassId: 'class 2' })
+    expect(JSON.parse(fetchMock.mock.calls.at(-3)?.[1].body)).toMatchObject({ toClassId: 'class 2' })
   })
 
-  it('maps stable route paths and unknown paths to dashboard', () => {
-    expect(viewPaths.enrollments).toBe('/enrollments')
-    expect(viewPaths.appointments).toBe('/appointments')
-    expect(viewPaths.calendar).toBe('/calendar')
-    expect(viewPaths.migration).toBe('/migration')
-    expect(viewFromPath('/calendar')).toBe('calendar')
+  it('groups views into task sections and resolves new and legacy paths', () => {
+    expect(viewPaths.dashboard).toBe('/today')
+    expect(viewPaths.enrollments).toBe('/billing/enrollments')
+    expect(viewPaths.appointments).toBe('/schedule/bookings')
+    expect(viewPaths.calendar).toBe('/schedule/calendar')
+    expect(viewPaths.migration).toBe('/settings/migration')
+    expect(viewFromPath('/schedule/calendar')).toBe('calendar')
+    expect(viewFromPath('/students/student_1')).toBe('students')
+    expect(viewFromPath('/points/rewards')).toBe('rewards')
     expect(viewFromPath('/appointments')).toBe('appointments')
-    expect(viewFromPath('/migration')).toBe('migration')
     expect(viewFromPath('/lessons/lesson_1')).toBe('lessons')
+    expect(viewFromPath('/points')).toBe('points')
     expect(viewFromPath('/not-found')).toBe('dashboard')
+    expect(sectionOf('accounts').label).toBe('账务')
+    expect(sectionOf('classes').tabs.map((tab) => tab.view)).toContain('lessons')
+    expect(navigationSections.map((section) => section.label)).toEqual(['今天', '学员', '课表', '账务', '积分', '设置'])
+    expect(sectionLabel(sectionOf('calendar'), { ...mockProfiles.teacher, isAdmin: false, courseCreditCapabilities: ['course_credit.teacher'] })).toBe('我的课表')
+    expect(sectionLabel(sectionOf('calendar'), mockProfiles.admin)).toBe('课表')
   })
 })

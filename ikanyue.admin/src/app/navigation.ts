@@ -1,94 +1,109 @@
-import { viewBusinessIcons } from './businessIcons'
-import type { AppView } from './types'
+import { Award, CalendarCheck2, CalendarDays, Settings, Users, Wallet, type LucideIcon } from 'lucide-react'
+
+import type { AppView, OpsProfile } from './types'
 
 export const viewPaths: Record<AppView, string> = {
-  dashboard: '/dashboard',
+  dashboard: '/today',
   students: '/students',
-  courses: '/courses',
-  packages: '/packages',
-  enrollments: '/enrollments',
-  classes: '/classes',
-  lessons: '/lessons',
-  calendar: '/calendar',
-  appointments: '/appointments',
-  accounts: '/lesson-hours',
-  payments: '/payments',
-  teachers: '/teacher-workload',
-  exceptions: '/exceptions',
-  audit: '/audit',
-  migration: '/migration',
-  points: '/points',
-  rewards: '/rewards',
+  calendar: '/schedule/calendar',
+  lessons: '/schedule/lessons',
+  appointments: '/schedule/bookings',
+  classes: '/schedule/classes',
+  teachers: '/schedule/workload',
+  enrollments: '/billing/enrollments',
+  payments: '/billing/orders',
+  accounts: '/billing/lesson-hours',
+  exceptions: '/billing/exceptions',
+  audit: '/billing/audit',
+  points: '/points/students',
+  rewards: '/points/rewards',
+  courses: '/settings/courses',
+  packages: '/settings/packages',
+  migration: '/settings/migration',
 }
 
-export const navigationGroups: Array<{
+// Pre-redesign single-level paths; kept so bookmarks and query deep links keep working.
+export const legacyViewPaths: Record<string, AppView> = {
+  '/dashboard': 'dashboard',
+  '/courses': 'courses',
+  '/packages': 'packages',
+  '/enrollments': 'enrollments',
+  '/classes': 'classes',
+  '/lessons': 'lessons',
+  '/calendar': 'calendar',
+  '/appointments': 'appointments',
+  '/lesson-hours': 'accounts',
+  '/payments': 'payments',
+  '/teacher-workload': 'teachers',
+  '/exceptions': 'exceptions',
+  '/audit': 'audit',
+  '/migration': 'migration',
+  '/points': 'points',
+  '/rewards': 'rewards',
+}
+
+export interface NavigationSection {
+  key: string
   label: string
-  items: Array<{ view: AppView; label: string; icon: string }>
-}> = [
+  icon: LucideIcon
+  tabs: Array<{ view: AppView; label: string }>
+}
+
+export const navigationSections: NavigationSection[] = [
+  { key: 'today', label: '今天', icon: CalendarCheck2, tabs: [{ view: 'dashboard', label: '今天' }] },
+  { key: 'students', label: '学员', icon: Users, tabs: [{ view: 'students', label: '学员' }] },
   {
-    label: '运营总览',
-    items: [
-      { view: 'dashboard', label: '今日工作台', icon: viewBusinessIcons.dashboard },
-      { view: 'students', label: '学员管理', icon: viewBusinessIcons.students },
+    key: 'schedule',
+    label: '课表',
+    icon: CalendarDays,
+    tabs: [
+      { view: 'calendar', label: '日历' },
+      { view: 'lessons', label: '课堂' },
+      { view: 'appointments', label: '预约' },
+      { view: 'classes', label: '班级' },
+      { view: 'teachers', label: '教师工作量' },
     ],
   },
   {
-    label: '课程运营',
-    items: [
-      { view: 'courses', label: '课程规格', icon: viewBusinessIcons.courses },
-      { view: 'packages', label: '课包与价格', icon: viewBusinessIcons.packages },
-      { view: 'enrollments', label: '报课管理', icon: viewBusinessIcons.enrollments },
-      { view: 'classes', label: '班级管理', icon: viewBusinessIcons.classes },
-      { view: 'lessons', label: '课堂管理', icon: viewBusinessIcons.lessons },
-      { view: 'calendar', label: '机构课表', icon: viewBusinessIcons.calendar },
-      { view: 'appointments', label: '课程预约', icon: viewBusinessIcons.appointments },
+    key: 'billing',
+    label: '账务',
+    icon: Wallet,
+    tabs: [
+      { view: 'enrollments', label: '报课' },
+      { view: 'payments', label: '订单收款' },
+      { view: 'accounts', label: '课时账户' },
+      { view: 'exceptions', label: '异常' },
+      { view: 'audit', label: '操作记录' },
     ],
   },
+  { key: 'points', label: '积分', icon: Award, tabs: [{ view: 'points', label: '学员积分' }, { view: 'rewards', label: '实物' }] },
   {
-    label: '核销与审计',
-    items: [
-      { view: 'accounts', label: '课时账户', icon: viewBusinessIcons.accounts },
-      { view: 'teachers', label: '教师工作量', icon: viewBusinessIcons.teachers },
-      { view: 'exceptions', label: '异常中心', icon: viewBusinessIcons.exceptions },
-      { view: 'audit', label: '操作审计', icon: viewBusinessIcons.audit },
-      { view: 'migration', label: '历史迁移', icon: viewBusinessIcons.migration },
-    ],
-  },
-  {
-    label: '财务',
-    items: [
-      { view: 'payments', label: '收款与退款', icon: viewBusinessIcons.payments },
-    ],
-  },
-  {
-    label: '积分运营',
-    items: [
-      { view: 'points', label: '学员积分', icon: viewBusinessIcons.points },
-      { view: 'rewards', label: '实物管理', icon: viewBusinessIcons.rewards },
+    key: 'settings',
+    label: '设置',
+    icon: Settings,
+    tabs: [
+      { view: 'courses', label: '课程' },
+      { view: 'packages', label: '课包与价格' },
+      { view: 'migration', label: '历史迁移' },
     ],
   },
 ]
 
-export const viewEyebrows: Record<AppView, string> = {
-  dashboard: '课程运营与风险队列',
-  students: '账号、课程与班级关系',
-  courses: '课程规格与授课约束',
-  packages: '课包、发放规则与价格',
-  enrollments: '管理员报课与名单同步',
-  classes: '班级成员、教师与学期',
-  lessons: '排课、出勤与核销',
-  calendar: '全机构课程日历',
-  appointments: '预约队列、开放时间与冲突',
-  accounts: '学员课时余额与来源',
-  payments: '订单收款、原路退款与渠道对账',
-  teachers: '教师授课工作量',
-  exceptions: '待处理业务异常',
-  audit: '关键操作追踪',
-  migration: '历史数据盘点、映射与零差异迁移',
-  points: '积分与线下兑换',
-  rewards: '实物目录与价格',
+export function sectionOf(view: AppView): NavigationSection {
+  return navigationSections.find((section) => section.tabs.some((tab) => tab.view === view)) || navigationSections[0]
+}
+
+export function isTeacherOnly(profile: OpsProfile) {
+  const capabilities = profile.courseCreditCapabilities || []
+  return !profile.isAdmin && capabilities.includes('course_credit.teacher') && !capabilities.includes('course_credit.academic')
+}
+
+export function sectionLabel(section: NavigationSection, profile: OpsProfile) {
+  return section.key === 'schedule' && isTeacherOnly(profile) ? '我的课表' : section.label
 }
 
 export function viewFromPath(pathname: string): AppView {
-  return (Object.entries(viewPaths).find(([, path]) => pathname === path || pathname.startsWith(`${path}/`))?.[0] as AppView) || 'dashboard'
+  const matches = (path: string) => pathname === path || pathname.startsWith(`${path}/`)
+  const current = Object.entries(viewPaths).find(([, path]) => matches(path))?.[0] as AppView | undefined
+  return current || Object.entries(legacyViewPaths).find(([path]) => matches(path))?.[1] || 'dashboard'
 }

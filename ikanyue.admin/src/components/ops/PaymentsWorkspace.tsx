@@ -1,7 +1,6 @@
 import { CheckCheck, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { commerceApi, money, type FinanceSummary } from '../../app/commerceApi'
-import { viewBusinessIcons } from '../../app/businessIcons'
 import { PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Button } from '../ui/Button'
 import { IconButton } from '../ui/Controls'
@@ -43,7 +42,7 @@ export function PaymentsWorkspace({ token }: { token: string }) {
     finally { setLoading(false) }
   }
   return <WorkspacePanel>
-    <PageHeader title="收款与退款" description="订单收款、原路退款与渠道对账" eyebrow="财务" icon={viewBusinessIcons.payments} actions={<div className="flex flex-wrap gap-2">
+    <PageHeader title="收款与退款" actions={<div className="flex flex-wrap gap-2">
       <IconButton label="刷新收退款" icon={<RefreshCw className="h-4 w-4" />} disabled={loading} onClick={() => void load()} />
       <Button variant="secondary" icon={<CheckCheck />} disabled={loading} onClick={() => void syncAndReconcile()}>同步并核对</Button>
     </div>} />

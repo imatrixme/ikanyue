@@ -3,14 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
+import { viewPaths } from '../../app/navigation'
 import { calendarRange, normalizeDateKey, shiftCalendarDate, todayKey, visibleCalendarDays } from '../../app/calendarLogic'
 import { calendarViewForContext, normalizeCalendarMode, schedulerLessonCode, selectionFromSlots, weeklyIntervals, type CalendarScheduleSelection, type CourseCalendarMode } from '../../app/calendarScheduler'
 import type { CourseCalendarEntry, CourseCalendarResponse, CourseCalendarView } from '../../app/calendarTypes'
 import type { CourseSpec, Lesson, TeachingClass } from '../../app/courseTypes'
 import type { OpsProfile } from '../../app/types'
-import { viewBusinessIcons } from '../../app/businessIcons'
 import { PageHeader, WorkspacePanel } from '../layout/Workspace'
-import { Badge } from '../ui/Badge'
 import { IconButton } from '../ui/Controls'
 import { AsyncState, EmptyState } from '../ui/DataDisplay'
 import { CourseCalendarDrawer } from './CourseCalendarDrawer'
@@ -173,10 +172,9 @@ export function CourseCalendarWorkspace({ api, profile, token }: Props) {
   const showScheduler = mode === 'schedule' && canAcademic && view === 'day'
   const canSelectWeekSlot = mode === 'schedule' && canAcademic && view === 'week' && activeTeacher
   const title = teacherOnly ? '我的周排程' : mode === 'schedule' ? '排课日历' : '机构课表'
-  const description = teacherOnly ? '汇总本人负责的正式课堂与班级安排。' : mode === 'schedule' ? '按教师与时间查看全机构课堂占用。' : '查看全机构课堂，并按教师、学员、班级、课程与来源筛选。'
 
   return <WorkspacePanel>
-    <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label={teacherOnly ? '刷新我的课表' : '刷新机构课表'} onClick={() => void load()} type="button" />{canAcademic && mode === 'schedule' && teachers[0] ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增排课" onClick={() => beginSchedule(selectionFromSlots(dateKey, activeTeacher || teachers[0], 2))} type="button" variant="primary" /> : null}</>} badge={<Badge tone={error ? 'red' : 'green'}>{items.length} 节课程</Badge>} description={description} eyebrow={teacherOnly ? '个人授课安排' : mode === 'schedule' ? '可视化排课' : '全盘课表'} icon={viewBusinessIcons.calendar} title={title} />
+    <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label={teacherOnly ? '刷新我的课表' : '刷新机构课表'} onClick={() => void load()} type="button" />{canAcademic && mode === 'schedule' && teachers[0] ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增排课" onClick={() => beginSchedule(selectionFromSlots(dateKey, activeTeacher || teachers[0], 2))} type="button" variant="primary" /> : null}</>} title={title} />
     <CourseCalendarToolbar dateLabel={calendarDateLabel(view, dateKey)} facets={data?.facets} filters={filters} mode={mode} onFilter={setParam} onMode={setMode} onReset={resetFilters} onShift={(direction) => setParam('date', shiftCalendarDate(view, dateKey, direction))} onToday={() => setParam('date', todayKey())} onView={(nextView: CourseCalendarView) => setParam('view', nextView)} teacherOnly={teacherOnly} view={view} />
     {scheduleNotice ? <p className="border-b border-[var(--success)]/30 bg-[var(--success)]/10 px-5 py-2 text-sm text-[var(--success)]" role="status">{scheduleNotice}</p> : null}
     {referenceError ? <p className="border-b border-[var(--danger-border)] bg-[var(--danger-soft)] px-5 py-2 text-sm text-[var(--destructive)]" role="alert">{referenceError}</p> : null}
@@ -184,7 +182,7 @@ export function CourseCalendarWorkspace({ api, profile, token }: Props) {
       {showScheduler ? <><div className="hidden md:block"><VisualCourseScheduler dateKey={dateKey} entries={items} onOpen={(entry) => void openEntry(entry)} onSelect={beginSchedule} teachers={teachers} /></div><div className="md:hidden"><CourseCalendarViews dateKey={dateKey} days={[dateKey]} entries={items} onOpen={(entry) => void openEntry(entry)} view="list" /></div></> : <CourseCalendarViews dateKey={dateKey} days={visibleCalendarDays(view, dateKey)} entries={items} onOpen={(entry) => void openEntry(entry)} onSelectSlot={canSelectWeekSlot ? (day, slot) => beginSchedule(selectionFromSlots(day, activeTeacher, slot)) : undefined} view={view} />}
     </AsyncState>
     {selection ? <CourseScheduleDrawer classes={classes} courses={courses} entries={items} error={scheduleError} key={`${selection.teacherId}:${selection.startAt}`} loading={loading} onClose={() => setSelection(null)} onSubmit={saveSchedule} selection={selection} /> : null}
-    {selected ? <CourseCalendarDrawer canManage={canAcademic} detail={detail} entry={selected} error={actionError} loading={loading} onCancel={(reason) => runAction(() => api.setCourseResourceStatus(token, 'lessons', selected.lessonId, 'cancelled', reason), '取消课堂失败')} onClose={() => setSelected(null)} onOpenLesson={() => navigate(`/lessons?sessionId=${encodeURIComponent(selected.lessonId)}`)} onReschedule={(startAt, endAt, reason) => runAction(() => api.rescheduleLesson(token, selected.lessonId, startAt, endAt, reason), '调整课堂时间失败')} /> : null}
+    {selected ? <CourseCalendarDrawer canManage={canAcademic} detail={detail} entry={selected} error={actionError} loading={loading} onCancel={(reason) => runAction(() => api.cancelLesson(token, selected.lessonId, reason), '取消课堂失败')} onClose={() => setSelected(null)} onOpenLesson={() => navigate(`${viewPaths.lessons}?sessionId=${encodeURIComponent(selected.lessonId)}`)} onReschedule={(startAt, endAt, reason) => runAction(() => api.rescheduleLesson(token, selected.lessonId, startAt, endAt, reason), '调整课堂时间失败')} /> : null}
   </WorkspacePanel>
 }
 

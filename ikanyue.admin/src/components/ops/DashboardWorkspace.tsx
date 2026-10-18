@@ -1,76 +1,167 @@
-import { ArrowRight, RefreshCw } from 'lucide-react'
+import { ChevronRight, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
 import type { BookingDashboard } from '../../app/bookingTypes'
-import { viewBusinessIcons } from '../../app/businessIcons'
-import type { CourseCapability, CourseRecord, EnrollmentOperation, Lesson } from '../../app/courseTypes'
-import type { OpsProfile } from '../../app/types'
-import { PageHeader, SectionHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
+import { formatDateTime, lessonNextStep, localDateKey, personName, recordName } from '../../app/coursePresentation'
+import type { CourseAccount, CourseCapability, CourseRecord, EnrollmentOperation, Lesson } from '../../app/courseTypes'
+import { viewPaths } from '../../app/navigation'
+import type { OpsProfile, StudentRecord } from '../../app/types'
+import { PageHeader, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
-import { Button } from '../ui/Button'
 import { IconButton } from '../ui/Controls'
 import { AsyncState } from '../ui/DataDisplay'
 
-interface DashboardData {
+// Students who have used or lost hours, now hold at most this many and have nothing booked, need a renewal conversation.
+const RENEWAL_THRESHOLD = 2
+
+interface TodayData {
   lessons: Lesson[]
   enrollments: EnrollmentOperation[]
-  accounts: CourseRecord[]
+  accounts: CourseAccount[]
+  students: StudentRecord[]
   teacherEvents: CourseRecord[]
-  settlementExceptions: CourseRecord[]
-  reconciliationExceptions: CourseRecord[]
+  exceptions: CourseRecord[]
   bookings: BookingDashboard
 }
 
+interface TaskRow { key: string; main: string; meta?: string; status?: string; to: string }
+
 export function DashboardWorkspace({ api, profile, token }: { api: OpsApi; profile: OpsProfile; token: string }) {
   const navigate = useNavigate()
-  const [data, setData] = useState<DashboardData | null>(null)
+  const [data, setData] = useState<TodayData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [now, setNow] = useState(() => Date.now())
+  const capabilities = new Set(profile.courseCreditCapabilities || [])
+  const allowed = (capability: CourseCapability) => profile.isAdmin || capabilities.has(capability)
+  const canAcademic = allowed('course_credit.academic')
+  const canTeach = allowed('course_credit.teacher')
+  const canSettle = allowed('course_credit.settlement')
+  const canFinance = allowed('course_credit.finance')
+  const canAudit = allowed('course_credit.audit')
+
   const load = useCallback(async () => {
     setLoading(true)
+    setNow(Date.now())
     setError('')
     try {
-      const capabilities = new Set(profile.courseCreditCapabilities || [])
-      const allowed = (capability: CourseCapability) => profile.isAdmin || capabilities.has(capability)
       const page = { page: 1, perPage: 100 }
-      const lessonResource = allowed('course_credit.academic') || allowed('course_credit.settlement') ? 'lessons' : 'assignedLessons'
-      const [lessons, enrollments, accounts, teacherEvents, settlementExceptions, reconciliationExceptions, bookings] = await Promise.all([
-        allowed('course_credit.academic') || allowed('course_credit.teacher') || allowed('course_credit.settlement') ? api.listCourseResource<Lesson>(token, lessonResource, page) : emptyPage<Lesson>(),
-        allowed('course_credit.finance') ? api.listCourseResource<EnrollmentOperation>(token, 'enrollments', page) : emptyPage<EnrollmentOperation>(),
-        allowed('course_credit.finance') ? api.listCourseResource(token, 'accounts', page) : emptyPage<CourseRecord>(),
-        allowed('course_credit.teacher') ? api.listCourseResource(token, 'teacherEvents', page) : emptyPage<CourseRecord>(),
-        allowed('course_credit.settlement') ? api.listCourseResource(token, 'settlementExceptions', page) : emptyPage<CourseRecord>(),
-        allowed('course_credit.audit') ? api.listCourseResource(token, 'reconciliationExceptions', page) : emptyPage<CourseRecord>(),
-        allowed('course_credit.academic') ? api.getBookingDashboard(token) : emptyBookingDashboard(),
+      const lessonResource = canAcademic || canSettle ? 'lessons' : 'assignedLessons'
+      const [lessons, enrollments, accounts, students, teacherEvents, settlementExceptions, reconciliationExceptions, bookings] = await Promise.all([
+        canAcademic || canTeach || canSettle ? api.listCourseResource<Lesson>(token, lessonResource, page) : emptyPage<Lesson>(),
+        canFinance ? api.listCourseResource<EnrollmentOperation>(token, 'enrollments', page) : emptyPage<EnrollmentOperation>(),
+        canFinance ? api.listCourseResource<CourseAccount>(token, 'accounts', page) : emptyPage<CourseAccount>(),
+        canFinance ? api.listManagedStudents(token, page) : emptyPage<StudentRecord>(),
+        canTeach ? api.listCourseResource(token, 'teacherEvents', page) : emptyPage<CourseRecord>(),
+        canSettle ? api.listCourseResource(token, 'settlementExceptions', page) : emptyPage<CourseRecord>(),
+        canAudit ? api.listCourseResource(token, 'reconciliationExceptions', page) : emptyPage<CourseRecord>(),
+        canAcademic ? api.getBookingDashboard(token) : emptyBookingDashboard(),
       ])
-      setData({ accounts: accounts.items, bookings, enrollments: enrollments.items, lessons: lessons.items, reconciliationExceptions: reconciliationExceptions.items, settlementExceptions: settlementExceptions.items, teacherEvents: teacherEvents.items })
+      setData({
+        accounts: accounts.items,
+        bookings,
+        enrollments: enrollments.items,
+        exceptions: [...settlementExceptions.items, ...reconciliationExceptions.items],
+        lessons: lessons.items,
+        students: students.items,
+        teacherEvents: teacherEvents.items,
+      })
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : '加载运营工作台失败')
+      setError(loadError instanceof Error ? loadError.message : '加载今日待办失败')
     } finally {
       setLoading(false)
     }
-  }, [api, profile.courseCreditCapabilities, profile.isAdmin, token])
+  }, [api, canAcademic, canAudit, canFinance, canSettle, canTeach, token])
   useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer) }, [load])
 
-  const today = new Date().toISOString().slice(0, 10)
-  const todayLessons = data?.lessons.filter((lesson) => lesson.startAt?.startsWith(today)) || []
-  const syncQueue = data?.enrollments.filter((item) => item.resultSnapshot.status === 'synchronizing_future_lessons') || []
-  const insufficient = data?.accounts.filter((item) => Number(item.availableQuantity || 0) <= 0) || []
-  const settlements = data?.lessons.filter((lesson) => ['completed', 'correction_pending'].includes(String(lesson.status))) || []
-  const expiry = data?.accounts.filter((item) => Number(item.expiredQuantity || 0) > 0) || []
-  const teacherPending = data?.teacherEvents.filter((item) => item.status === 'pending') || []
-  const exceptions = [...(data?.settlementExceptions || []), ...(data?.reconciliationExceptions || [])]
-  const capabilities = new Set(profile.courseCreditCapabilities || [])
-  const allowed = (capability: CourseCapability) => profile.isAdmin || capabilities.has(capability)
+  const today = localDateKey(now)
+  const lessonLink = (lesson: Lesson) => `${viewPaths.lessons}?sessionId=${encodeURIComponent(lesson.id)}`
+  const lessonRow = (lesson: Lesson, withDate: boolean): TaskRow => ({ key: lesson.id, main: lesson.title || recordName(lesson), meta: withDate ? formatDateTime(lesson.startAt) : timeOf(lesson.startAt), status: lessonNextStep(lesson, now), to: lessonLink(lesson) })
+  const studentName = (studentId: string) => personName(data?.students.find((item) => item.id === studentId), studentId)
 
-  return <WorkspacePanel><PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新今日工作台" onClick={() => void load()} type="button" />} badge={<Badge tone={exceptions.length || data?.bookings.openConflictCount ? 'amber' : 'green'}>{exceptions.length + (data?.bookings.openConflictCount || 0)} 个异常</Badge>} description="只展示当前账号获授权的课程运营队列。" eyebrow="运营总览" title="今日工作台" icon={viewBusinessIcons.dashboard} /><SummaryBand>{allowed('course_credit.academic') || allowed('course_credit.teacher') || allowed('course_credit.settlement') ? <SummaryMetric label="今日课堂" value={todayLessons.length} /> : null}{allowed('course_credit.academic') ? <SummaryMetric label="待确认预约" value={data?.bookings.pendingCount || 0} /> : null}{allowed('course_credit.finance') ? <SummaryMetric label="待名单同步" value={syncQueue.length} /> : null}{allowed('course_credit.settlement') ? <SummaryMetric label="待核销" value={settlements.length} /> : null}{allowed('course_credit.teacher') ? <SummaryMetric label="待确认工作量" value={teacherPending.length} /> : null}</SummaryBand><AsyncState error={error} loading={loading && !data} loadingLabel="正在加载运营队列..." onRetry={() => void load()}><div className="grid gap-px bg-[var(--border)] md:grid-cols-2 xl:grid-cols-3">{allowed('course_credit.academic') || allowed('course_credit.teacher') || allowed('course_credit.settlement') ? <Queue title="今日课堂" count={todayLessons.length} description="查看课堂名单、出勤与实际教师" onOpen={() => navigate('/lessons')} /> : null}{allowed('course_credit.academic') ? <Queue title="预约确认与冲突" count={(data?.bookings.pendingCount || 0) + (data?.bookings.openConflictCount || 0)} description="处理学员预约、教师开放时间与历史冲突" onOpen={() => navigate('/appointments')} /> : null}{allowed('course_credit.finance') ? <><Queue title="报课名单同步" count={syncQueue.length} description="预览后修正已发布课堂名单" onOpen={() => navigate('/enrollments')} /><Queue title="课时不足" count={insufficient.length} description="联系学员补充报课或调整课程" onOpen={() => navigate('/lesson-hours')} /><Queue title="有效期提醒" count={expiry.length} description="检查已过期课时与后续安排" onOpen={() => navigate('/lesson-hours')} /></> : null}{allowed('course_credit.settlement') ? <Queue title="核销与更正" count={settlements.length} description="核对课堂后确认课时使用" onOpen={() => navigate('/lessons')} /> : null}{allowed('course_credit.teacher') ? <Queue title="教师工作量" count={teacherPending.length} description="查看本人待确认的课堂工作量" onOpen={() => navigate('/teacher-workload')} /> : null}{allowed('course_credit.settlement') || allowed('course_credit.audit') ? <Queue title="异常中心" count={exceptions.length} description="核销与对账差异集中处理" onOpen={() => navigate('/exceptions')} /> : null}</div></AsyncState></WorkspacePanel>
+  const groups: Array<{ title: string; rows: TaskRow[] }> = data ? [
+    {
+      title: '今日课堂',
+      rows: data.lessons
+        .filter((lesson) => localDateKey(lesson.startAt) === today && lesson.status !== 'draft')
+        .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
+        .map((lesson) => lessonRow(lesson, false)),
+    },
+    {
+      title: '待确认预约',
+      rows: data.bookings.pending.map((item) => ({ key: item.appointmentId, main: `${item.student.name} · ${item.course.name}`, meta: `${formatDateTime(item.startAt)} · ${item.teacher.name}`, status: '待确认', to: `${viewPaths.appointments}?status=pending` })),
+    },
+    {
+      title: '待核销课堂',
+      rows: canSettle ? data.lessons
+        .filter((lesson) => lesson.status === 'completed' || lesson.status === 'correction_pending')
+        .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
+        .map((lesson) => lessonRow(lesson, true)) : [],
+    },
+    {
+      title: `需要续课（剩余 ≤ ${RENEWAL_THRESHOLD} 课时）`,
+      rows: data.accounts
+        .filter((account) => Number(account.availableQuantity || 0) <= RENEWAL_THRESHOLD && Number(account.frozenQuantity || 0) === 0 && Number(account.consumedQuantity || 0) + Number(account.expiredQuantity || 0) > 0)
+        .sort((a, b) => Number(a.availableQuantity || 0) - Number(b.availableQuantity || 0))
+        .map((account) => ({ key: account.studentId, main: studentName(account.studentId), meta: Number(account.expiredQuantity || 0) > 0 ? `已过期 ${account.expiredQuantity} 课时` : undefined, status: `剩 ${account.availableQuantity || 0} 课时`, to: `${viewPaths.students}/${encodeURIComponent(account.studentId)}` })),
+    },
+    {
+      title: '报课后待同步名单',
+      rows: data.enrollments
+        .filter((item) => item.resultSnapshot.status === 'synchronizing_future_lessons')
+        .map((item) => ({ key: item.id, main: studentName(item.studentId), meta: formatDateTime(item.created, ''), status: '待同步', to: viewPaths.enrollments })),
+    },
+    {
+      title: '异常',
+      rows: data.exceptions.length ? [{ key: 'exceptions', main: `${data.exceptions.length} 条核销或对账异常`, to: viewPaths.exceptions }] : [],
+    },
+    {
+      title: '待确认工作量',
+      rows: data.teacherEvents.some((item) => item.status === 'pending') ? [{ key: 'workload', main: `${data.teacherEvents.filter((item) => item.status === 'pending').length} 条授课工作量待确认`, to: viewPaths.teachers }] : [],
+    },
+  ].filter((group) => group.rows.length > 0) : []
+
+  return (
+    <WorkspacePanel>
+      <PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新今日待办" onClick={() => void load()} type="button" />} title={`今天 · ${new Date(now).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })}`} />
+      <AsyncState empty={data && groups.length === 0 ? <p className="px-5 py-16 text-center text-sm text-[var(--muted-foreground)]">今天没有待办</p> : undefined} error={error} loading={loading && !data} loadingLabel="正在加载今日待办..." onRetry={() => void load()}>
+        <div className="divide-y divide-[var(--border)]">
+          {groups.map((group) => (
+            <section aria-label={group.title} key={group.title}>
+              <h2 className="flex items-center gap-2 px-4 pb-1 pt-4 text-sm font-semibold sm:px-5">{group.title}<span className="font-normal text-[var(--muted-foreground)]">{group.rows.length}</span></h2>
+              <ul className="pb-2">
+                {group.rows.map((row) => (
+                  <li key={row.key}>
+                    <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-[var(--secondary)] sm:px-5" onClick={() => navigate(row.to)} type="button">
+                      {row.meta ? <span className="w-28 shrink-0 tabular-nums text-[var(--muted-foreground)]">{row.meta}</span> : null}
+                      <span className="min-w-0 flex-1 truncate">{row.main}</span>
+                      {row.status ? <Badge tone={statusTone(row.status)}>{row.status}</Badge> : null}
+                      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </AsyncState>
+    </WorkspacePanel>
+  )
+}
+
+function statusTone(status: string) {
+  if (status === '已核销') return 'green'
+  if (status === '已取消') return 'neutral'
+  if (status === '待上课') return 'blue'
+  return 'amber'
+}
+
+function timeOf(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '时间待定' : date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 function emptyPage<T>() { return Promise.resolve({ items: [] as T[], page: 1, perPage: 100, totalItems: 0, totalPages: 0 }) }
 function emptyBookingDashboard(): Promise<BookingDashboard> { return Promise.resolve({ pending: [], pendingCount: 0, upcoming: [], openConflicts: [], openConflictCount: 0 }) }
-
-function Queue({ count, description, onOpen, title }: { count: number; description: string; onOpen: () => void; title: string }) {
-  return <section className="grid min-h-40 content-between gap-4 bg-[var(--card)] p-5"><SectionHeader actions={<Badge tone={count ? 'amber' : 'green'}>{count}</Badge>} description={description} title={title} /><Button icon={<ArrowRight className="h-4 w-4" />} onClick={onOpen} type="button" variant="secondary">进入处理</Button></section>
-}

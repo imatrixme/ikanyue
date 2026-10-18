@@ -29,6 +29,13 @@ const STATUS_LABELS: Record<string, string> = {
   pending_activation: '待激活',
   unactivated: '待激活',
   scheduled: '待上课',
+  enrollment_closed: '报名截止',
+  in_progress: '上课中',
+  correction_pending: '待更正',
+  present: '到课',
+  late: '迟到',
+  leave: '请假',
+  absent: '缺席',
   published: '已发布',
   confirmed: '已确认',
   completed: '已完成',
@@ -267,8 +274,43 @@ export function courseFieldValue(key: string, value: unknown) {
   if (key === 'teacherTier') return teacherTierLabel(value)
   if (key === 'eventType') return creditEventLabel(value)
   if (key === 'durationMinutes') return value === null || value === undefined || value === '' ? '-' : `${value} 分钟`
+  if (key.endsWith('Days')) return value === null || value === undefined || value === '' ? '-' : `${value} 天`
   if (key === 'created' || key === 'updated' || key.startsWith('valid') || key.endsWith('At')) return formatDateTime(value, '-')
   return safeDisplayValue(value)
+}
+
+const OPEN_LESSON_STATUSES = ['scheduled', 'enrollment_closed', 'in_progress']
+
+// Mirrors the server-side lesson state guards so the UI only offers commands the API accepts.
+export function lessonActions(lesson: { status?: unknown; startAt?: unknown; appointmentId?: unknown }, now = Date.now()) {
+  const status = clean(lesson.status)
+  const open = OPEN_LESSON_STATUSES.includes(status)
+  const started = Date.parse(clean(lesson.startAt)) <= now
+  return {
+    attendance: open || status === 'completed',
+    reschedule: status === 'scheduled' || status === 'enrollment_closed',
+    complete: open && started,
+    cancel: (status === 'scheduled' || status === 'enrollment_closed') && !clean(lesson.appointmentId),
+    settle: status === 'completed' || status === 'cancelled' || status === 'correction_pending',
+    reverse: status === 'settled',
+  }
+}
+
+// The operator's next step for a lesson, phrased for task lists.
+export function lessonNextStep(lesson: { status?: unknown; startAt?: unknown }, now = Date.now()) {
+  const status = clean(lesson.status)
+  if (status === 'settled') return '已核销'
+  if (status === 'cancelled') return '已取消'
+  if (status === 'completed' || status === 'correction_pending') return '待核销'
+  if (status === 'draft') return '未发布'
+  return lessonActions(lesson, now).complete ? '待结课' : '待上课'
+}
+
+// Calendar day in the operator's time zone; ISO strings are UTC and would shift days before 08:00 in Shanghai.
+export function localDateKey(value: Date | string | number) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
 export function technicalValue(value: unknown) {

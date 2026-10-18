@@ -25,7 +25,7 @@ describe('lesson workspace coverage', () => {
     const reschedule = vi.spyOn(api, 'rescheduleLesson')
     const attendance = vi.spyOn(api, 'setAttendance')
     const teacher = vi.spyOn(api, 'setActualTeacher')
-    const status = vi.spyOn(api, 'setCourseResourceStatus')
+    const cancel = vi.spyOn(api, 'cancelLesson')
     renderLessons(api)
 
     expect(await screen.findByRole('heading', { name: '课堂管理' })).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('lesson workspace coverage', () => {
     drawer = await openLesson(user, '合唱排练')
     await user.click(within(drawer).getByRole('button', { name: '取消课堂' }))
     await user.click(screen.getByRole('button', { name: '确认取消' }))
-    await waitFor(() => expect(status).toHaveBeenCalledWith('token', 'lessons', 'lesson_1', 'cancelled', 'admin_cancelled'))
+    await waitFor(() => expect(cancel).toHaveBeenCalledWith('token', 'lesson_1', '教务取消课堂'))
 
     await user.click(screen.getAllByRole('button', { name: '课堂详情' }).at(-1)!)
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
@@ -125,19 +125,18 @@ describe('lesson workspace coverage', () => {
     await user.click(screen.getByRole('button', { name: '重新加载' }))
     await screen.findByRole('table')
 
+    vi.spyOn(api, 'cancelLesson').mockRejectedValueOnce(new Error('action failed'))
+    await user.click(within(await openLesson(user, '合唱排练')).getByRole('button', { name: '取消课堂' }))
+    await user.click(screen.getByRole('button', { name: '确认取消' }))
+    expect(await screen.findByText('action failed')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '重新加载' }))
+    await screen.findByRole('table')
+
     await api.setCourseResourceStatus('token', 'lessons', 'lesson_1', 'completed')
     vi.spyOn(api, 'previewSettlement').mockRejectedValueOnce('preview offline')
     await user.click(screen.getByRole('button', { name: '重新加载课堂' }))
     await user.click(within(await openLesson(user, '合唱排练')).getByRole('button', { name: '核销预览' }))
     expect(await screen.findByText('加载核销预览失败')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
-    await user.click(screen.getByRole('button', { name: '重新加载' }))
-    await screen.findByRole('table')
-
-    vi.spyOn(api, 'setCourseResourceStatus').mockRejectedValueOnce(new Error('action failed'))
-    await user.click(within(await openLesson(user, '合唱排练')).getByRole('button', { name: '取消课堂' }))
-    await user.click(screen.getByRole('button', { name: '确认取消' }))
-    expect(await screen.findByText('action failed')).toBeInTheDocument()
   })
 
   it('rejects a lesson removed from the current teacher assignment', async () => {
@@ -149,7 +148,7 @@ describe('lesson workspace coverage', () => {
       return original<T>(token, resource, query)
     }
     const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
-    render(<MemoryRouter><LessonsWorkspace api={api} profile={teacherOnly} token="token" /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/schedule/lessons?scope=all']}><LessonsWorkspace api={api} profile={teacherOnly} token="token" /></MemoryRouter>)
     await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
     expect(await screen.findByText('课堂不在当前教师的授课范围内')).toBeInTheDocument()
   })
@@ -183,19 +182,19 @@ describe('lesson workspace coverage', () => {
       teachers: [{ sessionTeacherId: 'teacher_missing', teacherId: 'teacher_missing', role: '', action: 'unknown', quantity: 0 }],
     } as never)
     const view = renderLessons(api)
-    expect(await screen.findByText('1 节待核销')).toBeInTheDocument()
-    expect(screen.getAllByText('时间待定').length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('时间待定')).length).toBeGreaterThan(0)
+    expect(screen.getByRole('group', { name: '课堂范围' })).toBeInTheDocument()
     expect(screen.queryByText('invalid-date')).not.toBeInTheDocument()
 
     let drawer = await openLesson(user, '无时间课堂')
     expect(drawer).toHaveTextContent('课时状态待确认')
     fireEvent.change(within(drawer).getByLabelText('未找到人员（stud...arse）出勤状态'), { target: { value: 'scheduled' } })
     fireEvent.change(within(drawer).getByLabelText('林老师实际授课状态'), { target: { value: 'pending' } })
-    await user.click(within(drawer).getByRole('button', { name: '调整时间' }))
-    let dialog = screen.getByRole('dialog', { name: '调整课堂时间' })
-    expect(within(dialog).getByLabelText('新开始时间')).toHaveValue('')
-    expect(within(dialog).getByLabelText('新结束时间')).toHaveValue('')
-    await user.click(within(dialog).getByRole('button', { name: '取消' }))
+    // Completed lessons can no longer be rescheduled or cancelled; only settlement remains.
+    expect(within(drawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: '取消课堂' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
+    let dialog: HTMLElement
 
     drawer = await openLesson(user, '无时间课堂')
     await user.click(within(drawer).getByRole('button', { name: '核销预览' }))
@@ -227,7 +226,7 @@ describe('lesson workspace coverage', () => {
       ? page<T>(query.sessionId ? [assigned] : [assigned])
       : page<T>([])
     const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
-    render(<MemoryRouter><LessonsWorkspace api={teacherApi} profile={teacherOnly} token="token" /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/schedule/lessons?scope=all']}><LessonsWorkspace api={teacherApi} profile={teacherOnly} token="token" /></MemoryRouter>)
     await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
     drawer = await screen.findByRole('dialog', { name: '双教师课堂' })
     expect(within(drawer).getByLabelText('林老师实际授课状态')).not.toBeDisabled()
@@ -260,10 +259,30 @@ describe('lesson workspace coverage', () => {
     await user.click(within(dialog).getByRole('button', { name: '加入' }))
     expect(dialog).toHaveTextContent('班级信息待补充')
   })
+
+  it('defaults to upcoming lessons and opens a linked lesson', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    const soon = new Date(Date.now() + 86_400_000)
+    const upcoming: Lesson = { ...draftLesson, id: 'lesson_soon', title: '明天的课', status: 'scheduled', startAt: soon.toISOString(), endAt: new Date(soon.getTime() + 3_600_000).toISOString() }
+    const done: Lesson = { ...draftLesson, id: 'lesson_done', title: '已上完待核销', status: 'completed', startAt: '2026-01-05T10:00:00.000Z', endAt: '2026-01-05T11:00:00.000Z' }
+    vi.spyOn(api, 'listCourseResource').mockImplementation(async (_token, resource) => page(resource === 'lessons' ? [upcoming, done] : []) as never)
+    render(<MemoryRouter initialEntries={['/schedule/lessons?sessionId=lesson_done']}><LessonsWorkspace api={api} profile={mockProfiles.admin} token="token" /></MemoryRouter>)
+
+    expect(await screen.findByRole('dialog', { name: '已上完待核销' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
+    expect(screen.getAllByText('明天的课').length).toBeGreaterThan(0)
+    expect(screen.queryByText('已上完待核销')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '切换到待处理 1' }))
+    expect(screen.getAllByText('已上完待核销').length).toBeGreaterThan(0)
+    expect(screen.queryByText('明天的课')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '切换到全部 2' }))
+    expect(screen.getAllByText('明天的课').length).toBeGreaterThan(0)
+  })
 })
 
 function renderLessons(api: OpsApi) {
-  return render(<MemoryRouter><LessonsWorkspace api={api} profile={mockProfiles.admin} token="token" /></MemoryRouter>)
+  return render(<MemoryRouter initialEntries={['/schedule/lessons?scope=all']}><LessonsWorkspace api={api} profile={mockProfiles.admin} token="token" /></MemoryRouter>)
 }
 
 async function fillLesson(user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) {

@@ -1,17 +1,17 @@
 import { Eye, Plus, RefreshCw } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
 import type { BookingReferenceData } from '../../app/bookingTypes'
-import { viewBusinessIcons } from '../../app/businessIcons'
-import { creditStatusLabel, formatDate, formatDateTime, personName, roleLabel, statusLabel } from '../../app/coursePresentation'
+import { creditStatusLabel, formatDate, formatDateTime, lessonActions, localDateKey, personName, roleLabel, statusLabel } from '../../app/coursePresentation'
 import type { CourseRecord, CourseResourceInput, Lesson, SettlementPreview } from '../../app/courseTypes'
 import type { OpsProfile, StudentRecord } from '../../app/types'
 import { PageHeader, SectionHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
-import { IconButton } from '../ui/Controls'
+import { IconButton, SegmentedControl } from '../ui/Controls'
 import { AsyncState, DataTable, EmptyState, ResponsiveDataRegion } from '../ui/DataDisplay'
 import { DialogShell } from '../ui/DialogShell'
 import { DrawerShell } from '../ui/DrawerShell'
@@ -22,8 +22,12 @@ import { TechnicalDetails } from '../ui/TechnicalDetails'
 
 interface LessonsWorkspaceProps { api: OpsApi; profile: OpsProfile; token: string }
 type LessonAction = 'complete' | 'settle' | 'reverse' | 'cancel'
+type LessonScope = 'upcoming' | 'todo' | 'all'
 
 export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const linkedSessionId = searchParams.get('sessionId') || ''
+  const handledLinkRef = useRef('')
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [selected, setSelected] = useState<Lesson | null>(null)
   const [students, setStudents] = useState<CourseRecord[]>([])
@@ -38,6 +42,7 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
   const [confirmAction, setConfirmAction] = useState<LessonAction | null>(null)
   const [actionTarget, setActionTarget] = useState<Lesson | null>(null)
   const [loading, setLoading] = useState(true)
+  const [now, setNow] = useState(() => Date.now())
   const [error, setError] = useState('')
   const capabilities = profile.courseCreditCapabilities || []
   const canAcademic = profile.isAdmin || capabilities.includes('course_credit.academic')
@@ -48,6 +53,7 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
 
   const load = useCallback(async () => {
     setLoading(true)
+    setNow(Date.now())
     setError('')
     try {
       const [page, referenceResult, classPage, studentPage] = await Promise.all([
@@ -160,7 +166,7 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
     try {
       if (action === 'settle') await api.settleLesson(token, lesson.id)
       if (action === 'reverse') await api.reverseSettlement(token, lesson.id, 'admin_correction')
-      if (action === 'cancel') await api.setCourseResourceStatus(token, 'lessons', lesson.id, 'cancelled', 'admin_cancelled')
+      if (action === 'cancel') await api.cancelLesson(token, lesson.id, '教务取消课堂')
       if (action === 'complete') await api.setCourseResourceStatus(token, 'lessons', lesson.id, 'completed', 'manual_completion')
       setConfirmAction(null)
       setActionTarget(null)
@@ -169,9 +175,44 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
     } catch (actionError) { setError(message(actionError, '课堂操作失败')); setLoading(false) }
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const todayCount = lessons.filter((lesson) => lesson.startAt?.startsWith(today)).length
-  const pendingSettlement = lessons.filter((lesson) => ['completed', 'correction_pending'].includes(String(lesson.status))).length
+  useEffect(() => {
+    if (!linkedSessionId || loading || handledLinkRef.current === linkedSessionId) return
+    const timer = window.setTimeout(() => {
+      handledLinkRef.current = linkedSessionId
+      const linked = lessons.find((lesson) => lesson.id === linkedSessionId)
+      if (linked) void openLesson(linked)
+      else if (usesGlobalLessons) void api.getCourseResource<Lesson>(token, 'lessons', linkedSessionId).then(openLesson).catch((linkError) => setError(message(linkError, '没有找到这节课堂')))
+      else void openLesson({ id: linkedSessionId } as Lesson)
+    }, 0)
+    return () => window.clearTimeout(timer)
+  // openLesson is recreated each render; the ref guarantees one open per linked id.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, lessons, linkedSessionId, loading, token, usesGlobalLessons])
+
+  function closeLesson() {
+    setSelected(null)
+    if (!searchParams.has('sessionId')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('sessionId')
+    handledLinkRef.current = ''
+    setSearchParams(next, { replace: true })
+  }
+
+  const scope = lessonScope(searchParams.get('scope'))
+  const todayStart = new Date(`${localDateKey(now)}T00:00:00`).getTime()
+  const scoped: Record<LessonScope, Lesson[]> = {
+    upcoming: lessons.filter((lesson) => Date.parse(lesson.startAt) >= todayStart && lesson.status !== 'cancelled' && lesson.status !== 'settled').sort(byStart),
+    todo: lessons.filter((lesson) => lessonActions(lesson, now).complete || lesson.status === 'completed' || lesson.status === 'correction_pending').sort(byStart),
+    all: lessons,
+  }
+  const visibleLessons = scoped[scope]
+
+  function setScope(value: LessonScope) {
+    const next = new URLSearchParams(searchParams)
+    if (value === 'upcoming') next.delete('scope')
+    else next.set('scope', value)
+    setSearchParams(next, { replace: true })
+  }
 
   function beginAction(lesson: Lesson, action: Exclude<LessonAction, 'settle'>) {
     setActionTarget(lesson)
@@ -187,18 +228,12 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
   const teacherOnly = canTeach && !canAcademic && !canSettle
   const settlementOnly = canSettle && !canAcademic && !canTeach
   const title = teacherOnly ? '我的课堂' : settlementOnly ? '课堂核销' : '课堂管理'
-  const description = teacherOnly
-    ? '查看本人负责的课堂，登记学员出勤并确认本人实际授课状态。'
-    : settlementOnly
-      ? '查看全部课堂名单，预览并确认课时核销；排课和出勤由教务与教师维护。'
-      : '创建与发布课堂，维护名单、出勤和实际授课教师；核销操作按权限独立开放。扫码签到留待下期。'
-  const badge = canSettle ? `${pendingSettlement} 节待核销` : teacherOnly ? `${lessons.length} 节已分配` : `${lessons.length} 节课堂`
   const actionCopy = lessonActionCopy(confirmAction)
 
-  return <WorkspacePanel><PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载课堂" onClick={() => void load()} type="button" />{canAcademic ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增课堂" onClick={() => setEditor(null)} type="button" variant="primary" /> : null}</>} badge={<Badge tone={pendingSettlement && canSettle ? 'amber' : 'green'}>{badge}</Badge>} description={description} eyebrow={teacherOnly ? '授课安排' : settlementOnly ? '课时核销' : '排课与课堂'} title={title} icon={viewBusinessIcons.lessons} /><SummaryBand><SummaryMetric label="今日课堂" value={todayCount} />{canSettle ? <SummaryMetric label="待核销" value={pendingSettlement} /> : null}<SummaryMetric label={teacherOnly ? '负责课堂' : '全部课堂'} value={lessons.length} /></SummaryBand><AsyncState empty={lessons.length === 0 ? <EmptyState noun="课堂" onCreate={canAcademic ? () => setEditor(null) : undefined} /> : undefined} error={error} loading={loading && lessons.length === 0} loadingLabel="正在加载课堂..." onRetry={() => void load()}><ResponsiveDataRegion desktop={<LessonTable lessons={lessons} onEdit={canAcademic ? setEditor : undefined} onOpen={openLesson} onPublish={canAcademic ? setPublishTarget : undefined} />} mobile={lessons.map((lesson) => <LessonCard key={lesson.id} lesson={lesson} onOpen={() => void openLesson(lesson)} />)} /></AsyncState>{selected ? <LessonDrawer canAcademic={canAcademic} canSettle={canSettle} canTeach={canTeach} lesson={selected} loading={loading} onAllPresent={() => markAllPresent(selected)} onAttendance={(record, status) => updateAttendance(selected, record, status)} onCancel={() => beginAction(selected, 'cancel')} onClose={() => setSelected(null)} onComplete={() => beginAction(selected, 'complete')} onPreviewSettlement={() => previewSettlement(selected)} onReschedule={() => beginReschedule(selected)} onReverse={() => beginAction(selected, 'reverse')} studentReferences={studentReferences} students={students} teacherId={profile.id} teacherReferences={referenceData.teachers} teachers={teachers} onTeacher={(record, status) => updateTeacher(selected, record, status)} /> : null}{canAcademic && editor !== undefined ? <LessonEditor creditTypes={referenceData.creditTypes} lesson={editor} loading={loading} onClose={() => setEditor(undefined)} onSave={saveLesson} /> : null}{canAcademic && publishTarget ? <PublishDialog classes={classes} lesson={publishTarget} loading={loading} onClose={() => setPublishTarget(null)} onPublish={(classIds) => publish(publishTarget, classIds)} /> : null}{canAcademic && rescheduleTarget ? <RescheduleDialog lesson={rescheduleTarget} loading={loading} onClose={() => setRescheduleTarget(null)} onSave={(startAt, endAt, reason) => reschedule(rescheduleTarget, startAt, endAt, reason)} /> : null}{canSettle && settlementPreview ? <SettlementPreviewDialog lesson={actionTarget} onCancel={() => { setSettlementPreview(null); setActionTarget(null) }} onConfirm={() => { setSettlementPreview(null); setConfirmAction('settle') }} preview={settlementPreview} studentReferences={studentReferences} teacherReferences={referenceData.teachers} /> : null}{confirmAction && actionCopy && actionTarget ? <ConfirmDialog confirmLabel={actionCopy.confirmLabel} destructive={actionCopy.destructive} description={<><strong>{actionTarget.title}</strong><br />{actionCopy.description}</>} onCancel={() => { setConfirmAction(null); setActionTarget(null) }} onConfirm={() => void runConfirmedAction(actionTarget, confirmAction)} title={actionCopy.title} /> : null}</WorkspacePanel>
+  return <WorkspacePanel><PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载课堂" onClick={() => void load()} type="button" />{canAcademic ? <IconButton icon={<Plus className="h-4 w-4" />} label="新增课堂" onClick={() => setEditor(null)} type="button" variant="primary" /> : null}</>} title={title} /><div className="border-b border-[var(--border)] px-4 py-3 sm:px-5"><div className="max-w-md"><SegmentedControl label="课堂范围" onChange={setScope} options={[{ label: `即将上课 ${scoped.upcoming.length}`, value: 'upcoming' }, { label: `待处理 ${scoped.todo.length}`, value: 'todo' }, { label: `全部 ${lessons.length}`, value: 'all' }]} value={scope} /></div></div><AsyncState empty={lessons.length === 0 ? <EmptyState noun="课堂" onCreate={canAcademic ? () => setEditor(null) : undefined} /> : visibleLessons.length === 0 ? <EmptyState filtered noun="课堂" onReset={() => setScope('all')} /> : undefined} error={error} loading={loading && lessons.length === 0} loadingLabel="正在加载课堂..." onRetry={() => void load()}><ResponsiveDataRegion desktop={<LessonTable lessons={visibleLessons} onEdit={canAcademic ? setEditor : undefined} onOpen={openLesson} onPublish={canAcademic ? setPublishTarget : undefined} />} mobile={visibleLessons.map((lesson) => <LessonCard key={lesson.id} lesson={lesson} onOpen={() => void openLesson(lesson)} />)} /></AsyncState>{selected ? <LessonDrawer canAcademic={canAcademic} canSettle={canSettle} canTeach={canTeach} lesson={selected} loading={loading} onAllPresent={() => markAllPresent(selected)} onAttendance={(record, status) => updateAttendance(selected, record, status)} onCancel={() => beginAction(selected, 'cancel')} onClose={closeLesson} onComplete={() => beginAction(selected, 'complete')} onPreviewSettlement={() => previewSettlement(selected)} onReschedule={() => beginReschedule(selected)} onReverse={() => beginAction(selected, 'reverse')} studentReferences={studentReferences} students={students} teacherId={profile.id} teacherReferences={referenceData.teachers} teachers={teachers} onTeacher={(record, status) => updateTeacher(selected, record, status)} /> : null}{canAcademic && editor !== undefined ? <LessonEditor creditTypes={referenceData.creditTypes} lesson={editor} loading={loading} onClose={() => setEditor(undefined)} onSave={saveLesson} /> : null}{canAcademic && publishTarget ? <PublishDialog classes={classes} lesson={publishTarget} loading={loading} onClose={() => setPublishTarget(null)} onPublish={(classIds) => publish(publishTarget, classIds)} /> : null}{canAcademic && rescheduleTarget ? <RescheduleDialog lesson={rescheduleTarget} loading={loading} onClose={() => setRescheduleTarget(null)} onSave={(startAt, endAt, reason) => reschedule(rescheduleTarget, startAt, endAt, reason)} /> : null}{canSettle && settlementPreview ? <SettlementPreviewDialog lesson={actionTarget} onCancel={() => { setSettlementPreview(null); setActionTarget(null) }} onConfirm={() => { setSettlementPreview(null); setConfirmAction('settle') }} preview={settlementPreview} studentReferences={studentReferences} teacherReferences={referenceData.teachers} /> : null}{confirmAction && actionCopy && actionTarget ? <ConfirmDialog confirmLabel={actionCopy.confirmLabel} destructive={actionCopy.destructive} description={<><strong>{actionTarget.title}</strong><br />{actionCopy.description}</>} onCancel={() => { setConfirmAction(null); setActionTarget(null) }} onConfirm={() => void runConfirmedAction(actionTarget, confirmAction)} title={actionCopy.title} /> : null}</WorkspacePanel>
 }
 
-function LessonTable({ lessons, onEdit, onOpen, onPublish }: { lessons: Lesson[]; onEdit?: (lesson: Lesson) => void; onOpen: (lesson: Lesson) => void; onPublish?: (lesson: Lesson) => void }) { return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3">课堂</th><th className="px-4 py-3">时间</th><th className="px-4 py-3">地点</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">每名学员</th><th className="px-4 py-3 text-right">操作</th></tr></thead><tbody>{lessons.map((lesson) => <tr className="border-b border-[var(--border)] hover:bg-[var(--brand-wash)]" key={lesson.id}><td className="px-4 py-3"><p className="font-semibold">{lesson.title}</p><p className="text-xs text-[var(--muted-foreground)]">{lesson.code}</p></td><td className="px-4 py-3">{formatDateTime(lesson.startAt)}</td><td className="px-4 py-3">{lesson.location || '地点待定'}</td><td className="px-4 py-3"><Badge tone={lesson.status === 'settled' ? 'green' : lesson.status === 'cancelled' ? 'red' : 'blue'}>{statusLabel(lesson.status)}</Badge></td><td className="px-4 py-3">{lesson.requiredQuantity || 1} 课时</td><td className="px-4 py-3"><div className="flex justify-end gap-2"><IconButton icon={<Eye className="h-4 w-4" />} label="课堂详情" onClick={() => void onOpen(lesson)} type="button" variant="ghost" />{onEdit && onPublish && lesson.status === 'draft' ? <><Button onClick={() => onEdit(lesson)} type="button" variant="secondary">编辑</Button><Button onClick={() => onPublish(lesson)} type="button">发布</Button></> : null}</div></td></tr>)}</tbody></DataTable> }
+function LessonTable({ lessons, onEdit, onOpen, onPublish }: { lessons: Lesson[]; onEdit?: (lesson: Lesson) => void; onOpen: (lesson: Lesson) => void; onPublish?: (lesson: Lesson) => void }) { return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3">课堂</th><th className="px-4 py-3">时间</th><th className="px-4 py-3">地点</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">每名学员</th><th className="px-4 py-3 text-right">操作</th></tr></thead><tbody>{lessons.map((lesson) => <tr className="border-b border-[var(--border)] hover:bg-[var(--brand-wash)]" key={lesson.id}><td className="px-4 py-3"><p className="font-semibold">{lesson.title}</p></td><td className="px-4 py-3">{formatDateTime(lesson.startAt)}</td><td className="px-4 py-3">{lesson.location || '地点待定'}</td><td className="px-4 py-3"><Badge tone={lesson.status === 'settled' ? 'green' : lesson.status === 'cancelled' ? 'red' : 'blue'}>{statusLabel(lesson.status)}</Badge></td><td className="px-4 py-3">{lesson.requiredQuantity || 1} 课时</td><td className="px-4 py-3"><div className="flex justify-end gap-2"><IconButton icon={<Eye className="h-4 w-4" />} label="课堂详情" onClick={() => void onOpen(lesson)} type="button" variant="ghost" />{onEdit && onPublish && lesson.status === 'draft' ? <><Button onClick={() => onEdit(lesson)} type="button" variant="secondary">编辑</Button><Button onClick={() => onPublish(lesson)} type="button">发布</Button></> : null}</div></td></tr>)}</tbody></DataTable> }
 function LessonCard({ lesson, onOpen }: { lesson: Lesson; onOpen: () => void }) { return <article className="grid gap-3 px-4 py-4"><div className="flex justify-between"><div><h3 className="font-semibold">{lesson.title}</h3><p className="text-xs text-[var(--muted-foreground)]">{formatDateTime(lesson.startAt)} · {lesson.location || '地点待定'}</p></div><Badge tone="blue">{statusLabel(lesson.status)}</Badge></div><p className="text-sm text-[var(--muted-foreground)]">每名学员使用 {lesson.requiredQuantity || 1} 课时</p><Button onClick={onOpen} type="button" variant="secondary">课堂详情</Button></article> }
 
 interface LessonDrawerProps {
@@ -224,11 +259,13 @@ interface LessonDrawerProps {
 }
 
 function LessonDrawer({ canAcademic, canSettle, canTeach, lesson, loading, onAllPresent, onAttendance, onCancel, onClose, onComplete, onPreviewSettlement, onReschedule, onReverse, onTeacher, studentReferences, students, teacherId, teacherReferences, teachers }: LessonDrawerProps) {
-  const canComplete = canAcademic && ['scheduled', 'enrollment_closed', 'in_progress'].includes(String(lesson.status))
-  const canPreviewSettlement = canSettle && ['completed', 'cancelled', 'correction_pending'].includes(String(lesson.status))
+  const actions = lessonActions(lesson)
+  const canComplete = canAcademic && actions.complete
+  const canPreviewSettlement = canSettle && actions.settle
+  const canMarkAttendance = canTeach && actions.attendance
   const teacherDescription = canAcademic ? '教务可维护全部实际授课教师' : canTeach ? '仅可确认本人的实际授课状态' : '仅查看核销所依据的实际授课状态'
 
-  return <DrawerShell description={`${formatDateTime(lesson.startAt)} · ${lesson.location || '地点待定'}`} onRequestClose={onClose} size="wide" title={lesson.title}><div className="grid gap-6 p-5"><div className="flex flex-wrap gap-2">{canTeach ? <Button disabled={loading} onClick={() => void onAllPresent()} type="button">全部到课</Button> : null}{canAcademic ? <Button onClick={onReschedule} type="button" variant="secondary">调整时间</Button> : null}{canComplete ? <Button onClick={onComplete} type="button" variant="secondary">结束课堂</Button> : null}{canPreviewSettlement ? <Button onClick={() => void onPreviewSettlement()} type="button" variant="secondary">核销预览</Button> : null}{canSettle && lesson.status === 'settled' ? <Button onClick={onReverse} type="button" variant="danger">核销更正</Button> : null}{canAcademic ? <Button onClick={onCancel} type="button" variant="danger">取消课堂</Button> : null}</div><section className="grid gap-3"><SectionHeader description={`${students.length} 名学员`} title="出勤名单" />{students.map((student) => { const person = studentReferences.find((item) => item.id === String(student.studentId)); const name = personName(person, String(student.studentId)); return <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3" key={student.id}><div><p className="font-semibold">{name}</p><p className="text-xs text-[var(--muted-foreground)]">{person?.cellphone || '联系方式待补充'} · {creditStatusLabel(student.creditStatus)}</p></div><Select aria-label={`${name}出勤状态`} className="max-w-36" disabled={!canTeach} options={attendanceOptions} value={String(student.attendanceStatus || 'scheduled')} onChange={(event) => { if (canTeach && event.target.value !== 'scheduled') void onAttendance(student, event.target.value) }} /></div> })}</section><section className="grid gap-3"><SectionHeader description={teacherDescription} title="授课教师" />{teachers.map((teacher) => { const editable = canAcademic || (canTeach && teacher.teacherId === teacherId); const person = teacherReferences.find((item) => item.id === String(teacher.teacherId)); const name = personName(person, String(teacher.teacherId)); return <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3" key={teacher.id}><div><p className="font-semibold">{name}</p><p className="text-xs text-[var(--muted-foreground)]">{person?.cellphone || '联系方式待补充'} · {roleLabel(teacher.role)}</p></div><Select aria-label={`${name}实际授课状态`} className="max-w-36" disabled={!editable} options={[{ label: '待确认', value: 'pending' }, { label: '实际授课', value: 'confirmed' }, { label: '缺席', value: 'absent' }, { label: '取消', value: 'cancelled' }]} value={String(teacher.actualStatus || 'pending')} onChange={(event) => { if (editable && event.target.value !== 'pending') void onTeacher(teacher, event.target.value) }} /></div> })}</section><TechnicalDetails fields={[{ label: '课堂编号', value: lesson.id }, { label: '课堂版本', value: lesson.version }, { label: '名单版本', value: lesson.rosterVersion }, { label: '原始状态', value: lesson.status }]} /></div></DrawerShell>
+  return <DrawerShell description={`${formatDateTime(lesson.startAt)} · ${lesson.location || '地点待定'}`} onRequestClose={onClose} size="wide" title={lesson.title}><div className="grid gap-6 p-5"><div className="flex flex-wrap gap-2">{canMarkAttendance ? <Button disabled={loading} onClick={() => void onAllPresent()} type="button">全部到课</Button> : null}{canAcademic && actions.reschedule ? <Button onClick={onReschedule} type="button" variant="secondary">调整时间</Button> : null}{canComplete ? <Button onClick={onComplete} type="button" variant="secondary">结束课堂</Button> : null}{canPreviewSettlement ? <Button onClick={() => void onPreviewSettlement()} type="button" variant="secondary">核销预览</Button> : null}{canSettle && actions.reverse ? <Button onClick={onReverse} type="button" variant="danger">核销更正</Button> : null}{canAcademic && actions.cancel ? <Button onClick={onCancel} type="button" variant="danger">取消课堂</Button> : null}</div><section className="grid gap-3"><SectionHeader description={`${students.length} 名学员`} title="出勤名单" />{students.map((student) => { const person = studentReferences.find((item) => item.id === String(student.studentId)); const name = personName(person, String(student.studentId)); return <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3" key={student.id}><div><p className="font-semibold">{name}</p><p className="text-xs text-[var(--muted-foreground)]">{person?.cellphone || '联系方式待补充'} · {creditStatusLabel(student.creditStatus)}</p></div><Select aria-label={`${name}出勤状态`} className="max-w-36" disabled={!canMarkAttendance} options={attendanceOptions} value={String(student.attendanceStatus || 'scheduled')} onChange={(event) => { if (canMarkAttendance && event.target.value !== 'scheduled') void onAttendance(student, event.target.value) }} /></div> })}</section><section className="grid gap-3"><SectionHeader description={teacherDescription} title="授课教师" />{teachers.map((teacher) => { const editable = actions.attendance && (canAcademic || (canTeach && teacher.teacherId === teacherId)); const person = teacherReferences.find((item) => item.id === String(teacher.teacherId)); const name = personName(person, String(teacher.teacherId)); return <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3" key={teacher.id}><div><p className="font-semibold">{name}</p><p className="text-xs text-[var(--muted-foreground)]">{person?.cellphone || '联系方式待补充'} · {roleLabel(teacher.role)}</p></div><Select aria-label={`${name}实际授课状态`} className="max-w-36" disabled={!editable} options={[{ label: '待确认', value: 'pending' }, { label: '实际授课', value: 'confirmed' }, { label: '缺席', value: 'absent' }, { label: '取消', value: 'cancelled' }]} value={String(teacher.actualStatus || 'pending')} onChange={(event) => { if (editable && event.target.value !== 'pending') void onTeacher(teacher, event.target.value) }} /></div> })}</section><TechnicalDetails fields={[{ label: '课堂编号', value: lesson.id }, { label: '课堂版本', value: lesson.version }, { label: '名单版本', value: lesson.rosterVersion }, { label: '原始状态', value: lesson.status }]} /></div></DrawerShell>
 }
 
 function LessonEditor({ creditTypes, lesson, loading, onClose, onSave }: { creditTypes: BookingReferenceData['creditTypes']; lesson: Lesson | null; loading: boolean; onClose: () => void; onSave: (values: Partial<Lesson>) => Promise<void> }) {
@@ -264,3 +301,6 @@ function settlementActionLabel(value: unknown) { return ({ consume: '扣减', re
 function lessonFormValue(lesson: Lesson | null): Partial<Lesson> { return lesson ? { code: lesson.code, title: lesson.title, startAt: lesson.startAt?.slice(0, 16), endAt: lesson.endAt?.slice(0, 16), location: lesson.location, requiredCreditTypeId: lesson.requiredCreditTypeId, requiredQuantity: lesson.requiredQuantity, status: lesson.status, rosterVersion: lesson.rosterVersion, version: lesson.version, attendanceRuleSnapshot: lesson.attendanceRuleSnapshot, settlementRuleSnapshot: lesson.settlementRuleSnapshot, teacherRuleSnapshot: lesson.teacherRuleSnapshot } : { status: 'draft', requiredQuantity: 1, rosterVersion: 1, version: 1, attendanceRuleSnapshot: { version: 1 }, settlementRuleSnapshot: { version: 1 }, teacherRuleSnapshot: { version: 1 } } }
 function toIsoDate(value: unknown) { const date = new Date(String(value || '')); return Number.isNaN(date.getTime()) ? String(value || '') : date.toISOString() }
 function message(error: unknown, fallback: string) { return error instanceof Error ? error.message : fallback }
+
+function lessonScope(value: string | null): LessonScope { return value === 'todo' || value === 'all' ? value : 'upcoming' }
+function byStart(a: Lesson, b: Lesson) { return Date.parse(a.startAt) - Date.parse(b.startAt) }

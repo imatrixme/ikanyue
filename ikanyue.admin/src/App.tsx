@@ -122,7 +122,7 @@ function AppContent({ api: injectedApi }: AppProps) {
   function onLogin(result: LoginResult) {
     writeCachedSession(result)
     dispatch({ type: 'login:success', payload: result })
-    navigate('/dashboard', { replace: true })
+    navigate(viewPaths.dashboard, { replace: true })
   }
 
   function onLogout() {

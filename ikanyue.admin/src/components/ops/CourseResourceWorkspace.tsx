@@ -1,8 +1,7 @@
 import { Eye, Pencil, Plus, RefreshCw } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
-import { resourceBusinessIcons } from '../../app/businessIcons'
 import { courseFieldValue, recordName, statusLabel, type ReferenceOption } from '../../app/coursePresentation'
 import type {
   CourseRecord,
@@ -48,8 +47,6 @@ interface CourseResourceWorkspaceProps {
   resource: CourseResourceKey
   writableResource?: CourseWritableResource
   title: string
-  eyebrow: string
-  description: string
   noun: string
   columns: ResourceColumn[]
   fields?: ResourceField[]
@@ -62,7 +59,7 @@ interface CourseResourceWorkspaceProps {
 const EMPTY_QUERY: Record<string, string> = {}
 
 export function CourseResourceWorkspace(props: CourseResourceWorkspaceProps) {
-  const { api, token, resource, writableResource, title, eyebrow, description, noun, columns, fields = [], statusOptions = [], defaultValues = {}, query = EMPTY_QUERY, onChanged } = props
+  const { api, token, resource, writableResource, title, noun, columns, fields = [], statusOptions = [], defaultValues = {}, query = EMPTY_QUERY, onChanged } = props
   const [records, setRecords] = useState<CourseRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -112,16 +109,11 @@ export function CourseResourceWorkspace(props: CourseResourceWorkspaceProps) {
     }
   }
 
-  const activeCount = useMemo(() => records.filter((record) => record.status === 'active' || record.status === 'scheduled').length, [records])
 
   return (
     <WorkspacePanel>
       <PageHeader
         actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label={`重新加载${noun}`} onClick={() => void load()} type="button" />{writableResource ? <IconButton icon={<Plus className="h-4 w-4" />} label={`新增${noun}`} onClick={() => setEditor(null)} type="button" variant="primary" /> : null}</>}
-        badge={<Badge tone="green">{records.length} 条 · {activeCount} 启用</Badge>}
-        description={description}
-        eyebrow={eyebrow}
-        icon={resourceBusinessIcons[resource]}
         title={title}
       />
       <AsyncState empty={records.length === 0 ? <EmptyState noun={noun} onCreate={writableResource ? () => setEditor(null) : undefined} /> : undefined} error={error} loading={loading && records.length === 0} loadingLabel={`正在加载${noun}...`} onRetry={() => void load()}>

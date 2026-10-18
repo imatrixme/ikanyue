@@ -34,7 +34,7 @@ export function CoursesWorkspace({ api, token }: WorkspaceProps) {
     { key: 'teacherTier', label: '教师要求', required: true, type: 'select', options: [{ label: '标准教师', value: 'standard' }, { label: '资深教师', value: 'senior' }, { label: '专家教师', value: 'expert' }] },
     { key: 'defaultCreditTypeId', label: '默认扣减课时', required: true, type: 'reference', options: refs.creditTypes, loading: refs.loading, emptyLabel: refs.error || '暂无可用课时类型', hint: '学员预约或上课时默认使用的课时余额。' },
   ]
-  return <CourseResourceWorkspace api={api} columns={courseColumns} defaultValues={{ durationMinutes: 60, deliveryMode: 'group', teacherTier: 'standard', status: 'draft' }} description="定义课程名称、授课形式、单节时长与教师要求；启用后可用于课包和班级。" eyebrow="课程目录" fields={fields} noun="课程规格" resource="courseSpecs" statusOptions={statusOptions} title="课程规格" token={token} writableResource="course-specs" />
+  return <CourseResourceWorkspace api={api} columns={courseColumns} defaultValues={{ durationMinutes: 60, deliveryMode: 'group', teacherTier: 'standard', status: 'draft' }} fields={fields} noun="课程规格" resource="courseSpecs" statusOptions={statusOptions} title="课程规格" token={token} writableResource="course-specs" />
 }
 
 type PackageTab = 'packages' | 'prices' | 'grants' | 'conversions'
@@ -60,7 +60,7 @@ function PackageList({ api, token }: WorkspaceProps) {
     { key: 'validityDurationDays', label: '有效天数', type: 'number', required: true },
     { key: 'expiryPolicy', label: '有效期规则', type: 'select', required: true, options: [{ label: '固定期限', value: 'FIXED_DURATION' }, { label: '学期结束', value: 'TERM_END' }, { label: '长期有效', value: 'NO_EXPIRY' }] },
   ]
-  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ saleChannel: 'admin', activationMode: 'FIRST_COMPLETED_SESSION', validityDurationDays: 180, activationDeadlineDays: 30, expiryPolicy: 'FIXED_DURATION', status: 'draft' }} description="一个课包可配置多条课程课时发放规则，并通过独立价格版本销售。" eyebrow="产品与课时" fields={fields} noun="课包" resource="packages" statusOptions={statusOptions} title="课包管理" token={token} writableResource="packages" />
+  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ saleChannel: 'admin', activationMode: 'FIRST_COMPLETED_SESSION', validityDurationDays: 180, activationDeadlineDays: 30, expiryPolicy: 'FIXED_DURATION', status: 'draft' }} fields={fields} noun="课包" resource="packages" statusOptions={statusOptions} title="课包管理" token={token} writableResource="packages" />
 }
 
 function PriceList({ api, token, refs }: WorkspaceProps & { refs: CatalogReferences }) {
@@ -75,7 +75,7 @@ function PriceList({ api, token, refs }: WorkspaceProps & { refs: CatalogReferen
     { key: 'version', label: '版本号', type: 'number', required: true },
     { key: 'validFrom', label: '开始时间', type: 'datetime-local', required: true }, { key: 'validTo', label: '结束时间', type: 'datetime-local' },
   ]
-  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ currency: 'CNY', version: 1, status: 'draft' }} description="价格修改会创建新版本，历史订单继续保留原价格快照。" eyebrow="产品与课时" fields={fields} noun="价格版本" resource="priceVersions" statusOptions={statusOptions} title="价格版本" token={token} writableResource="price-versions" />
+  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ currency: 'CNY', version: 1, status: 'draft' }} fields={fields} noun="价格版本" resource="priceVersions" statusOptions={statusOptions} title="价格版本" token={token} writableResource="price-versions" />
 }
 
 function GrantList({ api, token, refs }: WorkspaceProps & { refs: CatalogReferences }) {
@@ -88,7 +88,7 @@ function GrantList({ api, token, refs }: WorkspaceProps & { refs: CatalogReferen
     { key: 'creditTypeId', label: '包含的课时类型', required: true, type: 'reference', options: refs.creditTypes, loading: refs.loading, emptyLabel: refs.error || '暂无可用课时类型' },
     { key: 'quantity', label: '包含课时数', type: 'number', required: true },
   ]
-  return <CourseResourceWorkspace api={api} columns={columns} description="每条规则指定课包发放哪一种课程课时以及数量。" eyebrow="产品与课时" fields={fields} noun="发放规则" resource="grantLines" title="课时发放规则" token={token} writableResource="grant-lines" />
+  return <CourseResourceWorkspace api={api} columns={columns} fields={fields} noun="发放规则" resource="grantLines" title="课时发放规则" token={token} writableResource="grant-lines" />
 }
 
 function ConversionRuleList({ api, token, refs }: WorkspaceProps & { refs: CatalogReferences }) {
@@ -115,7 +115,7 @@ function ConversionRuleList({ api, token, refs }: WorkspaceProps & { refs: Catal
     { key: 'version', label: '版本号', type: 'number', required: true },
   ]
   const validFrom = new Date().toISOString().slice(0, 16)
-  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ sourceQuantity: 100, targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000, expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0, activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1, validFrom, validTo: '', version: 1, status: 'draft' }} description="发布时校验整张有向兑换图，拒绝可套利循环；修改、发布和停用都会创建不可变新版本。" eyebrow="产品与课时" fields={fields} noun="兑换规则" resource="conversionRules" statusOptions={statusOptions} title="兑换规则" token={token} writableResource="conversion-rules" />
+  return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ sourceQuantity: 100, targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000, expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0, activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1, validFrom, validTo: '', version: 1, status: 'draft' }} fields={fields} noun="兑换规则" resource="conversionRules" statusOptions={statusOptions} title="兑换规则" token={token} writableResource="conversion-rules" />
 }
 
 function conversionExample(record: Record<string, unknown>) {

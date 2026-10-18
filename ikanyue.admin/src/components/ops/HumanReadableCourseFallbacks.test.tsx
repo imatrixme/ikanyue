@@ -71,7 +71,7 @@ describe('human-readable course fallbacks', () => {
         { id: 'without-reference', name: '未选关联课程', relatedId: '', status: 'draft' },
       ],
     })
-    render(<CourseResourceWorkspace api={api} columns={[{ key: 'name', label: '名称' }, { key: 'relatedId', label: '关联课程', options: [] }]} defaultValues={{}} description="测试关联数据缺失时的用户提示。" eyebrow="课程配置" fields={[{ key: 'relatedId', label: '关联课程', type: 'reference' }, { key: 'mode', label: '可选模式', type: 'select' }]} noun="课程规格" resource="courseSpecs" title="关联字段测试" token="token" writableResource="course-specs" />)
+    render(<CourseResourceWorkspace api={api} columns={[{ key: 'name', label: '名称' }, { key: 'relatedId', label: '关联课程', options: [] }]} defaultValues={{}} fields={[{ key: 'relatedId', label: '关联课程', type: 'reference' }, { key: 'mode', label: '可选模式', type: 'select' }]} noun="课程规格" resource="courseSpecs" title="关联字段测试" token="token" writableResource="course-specs" />)
 
     const table = await screen.findByRole('table')
     expect(table).toHaveTextContent('关联信息待补充')

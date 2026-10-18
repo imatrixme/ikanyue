@@ -6,7 +6,7 @@ async function loginAsAdmin(page: import('@playwright/test').Page, openPoints = 
   await page.getByLabel('账号或手机号').fill('admin')
   await page.getByLabel('密码').fill('secret')
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^今天/ })).toBeVisible()
   if (openPoints) await openView(page, '学员积分')
 }
 
@@ -15,33 +15,28 @@ async function openRewards(page: import('@playwright/test').Page) {
 }
 
 async function openView(page: import('@playwright/test').Page, name: string) {
+  const view = views[name]
   const mobileMenu = page.getByRole('button', { name: '打开导航' })
   if (await mobileMenu.isVisible()) {
     await mobileMenu.click()
-    await page.getByRole('button', { name }).last().click()
+    await page.getByRole('navigation', { name: '后台导航' }).last().getByRole('button', { name: view.path[0], exact: true }).click()
   } else {
-    await page.getByRole('button', { name }).click()
+    await page.getByRole('navigation', { name: '后台导航' }).getByRole('button', { name: view.path[0], exact: true }).click()
   }
-  const heading = viewHeadings[name]
-  if (heading) await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+  if (view.path[1]) await page.getByRole('navigation', { name: '分区导航' }).getByRole('button', { name: view.path[1], exact: true }).click()
+  await expect(page.getByRole('heading', { name: view.heading })).toBeVisible()
 }
 
-const viewHeadings: Record<string, string> = {
-  '今日工作台': '今日工作台',
-  '学员管理': '学员管理',
-  '课程规格': '课程规格',
-  '课包与价格': '课包管理',
-  '报课管理': '报课管理',
-  '班级管理': '班级管理',
-  '课堂管理': '课堂管理',
-  '机构课表': '机构课表',
-  '课程预约': '课程预约',
-  '课时账户': '课时账户',
-  '教师工作量': '教师工作量',
-  '异常中心': '核销异常',
-  '操作审计': '操作审计',
-  '学员积分': '学员积分',
-  '实物管理': '实物管理',
+// Page name -> navigation section, optional section tab, and the page heading.
+const views: Record<string, { path: [string, string?]; heading: string }> = {
+  '学员积分': { path: ['积分', '学员积分'], heading: '学员积分' },
+  '实物管理': { path: ['积分', '实物'], heading: '实物管理' },
+  '学员管理': { path: ['学员'], heading: '学员管理' },
+  '课程规格': { path: ['设置', '课程'], heading: '课程规格' },
+  '报课管理': { path: ['账务', '报课'], heading: '报课管理' },
+  '课程预约': { path: ['课表', '预约'], heading: '课程预约' },
+  '机构课表': { path: ['课表', '日历'], heading: '机构课表' },
+  '课堂管理': { path: ['课表', '课堂'], heading: '课堂管理' },
 }
 
 test('admin completes grant and redemption from learner row dialogs', async ({ page }) => {
@@ -310,16 +305,16 @@ test('non-admin login receives scoped course navigation without points access', 
   await page.getByLabel('账号或手机号').fill('13800138001')
   await page.getByLabel('密码').fill('secret')
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '今日工作台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^今天/ })).toBeVisible()
   await openView(page, '课堂管理')
   await expect(page.getByRole('heading', { name: '课堂管理' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '学员积分' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '积分', exact: true })).toHaveCount(0)
 })
 
 test('admin logout returns to the login screen', async ({ page }) => {
   await loginAsAdmin(page)
   await page.getByRole('button', { name: '退出' }).click()
-  await expect(page.getByRole('heading', { name: '看乐积分兑换后台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '看乐教学运营中心' })).toBeVisible()
 })
 
 async function controlsDoNotOverlap(page: import('@playwright/test').Page, ids: string[]) {

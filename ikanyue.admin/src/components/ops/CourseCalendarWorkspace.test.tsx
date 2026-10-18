@@ -42,7 +42,7 @@ describe('institution course calendar workspace', () => {
     const user = userEvent.setup()
     const api = createMockOpsApi()
     const reschedule = vi.spyOn(api, 'rescheduleLesson')
-    const cancel = vi.spyOn(api, 'setCourseResourceStatus')
+    const cancel = vi.spyOn(api, 'cancelLesson')
     const view = renderWorkspace(api, '/calendar?view=list&date=2026-08-03')
     await user.click((await screen.findAllByText('少儿声乐小课'))[0])
     let drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
@@ -68,7 +68,7 @@ describe('institution course calendar workspace', () => {
     await user.click(within(drawer).getByRole('button', { name: '取消课堂' }))
     dialog = screen.getByRole('dialog', { name: '取消课堂' })
     await user.click(within(dialog).getByRole('button', { name: '确认取消' }))
-    expect(cancel).toHaveBeenCalledWith('token', 'lessons', 'lesson_1', 'cancelled', '教学安排取消')
+    expect(cancel).toHaveBeenCalledWith('token', 'lesson_1', '教学安排取消')
   })
 
   it('shows load, detail, command, and version-conflict recovery states', async () => {
@@ -101,7 +101,7 @@ describe('institution course calendar workspace', () => {
   it('keeps a failed non-conflict command open and resets an empty filtered state', async () => {
     const user = userEvent.setup()
     const api = createMockOpsApi()
-    vi.spyOn(api, 'setCourseResourceStatus').mockRejectedValueOnce(new Error('取消失败'))
+    vi.spyOn(api, 'cancelLesson').mockRejectedValueOnce(new Error('取消失败'))
     const failed = renderWorkspace(api, '/calendar?view=list&date=2026-08-03')
     await user.click((await screen.findAllByText('少儿声乐小课'))[0])
     await user.click(within(await screen.findByRole('dialog', { name: '少儿声乐小课' })).getByRole('button', { name: '取消课堂' }))

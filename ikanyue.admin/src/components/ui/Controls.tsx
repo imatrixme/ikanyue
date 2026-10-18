@@ -7,7 +7,7 @@ export function Tooltip({ children, label }: { children: ReactNode; label: strin
   return (
     <span className="group relative inline-flex">
       {children}
-      <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[calc(100%+0.375rem)] z-30 hidden -translate-x-1/2 whitespace-nowrap rounded bg-[var(--foreground)] px-2 py-1 text-xs text-[var(--background)] shadow-md group-hover:block group-focus-within:block">
+      <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[calc(100%+0.375rem)] z-30 hidden -translate-x-1/2 whitespace-nowrap rounded bg-[var(--foreground)] px-2 py-1 text-xs text-[var(--background)] shadow-md group-hover:block group-has-[:focus-visible]:block">
         {label}
       </span>
     </span>
@@ -23,7 +23,7 @@ interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 
 export function IconButton({ className, icon, label, variant = 'secondary', ...props }: IconButtonProps) {
   return (
     <Tooltip label={label}>
-      <Button aria-label={label} className={cn('h-9 w-9 shrink-0 px-0', className)} icon={icon} title={label} variant={variant} {...props} />
+      <Button aria-label={label} className={cn('h-9 w-9 shrink-0 px-0', className)} icon={icon} variant={variant} {...props} />
     </Tooltip>
   )
 }

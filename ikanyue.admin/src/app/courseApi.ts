@@ -30,6 +30,7 @@ export interface CourseOpsApi {
   previewSettlement(token: string, sessionId: string): Promise<SettlementPreview>
   publishLesson(token: string, sessionId: string, classIds: string[], teacherOverrides?: TeacherOverride[]): Promise<CourseCommandResult>
   rescheduleLesson(token: string, sessionId: string, newStartAt: string, newEndAt: string, reason: string): Promise<CourseCommandResult>
+  cancelLesson(token: string, sessionId: string, reason: string): Promise<CourseCommandResult>
   settleLesson(token: string, sessionId: string): Promise<CourseCommandResult>
   reverseSettlement(token: string, sessionId: string, reason: string): Promise<CourseCommandResult>
   confirmTeacherCredit(token: string, teacherCreditEventId: string, reason: string): Promise<TeacherCreditConfirmation>
@@ -111,6 +112,9 @@ export function createHttpCourseOpsApi(baseUrl: string): CourseOpsApi {
     rescheduleLesson(token, sessionId, newStartAt, newEndAt, reason) {
       return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/reschedule`, { newStartAt, newEndAt, reason })
     },
+    cancelLesson(token, sessionId, reason) {
+      return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/cancel`, { reason, cancellationType: 'institution' })
+    },
     settleLesson(token, sessionId) {
       return command(token, `/course-credits/sessions/${encodeURIComponent(sessionId)}/settle`)
     },
@@ -182,6 +186,7 @@ export function createMockCourseOpsApi(): CourseOpsApi {
     },
     async publishLesson(_token, sessionId, classIds, teacherOverrides = []) { updateRecord(store.lessons, sessionId, { status: 'scheduled' }); return { sessionId, classIds, teacherOverrides, status: 'scheduled' } },
     async rescheduleLesson(_token, sessionId, newStartAt, newEndAt, reason) { updateRecord(store.lessons, sessionId, { startAt: newStartAt, endAt: newEndAt }); return { sessionId, newStartAt, newEndAt, reason } },
+    async cancelLesson(_token, sessionId, reason) { updateRecord(store.lessons, sessionId, { status: 'cancelled' }); return { sessionId, reason, status: 'cancelled' } },
     async settleLesson(_token, sessionId) { updateRecord(store.lessons, sessionId, { status: 'settled' }); return { sessionId, status: 'settled' } },
     async reverseSettlement(_token, sessionId, reason) { updateRecord(store.lessons, sessionId, { status: 'correction_pending' }); return { sessionId, reason, status: 'correction_pending' } },
     async confirmTeacherCredit(_token, teacherCreditEventId, reason) {

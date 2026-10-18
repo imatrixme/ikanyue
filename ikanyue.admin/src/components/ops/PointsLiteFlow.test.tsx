@@ -35,7 +35,7 @@ describe('points lite app flow', () => {
     expect(await screen.findByText('已扣除积分，确认线下领取')).toBeInTheDocument()
     expect(screen.getByRole('table')).toHaveTextContent('100 分')
 
-    await user.click(screen.getByRole('button', { name: '实物管理' }))
+    await user.click(screen.getByRole('button', { name: '实物' }))
     await user.click(screen.getAllByRole('button', { name: '编辑贴纸套装' })[0])
     await user.upload(screen.getByLabelText('选择图片'), new File(['image'], 'sticker.png', { type: 'image/png' }))
     await user.click(screen.getByRole('button', { name: /上传图片|替换图片/ }))
@@ -55,7 +55,7 @@ describe('points lite app flow', () => {
     expect((await screen.findAllByText('帆布袋')).length).toBeGreaterThan(0)
 
     await user.click(screen.getByRole('button', { name: '退出' }))
-    expect(screen.getByRole('heading', { name: '看乐积分兑换后台' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '看乐教学运营中心' })).toBeInTheDocument()
   }, 15_000)
 
   it('shows login validation and scopes non-admin users by capability', async () => {
@@ -66,9 +66,9 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('账号或手机号'), '13800138001')
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
-    expect(await screen.findByRole('heading', { name: '今日工作台' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '课堂管理' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '学员积分' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^今天/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '课表' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '积分' })).not.toBeInTheDocument()
   })
 
   it('handles forced password changes and cached-session parse errors', async () => {
@@ -113,7 +113,7 @@ describe('points lite app flow', () => {
     expect(screen.getByRole('dialog', { name: '确认线下兑换' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
 
-    await user.click(screen.getByRole('button', { name: '实物管理' }))
+    await user.click(screen.getByRole('button', { name: '实物' }))
     api.createReward = async () => { throw new Error('save down') }
     await user.click(screen.getByRole('button', { name: '新增实物' }))
     await user.type(screen.getByLabelText('实物名称'), '新奖品')
@@ -159,7 +159,7 @@ describe('points lite app flow', () => {
     api.getStudentPoints = vi.fn(api.getStudentPoints)
     const user = userEvent.setup()
     render(<App api={api} />)
-    await screen.findByRole('heading', { name: '今日工作台' })
+    await screen.findByRole('heading', { name: /^今天/ })
     await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
     expect(screen.getByText('还没有学员')).toBeInTheDocument()
@@ -204,7 +204,7 @@ describe('points lite app flow', () => {
     await login(user)
     await openPoints(user)
     expect(await screen.findByRole('heading', { name: '学员积分' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '实物管理' }))
+    await user.click(screen.getByRole('button', { name: '实物' }))
     await user.click(screen.getAllByRole('button', { name: '新增实物' })[0])
     await user.type(screen.getByLabelText('实物名称'), '待加载奖品')
     await user.click(screen.getByRole('button', { name: '创建实物' }))
@@ -219,7 +219,7 @@ describe('points lite app flow', () => {
     render(<App api={api} />)
     await login(user)
     await openPoints(user)
-    await user.click(screen.getByRole('button', { name: '实物管理' }))
+    await user.click(screen.getByRole('button', { name: '实物' }))
     await user.click(screen.getAllByRole('button', { name: '编辑贴纸套装' })[0])
     await user.clear(screen.getByLabelText('积分价格'))
     await user.type(screen.getByLabelText('积分价格'), '55')
@@ -288,8 +288,8 @@ async function login(user: ReturnType<typeof userEvent.setup>) {
 
 async function openPoints(user: ReturnType<typeof userEvent.setup>) {
   if (screen.queryByRole('heading', { name: '学员积分' })) return
-  await screen.findByRole('heading', { name: '今日工作台' })
-  await user.click(screen.getByRole('button', { name: '学员积分' }))
+  await screen.findByRole('heading', { name: /^今天/ })
+  await user.click(screen.getByRole('button', { name: '积分' }))
   await screen.findByRole('heading', { name: '学员积分' })
 }
 

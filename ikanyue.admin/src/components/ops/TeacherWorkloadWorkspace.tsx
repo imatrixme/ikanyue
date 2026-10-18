@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
 import type { BookingReferenceData } from '../../app/bookingTypes'
-import { viewBusinessIcons } from '../../app/businessIcons'
 import { creditEventLabel, formatDateTime, personName, recordName } from '../../app/coursePresentation'
 import type { CourseRecord } from '../../app/courseTypes'
 import { PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
@@ -64,10 +63,6 @@ export function TeacherWorkloadWorkspace({ api, token }: { api: OpsApi; token: s
   return <WorkspacePanel>
     <PageHeader
       actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新教师工作量" onClick={() => void load()} type="button" />}
-      badge={<Badge tone={status === 'pending' && items.length ? 'amber' : 'green'}>{items.length} 条{workloadStatusLabel(status)}</Badge>}
-      description="按确认状态核对课堂产生的教师工作量；Admin 可在复核课堂、教师、数量与原因后代为确认。"
-      eyebrow="教师结算"
-      icon={viewBusinessIcons.teachers}
       title="教师工作量"
     />
     <SummaryBand>

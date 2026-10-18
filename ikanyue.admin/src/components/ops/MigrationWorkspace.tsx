@@ -2,7 +2,6 @@ import { CheckCircle2, RefreshCw, ScanSearch, UploadCloud } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
-import { viewBusinessIcons } from '../../app/businessIcons'
 import type { MigrationInventory, MigrationPlan, MigrationPreview, MigrationTarget } from '../../app/migrationTypes'
 import { PageHeader, SectionHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
@@ -62,7 +61,7 @@ export function MigrationWorkspace({ api, token }: { api: OpsApi; token: string 
     catch { setJsonError('JSON 格式尚未完整，修正后才能预览。') }
   }
 
-  return <WorkspacePanel><PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新盘点历史数据" onClick={() => void load()} type="button" />} badge={<Badge tone={preview?.ready ? 'green' : sourceCount ? 'amber' : 'green'}>{preview?.ready ? '零差异可迁移' : `${sourceCount} 条来源`}</Badge>} description="由 Admin 显式映射历史课时、学习项目和课堂；历史课堂只导入记录，不扣减课程点。" eyebrow="数据治理" icon={viewBusinessIcons.migration} title="历史数据迁移" />
+  return <WorkspacePanel><PageHeader actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新盘点历史数据" onClick={() => void load()} type="button" />} title="历史数据迁移" />
     <SummaryBand><SummaryMetric label="学员旧课时" value={inventory?.totals.studentHours ?? '-'} /><SummaryMetric label="教师旧工作量" value={inventory?.totals.teacherHours ?? '-'} /><SummaryMetric label="历史项目" value={inventory?.totals.programs ?? '-'} /><SummaryMetric label="历史课堂" value={inventory?.totals.sessions ?? '-'} /></SummaryBand>
     <AsyncState error={error && !inventory ? error : ''} loading={loading && !inventory} loadingLabel="正在盘点历史课程数据..." onRetry={() => void load()}>{inventory ? <div className="grid gap-0">
       {sourceCount === 0 ? <EmptyState noun="需要迁移的历史课程数据" /> : <>

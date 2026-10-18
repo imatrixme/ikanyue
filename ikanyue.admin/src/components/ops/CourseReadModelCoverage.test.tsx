@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi, type OpsApi } from '../../app/api'
@@ -9,6 +9,7 @@ import { mockProfiles } from '../../app/mockData'
 import type { OpsProfile, StudentRecord } from '../../app/types'
 import { DashboardWorkspace } from './DashboardWorkspace'
 import { AccountsWorkspace, ExceptionsWorkspace } from './ReadOnlyCourseWorkspaces'
+import { StudentDetailPage } from './StudentDetailPage'
 import { StudentsPanel } from './StudentsPanel'
 import { StudentWorkspace } from './StudentWorkspace'
 
@@ -40,45 +41,66 @@ describe('course read model coverage', () => {
     expect(screen.getByRole('table')).toHaveTextContent('custom_status')
   })
 
-  it('covers dashboard capability combinations, populated queues, and navigation callbacks', async () => {
+  it('lists today tasks by capability and opens the exact record', async () => {
     const user = userEvent.setup()
     const api = populatedDashboardApi()
     const view = renderDashboard(api, mockProfiles.admin)
-    expect(await screen.findByRole('heading', { name: '今日工作台' })).toBeInTheDocument()
-    expect(await screen.findByText('8 个异常')).toBeInTheDocument()
-    for (const button of screen.getAllByRole('button', { name: '进入处理' })) await user.click(button)
-    await user.click(screen.getByRole('button', { name: '刷新今日工作台' }))
-    await screen.findByText('8 个异常')
+    expect(await screen.findByRole('heading', { name: /^今天/ })).toBeInTheDocument()
+    const lessons = await screen.findByRole('region', { name: '今日课堂' })
+    expect(lessons).toHaveTextContent('晨间合唱')
+    expect(lessons).toHaveTextContent('07:30')
+    expect(lessons).not.toHaveTextContent('未来课堂')
+    expect(screen.getByRole('region', { name: '待核销课堂' })).toHaveTextContent('待核销')
+    const renewal = screen.getByRole('region', { name: '需要续课（剩余 ≤ 2 课时）' })
+    expect(renewal).toHaveTextContent('张同学')
+    expect(renewal).toHaveTextContent('已过期 2 课时')
+    expect(renewal).not.toHaveTextContent('student_2')
+    expect(renewal).not.toHaveTextContent('student_never')
+    expect(screen.getByRole('region', { name: '报课后待同步名单' })).toHaveTextContent('待同步')
+    expect(screen.getByRole('region', { name: '异常' })).toHaveTextContent('7 条核销或对账异常')
+    expect(screen.getByRole('region', { name: '待确认工作量' })).toHaveTextContent('1 条授课工作量待确认')
+    await user.click(within(lessons).getByRole('button', { name: /晨间合唱/ }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/schedule/lessons?sessionId=today')
+    await user.click(within(renewal).getByRole('button', { name: /张同学/ }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/students/student_1')
+    await user.click(screen.getByRole('button', { name: '刷新今日待办' }))
+    await screen.findByRole('region', { name: '今日课堂' })
     view.unmount()
 
-    const profiles: OpsProfile[] = [
-      { ...mockProfiles.teacher, courseCreditCapabilities: [] },
-      { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.finance'] },
-      { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.academic'] },
-      { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.settlement'] },
-      { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.audit'] },
-    ]
-    for (const profile of profiles) {
-      const profileView = renderDashboard(createMockOpsApi(), profile)
-      await screen.findByRole('heading', { name: '今日工作台' })
+    const empty = renderDashboard(createMockOpsApi(), { ...mockProfiles.teacher, courseCreditCapabilities: [] })
+    expect(await screen.findByText('今天没有待办')).toBeInTheDocument()
+    empty.unmount()
+
+    const teacherApi = createMockOpsApi()
+    const list = vi.spyOn(teacherApi, 'listCourseResource')
+    const teacherView = renderDashboard(teacherApi, { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher'] })
+    await screen.findByRole('heading', { name: /^今天/ })
+    await waitFor(() => expect(list).toHaveBeenCalled())
+    expect(list.mock.calls.map((call) => call[1])).toEqual(expect.arrayContaining(['assignedLessons', 'teacherEvents']))
+    expect(list.mock.calls.map((call) => call[1])).not.toEqual(expect.arrayContaining(['accounts']))
+    teacherView.unmount()
+
+    for (const capability of ['course_credit.finance', 'course_credit.academic', 'course_credit.settlement', 'course_credit.audit'] as const) {
+      const profileView = renderDashboard(createMockOpsApi(), { ...mockProfiles.teacher, courseCreditCapabilities: [capability] })
+      await screen.findByRole('heading', { name: /^今天/ })
       profileView.unmount()
     }
   })
 
-  it('covers dashboard Error and non-Error fallbacks', async () => {
+  it('covers today Error and non-Error fallbacks', async () => {
     const user = userEvent.setup()
-    const api = createMockOpsApi()
+    const api = populatedDashboardApi()
     vi.spyOn(api, 'listCourseResource').mockRejectedValueOnce(new Error('dashboard failed'))
     const view = renderDashboard(api, mockProfiles.admin)
     expect(await screen.findByText('dashboard failed')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '重新加载' }))
-    expect((await screen.findAllByRole('button', { name: '进入处理' })).length).toBeGreaterThan(0)
+    expect(await screen.findByRole('region', { name: '今日课堂' })).toBeInTheDocument()
     view.unmount()
 
     const fallbackApi = createMockOpsApi()
     vi.spyOn(fallbackApi, 'listCourseResource').mockRejectedValueOnce('offline')
     renderDashboard(fallbackApi, mockProfiles.admin)
-    expect(await screen.findByText('加载运营工作台失败')).toBeInTheDocument()
+    expect(await screen.findByText('加载今日待办失败')).toBeInTheDocument()
   })
 
   it('covers account batches, mobile detail, empty state, and load/detail errors', async () => {
@@ -132,46 +154,68 @@ describe('course read model coverage', () => {
     expect(await screen.findByText('account detail failed')).toBeInTheDocument()
   })
 
-  it('covers student operation errors, inactive cleanup, and mobile callbacks', async () => {
+  it('opens the student detail page from the list and keeps teachers in a drawer', async () => {
     const user = userEvent.setup()
-    const api = createMockOpsApi()
-    vi.spyOn(api, 'getCourseResource').mockRejectedValueOnce('offline')
-    const view = renderStudentWorkspace(api)
-    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
-    expect(await screen.findByText('加载学员课程详情失败')).toBeInTheDocument()
-    view.unmount()
-
-    let resolveAccount: ((value: CourseRecord) => void) | undefined
-    const deferredApi = createMockOpsApi()
-    vi.spyOn(deferredApi, 'getCourseResource').mockImplementationOnce(() => new Promise((resolve) => { resolveAccount = resolve }))
-    const deferredView = renderStudentWorkspace(deferredApi)
-    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
-    deferredView.unmount()
-    resolveAccount?.({ id: 'student_1', studentId: 'student_1', availableQuantity: 0, frozenQuantity: 0, consumedQuantity: 0, expiredQuantity: 0 })
-    await new Promise((resolve) => window.setTimeout(resolve, 0))
+    renderStudentWorkspace(createMockOpsApi())
+    await user.click((await screen.findAllByRole('button', { name: '查看张同学学员详情' }))[0])
+    expect(screen.getByTestId('location')).toHaveTextContent('/students/student_1')
 
     const onOpen = vi.fn()
     const mobileView = render(<StudentsPanel loading={false} onOpenOperations={onOpen} onReload={vi.fn()} onSave={vi.fn().mockResolvedValue(true)} students={[student]} />)
-    await user.click(screen.getByRole('button', { name: '课程与班级' }))
+    await user.click(screen.getAllByRole('button', { name: '详情' }).at(-1)!)
     expect(onOpen).toHaveBeenCalledWith(student)
     await user.click(screen.getAllByRole('button', { name: '编辑张同学' }).at(-1)!)
     expect(screen.getByRole('dialog', { name: '编辑张同学' })).toBeInTheDocument()
     mobileView.unmount()
   })
 
-  it('identifies a disabled student account in course details', async () => {
+  it('shows balance, upcoming lessons, enrollments and history on the student page', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={mockProfiles.admin} students={[{ ...student, blocked: true }]} token="token" /></MemoryRouter>)
-    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
-    expect(await screen.findByRole('dialog', { name: '张同学 · 课程与班级' })).toHaveTextContent('账号已停用')
+    const api = createMockOpsApi()
+    const soon = new Date(Date.now() + 86_400_000).toISOString()
+    const originalList = api.listCourseResource.bind(api)
+    api.listCourseResource = async <T extends CourseRecord = CourseRecord>(token: string, resource: CourseResourceKey, query: CourseQuery = {}) => {
+      if (resource === 'lessons') return coursePage<T>([{ id: 'lesson_next', title: '下周声乐课', startAt: soon, status: 'scheduled' }, { id: 'lesson_old', title: '上次合唱', startAt: '2026-01-05T10:00:00.000Z', status: 'settled' }])
+      if (resource === 'classStudents') return coursePage<T>([{ id: 'class_blank', classId: 'class_1', status: '' }])
+      if (resource === 'sessionStudents') return coursePage<T>([{ id: 's_next', sessionId: 'lesson_next', attendanceStatus: '' }, { id: 's_old', sessionId: 'lesson_old', attendanceStatus: 'present', creditStatus: '' }, { id: 's_missing', sessionId: 'lesson_gone', attendanceStatus: '' }])
+      if (resource === 'enrollments') return coursePage<T>([{ id: 'enroll_blank', operationNo: 'ENR-BLANK', status: 'committed', resultSnapshot: { status: '' } }])
+      if (resource === 'auditLogs') return coursePage<T>([{ id: 'audit_blank', action: 'student.inspect', outcome: '' }])
+      return originalList<T>(token, resource, query)
+    }
+    vi.spyOn(api, 'listManagedStudents').mockResolvedValue({ items: [{ ...student, blocked: true }], pagination: { page: 1, perPage: 100, totalItems: 1, totalPages: 1 } })
+    renderStudentPage(api)
+    expect(await screen.findByRole('heading', { name: '张同学' })).toBeInTheDocument()
+    expect(screen.getByText(/账号已停用/)).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: '即将上课' })).toHaveTextContent('下周声乐课')
+    expect(screen.getByRole('region', { name: '即将上课' })).not.toHaveTextContent('上次合唱')
+    expect(screen.getByRole('region', { name: '最近课堂' })).toHaveTextContent('上次合唱')
+    expect(screen.getByRole('region', { name: '最近课堂' })).toHaveTextContent('到课')
+    expect(screen.getByRole('region', { name: '最近课堂' })).toHaveTextContent('未找到课堂')
+    expect(screen.getByRole('region', { name: '报课记录' })).toHaveTextContent('课包信息缺失')
+    expect(screen.getByRole('region', { name: '最近操作' })).toHaveTextContent('student.inspect')
+    await user.click(screen.getByRole('button', { name: '报课/续课' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/billing/enrollments?new=1&studentId=student_1')
   })
 
-  it('covers sparse teacher relationships and student operation value fallbacks', async () => {
+  it('reports student page load failures', async () => {
+    const api = createMockOpsApi()
+    vi.spyOn(api, 'getCourseResource').mockRejectedValueOnce(new Error('student detail failed'))
+    const view = renderStudentPage(api)
+    expect(await screen.findByText('student detail failed')).toBeInTheDocument()
+    view.unmount()
+
+    const fallbackApi = createMockOpsApi()
+    vi.spyOn(fallbackApi, 'getCourseResource').mockRejectedValueOnce('offline')
+    renderStudentPage(fallbackApi)
+    expect(await screen.findByText('加载学员详情失败')).toBeInTheDocument()
+  })
+
+  it('covers sparse teacher relationships in the assigned-student drawer', async () => {
     const user = userEvent.setup()
     const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
     const sparseTeacher: StudentRecord = { ...student, realName: '', nickName: '只有昵称', classAssignments: undefined, lessonAssignments: undefined }
     const emptyView = render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={teacherOnly} students={[sparseTeacher]} token="token" /></MemoryRouter>)
-    await user.click((await screen.findAllByRole('button', { name: '查看只有昵称课程与班级' }))[0])
+    await user.click((await screen.findAllByRole('button', { name: '查看只有昵称学员详情' }))[0])
     let drawer = screen.getByRole('dialog', { name: '只有昵称 · 授课关系' })
     expect(drawer).toHaveTextContent('暂无负责班级关系')
     expect(drawer).toHaveTextContent('暂无负责课堂记录')
@@ -185,42 +229,27 @@ describe('course read model coverage', () => {
     }
     relationStudent.classAssignments?.push({ id: 'class_missing', studentId: 'student_1', status: '' })
     relationStudent.lessonAssignments?.push({ id: 'lesson_missing', studentId: 'student_1', attendanceStatus: '' })
-    const relationView = render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={teacherOnly} students={[relationStudent]} token="token" /></MemoryRouter>)
-    await user.click((await screen.findAllByRole('button', { name: '查看13900009999课程与班级' }))[0])
+    render(<MemoryRouter><StudentWorkspace api={createMockOpsApi()} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={teacherOnly} students={[relationStudent]} token="token" /></MemoryRouter>)
+    await user.click((await screen.findAllByRole('button', { name: '查看13900009999学员详情' }))[0])
     drawer = screen.getByRole('dialog', { name: /授课关系/ })
     expect(drawer).toHaveTextContent('未找到班级（class_1） · 启用')
     expect(drawer).toHaveTextContent('未找到课堂（lesson_1） · 待上课')
     expect(drawer).toHaveTextContent('班级信息缺失 · 启用')
     expect(drawer).toHaveTextContent('课堂信息缺失 · 待上课')
-    relationView.unmount()
-
-    const api = createMockOpsApi()
-    const originalList = api.listCourseResource.bind(api)
-    api.listCourseResource = async <T extends CourseRecord = CourseRecord>(token: string, resource: CourseResourceKey, query: CourseQuery = {}) => {
-      if (resource === 'classStudents') return coursePage<T>([{ id: 'class_blank', classId: 'class_1', status: '' }])
-      if (resource === 'sessionStudents') return coursePage<T>([{ id: 'lesson_blank', sessionId: 'lesson_1', attendanceStatus: '', creditStatus: '' }])
-      if (resource === 'enrollments') return coursePage<T>([{ id: 'enroll_blank', operationNo: 'ENR-BLANK', status: 'committed', resultSnapshot: { status: '' } }])
-      if (resource === 'auditLogs') return coursePage<T>([{ id: 'audit_blank', action: 'student.inspect', outcome: '' }])
-      return originalList<T>(token, resource, query)
-    }
-    const adminView = renderStudentWorkspace(api)
-    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
-    drawer = await screen.findByRole('dialog', { name: '张同学 · 课程与班级' })
-    expect(drawer).toHaveTextContent('课包信息缺失 · 报课处理中')
-    expect(drawer).toHaveTextContent('合唱排练 · 待上课 · 课时状态待确认')
-    expect(drawer).toHaveTextContent('student.inspect · 成功')
-    adminView.unmount()
-
-    const errorApi = createMockOpsApi()
-    vi.spyOn(errorApi, 'getCourseResource').mockRejectedValueOnce(new Error('student detail failed'))
-    renderStudentWorkspace(errorApi)
-    await user.click((await screen.findAllByRole('button', { name: '查看张同学课程与班级' }))[0])
-    expect(await screen.findByText('student detail failed')).toBeInTheDocument()
   })
 })
 
 function renderDashboard(api: OpsApi, profile: OpsProfile) {
-  return render(<MemoryRouter><DashboardWorkspace api={api} profile={profile} token="token" /></MemoryRouter>)
+  return render(<MemoryRouter initialEntries={['/today']}><DashboardWorkspace api={api} profile={profile} token="token" /><Location /></MemoryRouter>)
+}
+
+function renderStudentPage(api: OpsApi) {
+  return render(<MemoryRouter initialEntries={['/students/student_1']}><StudentDetailPage api={api} studentId="student_1" token="token" /><Location /></MemoryRouter>)
+}
+
+function Location() {
+  const location = useLocation()
+  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>
 }
 
 function renderAccounts(api: OpsApi) {
@@ -228,16 +257,17 @@ function renderAccounts(api: OpsApi) {
 }
 
 function renderStudentWorkspace(api: OpsApi) {
-  return render(<MemoryRouter><StudentWorkspace api={api} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={mockProfiles.admin} students={[student]} token="token" /></MemoryRouter>)
+  return render(<MemoryRouter><StudentWorkspace api={api} loading={false} onReload={vi.fn().mockResolvedValue(undefined)} onSave={vi.fn().mockResolvedValue(true)} profile={mockProfiles.admin} students={[student]} token="token" /><Location /></MemoryRouter>)
 }
 
 function populatedDashboardApi() {
   const api = createMockOpsApi()
   const original = api.listCourseResource.bind(api)
-  const today = new Date().toISOString().slice(0, 10)
+  const earlyToday = new Date()
+  earlyToday.setHours(7, 30, 0, 0)
   const records: Partial<Record<CourseResourceKey, CourseRecord[]>> = {
     lessons: [
-      { id: 'today', title: '今日课堂', startAt: `${today}T10:00:00.000Z`, status: 'completed' },
+      { id: 'today', title: '晨间合唱', startAt: earlyToday.toISOString(), status: 'completed' },
       { id: 'future', title: '未来课堂', startAt: '2030-01-01T10:00:00.000Z', status: 'scheduled' },
     ],
     enrollments: [
@@ -245,8 +275,9 @@ function populatedDashboardApi() {
       { id: 'done', resultSnapshot: { status: 'completed' } },
     ],
     accounts: [
-      { id: 'empty', availableQuantity: 0, expiredQuantity: 2 },
-      { id: 'valid', availableQuantity: 3, expiredQuantity: 0 },
+      { id: 'empty', studentId: 'student_1', availableQuantity: 0, frozenQuantity: 0, expiredQuantity: 2 },
+      { id: 'valid', studentId: 'student_2', availableQuantity: 3, frozenQuantity: 0, expiredQuantity: 0 },
+      { id: 'never_bought', studentId: 'student_never', availableQuantity: 0, frozenQuantity: 0, consumedQuantity: 0, expiredQuantity: 0 },
     ],
     teacherEvents: [{ id: 'pending', status: 'pending' }, { id: 'confirmed', status: 'confirmed' }],
     settlementExceptions: [{ id: 'settlement_exception' }, { id: 'settlement_exception_2' }, { id: 'settlement_exception_3' }],

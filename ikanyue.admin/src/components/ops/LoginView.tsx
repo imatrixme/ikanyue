@@ -1,4 +1,4 @@
-import { Gift, LockKeyhole, LogIn, UserPlus } from 'lucide-react'
+import { BookOpen, LogIn, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
@@ -14,9 +14,11 @@ interface LoginViewProps {
   errorMessage?: string
   onSuccess: (result: LoginResult) => void
   onError: (message: string) => void
+  // Mirrors the server's OPS_REGISTRATION_ENABLED; registration stays hidden unless both are on.
+  allowRegistration?: boolean
 }
 
-export function LoginView({ api, loading, errorMessage, onSuccess, onError }: LoginViewProps) {
+export function LoginView({ api, loading, errorMessage, onSuccess, onError, allowRegistration = import.meta.env.VITE_OPS_REGISTRATION_ENABLED === 'true' }: LoginViewProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [account, setAccount] = useState('')
   const [password, setPassword] = useState('')
@@ -49,25 +51,20 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
       <aside className="flex flex-col justify-between border-r border-[var(--border)] bg-[var(--primary)] p-8 text-[var(--primary-foreground)]">
         <div>
           <div className="mb-10 inline-flex h-10 w-10 items-center justify-center rounded-md bg-[var(--on-primary-overlay)]">
-            <Gift className="h-5 w-5" aria-hidden="true" />
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h1 className="text-3xl font-semibold leading-tight">看乐积分兑换后台</h1>
+          <h1 className="text-3xl font-semibold leading-tight">看乐教学运营中心</h1>
           <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--on-primary-muted)]">
-            看乐校区 · 微信轻量版
+            学员、排课、课时与收款
           </p>
-        </div>
-        <div className="mt-10 grid gap-2 text-sm text-[var(--on-primary-faint)]">
-          <span>管理员工作台</span>
-          <span>积分与线下兑换</span>
         </div>
       </aside>
       <section className="flex items-center justify-center px-5 py-10">
         <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm" onSubmit={submit}>
           <div className="mb-6">
-            <p className="text-xs font-medium text-[var(--muted-foreground)]">看乐积分</p>
-            <h2 className="mt-2 text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '管理员登录'}</h2>
+            <h2 className="text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '登录'}</h2>
           </div>
-          <div className="mb-4"><SegmentedControl label="账号操作" onChange={switchMode} options={[{ value: 'login', label: '登录' }, { value: 'register', label: '注册' }]} value={mode} /></div>
+          {allowRegistration ? <div className="mb-4"><SegmentedControl label="账号操作" onChange={switchMode} options={[{ value: 'login', label: '登录' }, { value: 'register', label: '注册' }]} value={mode} /></div> : null}
           {errorMessage ? <Alert className="mb-4" tone="error">{errorMessage}</Alert> : null}
           {successMessage ? <Alert className="mb-4" tone="success">{successMessage}</Alert> : null}
           <div className="grid gap-4">
@@ -96,10 +93,6 @@ export function LoginView({ api, loading, errorMessage, onSuccess, onError }: Lo
               {loading ? (mode === 'register' ? '注册中' : '登录中') : (mode === 'register' ? '提交注册' : '登录')}
             </Button>
           </div>
-          <p className="mt-5 flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
-            <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
-            积分加减和线下兑换均由服务端记录流水与审计。
-          </p>
         </form>
       </section>
     </main>
