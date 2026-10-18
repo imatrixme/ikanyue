@@ -2,6 +2,12 @@
   "openapi": "3.0.0",
   "info": { "title": "课程预约接口", "version": "2.1.0" },
   "paths": {
+    "/ops/course-bookings/students/{studentId}/options": {
+      "get": { "summary": "教务查看学员可预约的课程与教师", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentId", "in": "path", "required": true, "description": "学员编号", "schema": { "type": "string" } }, { "name": "courseId", "in": "query", "required": false, "description": "只看某门课程", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
+    },
+    "/ops/course-bookings/students/{studentId}/slots": {
+      "get": { "summary": "教务查看学员在某个预约课程下的可选时段", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentId", "in": "path", "required": true, "description": "学员编号", "schema": { "type": "string" } }, { "name": "offeringId", "in": "query", "required": true, "description": "预约课程编号", "schema": { "type": "string" } }, { "name": "from", "in": "query", "required": false, "description": "起始时间", "schema": { "type": "string" } }, { "name": "to", "in": "query", "required": false, "description": "结束时间", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
+    },
     "/v1/student/appointments/{appointmentId}/cancellation-preview": {
       "get": { "summary": "预览本人预约取消扣费及退款", "tags": ["StudentBooking"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }], "responses": { "200": { "description": "data contains mode=credit|cash, amount, fee, quantity and cash policyVersion/receivedAt. Cash cancellation must echo expectedRefundAmount and expectedFee. This route does not require the commerce feature flag." } } }
     },
@@ -65,7 +71,8 @@
       "get": { "summary": "查询预约配置所需教师、课程、课时类型和策略", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
     },
     "/ops/course-bookings/appointments": {
-      "get": { "summary": "分页查询全部预约", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/StatusQuery" }, { "$ref": "#/components/parameters/TeacherIdQuery" }, { "$ref": "#/components/parameters/StudentIdQuery" }, { "$ref": "#/components/parameters/CourseSpecIdQuery" }, { "$ref": "#/components/parameters/FromQuery" }, { "$ref": "#/components/parameters/ToQuery" }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
+      "get": { "summary": "分页查询全部预约", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/StatusQuery" }, { "$ref": "#/components/parameters/TeacherIdQuery" }, { "$ref": "#/components/parameters/StudentIdQuery" }, { "$ref": "#/components/parameters/CourseSpecIdQuery" }, { "$ref": "#/components/parameters/FromQuery" }, { "$ref": "#/components/parameters/ToQuery" }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } },
+      "post": { "summary": "教务代学员申请一对一预约，可同时确认", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["studentId", "offeringId", "startAt", "endAt"], "properties": { "studentId": { "type": "string" }, "offeringId": { "type": "string" }, "startAt": { "type": "string", "format": "date-time" }, "endAt": { "type": "string", "format": "date-time" }, "note": { "type": "string", "maxLength": 500 }, "confirm": { "type": "boolean", "description": "为 true 时在同一命令内确认预约（需要预约占课功能开关）" } } } } } }, "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }
     },
     "/ops/course-bookings/appointments/{appointmentId}": {
       "get": { "summary": "查询预约审计详情", "tags": ["BookingOperations"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/AppointmentId" }], "responses": { "200": { "$ref": "#/components/responses/BookingResponse" } } }

@@ -7,6 +7,7 @@ const { CourseCreditOutboxService } = require('./outboxService');
 const { CourseCreditMigrationService } = require('./migrationService');
 const { createCourseCreditNotificationDispatcher } = require('./notificationDispatcher');
 const { CourseCreditOpsQueryService } = require('./opsQueryService');
+const { StudentFollowUpService } = require('./studentFollowUpService');
 const {
     CourseCreditMetricsService,
     defaultCourseCreditMetrics,
@@ -79,7 +80,8 @@ function createCourseCreditServices(repository, options = {}) {
         migrationService: new CourseCreditMigrationService(repository, options.migration),
         queryService: new CourseCreditQueryService(repository, options.query),
         outboxService: new CourseCreditOutboxService(repository, options.outbox),
-        opsQueryService: new CourseCreditOpsQueryService(repository),
+        opsQueryService: new CourseCreditOpsQueryService(repository, options.opsQuery),
+        studentFollowUpService: new StudentFollowUpService(repository, options.studentFollowUp),
         reconciliationService: new CourseCreditReconciliationService(repository),
         reservationService: new CourseCreditReservationService(repository),
         scheduleQueryService: new ScheduleQueryService(repository, options.scheduleQuery),

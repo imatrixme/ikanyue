@@ -29,7 +29,7 @@ function createCourseCreditOpsQueryHandlers(options) {
         return services.opsQueryService.listResource(
             resource, queryParams(c, [
                 'page', 'perPage', 'status', 'studentId', 'teacherId', 'classId', 'sessionId',
-                'attendanceStatus', 'creditStatus', 'actualStatus',
+                'attendanceStatus', 'creditStatus', 'actualStatus', 'from', 'to',
             ])
         );
     });
@@ -125,7 +125,7 @@ function createCourseCreditOpsQueryHandlers(options) {
                 const user = requireAnyCapability(c.get('user'), [capability.ACADEMIC, capability.TEACHER]);
                 const services = await loadServices();
                 return services.opsQueryService.listAssignedLessons(
-                    user, queryParams(c, ['page', 'perPage', 'status', 'sessionId'])
+                    user, queryParams(c, ['page', 'perPage', 'status', 'sessionId', 'from', 'to'])
                 );
             });
         },
@@ -133,7 +133,23 @@ function createCourseCreditOpsQueryHandlers(options) {
             return safeQuery(c, async () => {
                 requireCapability(c.get('user'), capability.FINANCE);
                 const services = await loadServices();
-                return services.opsQueryService.listAccounts(queryParams(c, ['page', 'perPage']));
+                return services.opsQueryService.listAccounts(queryParams(c, [
+                    'page', 'perPage', 'studentIds', 'renewalThreshold',
+                ]));
+            });
+        },
+        async getStudentOverview(c) {
+            return safeQuery(c, async () => {
+                requireCapability(c.get('user'), capability.FINANCE);
+                const services = await loadServices();
+                return services.opsQueryService.studentOverview(queryParams(c, ['studentIds']));
+            });
+        },
+        async listStudentFollowUps(c) {
+            return safeQuery(c, async () => {
+                requireCapability(c.get('user'), capability.FINANCE);
+                const services = await loadServices();
+                return { items: await services.opsQueryService.listFollowUps([c.req.param('studentId')]) };
             });
         },
         async getCreditAccount(c) {

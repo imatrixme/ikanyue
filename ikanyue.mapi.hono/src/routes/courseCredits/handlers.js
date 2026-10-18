@@ -59,6 +59,20 @@ function createCourseCreditHandlers(
             safeQuery,
             featureGate,
         }),
+        async recordStudentFollowUp(c) {
+            return safeCommand(c, 'recordStudentFollowUp', async () => {
+                const user = requireCapability(c.get('user'), CAPABILITY.FINANCE);
+                const body = await readJsonBody(c);
+                const services = await loadServices();
+                return services.studentFollowUpService.record({
+                    status: body.status,
+                    note: body.note,
+                    snoozeUntil: body.snoozeUntil,
+                    ...commandMetadata(c, user),
+                    studentId: c.req.param('studentId'),
+                });
+            }, metrics);
+        },
         async grantOrderCredits(c) {
             return safeCommand(c, 'grantOrderCredits', async () => {
                 featureGate.require(FEATURE.GRANTS);

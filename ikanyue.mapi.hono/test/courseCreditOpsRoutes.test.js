@@ -120,6 +120,36 @@ test('Admin workspace capabilities prevent cross-scope financial and teacher acc
     assert.deepEqual(calls, [['list', 'classes', {}]]);
 });
 
+test('finance operators read student overviews and record renewal follow-ups', async () => {
+    const calls = [];
+    const app = createApp(calls);
+    const finance = auth({ id: 'finance', role: 'teacher', courseCreditCapabilities: ['course_credit.finance'] });
+
+    assert.equal((await get(app, '/ops/course-credits/student-overview?studentIds=a,b', finance)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/accounts?renewalThreshold=2&studentIds=a', finance)).code, 10000);
+    assert.equal((await get(app, '/ops/course-credits/students/a/follow-ups', finance)).code, 10000);
+    const response = await app.request('/ops/course-credits/students/a/follow-ups', {
+        method: 'POST',
+        headers: { authorization: finance, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'contacted', note: '已联系', snoozeUntil: '2026-10-25T00:00:00Z', actorId: 'spoofed', studentId: 'b' }),
+    });
+    assert.equal((await response.json()).code, 10000);
+    const recorded = calls.find(([name]) => name === 'recordFollowUp')[1];
+    assert.equal(recorded.studentId, 'a');
+    assert.equal(recorded.actorId, 'finance');
+    assert.equal(recorded.status, 'contacted');
+    assert.deepEqual(calls.slice(0, 3), [
+        ['overview', { studentIds: 'a,b' }],
+        ['accounts', { studentIds: 'a', renewalThreshold: '2' }],
+        ['followUps', ['a']],
+    ]);
+
+    const academic = auth({ id: 'academic', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'] });
+    assert.equal((await get(app, '/ops/course-credits/student-overview?studentIds=a', academic)).code, 403);
+    await get(app, '/ops/course-credits/sessions?from=2026-10-18&to=2026-10-19', academic);
+    assert.deepEqual(calls.at(-1), ['list', 'sessions', { from: '2026-10-18', to: '2026-10-19' }]);
+});
+
 function createApp(calls) {
     const serviceSet = {
         opsQueryService: {
@@ -133,6 +163,11 @@ function createApp(calls) {
             async listAssignedStudents(user, query) { calls.push(['assignedStudents', user.id, query]); return { items: [] }; },
             async listAssignedClasses(user, query) { calls.push(['assignedClasses', user.id, query]); return { items: [] }; },
             async listAssignedLessons(user, query) { calls.push(['assignedLessons', user.id, query]); return { items: [] }; },
+            async studentOverview(query) { calls.push(['overview', query]); return { items: [] }; },
+            async listFollowUps(ids) { calls.push(['followUps', ids]); return []; },
+        },
+        studentFollowUpService: {
+            async record(input) { calls.push(['recordFollowUp', input]); return { id: 'follow-up' }; },
         },
     };
     const app = new Hono();

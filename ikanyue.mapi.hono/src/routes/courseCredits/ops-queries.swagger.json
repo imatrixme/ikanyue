@@ -2,6 +2,13 @@
   "openapi": "3.0.0",
   "info": { "title": "课程点 Admin 工作区查询", "version": "2.0.0" },
   "paths": {
+    "/ops/course-credits/student-overview": {
+      "get": { "summary": "批量学员概览：课时余额、下节课与最近续课跟进", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentIds", "in": "query", "required": true, "description": "逗号分隔的学员编号，1 到 100 个", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
+    "/ops/course-credits/students/{studentId}/follow-ups": {
+      "get": { "summary": "学员续课跟进记录", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentId", "in": "path", "required": true, "description": "学员编号", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } },
+      "post": { "summary": "记录续课跟进（已联系 / 暂不续），在下次提醒日期前不再出现在今日待办", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentId", "in": "path", "required": true, "description": "学员编号", "schema": { "type": "string" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["status", "snoozeUntil"], "properties": { "status": { "type": "string", "enum": ["contacted", "declined"] }, "note": { "type": "string", "maxLength": 300 }, "snoozeUntil": { "type": "string", "format": "date-time" } } } } } }, "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+    },
     "/ops/course-credits/catalog/course-specs": {
       "get": {
         "summary": "课程规格列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }],
@@ -37,7 +44,7 @@
       "get": { "summary": "课程订单详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
     "/ops/course-credits/accounts": {
-      "get": { "summary": "学员课程点账户列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+      "get": { "summary": "学员课程点账户列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "name": "studentIds", "in": "query", "required": false, "description": "逗号分隔的学员编号", "schema": { "type": "string" } }, { "name": "renewalThreshold", "in": "query", "required": false, "description": "只返回需要续课的账户：用过课时、可用 ≤ 阈值且无预留", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
     "/ops/course-credits/accounts/{studentId}": {
       "get": { "summary": "学员课程点账户详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "name": "studentId", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
@@ -55,7 +62,7 @@
       "get": { "summary": "班级详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
     "/ops/course-credits/sessions": {
-      "get": { "summary": "课堂列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+      "get": { "summary": "课堂列表", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "name": "from", "in": "query", "required": false, "description": "课堂开始时间下限（含）", "schema": { "type": "string" } }, { "name": "to", "in": "query", "required": false, "description": "课堂开始时间上限（不含）", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
     "/ops/course-credits/sessions/{id}": {
       "get": { "summary": "课堂详情", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Id" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
@@ -97,7 +104,7 @@
       "get": { "summary": "当前操作者可见班级", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/ClassId" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     },
     "/ops/course-credits/assigned-lessons": {
-      "get": { "summary": "当前操作者可见课堂", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/SessionId" }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
+      "get": { "summary": "当前操作者可见课堂", "tags": ["CourseCredits"], "security": [{ "BearerAuth": [] }], "parameters": [{ "$ref": "#/components/parameters/Page" }, { "$ref": "#/components/parameters/PerPage" }, { "$ref": "#/components/parameters/Status" }, { "$ref": "#/components/parameters/SessionId" }, { "name": "from", "in": "query", "required": false, "description": "课堂开始时间下限（含）", "schema": { "type": "string" } }, { "name": "to", "in": "query", "required": false, "description": "课堂开始时间上限（不含）", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/CourseCreditResponse" } } }
     }
   },
   "components": {

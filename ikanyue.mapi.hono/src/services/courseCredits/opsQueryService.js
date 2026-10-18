@@ -11,6 +11,7 @@ const STUDENT_FIELDS = [
     'id', 'realname', 'nickname', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
     'created', 'updated',
 ];
+const FOLLOW_UP_ACTION = 'course_operations.students.follow_up';
 
 const RESOURCE_CONFIGS = Object.freeze({
     courseSpecs: resource('course_specs', 'name', [
@@ -95,8 +96,9 @@ const RESOURCE_CONFIGS = Object.freeze({
 });
 
 class CourseCreditOpsQueryService {
-    constructor(repository) {
+    constructor(repository, options = {}) {
         this.repository = repository;
+        this.clock = options.clock || Date.now;
     }
 
     async listResource(name, query = {}) {
@@ -112,6 +114,7 @@ class CourseCreditOpsQueryService {
                 filters.push(`${field}="${escapeFilter(query[field])}"`);
             }
         }
+        if (name === 'sessions') filters.push(...startRangeFilters(query));
         const result = await this.repository.page(config.collection, page.page, page.perPage, {
             ...(filters.length ? { filter: filters.join(' && ') } : {}),
             sort: config.sort,
@@ -132,11 +135,60 @@ class CourseCreditOpsQueryService {
 
     async listAccounts(query = {}) {
         const page = pagination(query);
-        const batches = await this.repository.list('credit_batches', { sort: 'studentId,created' });
-        const accounts = [...groupAccounts(batches).values()].sort((left, right) => (
-            left.studentId.localeCompare(right.studentId)
-        ));
+        const studentIds = idList(query.studentIds);
+        const batches = await this.repository.list('credit_batches', {
+            ...(studentIds.length ? { filter: anyFilter('studentId', studentIds) } : {}),
+            sort: 'studentId,created',
+        });
+        const threshold = optionalThreshold(query.renewalThreshold);
+        const accounts = [...groupAccounts(batches).values()]
+            .filter((account) => threshold === null || needsRenewal(account, threshold))
+            .sort((left, right) => left.studentId.localeCompare(right.studentId));
         return arrayPage(accounts, page.page, page.perPage);
+    }
+
+    async studentOverview(query = {}) {
+        const studentIds = idList(query.studentIds);
+        invariant(studentIds.length > 0 && studentIds.length <= 100,
+            'STUDENT_IDS_INVALID', '请提供 1 到 100 个学员编号');
+        const now = new Date(this.clock()).toISOString();
+        const [batches, upcoming, followUps] = await Promise.all([
+            this.repository.list('credit_batches', { filter: anyFilter('studentId', studentIds), sort: 'studentId,created' }),
+            this.repository.list('sessions', {
+                filter: `startAt>="${escapeFilter(now)}" && status!="draft" && status!="cancelled" && status!="settled"`,
+                sort: 'startAt',
+            }),
+            this.listFollowUps(studentIds),
+        ]);
+        const roster = upcoming.length ? await this.repository.list('session_students', {
+            filter: `${anyFilter('studentId', studentIds)} && ${anyFilter('sessionId', upcoming.map((lesson) => lesson.id))} && attendanceStatus!="cancelled"`,
+            sort: 'studentId',
+        }) : [];
+        const accounts = groupAccounts(batches);
+        const lessonOrder = new Map(upcoming.map((lesson, index) => [lesson.id, index]));
+        return {
+            items: studentIds.map((studentId) => {
+                const next = roster.filter((row) => relationId(row.studentId) === studentId)
+                    .map((row) => upcoming[lessonOrder.get(relationId(row.sessionId))])
+                    .filter(Boolean)
+                    .sort((left, right) => lessonOrder.get(left.id) - lessonOrder.get(right.id))[0];
+                return {
+                    ...(accounts.get(studentId) || emptyAccount(studentId)),
+                    nextLesson: next ? { id: next.id, title: next.title || '', startAt: next.startAt, status: next.status } : null,
+                    followUp: followUps.find((item) => item.studentId === studentId) || null,
+                };
+            }),
+        };
+    }
+
+    async listFollowUps(studentIds) {
+        const ids = idList(studentIds);
+        if (ids.length === 0) return [];
+        const rows = await this.repository.list('ops_audit_logs', {
+            filter: `action="${FOLLOW_UP_ACTION}" && ${anyFilter('resourceId', ids)}`,
+            sort: '-created',
+        });
+        return rows.map(projectFollowUp);
     }
 
     async getAccount(studentId) {
@@ -270,6 +322,7 @@ class CourseCreditOpsQueryService {
         if (scope && assignedSessionIds.length === 0) return arrayPage([], page.page, page.perPage);
         const filters = scope ? [anyFilter('id', assignedSessionIds)] : [];
         if (query.sessionId) filters.push(`id="${escapeFilter(query.sessionId)}"`);
+        filters.push(...startRangeFilters(query));
         if (query.status) {
             const config = configFor('sessions');
             invariant(config.statuses.has(query.status), 'OPS_FILTER_STATUS_INVALID', 'Resource status filter is invalid');
@@ -466,14 +519,58 @@ function arrayPage(items, page, perPage) {
     return { page, perPage, totalItems, totalPages, items: items.slice(start, start + perPage) };
 }
 
+function startRangeFilters(query = {}) {
+    const filters = [];
+    for (const [key, operator] of [['from', '>='], ['to', '<']]) {
+        if (query[key] === undefined || query[key] === '') continue;
+        invariant(Number.isFinite(Date.parse(query[key])), 'OPS_FILTER_DATE_INVALID', 'Date filter is invalid');
+        filters.push(`startAt${operator}"${new Date(query[key]).toISOString()}"`);
+    }
+    return filters;
+}
+
+function idList(value) {
+    const values = Array.isArray(value) ? value : String(value || '').split(',');
+    return [...new Set(values.map((item) => String(item).trim()).filter(Boolean))];
+}
+
+function optionalThreshold(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const threshold = Number(value);
+    invariant(Number.isFinite(threshold) && threshold >= 0, 'RENEWAL_THRESHOLD_INVALID', 'Renewal threshold is invalid');
+    return threshold;
+}
+
+function needsRenewal(account, threshold) {
+    return account.consumedQuantity + account.expiredQuantity > 0
+        && account.availableQuantity <= threshold
+        && account.frozenQuantity === 0;
+}
+
+function projectFollowUp(row) {
+    const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+    return {
+        id: row.id,
+        studentId: row.resourceId,
+        status: metadata.status || 'contacted',
+        note: metadata.note || '',
+        snoozeUntil: metadata.snoozeUntil || null,
+        actorId: relationId(row.actorId) || '',
+        created: row.created || null,
+    };
+}
+
 module.exports = {
     CourseCreditOpsQueryService,
+    FOLLOW_UP_ACTION,
     RESOURCE_CONFIGS,
     arrayPage,
     anyFilter,
     configFor,
     emptyAccount,
     groupAccounts,
+    idList,
+    needsRenewal,
     project,
     projectAccountBatch,
     projectAssignedClass,

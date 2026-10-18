@@ -67,6 +67,8 @@ function courseCreditRoutes(routes, handlers = createCourseCreditHandlers()) {
     routes.post('/ops/course-credits/shadow/preview')
         .use(opsAuthMiddleware, opsPasswordChangeGuard)
         .handler(handlers.runCourseCreditShadow);
+    routes.post('/ops/course-credits/students/:studentId/follow-ups')
+        .use(opsAuthMiddleware, opsPasswordChangeGuard).handler(handlers.recordStudentFollowUp);
     opsQueryRoutes(routes, handlers);
     routes.get('/v1/schedule/upcoming')
         .use(authMiddleware)
@@ -164,6 +166,11 @@ function opsBookingRoutes(routes, handlers) {
     protect(routes.get('/ops/course-bookings/dashboard')).handler(handlers.getOpsBookingDashboard);
     protect(routes.get('/ops/course-bookings/reference-data')).handler(handlers.getOpsBookingReferenceData);
     protect(routes.get('/ops/course-bookings/appointments')).handler(handlers.listOpsAppointments);
+    protect(routes.post('/ops/course-bookings/appointments')).handler(handlers.createOpsAppointment);
+    protect(routes.get('/ops/course-bookings/students/:studentId/options'))
+        .handler(handlers.listOpsStudentBookingOptions);
+    protect(routes.get('/ops/course-bookings/students/:studentId/slots'))
+        .handler(handlers.listOpsStudentBookingSlots);
     protect(routes.get('/ops/course-bookings/appointments/:appointmentId')).handler(handlers.getOpsAppointment);
     protect(routes.post('/ops/course-bookings/appointments/:appointmentId/confirm'))
         .handler(handlers.confirmOpsAppointment);
@@ -248,6 +255,8 @@ function opsQueryRoutes(routes, handlers) {
         ['/ops/course-credits/enrollments', handlers.listEnrollments],
         ['/ops/course-credits/enrollments/:id', handlers.getEnrollment],
         ['/ops/course-credits/accounts', handlers.listCreditAccounts],
+        ['/ops/course-credits/student-overview', handlers.getStudentOverview],
+        ['/ops/course-credits/students/:studentId/follow-ups', handlers.listStudentFollowUps],
         ['/ops/course-credits/accounts/:studentId', handlers.getCreditAccount],
         ['/ops/course-credits/conversion-rules', handlers.listConversionRules],
         ['/ops/course-credits/conversion-rules/:id', handlers.getConversionRule],

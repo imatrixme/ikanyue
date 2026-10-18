@@ -250,6 +250,42 @@ function createCourseBookingHandlers(options) {
                 })
             )
         ),
+        async listOpsStudentBookingOptions(c) {
+            return safeQuery(c, async () => {
+                requireBookingOperator(c.get('user'), capability, requireCapability);
+                const services = await loadServices();
+                const studentId = await existingStudent(services, c.req.param('studentId'));
+                return services.bookingQueryService.studentOptions(studentId, queryParams(c, ['courseId']));
+            });
+        },
+        async listOpsStudentBookingSlots(c) {
+            return safeQuery(c, async () => {
+                requireBookingOperator(c.get('user'), capability, requireCapability);
+                const services = await loadServices();
+                const studentId = await existingStudent(services, c.req.param('studentId'));
+                return services.bookingQueryService.availableSlots(studentId,
+                    queryParams(c, ['offeringId', 'from', 'to']));
+            });
+        },
+        createOpsAppointment: opsCommand('requestAppointment', async (_c, services, _user, body, metadata) => {
+            const studentId = await existingStudent(services, body.studentId);
+            const requested = await services.appointmentRequestService.createRequest({
+                offeringId: body.offeringId,
+                startAt: body.startAt,
+                endAt: body.endAt,
+                note: body.note,
+                ...metadata,
+                studentId,
+            });
+            if (body.confirm !== true || requested.status !== 'pending') return requested;
+            featureGate.require('reservation');
+            const confirmed = await services.appointmentDecisionService.confirm({
+                ...metadata,
+                idempotencyKey: `${metadata.idempotencyKey}:confirm`,
+                appointmentId: requested.appointmentId,
+            });
+            return { ...requested, ...confirmed, appointmentId: requested.appointmentId };
+        }),
         cancelOpsAppointment: opsCommand('cancelAppointment', (c, services, user, body, metadata) => {
             if (body.cancellationType === 'institution') requireCapability(user, capability.FINANCE);
             return services.appointmentCancellationService.cancel({
@@ -305,6 +341,12 @@ function requireBookingTeacher(user, capability, requireCapability) {
 
 function requireBookingOperator(user, capability, requireCapability) {
     return requireCapability(user, capability.ACADEMIC);
+}
+
+async function existingStudent(services, studentId) {
+    invariant(typeof studentId === 'string' && studentId, 'BOOKING_STUDENT_REQUIRED', '请选择学员');
+    const student = await services.repository.get('students', studentId);
+    return student.id;
 }
 
 module.exports = { createCourseBookingHandlers, requireBookingOperator, requireBookingTeacher };

@@ -122,6 +122,60 @@ test('Admin booking routes expose configuration, conflict, backfill, and lifecyc
     assert.equal(denied.code, 403);
 });
 
+test('Admin can book a one-to-one lesson on behalf of an existing student', async () => {
+    const fixture = bookingFixture();
+    const students = [];
+    fixture.services.repository = {
+        async get(collection, id) {
+            students.push([collection, id]);
+            if (id !== 'student') throw Object.assign(new Error('missing'), { status: 404 });
+            return { id };
+        },
+    };
+    fixture.services.appointmentRequestService.createRequest = async (input) => {
+        fixture.calls.push({ name: 'appointmentRequestService.createRequest', input });
+        return { appointmentId: 'appointment', status: 'pending', startAt: input.startAt };
+    };
+    const app = createApp(fixture.services);
+    const auth = token({ id: 'operator', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'] });
+
+    const options = await request(app, 'GET', '/ops/course-bookings/students/student/options', auth);
+    const slots = await request(app, 'GET', '/ops/course-bookings/students/student/slots?offeringId=offering', auth);
+    assert.equal(options.code, 10000);
+    assert.equal(slots.code, 10000);
+    assert.equal(fixture.calls.find((call) => call.name === 'bookingQueryService.availableSlots').args[0], 'student');
+
+    const created = await request(app, 'POST', '/ops/course-bookings/appointments', auth, {
+        studentId: 'student', offeringId: 'offering', startAt: '2026-08-04T01:00:00Z',
+        endAt: '2026-08-04T02:00:00Z', actorId: 'spoofed', confirm: true,
+    });
+    assert.equal(created.code, 10000);
+    const create = fixture.calls.find((call) => call.name === 'appointmentRequestService.createRequest');
+    assert.equal(create.input.studentId, 'student');
+    assert.equal(create.input.actorId, 'operator');
+    assert.equal(create.input.actorRole, 'admin');
+    const confirm = fixture.calls.find((call) => call.name === 'appointmentDecisionService.confirm');
+    assert.equal(confirm.input.appointmentId, 'appointment');
+    assert.equal(confirm.input.idempotencyKey, 'key-POST-/ops/course-bookings/appointments:confirm');
+    assert.equal(created.data.appointmentId, 'appointment');
+
+    const pendingOnly = await request(app, 'POST', '/ops/course-bookings/appointments', auth, {
+        studentId: 'student', offeringId: 'offering', startAt: '2026-08-05T01:00:00Z', endAt: '2026-08-05T02:00:00Z',
+    });
+    assert.equal(pendingOnly.code, 10000);
+    assert.equal(fixture.calls.filter((call) => call.name === 'appointmentDecisionService.confirm').length, 1);
+
+    const missing = await request(app, 'POST', '/ops/course-bookings/appointments', auth, { offeringId: 'offering' });
+    assert.notEqual(missing.code, 10000);
+    assert.equal(missing.errorCode, 'BOOKING_STUDENT_REQUIRED');
+
+    const teacher = await request(app, 'POST', '/ops/course-bookings/appointments', token({
+        id: 'teacher', role: 'teacher', courseCreditCapabilities: ['course_credit.teacher'],
+    }), { studentId: 'student' });
+    assert.equal(teacher.code, 403);
+    assert.ok(students.every(([collection]) => collection === 'students'));
+});
+
 function bookingFixture() {
     const calls = [];
     const methods = {

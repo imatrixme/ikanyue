@@ -3,11 +3,14 @@ const assert = require('node:assert/strict');
 
 const {
     CourseCreditOpsQueryService,
+    FOLLOW_UP_ACTION,
     RESOURCE_CONFIGS,
     arrayPage,
     configFor,
     emptyAccount,
     groupAccounts,
+    idList,
+    needsRenewal,
     project,
     projectAccountBatch,
     relationOrValue,
@@ -227,6 +230,83 @@ test('ops projection helpers normalize relations, empty accounts, and empty page
     assert.deepEqual(studentIdsFromScope({
         classStudents: [{ studentId: 'one' }], sessionStudents: [{ studentId: 'two' }],
     }), ['one', 'two']);
+});
+
+test('account list narrows by student ids and renewal threshold without counting never-purchased accounts', async () => {
+    const repository = mockRepository({ batches: [
+        { studentId: 'renew', availableQuantity: 1, consumedQuantity: 9 },
+        { studentId: 'booked', availableQuantity: 1, frozenQuantity: 1, consumedQuantity: 8 },
+        { studentId: 'fresh', availableQuantity: 0 },
+        { studentId: 'plenty', availableQuantity: 8, consumedQuantity: 2 },
+        { studentId: 'expired', availableQuantity: 0, expiredQuantity: 3 },
+    ] });
+    const service = new CourseCreditOpsQueryService(repository);
+    const renewal = await service.listAccounts({ renewalThreshold: '2', perPage: '100' });
+    assert.deepEqual(renewal.items.map((item) => item.studentId), ['expired', 'renew']);
+    assert.equal(needsRenewal({ ...emptyAccount('x'), consumedQuantity: 1, availableQuantity: 3 }, 2), false);
+
+    await service.listAccounts({ studentIds: 'renew, plenty,renew' });
+    assert.equal(repository.calls.at(-1).options.filter, '(studentId="renew" || studentId="plenty")');
+    await assert.rejects(service.listAccounts({ renewalThreshold: '-1' }), { code: 'RENEWAL_THRESHOLD_INVALID' });
+    assert.deepEqual(idList(['a', ' b ', '', 'a']), ['a', 'b']);
+});
+
+test('session lists accept a start-time range for today and assigned lessons', async () => {
+    const repository = mockRepository({ records: [] });
+    const service = new CourseCreditOpsQueryService(repository);
+    await service.listResource('sessions', {
+        from: '2026-10-18T00:00:00+08:00', to: '2026-10-19T00:00:00+08:00', status: 'scheduled',
+    });
+    assert.equal(repository.calls[0].options.filter,
+        'status="scheduled" && startAt>="2026-10-17T16:00:00.000Z" && startAt<"2026-10-18T16:00:00.000Z"');
+    await service.listResource('orders', { from: 'ignored' });
+    assert.equal(repository.calls[1].options.filter, undefined);
+    await assert.rejects(service.listResource('sessions', { from: 'not-a-date' }), { code: 'OPS_FILTER_DATE_INVALID' });
+
+    const assigned = assignedRepository();
+    await new CourseCreditOpsQueryService(assigned).listAssignedLessons({ isAdmin: true }, { from: '2026-10-18T00:00:00Z' });
+    assert.match(assigned.pageCalls[0].options.filter, /startAt>="2026-10-18T00:00:00.000Z"/);
+});
+
+test('student overview joins balance, the next upcoming lesson and the latest follow-up', async () => {
+    const repository = mockRepository({ collections: {
+        credit_batches: [
+            { studentId: 'one', availableQuantity: 2, consumedQuantity: 8 },
+            { studentId: 'one', availableQuantity: 1, frozenQuantity: 1 },
+        ],
+        sessions: [
+            { id: 'early', title: '视唱练耳', startAt: '2026-10-19T01:00:00Z', status: 'scheduled' },
+            { id: 'late', title: '声乐一对一', startAt: '2026-10-20T01:00:00Z', status: 'scheduled' },
+        ],
+        session_students: [
+            { studentId: 'one', sessionId: 'late' },
+            { studentId: 'one', sessionId: 'early' },
+        ],
+        ops_audit_logs: [
+            { id: 'f2', resourceId: 'two', actorId: 'admin', metadata: { status: 'declined', note: '暂不续', snoozeUntil: '2026-11-01T00:00:00.000Z' }, created: '2026-10-18' },
+        ],
+    } });
+    const service = new CourseCreditOpsQueryService(repository, { clock: () => Date.parse('2026-10-18T00:00:00Z') });
+    const overview = await service.studentOverview({ studentIds: 'one,two' });
+
+    assert.equal(overview.items[0].availableQuantity, 3);
+    assert.equal(overview.items[0].frozenQuantity, 1);
+    assert.deepEqual(overview.items[0].nextLesson, {
+        id: 'early', title: '视唱练耳', startAt: '2026-10-19T01:00:00Z', status: 'scheduled',
+    });
+    assert.equal(overview.items[0].followUp, null);
+    assert.equal(overview.items[1].nextLesson, null);
+    assert.deepEqual(overview.items[1].followUp, {
+        id: 'f2', studentId: 'two', status: 'declined', note: '暂不续',
+        snoozeUntil: '2026-11-01T00:00:00.000Z', actorId: 'admin', created: '2026-10-18',
+    });
+    const sessionQuery = repository.calls.find((call) => call.collection === 'sessions');
+    assert.match(sessionQuery.options.filter, /^startAt>="2026-10-18T00:00:00.000Z" && status!="draft"/);
+    const followUpQuery = repository.calls.find((call) => call.collection === 'ops_audit_logs');
+    assert.equal(followUpQuery.options.filter,
+        `action="${FOLLOW_UP_ACTION}" && (resourceId="one" || resourceId="two")`);
+    await assert.rejects(service.studentOverview({ studentIds: '' }), { code: 'STUDENT_IDS_INVALID' });
+    assert.deepEqual(await service.listFollowUps([]), []);
 });
 
 test('assigned student and lesson queries scope teacher data to explicit teaching relations', async () => {

@@ -4511,6 +4511,100 @@
         "$ref": "#/components/x-operations/GetResource"
       }
     },
+    "/ops/course-bookings/students/{studentId}/options": {
+      "get": {
+        "summary": "教务查看学员可预约的课程与教师",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "description": "学员编号",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "required": false,
+            "description": "只看某门课程",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-bookings/students/{studentId}/slots": {
+      "get": {
+        "summary": "教务查看学员在某个预约课程下的可选时段",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "description": "学员编号",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offeringId",
+            "in": "query",
+            "required": true,
+            "description": "预约课程编号",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "起始时间",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "结束时间",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      }
+    },
     "/v1/student/booking-options": {
       "get": {
         "summary": "查询本人可预约课程与教师",
@@ -5093,6 +5187,67 @@
             "$ref": "#/components/parameters/ToQuery"
           }
         ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookingResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "教务代学员申请一对一预约，可同时确认",
+        "tags": [
+          "BookingOperations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "studentId",
+                  "offeringId",
+                  "startAt",
+                  "endAt"
+                ],
+                "properties": {
+                  "studentId": {
+                    "type": "string"
+                  },
+                  "offeringId": {
+                    "type": "string"
+                  },
+                  "startAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "description": "为 true 时在同一命令内确认预约（需要预约占课功能开关）"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/BookingResponse"
@@ -6570,6 +6725,122 @@
         }
       }
     },
+    "/ops/course-credits/student-overview": {
+      "get": {
+        "summary": "批量学员概览：课时余额、下节课与最近续课跟进",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentIds",
+            "in": "query",
+            "required": true,
+            "description": "逗号分隔的学员编号，1 到 100 个",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
+    "/ops/course-credits/students/{studentId}/follow-ups": {
+      "get": {
+        "summary": "学员续课跟进记录",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "description": "学员编号",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "记录续课跟进（已联系 / 暂不续），在下次提醒日期前不再出现在今日待办",
+        "tags": [
+          "CourseCredits"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "description": "学员编号",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "snoozeUntil"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "contacted",
+                      "declined"
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "snoozeUntil": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CourseCreditResponse"
+          }
+        }
+      }
+    },
     "/ops/course-credits/catalog/course-specs": {
       "get": {
         "summary": "课程规格列表",
@@ -6847,6 +7118,24 @@
           },
           {
             "$ref": "#/components/parameters/PerPage"
+          },
+          {
+            "name": "studentIds",
+            "in": "query",
+            "required": false,
+            "description": "逗号分隔的学员编号",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "renewalThreshold",
+            "in": "query",
+            "required": false,
+            "description": "只返回需要续课的账户：用过课时、可用 ≤ 阈值且无预留",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7008,6 +7297,24 @@
           },
           {
             "$ref": "#/components/parameters/Status"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "课堂开始时间下限（含）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "课堂开始时间上限（不含）",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7303,6 +7610,24 @@
           },
           {
             "$ref": "#/components/parameters/SessionId"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "课堂开始时间下限（含）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "课堂开始时间上限（不含）",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
