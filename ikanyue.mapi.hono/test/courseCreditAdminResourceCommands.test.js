@@ -352,3 +352,20 @@ test('new lessons receive server-owned rule snapshots and versions', () => {
     assert.equal(data.version, 1);
     assert.equal(data.originType, 'admin');
 });
+
+test('scheduled lessons can be completed only after they start', async () => {
+    assert.doesNotThrow(() => validateLessonStatusTransition('scheduled', 'completed'));
+    assert.doesNotThrow(() => validateLessonStatusTransition('enrollment_closed', 'completed'));
+    assert.throws(() => validateLessonStatusTransition('draft', 'completed'),
+        hasCode('LESSON_STATUS_TRANSITION_INVALID'));
+
+    const future = mockRepository({ records: { sessions: lessonData({ id: 'lesson', status: 'scheduled' }) } });
+    await assert.rejects(createService(future).updateResource('lessons', 'lesson', command({ status: 'completed' })),
+        hasCode('LESSON_NOT_STARTED'));
+
+    const started = mockRepository({ records: { sessions: lessonData({
+        id: 'lesson', status: 'scheduled', startAt: '2026-07-23T07:00:00Z', endAt: '2026-07-23T08:00:00Z',
+    }) } });
+    const result = await createService(started).updateResource('lessons', 'lesson', command({ status: 'completed' }));
+    assert.equal(result.status, 'completed');
+});

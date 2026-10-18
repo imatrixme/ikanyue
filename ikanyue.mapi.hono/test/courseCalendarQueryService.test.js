@@ -26,6 +26,9 @@ test('institution calendar projects formal sessions and applies relation filters
     assert.equal(result.facets.teachers.find((teacher) => teacher.id === 'teacher-2').name, '郑老师');
     assert.deepEqual(Object.keys(result.facets.teachers.find((teacher) => teacher.id === 'teacher-2')), ['id', 'name']);
     assert.match(repository.calls.find((call) => call.collection === 'sessions').options.filter, /endAt>/);
+    // PocketBase rejects sorts on unknown fields; the teachers schema uses camelCase `realName`.
+    assert.equal(repository.calls.find((call) => call.collection === 'teachers').options.sort,
+        'realName,nickName,username');
 });
 
 test('teacher and learner calendars use assignment ownership and role-safe projections', async () => {

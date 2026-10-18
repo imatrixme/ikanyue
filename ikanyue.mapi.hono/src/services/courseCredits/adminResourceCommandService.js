@@ -46,6 +46,9 @@ class AdminResourceCommandService {
         const data = normalizeResourceInput(name, input.data || input, current);
         if (name === 'lessons') {
             validateLessonStatusTransition(current.status, data.status);
+            invariant(data.status !== 'completed' || current.status === 'completed'
+                || Date.parse(current.startAt) <= this.clock(),
+            'LESSON_NOT_STARTED', '课堂开始后才能结束');
             invariant(data.status !== 'cancelled' || current.status === 'draft',
                 'LESSON_CANCELLATION_COMMAND_REQUIRED', '已排课课堂必须使用课堂取消命令');
             return this.updateLesson(id, current, data, input);
@@ -156,8 +159,8 @@ function validateLessonStatusTransition(current, next) {
     if (current === next) return;
     const allowed = {
         draft: ['cancelled'],
-        scheduled: ['enrollment_closed', 'in_progress', 'cancelled'],
-        enrollment_closed: ['in_progress', 'cancelled'],
+        scheduled: ['enrollment_closed', 'in_progress', 'completed', 'cancelled'],
+        enrollment_closed: ['in_progress', 'completed', 'cancelled'],
         in_progress: ['completed', 'cancelled'],
         completed: [],
         cancelled: [],

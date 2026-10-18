@@ -168,7 +168,7 @@ class ScheduleQueryService {
         const rows = await this.repository.list('teachers', {
             filter: 'blocked=false && verified=true',
             fields: 'id,realName,realname,nickName,nickname,username,sn',
-            sort: 'realname,nickName,username',
+            sort: 'realName,nickName,username',
         });
         return rows.map((teacher) => ({ id: teacher.id, name: publicName(teacher) }))
             .filter((teacher) => teacher.id);
