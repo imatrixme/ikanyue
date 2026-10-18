@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -50,7 +51,7 @@ describe('admin workflow infrastructure', () => {
   it('paginates learner rows and restores persisted sorting', async () => {
     localStorage.setItem('kanyue.points.filters.v1', JSON.stringify({ keyword: '', minBalance: '', maxBalance: '', sort: 'balance-desc' }))
     const user = userEvent.setup()
-    render(<PointsWorkspace loading={false} rewards={[]} selectedStudentId="" studentSummary={null} students={makeStudents(10)} onAddPoints={vi.fn()} onLoadStudent={vi.fn()} onRedeem={vi.fn()} onReloadStudents={vi.fn()} />)
+    render(<PointsWorkspace loading={false} rewards={[]} selectedStudentId="" studentSummary={null} students={makeStudents(10)} onAddPoints={vi.fn()} onLoadStudent={vi.fn()} onRedeem={vi.fn()} onReloadStudents={vi.fn()} />, { wrapper: MemoryRouter })
     const rows = screen.getAllByRole('row')
     expect(rows[1]).toHaveTextContent('学员09')
     await user.click(screen.getByRole('button', { name: '下一页' }))

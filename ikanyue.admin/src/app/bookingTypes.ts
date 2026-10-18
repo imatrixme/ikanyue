@@ -221,3 +221,25 @@ export interface BookingCommandResult {
   status?: string
   [key: string]: unknown
 }
+
+export interface StudentBookingOption {
+  offeringId: string
+  course: { courseId: string; name: string; durationMinutes: number }
+  teacher: { teacherId: string; name: string; avatar?: string }
+  location: string
+}
+
+export interface BookingSlot {
+  startAt: string
+  endAt: string
+}
+
+export interface OperatorAppointmentInput {
+  studentId: string
+  offeringId: string
+  startAt: string
+  endAt: string
+  note?: string
+  /** Confirm in the same command (staff booked it with the student on the phone). */
+  confirm: boolean
+}

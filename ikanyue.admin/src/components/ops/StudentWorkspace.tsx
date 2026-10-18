@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
@@ -19,12 +19,16 @@ interface StudentWorkspaceProps {
   profile: OpsProfile
   students: StudentRecord[]
   token: string
+  totalStudents?: number
 }
 
 export function StudentWorkspace(props: StudentWorkspaceProps) {
   const navigate = useNavigate()
   const [student, setStudent] = useState<StudentRecord | null>(null)
-  return <><StudentsPanel canManage={props.profile.isAdmin} errorMessage={props.errorMessage} loading={props.loading} onOpenOperations={props.profile.isAdmin ? (item) => navigate(`${viewPaths.students}/${encodeURIComponent(item.id)}`) : setStudent} onReload={props.onReload} onSave={props.onSave} students={props.students} />{student ? <AssignedStudentDrawer onClose={() => setStudent(null)} student={student} /> : null}</>
+  const { api, token } = props
+  const canFinance = props.profile.isAdmin || (props.profile.courseCreditCapabilities || []).includes('course_credit.finance')
+  const loadOverview = useCallback((ids: string[]) => api.getStudentOverview(token, ids), [api, token])
+  return <><StudentsPanel canManage={props.profile.isAdmin} loadOverview={canFinance ? loadOverview : undefined} totalStudents={props.totalStudents} errorMessage={props.errorMessage} loading={props.loading} onOpenOperations={props.profile.isAdmin ? (item) => navigate(`${viewPaths.students}/${encodeURIComponent(item.id)}`) : setStudent} onReload={props.onReload} onSave={props.onSave} students={props.students} />{student ? <AssignedStudentDrawer onClose={() => setStudent(null)} student={student} /> : null}</>
 }
 
 function AssignedStudentDrawer({ onClose, student }: { onClose: () => void; student: StudentRecord }) {

@@ -11,6 +11,9 @@ import type {
   EnrollmentInput,
   RosterSyncPreview,
   SettlementPreview,
+  StudentFollowUp,
+  StudentFollowUpInput,
+  StudentOverview,
   TeacherCreditConfirmation,
   TeacherOverride,
 } from './courseTypes'
@@ -37,6 +40,35 @@ export interface CourseOpsApi {
   setClassMembership(token: string, classId: string, studentId: string, status: string): Promise<CourseCommandResult>
   transferClassStudent(token: string, classId: string, studentId: string, targetClassId: string): Promise<CourseCommandResult>
   setClassTeacher(token: string, classId: string, teacherId: string, role: string, status: string): Promise<CourseCommandResult>
+  getStudentOverview(token: string, studentIds: string[]): Promise<StudentOverview[]>
+  listFollowUps(token: string, studentId: string): Promise<StudentFollowUp[]>
+  recordFollowUp(token: string, studentId: string, input: StudentFollowUpInput): Promise<StudentFollowUp>
+}
+
+/** Upper bound for {@link listAllPages}; past this the caller shows a truncation notice. */
+export const LIST_ALL_LIMIT = 2000
+
+export interface AllPages<T> {
+  items: T[]
+  totalItems: number
+  truncated: boolean
+}
+
+/** Reads every page (100 per request) up to {@link LIST_ALL_LIMIT} rows. */
+export async function listAllPages<T>(fetchPage: (page: number, perPage: number) => Promise<CoursePage<T>>, limit = LIST_ALL_LIMIT): Promise<AllPages<T>> {
+  const perPage = 100
+  const first = await fetchPage(1, perPage)
+  const items = [...first.items]
+  const lastPage = Math.min(first.totalPages, Math.ceil(limit / perPage))
+  for (let page = 2; page <= lastPage; page += 1) items.push(...(await fetchPage(page, perPage)).items)
+  const kept = items.slice(0, limit)
+  const totalItems = Math.max(first.totalItems, kept.length)
+  return { items: kept, totalItems, truncated: totalItems > kept.length }
+}
+
+/** Convenience wrapper: every record of a course resource for the given query. */
+export function listAllCourseResource<T extends CourseRecord = CourseRecord>(api: Pick<CourseOpsApi, 'listCourseResource'>, token: string, resource: CourseResourceKey, query: CourseQuery = {}) {
+  return listAllPages<T>((page, perPage) => api.listCourseResource<T>(token, resource, { ...query, page, perPage }))
 }
 
 const resourcePaths: Record<CourseResourceKey, string> = {
@@ -133,11 +165,24 @@ export function createHttpCourseOpsApi(baseUrl: string): CourseOpsApi {
     setClassTeacher(token, classId, teacherId, role, status) {
       return command(token, `/course-credits/classes/${encodeURIComponent(classId)}/teachers/${encodeURIComponent(teacherId)}/assignment`, { role, status, effectiveFrom: new Date().toISOString() })
     },
+    async getStudentOverview(token, studentIds) {
+      if (studentIds.length === 0) return []
+      const result = await request<{ items: StudentOverview[] }>(`${baseUrl}/course-credits/student-overview${toQuery({ studentIds: studentIds.join(',') })}`, { token })
+      return result.items
+    },
+    async listFollowUps(token, studentId) {
+      const result = await request<{ items: StudentFollowUp[] }>(`${baseUrl}/course-credits/students/${encodeURIComponent(studentId)}/follow-ups`, { token })
+      return result.items
+    },
+    recordFollowUp(token, studentId, input) {
+      return command(token, `/course-credits/students/${encodeURIComponent(studentId)}/follow-ups`, input)
+    },
   }
 }
 
 export function createMockCourseOpsApi(): CourseOpsApi {
   const store = createMockStore()
+  const followUps: StudentFollowUp[] = []
   return {
     async listCourseResource<T extends CourseRecord = CourseRecord>(_token: string, resource: CourseResourceKey, query: CourseQuery = {}): Promise<CoursePage<T>> {
       const source = resource === 'assignedLessons' ? assignedLessons(store) : store[resource]
@@ -213,6 +258,29 @@ export function createMockCourseOpsApi(): CourseOpsApi {
       else store.classTeachers.push({ id: `class_teacher_${store.classTeachers.length + 1}`, classId, teacherId, role, status, effectiveFrom: new Date().toISOString() })
       return { classId, teacherId, role, status }
     },
+    async getStudentOverview(_token, studentIds) {
+      const now = Date.now()
+      return studentIds.map((studentId) => {
+        const account = store.accounts.find((item) => item.studentId === studentId) as CourseAccount | undefined
+        const sessionIds = new Set(store.sessionStudents.filter((item) => item.studentId === studentId && item.attendanceStatus !== 'cancelled').map((item) => item.sessionId))
+        const next = store.lessons.filter((lesson) => sessionIds.has(lesson.id) && !['draft', 'cancelled', 'settled'].includes(String(lesson.status)) && Date.parse(String(lesson.startAt)) >= now).sort((left, right) => String(left.startAt).localeCompare(String(right.startAt)))[0]
+        return {
+          studentId,
+          availableQuantity: account?.availableQuantity || 0,
+          frozenQuantity: account?.frozenQuantity || 0,
+          consumedQuantity: account?.consumedQuantity || 0,
+          expiredQuantity: account?.expiredQuantity || 0,
+          nextLesson: next ? { id: next.id, title: String(next.title || ''), startAt: String(next.startAt), status: String(next.status) } : null,
+          followUp: followUps.find((item) => item.studentId === studentId) || null,
+        }
+      })
+    },
+    async listFollowUps(_token, studentId) { return clone(followUps.filter((item) => item.studentId === studentId)) },
+    async recordFollowUp(_token, studentId, input) {
+      const record: StudentFollowUp = { id: `follow_up_${followUps.length + 1}`, studentId, status: input.status, note: input.note || '', snoozeUntil: input.snoozeUntil, actorId: 'admin_1', created: new Date().toISOString() }
+      followUps.unshift(record)
+      return clone(record)
+    },
   }
 }
 
@@ -254,7 +322,17 @@ function writableStoreKey(resource: CourseWritableResource): CourseResourceKey {
 }
 
 function matchesQuery(record: CourseRecord, query: CourseQuery) {
-  return Object.entries(query).every(([key, value]) => ['page', 'perPage'].includes(key) || value === undefined || value === '' || String(record[key] ?? '') === String(value))
+  return Object.entries(query).every(([key, value]) => {
+    if (['page', 'perPage'].includes(key) || value === undefined || value === '') return true
+    if (key === 'from') return Date.parse(String(record.startAt)) >= Date.parse(String(value))
+    if (key === 'to') return Date.parse(String(record.startAt)) < Date.parse(String(value))
+    if (key === 'studentIds') return String(value).split(',').includes(String(record.studentId))
+    if (key === 'renewalThreshold') {
+      const account = record as CourseAccount
+      return account.consumedQuantity + account.expiredQuantity > 0 && account.availableQuantity <= Number(value) && account.frozenQuantity === 0
+    }
+    return String(record[key] ?? '') === String(value)
+  })
 }
 
 function page<T>(items: T[], requestedPage = 1, requestedPerPage = 20): CoursePage<T> {

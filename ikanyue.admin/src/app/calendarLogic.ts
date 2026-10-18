@@ -49,7 +49,7 @@ export function visibleCalendarDays(view: CourseCalendarView, dateKey: string): 
 
 export function calendarRange(view: CourseCalendarView, dateKey: string): { from: string; to: string } {
   const days = visibleCalendarDays(view, dateKey)
-  return { from: shanghaiBoundary(days[0]), to: shanghaiBoundary(addDateDays(days.at(-1)!, 1)) }
+  return { from: shanghaiDayStartIso(days[0]), to: shanghaiDayStartIso(addDateDays(days.at(-1)!, 1)) }
 }
 
 export function shiftCalendarDate(view: CourseCalendarView, dateKey: string, direction: -1 | 1): string {
@@ -145,7 +145,7 @@ export function calendarOriginLabel(origin: string): string {
   return ({ class: '班级排课', appointment: '预约成课', admin: '教务排课' } as Record<string, string>)[origin] || origin
 }
 
-function shanghaiBoundary(dateKey: string): string {
+export function shanghaiDayStartIso(dateKey: string): string {
   return new Date(`${dateKey}T00:00:00.000+08:00`).toISOString()
 }
 

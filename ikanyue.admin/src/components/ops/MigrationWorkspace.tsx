@@ -75,7 +75,7 @@ export function MigrationWorkspace({ api, token }: { api: OpsApi; token: string 
         <Textarea aria-label="迁移计划 JSON" className="min-h-56 font-mono text-xs" onChange={(event) => updateJson(event.target.value)} value={JSON.stringify(plan, null, 2)} />
         {jsonError ? <FormMessage tone="error">{jsonError}</FormMessage> : null}
       </section>
-      <section className="grid gap-4 border-t border-[var(--border)] bg-[var(--brand-wash)] px-5 py-5">
+      <section className="grid gap-4 border-t border-[var(--border)] px-5 py-5">
         <SectionHeader description="预览只计算映射、差异和未解释来源，不写入余额。" title="预览与提交" />
         {!complete ? <FormMessage tone="error">仍有目标课程点、项目分类或课堂字段未填写。</FormMessage> : null}
         {preview ? <PreviewReport preview={preview} /> : null}

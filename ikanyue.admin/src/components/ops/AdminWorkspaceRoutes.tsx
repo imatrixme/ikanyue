@@ -27,6 +27,7 @@ interface AdminWorkspaceRoutesProps {
   loading: boolean
   managedStudents: StudentRecord[]
   managedStudentsError?: string
+  managedStudentsTotal?: number
   onAddPoints: (studentId: string, payload: { amount: number; reason?: string; remark?: string }) => Promise<boolean>
   onLoadManagedStudents: () => Promise<void>
   onLoadRewards: () => Promise<void>
@@ -50,7 +51,7 @@ export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
     <Routes>
       <Route path="/" element={<Navigate replace to={viewPaths.dashboard} />} />
       <Route path={viewPaths.dashboard} element={<Gate profile={props.profile} view="dashboard"><DashboardWorkspace {...courseProps} profile={props.profile} /></Gate>} />
-      <Route path={viewPaths.students} element={<Gate profile={props.profile} view="students"><StudentWorkspace api={props.api} errorMessage={props.managedStudentsError} loading={props.loading} onReload={props.onLoadManagedStudents} onSave={props.onSaveStudent} profile={props.profile} students={props.managedStudents} token={props.token} /></Gate>} />
+      <Route path={viewPaths.students} element={<Gate profile={props.profile} view="students"><StudentWorkspace api={props.api} errorMessage={props.managedStudentsError} loading={props.loading} onReload={props.onLoadManagedStudents} onSave={props.onSaveStudent} profile={props.profile} students={props.managedStudents} token={props.token} totalStudents={props.managedStudentsTotal} /></Gate>} />
       <Route path={`${viewPaths.students}/:studentId`} element={<Gate profile={props.profile} view="students"><StudentDetailRoute api={props.api} profile={props.profile} token={props.token} /></Gate>} />
       <Route path={viewPaths.courses} element={<Gate profile={props.profile} view="courses"><CoursesWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.packages} element={<Gate profile={props.profile} view="packages"><PackagesWorkspace {...courseProps} /></Gate>} />

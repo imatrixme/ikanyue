@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
+import { listAllCourseResource } from '../../app/courseApi'
 import { viewPaths } from '../../app/navigation'
 import { calendarRange, normalizeDateKey, shiftCalendarDate, todayKey, visibleCalendarDays } from '../../app/calendarLogic'
 import { calendarViewForContext, normalizeCalendarMode, schedulerLessonCode, selectionFromSlots, weeklyIntervals, type CalendarScheduleSelection, type CourseCalendarMode } from '../../app/calendarScheduler'
@@ -66,8 +67,8 @@ export function CourseCalendarWorkspace({ api, profile, token }: Props) {
     const timeout = window.setTimeout(() => {
       setReferenceError('')
       void Promise.all([
-        api.listCourseResource<TeachingClass>(token, 'classes', { page: 1, perPage: 100, status: 'active' }),
-        api.listCourseResource<CourseSpec>(token, 'courseSpecs', { page: 1, perPage: 100, status: 'active' }),
+        listAllCourseResource<TeachingClass>(api, token, 'classes', { status: 'active' }),
+        listAllCourseResource<CourseSpec>(api, token, 'courseSpecs', { status: 'active' }),
       ]).then(([classPage, coursePage]) => { setClasses(classPage.items); setCourses(coursePage.items) })
         .catch((loadError) => setReferenceError(message(loadError, '加载排课选项失败')))
     }, 0)

@@ -64,7 +64,7 @@ test('learner filters persist and detail reconstructs points history', async ({ 
   await page.getByLabel('排序').selectOption('balance-asc')
   await page.reload()
   await expect(page.getByLabel('排序')).toHaveValue('balance-asc')
-  await page.getByLabel('搜索学员').fill('李')
+  await page.getByLabel('搜索学员', { exact: true }).fill('李')
   await expect(page.getByRole('button', { name: '查看李同学详情' })).toBeVisible()
   await expect(page.getByText('张同学', { exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: '重置' }).click()

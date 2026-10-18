@@ -61,7 +61,7 @@ describe('course read model coverage', () => {
     expect(screen.getByRole('region', { name: '待确认工作量' })).toHaveTextContent('1 条授课工作量待确认')
     await user.click(within(lessons).getByRole('button', { name: /晨间合唱/ }))
     expect(screen.getByTestId('location')).toHaveTextContent('/schedule/lessons?sessionId=today')
-    await user.click(within(renewal).getByRole('button', { name: /张同学/ }))
+    await user.click(within(renewal).getByRole('button', { name: /剩 0 课时/ }))
     expect(screen.getByTestId('location')).toHaveTextContent('/students/student_1')
     await user.click(screen.getByRole('button', { name: '刷新今日待办' }))
     await screen.findByRole('region', { name: '今日课堂' })
@@ -85,6 +85,30 @@ describe('course read model coverage', () => {
       await screen.findByRole('heading', { name: /^今天/ })
       profileView.unmount()
     }
+  })
+
+  it('marks a lesson present and snoozes a renewal from today', async () => {
+    const user = userEvent.setup()
+    const api = populatedDashboardApi()
+    const mark = vi.spyOn(api, 'markAllPresent')
+    const record = vi.spyOn(api, 'recordFollowUp')
+    renderDashboard(api, mockProfiles.admin)
+    const lessons = await screen.findByRole('region', { name: '今日课堂' })
+    expect(within(lessons).queryByRole('button', { name: '晨间合唱全部到课' })).not.toBeInTheDocument()
+    await user.click(within(lessons).getByRole('button', { name: '午间练声全部到课' }))
+    expect(mark).toHaveBeenCalledWith('token', 'today_open')
+    expect(await within(lessons).findByRole('button', { name: '午间练声已全部到课' })).toBeDisabled()
+
+    await user.click(within(screen.getByRole('region', { name: /需要续课/ })).getByRole('button', { name: '张同学记录跟进' }))
+    const dialog = screen.getByRole('dialog', { name: '记录续课跟进' })
+    await user.type(within(dialog).getByRole('textbox', { name: '备注' }), '下周回复')
+    await user.click(within(dialog).getByRole('button', { name: '保存跟进' }))
+    expect(record).toHaveBeenCalledWith('token', 'student_1', expect.objectContaining({ status: 'contacted', note: '下周回复' }))
+    await waitFor(() => expect(screen.queryByRole('region', { name: /需要续课/ })).not.toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: '刷新今日待办' }))
+    await screen.findByRole('region', { name: '今日课堂' })
+    expect(screen.queryByRole('region', { name: /需要续课/ })).not.toBeInTheDocument()
   })
 
   it('covers today Error and non-Error fallbacks', async () => {
@@ -161,7 +185,7 @@ describe('course read model coverage', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/students/student_1')
 
     const onOpen = vi.fn()
-    const mobileView = render(<StudentsPanel loading={false} onOpenOperations={onOpen} onReload={vi.fn()} onSave={vi.fn().mockResolvedValue(true)} students={[student]} />)
+    const mobileView = render(<StudentsPanel loading={false} onOpenOperations={onOpen} onReload={vi.fn()} onSave={vi.fn().mockResolvedValue(true)} students={[student]} />, { wrapper: MemoryRouter })
     await user.click(screen.getAllByRole('button', { name: '详情' }).at(-1)!)
     expect(onOpen).toHaveBeenCalledWith(student)
     await user.click(screen.getAllByRole('button', { name: '编辑张同学' }).at(-1)!)
@@ -268,6 +292,7 @@ function populatedDashboardApi() {
   const records: Partial<Record<CourseResourceKey, CourseRecord[]>> = {
     lessons: [
       { id: 'today', title: '晨间合唱', startAt: earlyToday.toISOString(), status: 'completed' },
+      { id: 'today_open', title: '午间练声', startAt: new Date(earlyToday.getTime() + 4 * 3_600_000).toISOString(), status: 'scheduled' },
       { id: 'future', title: '未来课堂', startAt: '2030-01-01T10:00:00.000Z', status: 'scheduled' },
     ],
     enrollments: [
@@ -284,10 +309,19 @@ function populatedDashboardApi() {
     reconciliationExceptions: [{ id: 'reconciliation_exception' }, { id: 'reconciliation_exception_2' }, { id: 'reconciliation_exception_3' }, { id: 'reconciliation_exception_4' }],
   }
   api.listCourseResource = async <T extends CourseRecord = CourseRecord>(token: string, resource: CourseResourceKey, query: CourseQuery = {}): Promise<CoursePage<T>> => {
-    const items = records[resource]
+    const items = records[resource]?.filter((item) => matchesDashboardQuery(item, query))
     return items ? { items: structuredClone(items) as T[], page: 1, perPage: 100, totalItems: items.length, totalPages: 1 } : original<T>(token, resource, query)
   }
   return api
+}
+
+function matchesDashboardQuery(item: CourseRecord, query: CourseQuery) {
+  const quantity = (key: string) => Number(item[key] || 0)
+  if (query.status && item.status !== query.status) return false
+  if (query.from && Date.parse(String(item.startAt)) < Date.parse(query.from)) return false
+  if (query.to && Date.parse(String(item.startAt)) >= Date.parse(query.to)) return false
+  if (query.renewalThreshold !== undefined && !(quantity('availableQuantity') <= query.renewalThreshold && quantity('frozenQuantity') === 0 && quantity('consumedQuantity') + quantity('expiredQuantity') > 0)) return false
+  return true
 }
 
 function replaceResource(api: OpsApi, resourceKey: CourseResourceKey, items: CourseRecord[]) {

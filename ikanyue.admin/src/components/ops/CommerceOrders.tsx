@@ -1,7 +1,9 @@
 import { ChevronLeft, ChevronRight, FlaskConical, Search, RotateCcw, RefreshCw } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { commerceApi, money, orderLabel, type OrderPage, type OrderDetail } from '../../app/commerceApi'
 import { Button } from '../ui/Button'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
+import { useNotify } from '../ui/notifyContext'
 import { IconButton, Textarea } from '../ui/Controls'
 import { DialogShell } from '../ui/DialogShell'
 import { AsyncState } from '../ui/DataDisplay'
@@ -42,12 +44,14 @@ export function CommerceOrders({ token, mockEnabled = false }: { token: string; 
 export function CommerceOrderDialog({ token, id, onClose, mockEnabled = false }: { token: string; id: string; onClose: () => void; mockEnabled?: boolean }) {
   const [order, setOrder] = useState<OrderDetail | null>(null)
   const [reason, setReason] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false)
+  const [pending, setPending] = useState<PendingAction | null>(null)
+  const notify = useNotify()
   const key = useRef(crypto.randomUUID())
   const load = useCallback(async () => { try { setOrder(await commerceApi.order(token, id)) } catch (error) { setError(error instanceof Error ? error.message : '订单加载失败') } }, [token, id])
   useEffect(() => { const timer = setTimeout(() => void load(), 0); return () => clearTimeout(timer) }, [load])
-  async function run(action: () => Promise<unknown>) {
+  async function run(action: () => Promise<unknown>, success?: string) {
     setBusy(true); setError('')
-    try { await action(); key.current = crypto.randomUUID(); await load(); setReason('') }
+    try { await action(); key.current = crypto.randomUUID(); await load(); setReason(''); if (success) notify(success) }
     catch (error) { setError(error instanceof Error ? error.message : '操作未完成'); await load() }
     finally { setBusy(false) }
   }
@@ -59,16 +63,27 @@ export function CommerceOrderDialog({ token, id, onClose, mockEnabled = false }:
         {order.cancellationFees ? <p className="text-sm">取消预约扣费 {money(order.cancellationFees)}</p> : null}
         <div><h4 className="mb-2 font-medium">课程使用情况</h4>{order.batches.map((batch) => <p key={batch.id} className="py-1 text-sm">{batch.name}：剩余 {batch.available} · 已预约 {batch.reserved} · 已使用 {batch.consumed} · 已退回或停用 {batch.reversed}</p>)}</div>
         <div className="border-y border-[var(--border)] py-4"><h4 className="font-semibold">退还剩余课时 {money(order.quote.amount)}</h4><p className="my-2 text-sm">{order.quote.message}</p><label className="grid gap-2 text-sm">处理原因<Textarea value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} /></label>
-          <div className="mt-3 flex flex-wrap gap-2"><Button icon={<RotateCcw />} disabled={busy || order.quote.blocked || order.quote.amount <= 0 || reason.trim().length < 2} onClick={() => {
-            if (window.confirm(`确认向 ${order.student.name} 原路退款 ${money(order.quote.amount)}？相应剩余课时将暂停使用。`)) void run(() => commerceApi.refundOrder(token, id, { key: key.current, expectedAmount: order.quote.amount, reason }))
-          }}>确认退款</Button><Button variant="secondary" icon={<RefreshCw />} disabled={busy || reason.trim().length < 2} onClick={() => void run(() => commerceApi.recoverOrder(token, id, reason))}>重试结果同步</Button></div>
+          <div className="mt-3 flex flex-wrap gap-2"><Button icon={<RotateCcw />} disabled={busy || order.quote.blocked || order.quote.amount <= 0 || reason.trim().length < 2} onClick={() => setPending({
+            title: '确认原路退款',
+            description: <>将向 {order.student.name} 原路退还 <strong className="text-[var(--foreground)]">{money(order.quote.amount)}</strong>，相应剩余课时会立即停用，此操作无法撤回。</>,
+            confirmLabel: `退款 ${money(order.quote.amount)}`,
+            success: `已提交 ${money(order.quote.amount)} 退款`,
+            action: () => commerceApi.refundOrder(token, id, { key: key.current, expectedAmount: order.quote.amount, reason }),
+          })}>确认退款</Button><Button variant="secondary" icon={<RefreshCw />} disabled={busy || reason.trim().length < 2} onClick={() => void run(() => commerceApi.recoverOrder(token, id, reason), '已重新同步订单结果')}>重试结果同步</Button></div>
         </div>
-        <div><h4 className="mb-2 font-medium">退款记录</h4>{order.refunds.length ? order.refunds.map((refund) => <div key={refund.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><p>{money(refund.amount)} · {({ processing: '处理中', succeeded: '已退款', failed: '退款失败' } as Record<string, string>)[refund.status]} · {refund.actor?.reason || '学员退款'}</p>{refund.kind === 'reservation' && refund.status === 'failed' ? <Button variant="secondary" icon={<RefreshCw />} disabled={busy || reason.trim().length < 2} onClick={() => void run(() => commerceApi.retryRefund(token, refund.id, reason))}>重试原路退款</Button> : null}{mockEnabled && refund.status === 'processing' ? <Button variant="secondary" icon={<FlaskConical />} disabled={busy} onClick={() => {
-          if (window.confirm('仅模拟退款到账，不会发生真实资金转移。继续？')) void run(() => commerceApi.mockRefund(token, refund.id))
-        }}>模拟退款到账</Button> : null}</div>) : <p className="text-sm">暂无退款</p>}</div>
+        <div><h4 className="mb-2 font-medium">退款记录</h4>{order.refunds.length ? order.refunds.map((refund) => <div key={refund.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><p>{money(refund.amount)} · {({ processing: '处理中', succeeded: '已退款', failed: '退款失败' } as Record<string, string>)[refund.status]} · {refund.actor?.reason || '学员退款'}</p>{refund.kind === 'reservation' && refund.status === 'failed' ? <Button variant="secondary" icon={<RefreshCw />} disabled={busy || reason.trim().length < 2} onClick={() => void run(() => commerceApi.retryRefund(token, refund.id, reason), '已重新发起原路退款')}>重试原路退款</Button> : null}{mockEnabled && refund.status === 'processing' ? <Button variant="secondary" icon={<FlaskConical />} disabled={busy} onClick={() => setPending({
+          title: '模拟退款到账',
+          description: `仅把这笔 ${money(refund.amount)} 退款标记为已到账，不会发生真实资金转移。`,
+          confirmLabel: '模拟到账',
+          success: '已模拟退款到账',
+          action: () => commerceApi.mockRefund(token, refund.id),
+        })}>模拟退款到账</Button> : null}</div>) : <p className="text-sm">暂无退款</p>}</div>
         <div><h4 className="mb-2 font-medium">操作记录</h4>{order.audit.map((entry) => <p key={entry.id} className="py-1 text-sm">{new Date(entry.createdAt).toLocaleString('zh-CN')} · {entry.actorName || '历史操作人'} · {entry.reason}</p>)}</div>
         <details className="text-xs text-[var(--muted-foreground)]"><summary>订单凭证</summary><p className="break-all">{id}</p></details>
       </> : null}
     </AsyncState></div>
+    {pending ? <ConfirmDialog title={pending.title} description={pending.description} confirmLabel={pending.confirmLabel} destructive onCancel={() => setPending(null)} onConfirm={() => { const next = pending; setPending(null); void run(next.action, next.success) }} /> : null}
   </DialogShell>
 }
+
+interface PendingAction { title: string; description: ReactNode; confirmLabel: string; success: string; action: () => Promise<unknown> }

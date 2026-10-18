@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { listAllCourseResource } from '../../app/courseApi'
+import { shanghaiLocalInput } from '../../app/calendarLogic'
 import type { BookingReferenceData } from '../../app/bookingTypes'
 import { formatMoney, recordOption, type ReferenceOption } from '../../app/coursePresentation'
 import type { CourseRecord } from '../../app/courseTypes'
@@ -114,7 +116,7 @@ function ConversionRuleList({ api, token, refs }: WorkspaceProps & { refs: Catal
     { key: 'validTo', label: '失效时间', type: 'datetime-local' },
     { key: 'version', label: '版本号', type: 'number', required: true },
   ]
-  const validFrom = new Date().toISOString().slice(0, 16)
+  const validFrom = shanghaiLocalInput(new Date().toISOString())
   return <CourseResourceWorkspace api={api} columns={columns} defaultValues={{ sourceQuantity: 100, targetQuantity: 1, minSourceQuantity: 100, maxSourceQuantity: 1000, expiryPolicy: 'INHERIT_SOURCE', activationMode: 'GRANT_TIME', validityDurationDays: 0, activationDeadlineDays: 0, reversible: false, referenceValueLimit: 1, validFrom, validTo: '', version: 1, status: 'draft' }} fields={fields} noun="兑换规则" resource="conversionRules" statusOptions={statusOptions} title="兑换规则" token={token} writableResource="conversion-rules" />
 }
 
@@ -142,7 +144,7 @@ function useCatalogReferences(api: OpsApi, token: string): CatalogReferences {
     setError('')
     try {
       const [packagePage, referenceData] = await Promise.all([
-        api.listCourseResource(token, 'packages', { page: 1, perPage: 100 }),
+        listAllCourseResource(api, token, 'packages'),
         api.getBookingReferenceData(token),
       ])
       setPackages(packagePage.items)

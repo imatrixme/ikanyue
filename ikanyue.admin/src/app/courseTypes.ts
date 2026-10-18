@@ -141,6 +141,42 @@ export interface CourseQuery {
   resourceType?: string
   resourceId?: string
   outcome?: string
+  /** Lesson start lower bound (inclusive), ISO time. */
+  from?: string
+  /** Lesson start upper bound (exclusive), ISO time. */
+  to?: string
+  /** Comma-separated student ids (accounts only). */
+  studentIds?: string
+  /** Only accounts that need renewal at this many hours or fewer (accounts only). */
+  renewalThreshold?: number
+}
+
+export type FollowUpStatus = 'contacted' | 'declined'
+
+export interface StudentFollowUp {
+  id: string
+  studentId: string
+  status: FollowUpStatus
+  note: string
+  snoozeUntil: string | null
+  actorId: string
+  created: string | null
+}
+
+export interface StudentFollowUpInput {
+  status: FollowUpStatus
+  note?: string
+  snoozeUntil: string
+}
+
+export interface StudentOverview {
+  studentId: string
+  availableQuantity: number
+  frozenQuantity: number
+  consumedQuantity: number
+  expiredQuantity: number
+  nextLesson: { id: string; title: string; startAt: string; status: string } | null
+  followUp: StudentFollowUp | null
 }
 
 export interface CourseCommandResult {

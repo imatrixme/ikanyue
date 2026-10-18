@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import App from '../../App'
@@ -233,7 +234,7 @@ describe('list-first scene components', () => {
   it('filters learners, opens detail, and preserves grant data when returning from review', async () => {
     const user = userEvent.setup()
     const onAddPoints = vi.fn().mockResolvedValue(true)
-    render(<PointsWorkspace {...workspaceProps({ onAddPoints })} />)
+    render(<PointsWorkspace {...workspaceProps({ onAddPoints })} />, { wrapper: MemoryRouter })
     await user.type(screen.getByLabelText('搜索学员'), '李')
     expect(screen.getByRole('table')).toHaveTextContent('李同学')
     expect(screen.getByRole('table')).not.toHaveTextContent('张同学')

@@ -2,14 +2,14 @@ import { Eye, Gift, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { RewardItem, StudentPointSummary, StudentPointsRow } from '../../app/types'
-import { FilterToolbar, PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
+import { FilterToolbar, PageHeader, WorkspacePanel } from '../layout/Workspace'
 import { Button } from '../ui/Button'
 import { IconButton } from '../ui/Controls'
 import { AsyncState, DataTable, ResponsiveDataRegion } from '../ui/DataDisplay'
 import { Field, Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { FilterSummary, ListEmptyState, PaginationControls } from './ListControls'
-import { isRecord, pageItems, parseOptionalNumber, stringValue, usePersistedFilters } from './listState'
+import { isRecord, pageItems, parseOptionalNumber, stringValue, useUrlFilters } from './listState'
 import { PointActionDialog } from './PointActionDialog'
 import { StudentDetailDrawer } from './StudentDetailDialog'
 
@@ -33,7 +33,7 @@ const defaults: LearnerFilters = { keyword: '', maxBalance: '', minBalance: '', 
 const pageSize = 8
 
 export function PointsWorkspace(props: PointsWorkspaceProps) {
-  const [filters, setFilters] = usePersistedFilters('kanyue.points.filters.v1', defaults, sanitizeFilters)
+  const [filters, setFilters] = useUrlFilters('kanyue.points.filters.v1', defaults, sanitizeFilters)
   const [page, setPage] = useState(1)
   const [overlay, setOverlay] = useState<LearnerOverlay | null>(null)
   const activeRewards = useMemo(() => props.rewards.filter((item) => item.status === 'active'), [props.rewards])
@@ -67,7 +67,6 @@ export function PointsWorkspace(props: PointsWorkspaceProps) {
   return (
     <WorkspacePanel>
       <PageHeader actions={<IconButton disabled={props.loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载学员" onClick={() => void props.onReloadStudents()} type="button" />} title="学员积分" />
-      <SummaryBand><SummaryMetric label="学员总数" value={`${props.students.length} 人`} /><SummaryMetric label="当前积分总额" value={`${props.students.reduce((total, student) => total + student.balance, 0)} 分`} /><SummaryMetric label="上架实物" value={`${activeRewards.length} 件`} /></SummaryBand>
       <FilterToolbar className="md:grid-cols-[minmax(180px,1fr)_140px_140px_180px]">
         <Field label="搜索学员" htmlFor="learner-keyword"><Input id="learner-keyword" placeholder="姓名 / 昵称 / 手机号" value={filters.keyword} onChange={(event) => updateFilter('keyword', event.target.value)} /></Field>
         <Field label="最低积分" htmlFor="learner-min"><Input id="learner-min" min="0" type="number" value={filters.minBalance} onChange={(event) => updateFilter('minBalance', event.target.value)} /></Field>
@@ -84,7 +83,7 @@ export function PointsWorkspace(props: PointsWorkspaceProps) {
 }
 
 function LearnerTable({ activeRewards, selectedId, students, summary, onAction }: { activeRewards: RewardItem[]; selectedId: string; students: StudentPointsRow[]; summary: StudentPointSummary | null; onAction: (kind: 'grant' | 'redeem' | 'detail', student: StudentPointsRow) => void }) {
-  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">当前积分</th><th className="px-4 py-3 font-medium">可兑换</th><th className="px-4 py-3 font-medium">最近记录</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.cellphone || '无手机号'}</p></td><td className="px-4 py-3 font-semibold tabular-nums text-[var(--point)]">{student.balance} 分</td><td className="px-4 py-3">{affordableCount(activeRewards, student.balance)} 件</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{selectedId === student.id && summary?.events?.[0] ? eventSummary(summary.events[0]) : '-'}</td><td className="px-4 py-3"><RowActions student={student} onAction={onAction} /></td></tr>)}</tbody></DataTable>
+  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3 font-medium">学员</th><th className="px-4 py-3 font-medium">当前积分</th><th className="px-4 py-3 font-medium">可兑换</th><th className="px-4 py-3 font-medium">最近记录</th><th className="px-4 py-3 text-right font-medium">操作</th></tr></thead><tbody>{students.map((student) => <tr className="border-b border-[var(--border)] transition-colors hover:bg-[var(--muted)] last:border-0" key={student.id}><td className="px-4 py-3"><p className="font-semibold">{studentName(student)}</p><p className="mt-1 text-xs text-[var(--muted-foreground)]">{student.cellphone || '无手机号'}</p></td><td className="px-4 py-3 font-semibold tabular-nums text-[var(--point)]">{student.balance} 分</td><td className="px-4 py-3">{affordableCount(activeRewards, student.balance)} 件</td><td className="px-4 py-3 text-[var(--muted-foreground)]">{selectedId === student.id && summary?.events?.[0] ? eventSummary(summary.events[0]) : '-'}</td><td className="px-4 py-3"><RowActions student={student} onAction={onAction} /></td></tr>)}</tbody></DataTable>
 }
 
 function LearnerCard({ activeRewards, student, onAction }: { activeRewards: RewardItem[]; student: StudentPointsRow; onAction: (kind: 'grant' | 'redeem' | 'detail') => void }) {

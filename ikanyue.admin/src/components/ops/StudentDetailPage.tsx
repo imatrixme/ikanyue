@@ -1,15 +1,20 @@
-import { ArrowLeft, Award, Plus } from 'lucide-react'
+import { ArrowLeft, Award, CalendarPlus, PhoneCall, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
-import { creditStatusLabel, enrollmentStatusLabel, formatDateTime, personName, recordName, statusLabel } from '../../app/coursePresentation'
-import type { CourseAccount, CourseRecord, EnrollmentOperation, Lesson } from '../../app/courseTypes'
+import { listAllCourseResource } from '../../app/courseApi'
+import { creditStatusLabel, enrollmentStatusLabel, followUpStatusLabels, formatDate, formatDateTime, personName, recordName, statusLabel } from '../../app/coursePresentation'
+import type { CourseAccount, CourseRecord, EnrollmentOperation, Lesson, StudentFollowUp, StudentFollowUpInput } from '../../app/courseTypes'
 import { viewPaths } from '../../app/navigation'
+import { listAllStudents } from '../../app/studentDirectory'
 import type { StudentPointSummary, StudentRecord } from '../../app/types'
 import { PageHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Button } from '../ui/Button'
 import { AsyncState } from '../ui/DataDisplay'
+import { useNotify } from '../ui/notifyContext'
+import { FollowUpDialog } from './FollowUpDialog'
+import { OperatorBookingDialog } from './OperatorBookingDialog'
 
 interface StudentDetailData {
   account: CourseAccount
@@ -17,6 +22,7 @@ interface StudentDetailData {
   classCatalog: CourseRecord[]
   classes: CourseRecord[]
   enrollments: EnrollmentOperation[]
+  followUps: StudentFollowUp[]
   lessonCatalog: Lesson[]
   packages: CourseRecord[]
   points: StudentPointSummary
@@ -30,27 +36,37 @@ export function StudentDetailPage({ api, studentId, token }: { api: OpsApi; stud
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [now] = useState(() => Date.now())
+  const [version, setVersion] = useState(0)
+  const [dialog, setDialog] = useState<'booking' | 'followUp' | null>(null)
+  const notify = useNotify()
+  const reload = () => setVersion((value) => value + 1)
+
+  async function saveFollowUp(input: StudentFollowUpInput) {
+    await api.recordFollowUp(token, studentId, input)
+    notify('已记录续课跟进')
+    reload()
+  }
 
   useEffect(() => {
     let active = true
-    const page = { page: 1, perPage: 100 }
     void Promise.all([
       api.getCourseResource<CourseAccount>(token, 'accounts', studentId),
-      api.listCourseResource(token, 'classStudents', { ...page, studentId }),
-      api.listCourseResource(token, 'sessionStudents', { ...page, studentId }),
-      api.listCourseResource<EnrollmentOperation>(token, 'enrollments', { ...page, studentId }),
+      listAllCourseResource(api, token, 'classStudents', { studentId }),
+      listAllCourseResource(api, token, 'sessionStudents', { studentId }),
+      listAllCourseResource<EnrollmentOperation>(api, token, 'enrollments', { studentId }),
       api.listCourseResource(token, 'auditLogs', { page: 1, perPage: 20, resourceType: 'student', resourceId: studentId }),
       api.getStudentPoints(token, studentId),
-      api.listCourseResource(token, 'classes', page),
-      api.listCourseResource<Lesson>(token, 'lessons', page),
-      api.listCourseResource(token, 'packages', page),
-      api.listManagedStudents(token, page),
-    ]).then(([account, classes, sessions, enrollments, audit, points, classCatalog, lessonCatalog, packages, students]) => {
-      if (active) setData({ account, audit: audit.items, classCatalog: classCatalog.items, classes: classes.items, enrollments: enrollments.items, lessonCatalog: lessonCatalog.items, packages: packages.items, points, sessions: sessions.items, student: students.items.find((item) => item.id === studentId) })
+      listAllCourseResource(api, token, 'classes'),
+      listAllCourseResource<Lesson>(api, token, 'lessons'),
+      listAllCourseResource(api, token, 'packages'),
+      listAllStudents(api, token),
+      api.listFollowUps(token, studentId),
+    ]).then(([account, classes, sessions, enrollments, audit, points, classCatalog, lessonCatalog, packages, students, followUps]) => {
+      if (active) setData({ account, audit: audit.items, classCatalog: classCatalog.items, classes: classes.items, enrollments: enrollments.items, followUps, lessonCatalog: lessonCatalog.items, packages: packages.items, points, sessions: sessions.items, student: students.items.find((item) => item.id === studentId) })
     }).catch((loadError) => { if (active) setError(loadError instanceof Error ? loadError.message : '加载学员详情失败') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [api, studentId, token])
+  }, [api, studentId, token, version])
 
   const name = data?.student ? personName(data.student) : '学员详情'
   const lessonOf = (record: CourseRecord) => data?.lessonCatalog.find((lesson) => lesson.id === String(record.sessionId))
@@ -69,6 +85,8 @@ export function StudentDetailPage({ api, studentId, token }: { api: OpsApi; stud
         actions={<>
           <Button icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(viewPaths.students)} type="button" variant="ghost">学员列表</Button>
           <Button icon={<Award className="h-4 w-4" />} onClick={() => navigate(viewPaths.points)} type="button" variant="secondary">积分</Button>
+          <Button disabled={!data} icon={<PhoneCall className="h-4 w-4" />} onClick={() => setDialog('followUp')} type="button" variant="secondary">记录跟进</Button>
+          <Button disabled={!data} icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setDialog('booking')} type="button" variant="secondary">代约一对一</Button>
           <Button icon={<Plus className="h-4 w-4" />} onClick={() => navigate(`${viewPaths.enrollments}?new=1&studentId=${encodeURIComponent(studentId)}`)} type="button">报课/续课</Button>
         </>}
         title={name}
@@ -95,12 +113,17 @@ export function StudentDetailPage({ api, studentId, token }: { api: OpsApi; stud
             <DetailSection empty="还没有上过课" title="最近课堂">
               {history.map(({ record, lesson }) => <Row key={record.id} main={lesson?.title || recordName(lesson, String(record.sessionId || ''), '课堂')} meta={lesson ? formatDateTime(lesson.startAt) : undefined} side={`${statusLabel(record.attendanceStatus || 'scheduled')} · ${creditStatusLabel(record.creditStatus)}`} />)}
             </DetailSection>
+            <DetailSection empty="还没有续课跟进" title="续课跟进">
+              {data.followUps.map((item) => <Row key={item.id} main={item.note || followUpStatusLabels[item.status]} meta={formatDateTime(item.created, '')} side={`${followUpStatusLabels[item.status]}${item.snoozeUntil ? ` · ${formatDate(item.snoozeUntil)} 再提醒` : ''}`} />)}
+            </DetailSection>
             <DetailSection empty="没有操作记录" title="最近操作">
               {data.audit.map((item) => <Row key={item.id} main={String(item.action || '业务操作')} meta={formatDateTime(item.created, '')} side={statusLabel(item.outcome || 'succeeded')} />)}
             </DetailSection>
           </div>
         </> : null}
       </AsyncState>
+      {dialog === 'followUp' ? <FollowUpDialog onClose={() => setDialog(null)} onSave={saveFollowUp} studentName={name} /> : null}
+      {dialog === 'booking' ? <OperatorBookingDialog api={api} onBooked={reload} onClose={() => setDialog(null)} student={{ id: studentId, name }} token={token} /> : null}
     </WorkspacePanel>
   )
 }

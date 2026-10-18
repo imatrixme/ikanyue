@@ -13,6 +13,12 @@ export function ResponsiveDataRegion({ desktop, mobile }: { desktop: ReactNode; 
   return <><div className="hidden overflow-x-auto md:block">{desktop}</div><div className="grid divide-y divide-[var(--border)] md:hidden">{mobile}</div></>
 }
 
+/** Says out loud that a list stopped short instead of dropping rows silently. */
+export function TruncationNotice({ shown, total }: { shown: number; total: number }) {
+  if (total <= shown) return null
+  return <p className="border-b border-[var(--border)] px-4 py-2 text-sm text-[var(--warning-foreground)]" role="note">仅显示前 {shown} 条，共 {total} 条</p>
+}
+
 export function EmptyState({ filtered = false, noun, onCreate, onReset }: { filtered?: boolean; noun: string; onCreate?: () => void; onReset?: () => void }) {
   return (
     <div className="grid min-h-48 place-items-center px-5 py-10 text-center">

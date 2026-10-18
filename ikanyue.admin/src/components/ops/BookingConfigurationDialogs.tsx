@@ -10,6 +10,7 @@ import type {
   BookingReferenceData,
   BookingWeeklyRule,
 } from '../../app/bookingTypes'
+import { dateKeyInShanghai } from '../../app/calendarLogic'
 import { Button } from '../ui/Button'
 import { IconButton, Textarea } from '../ui/Controls'
 import { DialogShell } from '../ui/DialogShell'
@@ -43,7 +44,7 @@ export function BookingOverrideDialog({ loading, onClose, onSave }: { loading: b
   const [end, setEnd] = useState('11:00')
   const [reason, setReason] = useState('教师临时安排')
   const valid = Boolean(date) && start < end && reason.trim().length >= 2
-  return <DialogShell description="日期例外只影响选定课程，不会改变教师其他课程的开放时间。" onRequestClose={onClose} size="compact" title="新增日期例外"><form className="grid gap-4 p-5" onSubmit={(event) => { event.preventDefault(); if (valid) void onSave({ type, startAt: localIso(date, start), endAt: localIso(date, end), reason: reason.trim() }) }}><Field htmlFor="override-type" label="例外类型"><Select id="override-type" onChange={(event) => setType(event.target.value as 'available' | 'unavailable')} options={[{ label: '临时不开放', value: 'unavailable' }, { label: '临时加开', value: 'available' }]} value={type} /></Field><Field htmlFor="override-date" label="日期"><Input id="override-date" min={new Date().toISOString().slice(0, 10)} onChange={(event) => setDate(event.target.value)} required type="date" value={date} /></Field><div className="grid grid-cols-2 gap-3"><Field htmlFor="override-start" label="开始"><Input id="override-start" onChange={(event) => setStart(event.target.value)} required type="time" value={start} /></Field><Field htmlFor="override-end" label="结束"><Input id="override-end" onChange={(event) => setEnd(event.target.value)} required type="time" value={end} /></Field></div><Field htmlFor="override-reason" label="说明"><Textarea id="override-reason" minLength={2} onChange={(event) => setReason(event.target.value)} required value={reason} /></Field><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">取消</Button><Button disabled={loading || !valid} type="submit">保存日期例外</Button></div></form></DialogShell>
+  return <DialogShell description="日期例外只影响选定课程，不会改变教师其他课程的开放时间。" onRequestClose={onClose} size="compact" title="新增日期例外"><form className="grid gap-4 p-5" onSubmit={(event) => { event.preventDefault(); if (valid) void onSave({ type, startAt: localIso(date, start), endAt: localIso(date, end), reason: reason.trim() }) }}><Field htmlFor="override-type" label="例外类型"><Select id="override-type" onChange={(event) => setType(event.target.value as 'available' | 'unavailable')} options={[{ label: '临时不开放', value: 'unavailable' }, { label: '临时加开', value: 'available' }]} value={type} /></Field><Field htmlFor="override-date" label="日期"><Input id="override-date" min={dateKeyInShanghai(new Date().toISOString())} onChange={(event) => setDate(event.target.value)} required type="date" value={date} /></Field><div className="grid grid-cols-2 gap-3"><Field htmlFor="override-start" label="开始"><Input id="override-start" onChange={(event) => setStart(event.target.value)} required type="time" value={start} /></Field><Field htmlFor="override-end" label="结束"><Input id="override-end" onChange={(event) => setEnd(event.target.value)} required type="time" value={end} /></Field></div><Field htmlFor="override-reason" label="说明"><Textarea id="override-reason" minLength={2} onChange={(event) => setReason(event.target.value)} required value={reason} /></Field><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">取消</Button><Button disabled={loading || !valid} type="submit">保存日期例外</Button></div></form></DialogShell>
 }
 
 interface PolicyForm extends Omit<BookingPolicyInput, 'defaultWindows' | 'effectiveFrom'> { effectiveFrom: string; window1Start: string; window1End: string; window2Start: string; window2End: string }
@@ -59,7 +60,7 @@ function hasOverlap(rules: RuleForm[]) { const sorted = [...rules].sort((left, r
 function validPolicyWindows(value: PolicyForm) { return value.window1Start < value.window1End && ((!value.window2Start && !value.window2End) || (value.window2Start < value.window2End && value.window1End <= value.window2Start)) }
 function timeMinute(value: string) { const [hours, minutes] = value.split(':').map(Number); return hours * 60 + minutes }
 function minuteTime(value: number) { return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}` }
-function localIso(date: string, time: string) { return new Date(`${date}T${time}:00`).toISOString() }
+function localIso(date: string, time: string) { return new Date(`${date}T${time}:00+08:00`).toISOString() }
 function toLocalInput(value: string) { const date = new Date(value); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16) }
 
 const weekdayOptions = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((label, index) => ({ label, value: String(index + 1) }))

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { mockRewards, mockStudents } from '../../app/mockData'
@@ -12,7 +13,7 @@ describe('points lite edge scenes', () => {
   it('changes the selected reward and keeps failed redemption review open', async () => {
     const user = userEvent.setup()
     const onRedeem = vi.fn().mockResolvedValue(false)
-    render(<PointsWorkspace {...pointsProps({ onRedeem, studentSummary: summary(250), students: [{ ...mockStudents.items[0], balance: 250 }, mockStudents.items[1]] })} />)
+    render(<PointsWorkspace {...pointsProps({ onRedeem, studentSummary: summary(250), students: [{ ...mockStudents.items[0], balance: 250 }, mockStudents.items[1]] })} />, { wrapper: MemoryRouter })
     await user.click(screen.getAllByRole('button', { name: '为张同学线下兑换' })[0])
     await user.selectOptions(screen.getByLabelText('可兑换实物'), 'reward_book')
     await user.clear(screen.getByLabelText('兑换备注'))
@@ -27,7 +28,7 @@ describe('points lite edge scenes', () => {
   it('shows true and filtered empty states with reset and reload actions', async () => {
     const user = userEvent.setup()
     const onReloadStudents = vi.fn()
-    const { rerender } = render(<PointsWorkspace {...pointsProps({ students: [], onReloadStudents })} />)
+    const { rerender } = render(<PointsWorkspace {...pointsProps({ students: [], onReloadStudents })} />, { wrapper: MemoryRouter })
     expect(screen.getByText('还没有学员')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '重新加载学员' }))
     expect(onReloadStudents).toHaveBeenCalled()
@@ -42,7 +43,7 @@ describe('points lite edge scenes', () => {
   it('shows detail retry after a failed summary load', async () => {
     const user = userEvent.setup()
     const onLoadStudent = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(summary(120))
-    render(<PointsWorkspace {...pointsProps({ onLoadStudent })} />)
+    render(<PointsWorkspace {...pointsProps({ onLoadStudent })} />, { wrapper: MemoryRouter })
     await user.click(screen.getAllByRole('button', { name: '查看张同学详情' })[0])
     expect(await screen.findByText('学员详情加载失败')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '重新加载' }))

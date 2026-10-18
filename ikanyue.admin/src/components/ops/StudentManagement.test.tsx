@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import App from '../../App'
@@ -16,7 +17,7 @@ describe('student management', () => {
   it('filters, sorts, resets, reloads, and distinguishes loading and empty states', async () => {
     const user = userEvent.setup()
     const onReload = vi.fn()
-    const { rerender } = render(<StudentsPanel loading={false} onReload={onReload} onSave={vi.fn()} students={students} />)
+    const { rerender } = render(<StudentsPanel loading={false} onReload={onReload} onSave={vi.fn()} students={students} />, { wrapper: MemoryRouter })
 
     await user.selectOptions(screen.getByLabelText('状态'), 'inactive')
     expect(screen.getByRole('table')).toHaveTextContent('李同学')
@@ -42,7 +43,7 @@ describe('student management', () => {
   it('protects dirty create data and keeps a failed save open', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn().mockResolvedValue(false)
-    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={onSave} students={students} />)
+    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={onSave} students={students} />, { wrapper: MemoryRouter })
     await user.click(screen.getByRole('button', { name: '新增学员' }))
     expect(screen.getByRole('button', { name: '创建学员' })).toBeDisabled()
     await user.type(screen.getByLabelText('学员姓名'), '王同学')
@@ -63,7 +64,7 @@ describe('student management', () => {
   it('edits status while preserving an empty password reset', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn().mockResolvedValue(true)
-    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={onSave} students={students} />)
+    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={onSave} students={students} />, { wrapper: MemoryRouter })
     await user.click(screen.getAllByRole('button', { name: '编辑张同学' })[0])
     const dialog = screen.getByRole('dialog', { name: '编辑张同学' })
     expect(within(dialog).getByLabelText('重置密码')).toHaveValue('')
@@ -106,7 +107,7 @@ describe('student management', () => {
       created: `2026-06-${String(index + 1).padStart(2, '0')}T08:00:00.000Z`,
       updated: '',
     }))
-    const view = render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={many} />)
+    const view = render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={many} />, { wrapper: MemoryRouter })
     expect(screen.getByLabelText('状态')).toHaveValue('all')
     expect(screen.getByLabelText('排序')).toHaveValue('created-desc')
     await user.selectOptions(screen.getByLabelText('排序'), 'created-asc')
@@ -119,13 +120,13 @@ describe('student management', () => {
 
     view.unmount()
     localStorage.setItem('kanyue.students.filters.v1', '[]')
-    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={many.slice(0, 1)} />)
+    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={many.slice(0, 1)} />, { wrapper: MemoryRouter })
     expect(screen.getByLabelText('排序')).toHaveValue('created-desc')
   })
 
   it('closes a clean editor and keeps an App edit failure open', async () => {
     const user = userEvent.setup()
-    const first = render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={students} />)
+    const first = render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={students} />, { wrapper: MemoryRouter })
     await user.click(screen.getAllByRole('button', { name: '编辑张同学' })[0])
     await user.click(screen.getByRole('button', { name: '取消' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -153,7 +154,7 @@ describe('student management', () => {
       { ...students[0], id: 'phone-only', realName: '', nickName: '', cellphone: '13900009999' },
       { ...students[0], id: 'unnamed', realName: '', nickName: '', cellphone: '' },
     ]
-    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={legacy} />)
+    render(<StudentsPanel loading={false} onReload={vi.fn()} onSave={vi.fn()} students={legacy} />, { wrapper: MemoryRouter })
     for (const name of ['只有昵称', '13900009999', '未命名学员']) {
       await user.click(screen.getAllByRole('button', { name: `编辑${name}` })[0])
       expect(screen.getByRole('dialog', { name: `编辑${name === '未命名学员' ? '学员' : name}` })).toBeInTheDocument()

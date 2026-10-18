@@ -18,7 +18,7 @@ export function PointEventsView({ events = [] }: { events?: StudentPointSummary[
               </thead>
               <tbody>
                 {events.map((event) => (
-                  <tr key={event.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--brand-wash)] last:border-0">
+                  <tr key={event.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--muted)] last:border-0">
                     <td className="px-4 py-3">{eventLabel(event)}</td>
                     <td className={deltaClass(event)}>{formatDelta(event.delta)}</td>
                     <td className="px-4 py-3 tabular-nums">{event.balanceAfter}</td>

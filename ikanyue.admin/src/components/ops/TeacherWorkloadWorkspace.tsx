@@ -2,6 +2,7 @@ import { CheckCircle2, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { listAllCourseResource } from '../../app/courseApi'
 import type { BookingReferenceData } from '../../app/bookingTypes'
 import { creditEventLabel, formatDateTime, personName, recordName } from '../../app/coursePresentation'
 import type { CourseRecord } from '../../app/courseTypes'
@@ -30,10 +31,10 @@ export function TeacherWorkloadWorkspace({ api, token }: { api: OpsApi; token: s
     setLoading(true); setError('')
     try {
       const [itemResult, referenceResult, sessionTeacherResult, lessonResult] = await Promise.allSettled([
-        api.listCourseResource(token, 'teacherEvents', { page: 1, perPage: 100, status }),
+        listAllCourseResource(api, token, 'teacherEvents', { status }),
         api.getBookingReferenceData(token),
-        api.listCourseResource(token, 'sessionTeachers', { page: 1, perPage: 100 }),
-        api.listCourseResource(token, 'lessons', { page: 1, perPage: 100 }),
+        listAllCourseResource(api, token, 'sessionTeachers'),
+        listAllCourseResource(api, token, 'lessons'),
       ])
       if (itemResult.status === 'rejected') throw itemResult.reason
       setItems(itemResult.value.items)
@@ -65,10 +66,6 @@ export function TeacherWorkloadWorkspace({ api, token }: { api: OpsApi; token: s
       actions={<IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="刷新教师工作量" onClick={() => void load()} type="button" />}
       title="教师工作量"
     />
-    <SummaryBand>
-      <SummaryMetric label={workloadStatusLabel(status)} value={items.length} />
-      <SummaryMetric label="当前工作量" value={sum(items)} />
-    </SummaryBand>
     <div className="px-4 sm:px-5"><Tabs label="教师工作量状态" onChange={setStatus} options={[{ label: '待确认', value: 'pending' }, { label: '已确认', value: 'confirmed' }, { label: '已撤销', value: 'reversed' }]} value={status} /></div>
     <AsyncState empty={items.length === 0 ? <EmptyState noun={`${workloadStatusLabel(status)}教师工作量`} /> : undefined} error={error} loading={loading && items.length === 0} loadingLabel="正在加载教师工作量..." onRetry={() => void load()}>
       <ResponsiveDataRegion desktop={<WorkloadTable items={items} lessons={lessons} onReview={setReviewing} sessionTeachers={sessionTeachers} status={status} teachers={teachers} />} mobile={items.map((item) => <WorkloadCard item={item} key={item.id} lessons={lessons} onReview={setReviewing} sessionTeachers={sessionTeachers} status={status} teachers={teachers} />)} />
@@ -95,7 +92,6 @@ function TeacherCreditReviewDialog({ event, lessons, loading, onCancel, onConfir
   return <DialogShell description="确认会保留原始课堂工作量，并新增一条教务确认记录。" onRequestClose={onCancel} title="确认教师工作量"><form className="grid gap-5 p-5" onSubmit={(event_) => { event_.preventDefault(); if (valid) void onConfirm(reason.trim()) }}><SummaryBand><SummaryMetric label="教师" value={personName(teacher, String(event.teacherId))} /><SummaryMetric label="对应课堂" value={recordName(lesson, '', '课堂')} /><SummaryMetric label="确认工作量" value={`${value(event.quantityDelta)} 课时`} /></SummaryBand><Field htmlFor="teacher-credit-reason" hint="至少 4 个字符，将写入审计与确认记录。" label="确认说明"><Input id="teacher-credit-reason" onChange={(input) => setReason(input.target.value)} required value={reason} /></Field><TechnicalDetails fields={[{ label: '工作量记录编号', value: event.id }, { label: '教师编号', value: event.teacherId }, { label: '课堂教师记录编号', value: event.sessionTeacherId }, { label: '原始事件类型', value: event.eventType }]} /><div className="flex justify-end gap-2"><Button onClick={onCancel} type="button" variant="secondary">返回核对</Button><Button disabled={loading || !valid} type="submit">确认工作量</Button></div></form></DialogShell>
 }
 
-function sum(items: CourseRecord[]) { return items.reduce((total, item) => total + Number(item.quantityDelta || 0), 0) }
 function workloadStatusLabel(status: WorkloadStatus) { return ({ pending: '待确认', confirmed: '已确认', reversed: '已撤销' } as const)[status] }
 function lessonForEvent(event: CourseRecord, sessionTeachers: CourseRecord[], lessons: CourseRecord[]) { const relation = sessionTeachers.find((item) => item.id === String(event.sessionTeacherId)); return lessons.find((lesson) => lesson.id === String(relation?.sessionId || '')) }
 function value(input: unknown, fallback = '未知') { return input === undefined || input === null || input === '' ? fallback : String(input) }

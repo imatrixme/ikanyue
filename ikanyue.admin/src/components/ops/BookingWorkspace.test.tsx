@@ -123,9 +123,9 @@ describe('booking workspace', () => {
     view.unmount()
 
     const summaryApi = createMockOpsApi()
-    vi.spyOn(summaryApi, 'getBookingDashboard').mockRejectedValueOnce('offline')
+    vi.spyOn(summaryApi, 'getBookingReferenceData').mockRejectedValueOnce('offline')
     const summaryView = renderWorkspace(summaryApi, '/appointments?tab=configuration')
-    expect(await screen.findByText('加载预约概览失败')).toBeInTheDocument()
+    expect(await screen.findByText('加载课程与教师失败')).toBeInTheDocument()
     summaryView.unmount()
 
     const detailApi = createMockOpsApi()

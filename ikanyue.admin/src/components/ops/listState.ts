@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 export function usePersistedFilters<T>(key: string, defaults: T, sanitize: (value: unknown, defaults: T) => T) {
   const [value, setValue] = useState<T>(() => readPersistedFilters(key, defaults, sanitize))
@@ -9,6 +10,38 @@ export function usePersistedFilters<T>(key: string, defaults: T, sanitize: (valu
   }, [key, value])
 
   return [value, setValue] as const
+}
+
+/**
+ * Filters that live in the URL so a refresh or a shared link keeps them.
+ * Without URL parameters the last filters saved in localStorage apply.
+ */
+export function useUrlFilters<T extends { [K in keyof T]: string }>(key: string, defaults: T, sanitize: (value: unknown, defaults: T) => T) {
+  const [params, setParams] = useSearchParams()
+  const [persisted, setPersisted] = useState<T>(() => readPersistedFilters(key, defaults, sanitize))
+  const fields = useMemo(() => Object.keys(defaults) as Array<keyof T & string>, [defaults])
+  const search = params.toString()
+  const filters = useMemo(() => {
+    const current = new URLSearchParams(search)
+    if (!fields.some((field) => current.has(field))) return persisted
+    return sanitize(Object.fromEntries(fields.map((field) => [field, current.get(field) ?? defaults[field]])), defaults)
+  }, [defaults, fields, persisted, sanitize, search])
+
+  const setFilters = useCallback((update: T | ((current: T) => T)) => {
+    const next = typeof update === 'function' ? update(filters) : update
+    setPersisted(next)
+    if (typeof localStorage !== 'undefined') localStorage.setItem(key, JSON.stringify(next))
+    setParams((current) => {
+      const result = new URLSearchParams(current)
+      for (const field of fields) {
+        if (next[field] && next[field] !== defaults[field]) result.set(field, next[field])
+        else result.delete(field)
+      }
+      return result
+    }, { replace: true })
+  }, [defaults, fields, filters, key, setParams])
+
+  return [filters, setFilters] as const
 }
 
 export function readPersistedFilters<T>(key: string, defaults: T, sanitize: (value: unknown, defaults: T) => T): T {

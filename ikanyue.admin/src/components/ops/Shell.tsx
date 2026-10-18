@@ -3,12 +3,14 @@ import { useState } from 'react'
 
 import { sectionLabel, sectionOf } from '../../app/navigation'
 import { canAccessView } from '../../app/state'
-import type { AppView, OpsProfile, ToastState } from '../../app/types'
+import type { AppView, OpsProfile, StudentRecord, ToastState } from '../../app/types'
 import { Button } from '../ui/Button'
 import { IconButton } from '../ui/Controls'
 import { ToastMessage } from '../ui/Feedback'
+import { NotifyProvider } from '../ui/Notify'
 import { cn } from '../ui/utils'
 import { AdminSidebar } from './AdminSidebar'
+import { GlobalStudentSearch } from './GlobalStudentSearch'
 
 interface ShellProps {
   activeView: AppView
@@ -16,15 +18,18 @@ interface ShellProps {
   toast: ToastState | null
   onViewChange: (view: AppView) => void
   onLogout: () => void
+  onOpenStudent?: (student: StudentRecord) => void
+  onSearchStudents?: (keyword: string) => Promise<StudentRecord[]>
   children: React.ReactNode
 }
 
-export function Shell({ activeView, profile, toast, onViewChange, onLogout, children }: ShellProps) {
+export function Shell({ activeView, profile, toast, onViewChange, onLogout, onOpenStudent, onSearchStudents, children }: ShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const section = sectionOf(activeView)
   const tabs = section.tabs.filter((tab) => canAccessView(profile, tab.view))
 
   return (
+    <NotifyProvider>
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <div className="lg:grid lg:min-h-screen lg:grid-cols-[auto_1fr]">
         <AdminSidebar activeView={activeView} profile={profile} onViewChange={onViewChange} />
@@ -61,7 +66,8 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
                 />
                 <p className="truncate text-sm font-semibold">{sectionLabel(section, profile)}</p>
               </div>
-              <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+                {onSearchStudents && onOpenStudent ? <div className="hidden flex-1 justify-end sm:flex"><GlobalStudentSearch onOpen={onOpenStudent} onSearch={onSearchStudents} /></div> : null}
                 <span className="hidden max-w-[160px] truncate text-sm text-[var(--muted-foreground)] md:inline">{profile.realName || profile.nickName}{profile.isAdmin ? ' · 管理员' : ''}</span>
                 <Button aria-label="退出" className="h-9 w-9 px-0 sm:w-auto sm:px-3" variant="ghost" onClick={onLogout} icon={<LogOut className="h-4 w-4" aria-hidden="true" />}>
                   <span className="hidden sm:inline">退出</span>
@@ -93,5 +99,6 @@ export function Shell({ activeView, profile, toast, onViewChange, onLogout, chil
         </div>
       </div>
     </div>
+    </NotifyProvider>
   )
 }

@@ -1,4 +1,4 @@
-import type { CourseRecord } from './courseTypes'
+import type { CourseRecord, FollowUpStatus } from './courseTypes'
 
 export interface ReferenceOption {
   value: string
@@ -305,6 +305,17 @@ export function lessonNextStep(lesson: { status?: unknown; startAt?: unknown }, 
   if (status === 'draft') return '未发布'
   return lessonActions(lesson, now).complete ? '待结课' : '待上课'
 }
+
+// Lesson-day flow: 0 点名 → 1 结束课堂 → 2 核销, 3 when settled; null when the lesson is a draft or cancelled.
+export function lessonStep(lesson: { status?: unknown }, roster: Array<Record<string, unknown>>) {
+  const status = clean(lesson.status)
+  if (status === 'settled') return 3
+  if (status === 'completed' || status === 'correction_pending') return 2
+  if (!OPEN_LESSON_STATUSES.includes(status)) return null
+  return roster.some((item) => !clean(item.attendanceStatus) || clean(item.attendanceStatus) === 'scheduled') ? 0 : 1
+}
+
+export const followUpStatusLabels: Record<FollowUpStatus, string> = { contacted: '已联系', declined: '暂不续' }
 
 // Calendar day in the operator's time zone; ISO strings are UTC and would shift days before 08:00 in Shanghai.
 export function localDateKey(value: Date | string | number) {

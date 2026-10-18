@@ -5,7 +5,8 @@ import { createOpsApi, type OpsApi } from './app/api'
 import { viewFromPath, viewPaths } from './app/navigation'
 import { tokenExpiresAt } from './app/session'
 import { appReducer, canAccessView, initialState } from './app/state'
-import type { AppView, LoginResult, RewardItem, RewardItemInput, StudentInput, UploadProgressHandler } from './app/types'
+import { listAllStudents } from './app/studentDirectory'
+import type { AppView, LoginResult, RewardItem, RewardItemInput, StudentInput, StudentRecord, UploadProgressHandler } from './app/types'
 import { AdminWorkspaceRoutes } from './components/ops/AdminWorkspaceRoutes'
 import { ForcePasswordChangeView } from './components/ops/ForcePasswordChangeView'
 import { LoginView } from './components/ops/LoginView'
@@ -62,10 +63,8 @@ function AppContent({ api: injectedApi }: AppProps) {
     if (!state.token) return
     dispatch({ type: 'loading:set', payload: true })
     try {
-      const payload = state.profile?.isAdmin
-        ? await api.listManagedStudents(state.token, { perPage: 100 })
-        : await api.listAssignedStudents(state.token, { perPage: 100 })
-      dispatch({ type: 'managedStudents:set', payload })
+      const all = await listAllStudents(api, state.token, state.profile?.isAdmin ? 'managed' : 'assigned')
+      dispatch({ type: 'managedStudents:set', payload: { items: all.items, pagination: { page: 1, perPage: all.items.length, totalItems: all.totalItems, totalPages: 1 } } })
     } catch (error) {
       const message = errorMessage(error, '加载学员管理列表失败')
       dispatch({ type: 'managedStudents:error', payload: message })
@@ -129,6 +128,16 @@ function AppContent({ api: injectedApi }: AppProps) {
     clearCachedSession()
     dispatch({ type: 'logout' })
     navigate('/', { replace: true })
+  }
+
+  const searchStudents = useCallback(async (keyword: string) => {
+    const query = { keyword, page: 1, perPage: 8 }
+    const result = state.profile?.isAdmin ? await api.listManagedStudents(state.token, query) : await api.listAssignedStudents(state.token, query)
+    return result.items
+  }, [api, state.profile, state.token])
+
+  function openStudent(student: StudentRecord) {
+    navigate(state.profile?.isAdmin ? `${viewPaths.students}/${encodeURIComponent(student.id)}` : `${viewPaths.students}?keyword=${encodeURIComponent(student.realName || student.cellphone)}`)
   }
 
   function setView(view: AppView) {
@@ -267,8 +276,10 @@ function AppContent({ api: injectedApi }: AppProps) {
       toast={state.toast}
       onViewChange={setView}
       onLogout={onLogout}
+      onOpenStudent={canAccessView(state.profile, 'students') ? openStudent : undefined}
+      onSearchStudents={canAccessView(state.profile, 'students') ? searchStudents : undefined}
     >
-      <AdminWorkspaceRoutes api={api} loading={state.loading} managedStudents={state.managedStudents?.items || []} managedStudentsError={state.managedStudentsError} onAddPoints={addPoints} onLoadManagedStudents={loadManagedStudents} onLoadRewards={loadRewards} onLoadStudent={selectStudent} onLoadStudents={() => loadStudents()} onRedeem={redeem} onSaveReward={saveReward} onSaveStudent={saveStudent} onUploadRewardImage={uploadRewardImage} profile={state.profile} rewards={state.rewards?.items || []} selectedStudentId={state.selectedStudentId} studentSummary={state.selectedStudentSummary} students={state.students?.items || []} token={state.token} />
+      <AdminWorkspaceRoutes api={api} loading={state.loading} managedStudents={state.managedStudents?.items || []} managedStudentsError={state.managedStudentsError} managedStudentsTotal={state.managedStudents?.pagination.totalItems} onAddPoints={addPoints} onLoadManagedStudents={loadManagedStudents} onLoadRewards={loadRewards} onLoadStudent={selectStudent} onLoadStudents={() => loadStudents()} onRedeem={redeem} onSaveReward={saveReward} onSaveStudent={saveStudent} onUploadRewardImage={uploadRewardImage} profile={state.profile} rewards={state.rewards?.items || []} selectedStudentId={state.selectedStudentId} studentSummary={state.selectedStudentSummary} students={state.students?.items || []} token={state.token} />
     </Shell>
   )
 }

@@ -18,7 +18,10 @@ import type {
   BookingPolicy,
   BookingPolicyInput,
   BookingReferenceData,
+  BookingSlot,
   BookingWeeklyRule,
+  OperatorAppointmentInput,
+  StudentBookingOption,
 } from './bookingTypes'
 
 export interface BookingOpsApi {
@@ -42,6 +45,9 @@ export interface BookingOpsApi {
   resolveBookingConflict(token: string, conflictId: string, resolution: string): Promise<BookingCommandResult>
   previewBookingBackfill(token: string, from: string, to?: string): Promise<BookingBackfillPreview>
   applyBookingBackfill(token: string, from: string, to?: string): Promise<BookingBackfillResult>
+  listStudentBookingOptions(token: string, studentId: string): Promise<StudentBookingOption[]>
+  listStudentBookingSlots(token: string, studentId: string, offeringId: string): Promise<BookingSlot[]>
+  createAppointmentForStudent(token: string, input: OperatorAppointmentInput): Promise<BookingCommandResult>
 }
 
 export function createHttpBookingOpsApi(baseUrl: string): BookingOpsApi {
@@ -72,6 +78,9 @@ export function createHttpBookingOpsApi(baseUrl: string): BookingOpsApi {
     resolveBookingConflict: (token, id, resolution) => command(token, `/course-bookings/conflicts/${encodeURIComponent(id)}/resolve`, { resolution }),
     previewBookingBackfill: (token, from, to) => request(`${baseUrl}/course-bookings/backfill/preview${toQuery({ from, to })}`, { token }),
     applyBookingBackfill: (token, from, to) => command(token, '/course-bookings/backfill', { from, to }),
+    listStudentBookingOptions: (token, studentId) => request(`${baseUrl}/course-bookings/students/${encodeURIComponent(studentId)}/options`, { token }),
+    listStudentBookingSlots: async (token, studentId, offeringId) => (await request<{ slots: BookingSlot[] }>(`${baseUrl}/course-bookings/students/${encodeURIComponent(studentId)}/slots${toQuery({ offeringId })}`, { token })).slots,
+    createAppointmentForStudent: (token, input) => command(token, '/course-bookings/appointments', input),
   }
 }
 
@@ -191,6 +200,24 @@ export function createMockBookingOpsApi(): BookingOpsApi {
     },
     async applyBookingBackfill() {
       return { claimedSessionIds: ['lesson_1', 'lesson_2', 'lesson_3'], conflictCount: store.conflicts.filter((item) => item.status === 'open').length, disabledOfferingIds: [], operationId: 'mock-backfill', scannedCount: 4 }
+    },
+    async listStudentBookingOptions() {
+      return store.offerings.filter((item) => item.status === 'active').map((item) => ({ offeringId: item.id, course: { ...item.course, durationMinutes: 60 }, teacher: item.teacher, location: item.location }))
+    },
+    async listStudentBookingSlots(_token, _studentId, offeringId) {
+      if (!store.offerings.some((item) => item.id === offeringId && item.status === 'active')) throw new Error('该教师暂未开放预约')
+      const day = new Date()
+      day.setDate(day.getDate() + 2)
+      day.setHours(10, 0, 0, 0)
+      return [0, 1, 2].map((offset) => ({ startAt: new Date(day.getTime() + offset * 3_600_000).toISOString(), endAt: new Date(day.getTime() + (offset + 1) * 3_600_000).toISOString() }))
+    },
+    async createAppointmentForStudent(_token, input) {
+      const offering = store.offerings.find((item) => item.id === input.offeringId)
+      if (!offering) throw new Error('该教师暂未开放预约')
+      const id = `appointment_${store.appointments.length + 1}`
+      const status = input.confirm ? 'confirmed' : 'pending'
+      store.appointments.unshift({ ...appointment(id, status, input.startAt, '学员'), student: { studentId: input.studentId, name: '学员' }, endAt: input.endAt, note: input.note || '' })
+      return { appointmentId: id, status }
     },
   }
 }

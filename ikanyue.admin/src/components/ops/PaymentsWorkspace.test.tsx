@@ -19,7 +19,6 @@ describe('payments workspace', () => {
     vi.spyOn(commerceApi, 'order').mockResolvedValue(detail)
     vi.spyOn(commerceApi, 'recover').mockResolvedValue({ orders: { unresolved: 1 }, refunds: { unresolved: 0 } })
     vi.spyOn(commerceApi, 'reconcile').mockResolvedValue({ findings: [] })
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const refund = vi.spyOn(commerceApi, 'mockRefund').mockResolvedValue({})
     render(<PaymentsWorkspace token="finance-token" />)
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['订单管理', '待处理', '课程商品', '账单对账'])
@@ -29,6 +28,8 @@ describe('payments workspace', () => {
     await user.click(await screen.findByRole('button', { name: /小林/ }))
     const dialog = await screen.findByRole('dialog', { name: '课程订单' })
     await user.click(await within(dialog).findByRole('button', { name: '模拟退款到账' }))
+    expect(screen.getByRole('dialog', { name: '模拟退款到账' })).toHaveTextContent('不会发生真实资金转移')
+    await user.click(screen.getByRole('button', { name: '模拟到账' }))
     await waitFor(() => expect(refund).toHaveBeenCalledWith('finance-token', 'business-refund'))
   })
   it('shows retryable failures and restricts finance navigation', async () => {

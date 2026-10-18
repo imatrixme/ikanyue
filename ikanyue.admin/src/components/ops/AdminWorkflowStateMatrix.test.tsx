@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -27,7 +28,7 @@ const students: StudentPointsRow[] = [
 describe('admin workflow state matrix', () => {
   it('covers learner range filters, all sort modes, loading, and identity fallbacks', async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<PointsWorkspace {...workspaceProps()} />)
+    const { rerender } = render(<PointsWorkspace {...workspaceProps()} />, { wrapper: MemoryRouter })
 
     expect(screen.getByRole('table')).toHaveTextContent('小北')
     expect(screen.getByRole('table')).toHaveTextContent('13900000003')
@@ -59,7 +60,7 @@ describe('admin workflow state matrix', () => {
     const user = userEvent.setup()
     const onAddPoints = vi.fn().mockResolvedValue(undefined)
     const onRedeem = vi.fn().mockResolvedValue(undefined)
-    render(<PointsWorkspace {...workspaceProps({ onAddPoints, onRedeem, students: [{ ...students[3], balance: 10 }] })} />)
+    render(<PointsWorkspace {...workspaceProps({ onAddPoints, onRedeem, students: [{ ...students[3], balance: 10 }] })} />, { wrapper: MemoryRouter })
 
     await user.click(screen.getAllByRole('button', { name: '为未命名学员线下兑换' })[0])
     expect(screen.getByText('当前积分还不能兑换任何上架实物。')).toBeInTheDocument()
@@ -85,7 +86,7 @@ describe('admin workflow state matrix', () => {
     const anonymous = students[3]
     const noActiveRewards = [rewards[2]]
     const loadedSummary = summary(0)
-    const view = render(<PointsWorkspace {...workspaceProps({ rewards: noActiveRewards, selectedStudentId: anonymous.id, studentSummary: loadedSummary, students: [anonymous], onLoadStudent: vi.fn().mockResolvedValue(loadedSummary) })} />)
+    const view = render(<PointsWorkspace {...workspaceProps({ rewards: noActiveRewards, selectedStudentId: anonymous.id, studentSummary: loadedSummary, students: [anonymous], onLoadStudent: vi.fn().mockResolvedValue(loadedSummary) })} />, { wrapper: MemoryRouter })
 
     expect(screen.getByLabelText('排序')).toHaveValue('name-asc')
     await user.click(screen.getAllByRole('button', { name: '查看未命名学员详情' })[0])
@@ -95,7 +96,7 @@ describe('admin workflow state matrix', () => {
 
     view.unmount()
     localStorage.setItem('kanyue.points.filters.v1', '[]')
-    render(<PointsWorkspace {...workspaceProps({ students: [anonymous] })} />)
+    render(<PointsWorkspace {...workspaceProps({ students: [anonymous] })} />, { wrapper: MemoryRouter })
     expect(screen.getByLabelText('排序')).toHaveValue('name-asc')
   })
 

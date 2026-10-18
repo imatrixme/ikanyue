@@ -2,6 +2,7 @@ import { Play, RefreshCw, ScanLine } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { listAllCourseResource } from '../../app/courseApi'
 import type { CourseRecord } from '../../app/courseTypes'
 import type { ShadowExpectation, ShadowResult } from '../../app/migrationTypes'
 import { SectionHeader, SummaryBand, SummaryMetric } from '../layout/Workspace'
@@ -21,7 +22,7 @@ export function ShadowRolloutPanel({ api, token }: { api: OpsApi; token: string 
   const load = useCallback(async () => {
     setLoading(true); setError('')
     try {
-      const page = await api.listCourseResource(token, 'lessons', { page: 1, perPage: 100 })
+      const page = await listAllCourseResource(api, token, 'lessons')
       setLessons(page.items.filter((item) => ['completed', 'cancelled', 'correction_pending'].includes(String(item.status))))
     } catch (loadError) { setError(message(loadError, '加载影子课堂失败')) }
     finally { setLoading(false) }

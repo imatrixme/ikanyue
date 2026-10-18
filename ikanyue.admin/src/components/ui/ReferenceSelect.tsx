@@ -112,7 +112,7 @@ export function ReferenceSelect({
           {!loading ? filtered.map((option, index) => (
             <button
               aria-selected={option.value === value}
-              className={cn('flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left hover:bg-[var(--brand-wash)] focus-visible:bg-[var(--brand-wash)] focus-visible:outline-none', index === activeIndex && 'bg-[var(--muted)]')}
+              className={cn('flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)] focus-visible:outline-none', index === activeIndex && 'bg-[var(--muted)]')}
               key={option.value}
               onClick={() => choose(option)}
               onMouseEnter={() => setActiveIndex(index)}

@@ -1,6 +1,7 @@
 import { Download, Upload, CheckCheck, FileCheck } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { commerceApi, money, findingLabel, type Statement, type StatementDetail } from '../../app/commerceApi'
+import { dateKeyInShanghai } from '../../app/calendarLogic'
 import { AsyncState } from '../ui/DataDisplay'
 import { Button } from '../ui/Button'
 import { DialogShell } from '../ui/DialogShell'
@@ -9,7 +10,7 @@ import { commerceInput } from './CommerceOrders'
 export function CommerceStatements({ token }: { token: string }) {
   const [items, setItems] = useState<Statement[] | null>(null)
   const [detail, setDetail] = useState<StatementDetail | null>(null)
-  const [date, setDate] = useState(() => new Date(Date.now() - 86400000 + 8 * 3600000).toISOString().slice(0, 10))
+  const [date, setDate] = useState(() => dateKeyInShanghai(new Date(Date.now() - 86_400_000).toISOString()))
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false)
   const load = useCallback(async () => { try { setItems((await commerceApi.statements(token)).items) } catch (error) { setError(error instanceof Error ? error.message : '账单加载失败') } }, [token])
   useEffect(() => { const timer = setTimeout(() => void load(), 0); return () => clearTimeout(timer) }, [load])

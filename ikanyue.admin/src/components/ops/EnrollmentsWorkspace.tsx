@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import type { OpsApi } from '../../app/api'
+import { listAllStudents } from '../../app/studentDirectory'
+import { listAllCourseResource } from '../../app/courseApi'
 import { enrollmentStatusLabel, formatDateTime, formatMoney, personName, personOption, recordName, recordOption, roleLabel } from '../../app/coursePresentation'
 import type { CourseRecord, EnrollmentInput, EnrollmentOperation, RosterSyncPreview } from '../../app/courseTypes'
 import type { StudentRecord } from '../../app/types'
@@ -11,7 +13,8 @@ import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { IconButton } from '../ui/Controls'
-import { AsyncState, DataTable, EmptyState, ResponsiveDataRegion } from '../ui/DataDisplay'
+import { useNotify } from '../ui/notifyContext'
+import { AsyncState, DataTable, EmptyState, ResponsiveDataRegion, TruncationNotice } from '../ui/DataDisplay'
 import { DialogShell } from '../ui/DialogShell'
 import { DrawerShell } from '../ui/DrawerShell'
 import { Field, Input } from '../ui/Input'
@@ -23,6 +26,7 @@ interface EnrollmentsWorkspaceProps { api: OpsApi; token: string }
 export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [enrollments, setEnrollments] = useState<EnrollmentOperation[]>([])
+  const [total, setTotal] = useState(0)
   const [students, setStudents] = useState<StudentRecord[]>([])
   const [packages, setPackages] = useState<CourseRecord[]>([])
   const [prices, setPrices] = useState<CourseRecord[]>([])
@@ -31,6 +35,7 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
   const [syncTarget, setSyncTarget] = useState<EnrollmentOperation | null>(null)
   const [syncPreview, setSyncPreview] = useState<RosterSyncPreview | null>(null)
   const [loading, setLoading] = useState(true)
+  const notify = useNotify()
   const [error, setError] = useState('')
   const [editorOpen, setEditorOpen] = useState(searchParams.get('new') === '1' || Boolean(searchParams.get('studentId')))
 
@@ -39,13 +44,13 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
     setError('')
     try {
       const [enrollmentPage, studentPage, packagePage, pricePage, classPage] = await Promise.all([
-        api.listCourseResource<EnrollmentOperation>(token, 'enrollments', { page: 1, perPage: 100 }),
-        api.listManagedStudents(token, { page: 1, perPage: 100 }),
-        api.listCourseResource(token, 'packages', { page: 1, perPage: 100, status: 'active' }),
-        api.listCourseResource(token, 'priceVersions', { page: 1, perPage: 100, status: 'active' }),
-        api.listCourseResource(token, 'classes', { page: 1, perPage: 100 }),
+        listAllCourseResource<EnrollmentOperation>(api, token, 'enrollments'),
+        listAllStudents(api, token),
+        listAllCourseResource(api, token, 'packages', { status: 'active' }),
+        listAllCourseResource(api, token, 'priceVersions', { status: 'active' }),
+        listAllCourseResource(api, token, 'classes'),
       ])
-      setEnrollments(enrollmentPage.items)
+      setEnrollments(enrollmentPage.items); setTotal(enrollmentPage.totalItems)
       setStudents(studentPage.items)
       setPackages(packagePage.items)
       setPrices(pricePage.items)
@@ -64,6 +69,7 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
     try {
       await api.createEnrollment(token, input)
       setEditorOpen(false)
+      notify('报课成功')
       setSearchParams({})
       await load()
     } catch (enrollmentError) {
@@ -94,6 +100,7 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
       await api.confirmEnrollmentSync(token, orderId, syncPreview.previewHash, syncPreview.lessons.map((lesson) => lesson.lessonId))
       setSyncPreview(null)
       setSyncTarget(null)
+      notify('课堂名单已同步')
       await load()
     } catch (syncError) {
       setError(message(syncError, '同步课堂名单失败'))
@@ -101,14 +108,10 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
     }
   }
 
-  const pendingSync = enrollments.filter((item) => item.resultSnapshot.status === 'synchronizing_future_lessons').length
-  const awaitingClass = enrollments.filter((item) => item.resultSnapshot.status === 'awaiting_class_assignment').length
-
   return (
     <WorkspacePanel>
       <PageHeader actions={<><IconButton disabled={loading} icon={<RefreshCw className="h-4 w-4" />} label="重新加载报课列表" onClick={() => void load()} type="button" /><IconButton icon={<Plus className="h-4 w-4" />} label="新建报课" onClick={() => setEditorOpen(true)} type="button" variant="primary" /></>} title="报课管理" />
-      <SummaryBand><SummaryMetric label="报课记录" value={enrollments.length} /><SummaryMetric label="待名单同步" value={pendingSync} /><SummaryMetric label="待分班" value={awaitingClass} /></SummaryBand>
-      <AsyncState empty={enrollments.length === 0 ? <EmptyState noun="报课记录" onCreate={() => setEditorOpen(true)} /> : undefined} error={error} loading={loading && enrollments.length === 0} loadingLabel="正在加载报课记录..." onRetry={() => void load()}>
+      <TruncationNotice shown={enrollments.length} total={total} /><AsyncState empty={enrollments.length === 0 ? <EmptyState noun="报课记录" onCreate={() => setEditorOpen(true)} /> : undefined} error={error} loading={loading && enrollments.length === 0} loadingLabel="正在加载报课记录..." onRetry={() => void load()}>
         <ResponsiveDataRegion desktop={<EnrollmentTable classes={classes} enrollments={enrollments} onSelect={setSelected} onSync={previewSync} packages={packages} students={students} />} mobile={enrollments.map((item) => <EnrollmentCard classes={classes} enrollment={item} key={item.id} onSelect={() => setSelected(item)} onSync={() => void previewSync(item)} packages={packages} students={students} />)} />
       </AsyncState>
       {editorOpen ? <EnrollmentDialog classes={classes} defaultClassId={searchParams.get('classId') || ''} defaultStudentId={searchParams.get('studentId') || ''} loading={loading} onClose={() => { setEditorOpen(false); setSearchParams({}) }} onSubmit={enroll} packages={packages} prices={prices} students={students} /> : null}
@@ -119,7 +122,7 @@ export function EnrollmentsWorkspace({ api, token }: EnrollmentsWorkspaceProps) 
 }
 
 function EnrollmentTable({ classes, enrollments, onSelect, onSync, packages, students }: { classes: CourseRecord[]; enrollments: EnrollmentOperation[]; onSelect: (item: EnrollmentOperation) => void; onSync: (item: EnrollmentOperation) => void; packages: CourseRecord[]; students: StudentRecord[] }) {
-  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3">学员</th><th className="px-4 py-3">所报课包</th><th className="px-4 py-3">进入班级</th><th className="px-4 py-3">提交时间</th><th className="px-4 py-3">处理结果</th><th className="px-4 py-3 text-right">操作</th></tr></thead><tbody>{enrollments.map((item) => <tr className="border-b border-[var(--border)] hover:bg-[var(--brand-wash)]" key={item.id}><td className="px-4 py-3"><strong>{personName(students.find((student) => student.id === item.studentId), item.studentId)}</strong><p className="mt-1 text-xs text-[var(--muted-foreground)]">{students.find((student) => student.id === item.studentId)?.cellphone || '联系方式待补充'}</p></td><td className="px-4 py-3">{recordName(packages.find((record) => record.id === item.requestSnapshot.packageId), item.requestSnapshot.packageId, '课包')}</td><td className="px-4 py-3">{item.requestSnapshot.classId ? recordName(classes.find((record) => record.id === item.requestSnapshot.classId), item.requestSnapshot.classId, '班级') : '暂不分班'}</td><td className="px-4 py-3">{formatDateTime(item.created, '时间待补充')}</td><td className="px-4 py-3"><EnrollmentBadge status={item.resultSnapshot.status} /></td><td className="px-4 py-3"><div className="flex justify-end gap-2"><IconButton icon={<Eye className="h-4 w-4" />} label="查看报课详情" onClick={() => onSelect(item)} type="button" variant="ghost" />{item.resultSnapshot.status === 'synchronizing_future_lessons' ? <Button icon={<RotateCw className="h-4 w-4" />} onClick={() => onSync(item)} type="button" variant="secondary">同步名单</Button> : null}</div></td></tr>)}</tbody></DataTable>
+  return <DataTable><thead><tr className="border-y border-[var(--border)] bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><th className="px-4 py-3">学员</th><th className="px-4 py-3">所报课包</th><th className="px-4 py-3">进入班级</th><th className="px-4 py-3">提交时间</th><th className="px-4 py-3">处理结果</th><th className="px-4 py-3 text-right">操作</th></tr></thead><tbody>{enrollments.map((item) => <tr className="border-b border-[var(--border)] hover:bg-[var(--muted)]" key={item.id}><td className="px-4 py-3"><strong>{personName(students.find((student) => student.id === item.studentId), item.studentId)}</strong><p className="mt-1 text-xs text-[var(--muted-foreground)]">{students.find((student) => student.id === item.studentId)?.cellphone || '联系方式待补充'}</p></td><td className="px-4 py-3">{recordName(packages.find((record) => record.id === item.requestSnapshot.packageId), item.requestSnapshot.packageId, '课包')}</td><td className="px-4 py-3">{item.requestSnapshot.classId ? recordName(classes.find((record) => record.id === item.requestSnapshot.classId), item.requestSnapshot.classId, '班级') : '暂不分班'}</td><td className="px-4 py-3">{formatDateTime(item.created, '时间待补充')}</td><td className="px-4 py-3"><EnrollmentBadge status={item.resultSnapshot.status} /></td><td className="px-4 py-3"><div className="flex justify-end gap-2"><IconButton icon={<Eye className="h-4 w-4" />} label="查看报课详情" onClick={() => onSelect(item)} type="button" variant="ghost" />{item.resultSnapshot.status === 'synchronizing_future_lessons' ? <Button icon={<RotateCw className="h-4 w-4" />} onClick={() => onSync(item)} type="button" variant="secondary">同步名单</Button> : null}</div></td></tr>)}</tbody></DataTable>
 }
 
 function EnrollmentCard({ classes, enrollment, onSelect, onSync, packages, students }: { classes: CourseRecord[]; enrollment: EnrollmentOperation; onSelect: () => void; onSync: () => void; packages: CourseRecord[]; students: StudentRecord[] }) {
