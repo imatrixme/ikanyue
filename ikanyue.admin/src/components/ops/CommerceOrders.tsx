@@ -34,7 +34,7 @@ export function CommerceOrders({ token, mockEnabled = false }: { token: string; 
     <AsyncState error={error} loading={busy && !data} loadingLabel="正在查找订单..." onRetry={() => void load()}>
       {!data?.items.length ? <p className="py-8 text-center text-sm">没有符合条件的订单</p> : <div className="divide-y divide-[var(--border)]">{data.items.map((order) => <button key={order.id} className="grid w-full gap-2 py-4 text-left sm:grid-cols-[1fr_auto]" onClick={() => setSelected(order.id)}>
         <span><strong>{order.student.name}</strong><span className="ml-2 text-sm text-[var(--muted-foreground)]">{order.student.cellphone}</span><span className="mt-1 block text-sm">{order.name}</span></span>
-        <span className="text-sm sm:text-right"><strong>{money(order.amount)}</strong><span className="block">{orderLabel(order)}</span><span className="block text-xs text-[var(--muted-foreground)]">{new Date(order.createdAt).toLocaleString('zh-CN')}</span></span>
+        <span className="text-sm sm:text-right"><strong>{money(order.amount)}</strong><span className="block">{orderLabel(order)}</span><span className="block text-xs text-[var(--muted-foreground)]">{new Date(order.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</span></span>
       </button>)}</div>}
     </AsyncState>
     {data ? <div className="mt-4 flex items-center justify-between gap-3 text-sm"><span>共 {data.totalItems} 笔 · 第 {data.page} / {Math.max(1, data.totalPages)} 页</span><div className="flex gap-2"><IconButton label="上一页订单" icon={<ChevronLeft />} disabled={busy || data.page <= 1} onClick={() => setQuery({ ...query, page: String(data.page - 1) })} /><IconButton label="下一页订单" icon={<ChevronRight />} disabled={busy || data.page >= data.totalPages} onClick={() => setQuery({ ...query, page: String(data.page + 1) })} /></div></div> : null}
@@ -78,7 +78,7 @@ export function CommerceOrderDialog({ token, id, onClose, mockEnabled = false }:
           success: '已模拟退款到账',
           action: () => commerceApi.mockRefund(token, refund.id),
         })}>模拟退款到账</Button> : null}</div>) : <p className="text-sm">暂无退款</p>}</div>
-        <div><h4 className="mb-2 font-medium">操作记录</h4>{order.audit.map((entry) => <p key={entry.id} className="py-1 text-sm">{new Date(entry.createdAt).toLocaleString('zh-CN')} · {entry.actorName || '历史操作人'} · {entry.reason}</p>)}</div>
+        <div><h4 className="mb-2 font-medium">操作记录</h4>{order.audit.map((entry) => <p key={entry.id} className="py-1 text-sm">{new Date(entry.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })} · {entry.actorName || '历史操作人'} · {entry.reason}</p>)}</div>
         <details className="text-xs text-[var(--muted-foreground)]"><summary>订单凭证</summary><p className="break-all">{id}</p></details>
       </> : null}
     </AsyncState></div>

@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi, type OpsApi } from '../../app/api'
+import { todayKey } from '../../app/calendarLogic'
 import type { CoursePage, CourseQuery, CourseRecord, CourseResourceKey } from '../../app/courseTypes'
 import { mockProfiles } from '../../app/mockData'
 import type { OpsProfile, StudentRecord } from '../../app/types'
@@ -287,8 +288,7 @@ function renderStudentWorkspace(api: OpsApi) {
 function populatedDashboardApi() {
   const api = createMockOpsApi()
   const original = api.listCourseResource.bind(api)
-  const earlyToday = new Date()
-  earlyToday.setHours(7, 30, 0, 0)
+  const earlyToday = new Date(`${todayKey()}T07:30:00+08:00`)
   const records: Partial<Record<CourseResourceKey, CourseRecord[]>> = {
     lessons: [
       { id: 'today', title: '晨间合唱', startAt: earlyToday.toISOString(), status: 'completed' },

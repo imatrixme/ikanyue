@@ -79,7 +79,12 @@ export function createHttpBookingOpsApi(baseUrl: string): BookingOpsApi {
     previewBookingBackfill: (token, from, to) => request(`${baseUrl}/course-bookings/backfill/preview${toQuery({ from, to })}`, { token }),
     applyBookingBackfill: (token, from, to) => command(token, '/course-bookings/backfill', { from, to }),
     listStudentBookingOptions: (token, studentId) => request(`${baseUrl}/course-bookings/students/${encodeURIComponent(studentId)}/options`, { token }),
-    listStudentBookingSlots: async (token, studentId, offeringId) => (await request<{ slots: BookingSlot[] }>(`${baseUrl}/course-bookings/students/${encodeURIComponent(studentId)}/slots${toQuery({ offeringId })}`, { token })).slots,
+    listStudentBookingSlots: async (token, studentId, offeringId) => {
+      // The server requires an explicit window; match the mini program's 30-day range (policy maxAdvanceDays still caps it).
+      const now = Date.now()
+      const range = { offeringId, from: new Date(now).toISOString(), to: new Date(now + 30 * 86400000).toISOString() }
+      return (await request<{ slots: BookingSlot[] }>(`${baseUrl}/course-bookings/students/${encodeURIComponent(studentId)}/slots${toQuery(range)}`, { token })).slots
+    },
     createAppointmentForStudent: (token, input) => command(token, '/course-bookings/appointments', input),
   }
 }

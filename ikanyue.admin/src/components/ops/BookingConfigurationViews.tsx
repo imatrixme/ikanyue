@@ -103,6 +103,6 @@ function windowLabel(window: { startMinute: number; endMinute: number }) { retur
 function minuteTime(value: number) { return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}` }
 function durationLabel(minutes: number) { if (minutes % 1440 === 0) return `${minutes / 1440} 天`; if (minutes % 60 === 0) return `${minutes / 60} 小时`; return `${minutes} 分钟` }
 function weekdayLabel(value: number) { return ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][value - 1] || `星期 ${value}` }
-function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) }
-function formatTimeRange(start: string, end: string) { const formatter = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }); return `${formatter(start)}-${formatter(end)}` }
+function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Shanghai' }) }
+function formatTimeRange(start: string, end: string) { const formatter = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' }); return `${formatter(start)}-${formatter(end)}` }
 function message(error: unknown, fallback: string) { return error instanceof Error ? error.message : fallback }

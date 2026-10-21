@@ -52,8 +52,8 @@ export function BookingWorkspace({ api, token }: { api: OpsApi; token: string })
 
   const query = useMemo(() => ({
     page, perPage: 20, status, teacherId, courseSpecId,
-    from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
-    to: to ? new Date(`${to}T23:59:59`).toISOString() : undefined,
+    from: from ? new Date(`${from}T00:00:00+08:00`).toISOString() : undefined,
+    to: to ? new Date(`${to}T23:59:59+08:00`).toISOString() : undefined,
   }), [courseSpecId, from, page, status, teacherId, to])
 
   const loadAppointments = useCallback(async () => {

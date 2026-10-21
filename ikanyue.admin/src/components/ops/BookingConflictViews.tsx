@@ -2,6 +2,7 @@ import { CheckCircle2, RefreshCw, ScanSearch, ShieldAlert } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { todayKey } from '../../app/calendarLogic'
 import { listAllStudents } from '../../app/studentDirectory'
 import { listAllCourseResource } from '../../app/courseApi'
 import type { BookingBackfillPreview, BookingConflict, BookingReferenceData } from '../../app/bookingTypes'
@@ -26,7 +27,7 @@ export function BookingConflictViews({ api, referenceData, token }: { api: OpsAp
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [status, setStatus] = useState('open')
-  const [from, setFrom] = useState(() => new Date().toISOString().slice(0, 10))
+  const [from, setFrom] = useState(() => todayKey())
   const [to, setTo] = useState('')
   const [preview, setPreview] = useState<BookingBackfillPreview | null>(null)
   const [resolveTarget, setResolveTarget] = useState<BookingConflict | null>(null)
@@ -53,14 +54,14 @@ export function BookingConflictViews({ api, referenceData, token }: { api: OpsAp
 
   async function previewBackfill() {
     setLoading(true); setError(''); setResultMessage('')
-    try { setPreview(await api.previewBookingBackfill(token, new Date(`${from}T00:00:00`).toISOString(), to ? new Date(`${to}T23:59:59`).toISOString() : undefined)) }
+    try { setPreview(await api.previewBookingBackfill(token, new Date(`${from}T00:00:00+08:00`).toISOString(), to ? new Date(`${to}T23:59:59+08:00`).toISOString() : undefined)) }
     catch (previewError) { setError(message(previewError, '回填预检失败')) }
     finally { setLoading(false) }
   }
   async function applyBackfill() {
     setLoading(true); setError('')
     try {
-      const result = await api.applyBookingBackfill(token, new Date(`${from}T00:00:00`).toISOString(), to ? new Date(`${to}T23:59:59`).toISOString() : undefined)
+      const result = await api.applyBookingBackfill(token, new Date(`${from}T00:00:00+08:00`).toISOString(), to ? new Date(`${to}T23:59:59+08:00`).toISOString() : undefined)
       setResultMessage(`已扫描 ${result.scannedCount} 节未来课堂，占用 ${result.claimedSessionIds.length} 节；新增冲突 ${result.conflictCount} 条。`)
       setApplyConfirm(false); setPreview(null); await load()
     } catch (applyError) { setError(message(applyError, '执行回填失败')); setLoading(false) }
@@ -95,8 +96,8 @@ function ResolveConflictDialog({ conflict, lessons, loading, onClose, onResolve,
 function conflictTypeLabel(type: string) { return ({ teacher_overlap: '教师时间重叠', student_overlap: '学员时间重叠', claim_failed: '时间占用失败', eligibility_lost: '可用课时失效', backfill_overlap: '历史课堂重叠' } as Record<string, string>)[type] || type }
 function conflictDescription(conflict: BookingConflict) { const reason = conflict.details?.reason; return typeof reason === 'string' ? reason : '需要教务核对相关课堂与预约安排。' }
 function teacherName(id: string | undefined, refs: BookingReferenceData) { return personName(refs.teachers.find((item) => item.id === id), id) }
-function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' }) }
-function formatTimeRange(start: string, end: string) { const format = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }); return `${format(start)}-${format(end)}` }
+function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'Asia/Shanghai' }) }
+function formatTimeRange(start: string, end: string) { const format = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' }); return `${format(start)}-${format(end)}` }
 function message(error: unknown, fallback: string) { return error instanceof Error ? error.message : fallback }
 
 interface ConflictViewProps {

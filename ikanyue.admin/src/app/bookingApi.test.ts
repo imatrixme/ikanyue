@@ -89,6 +89,7 @@ describe('booking operations api', () => {
       api.resolveBookingConflict('token', 'conflict 1', '已处理'),
       api.previewBookingBackfill('token', 'from', 'to'),
       api.applyBookingBackfill('token', 'from'),
+      api.listStudentBookingSlots('token', 'student 1', 'offering 1'),
     ])
     const urls = fetchMock.mock.calls.map(([url]) => url)
     expect(urls).toContain('/ops/course-bookings/reference-data')
@@ -100,6 +101,9 @@ describe('booking operations api', () => {
     expect(confirmCall?.[1].body).toBe('{}')
     expect(urls).toContain('/ops/course-bookings/offerings/offering%201/availability')
     expect(urls).toContain('/ops/course-bookings/backfill/preview?from=from&to=to')
+    const slotsUrl = new URL(String(urls.find((url) => String(url).startsWith('/ops/course-bookings/students/student%201/slots'))), 'http://local')
+    expect(slotsUrl.searchParams.get('offeringId')).toBe('offering 1')
+    expect(Date.parse(slotsUrl.searchParams.get('to') || '') - Date.parse(slotsUrl.searchParams.get('from') || '')).toBe(30 * 86400000)
     const commands = fetchMock.mock.calls.map(([, options]) => options).filter((options) => options?.method && options.method !== 'GET')
     expect(commands.every((options) => options.headers.authorization === 'Bearer token')).toBe(true)
     expect(commands.every((options) => options.headers['Idempotency-Key'])).toBe(true)

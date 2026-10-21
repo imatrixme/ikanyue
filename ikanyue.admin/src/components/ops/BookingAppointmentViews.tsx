@@ -2,7 +2,7 @@ import { Ban, CalendarDays, CheckCircle2, Eye, RotateCw, XCircle } from 'lucide-
 import { useState } from 'react'
 
 import type { BookingAppointment, BookingAppointmentDetail } from '../../app/bookingTypes'
-import { dateKeyInShanghai } from '../../app/calendarLogic'
+import { dateKeyInShanghai, shanghaiLocalInput, shanghaiLocalInputToIso } from '../../app/calendarLogic'
 import { SectionHeader } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
@@ -111,11 +111,11 @@ export function BookingCancelDialog({ loading, onClose, onConfirm }: { loading: 
 }
 
 export function BookingRescheduleDialog({ appointment, loading, onClose, onConfirm }: { appointment: BookingAppointmentDetail; loading: boolean; onClose: () => void; onConfirm: (startAt: string, endAt: string, reason: string) => Promise<void> }) {
-  const [startAt, setStartAt] = useState(toLocalInput(appointment.startAt))
-  const [endAt, setEndAt] = useState(toLocalInput(appointment.endAt))
+  const [startAt, setStartAt] = useState(shanghaiLocalInput(appointment.startAt))
+  const [endAt, setEndAt] = useState(shanghaiLocalInput(appointment.endAt))
   const [reason, setReason] = useState('教务调整课程时间')
   const valid = Date.parse(startAt) < Date.parse(endAt) && reason.trim().length >= 2
-  return <DialogShell description="提交前会重新检查教师、学员时间与可用课时，发生冲突时原预约保持不变。" onRequestClose={onClose} size="compact" title="调整预约时间"><form className="grid gap-4 p-5" onSubmit={(event) => { event.preventDefault(); if (valid) void onConfirm(new Date(startAt).toISOString(), new Date(endAt).toISOString(), reason.trim()) }}><Field htmlFor="booking-reschedule-start" label="新开始时间"><Input id="booking-reschedule-start" onChange={(event) => setStartAt(event.target.value)} required type="datetime-local" value={startAt} /></Field><Field htmlFor="booking-reschedule-end" label="新结束时间"><Input id="booking-reschedule-end" onChange={(event) => setEndAt(event.target.value)} required type="datetime-local" value={endAt} /></Field><Field htmlFor="booking-reschedule-reason" label="调整原因"><Textarea id="booking-reschedule-reason" minLength={2} onChange={(event) => setReason(event.target.value)} required value={reason} /></Field><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">返回</Button><Button disabled={loading || !valid} type="submit">确认调整</Button></div></form></DialogShell>
+  return <DialogShell description="提交前会重新检查教师、学员时间与可用课时，发生冲突时原预约保持不变。" onRequestClose={onClose} size="compact" title="调整预约时间"><form className="grid gap-4 p-5" onSubmit={(event) => { event.preventDefault(); if (valid) void onConfirm(shanghaiLocalInputToIso(startAt), shanghaiLocalInputToIso(endAt), reason.trim()) }}><Field htmlFor="booking-reschedule-start" label="新开始时间"><Input id="booking-reschedule-start" onChange={(event) => setStartAt(event.target.value)} required type="datetime-local" value={startAt} /></Field><Field htmlFor="booking-reschedule-end" label="新结束时间"><Input id="booking-reschedule-end" onChange={(event) => setEndAt(event.target.value)} required type="datetime-local" value={endAt} /></Field><Field htmlFor="booking-reschedule-reason" label="调整原因"><Textarea id="booking-reschedule-reason" minLength={2} onChange={(event) => setReason(event.target.value)} required value={reason} /></Field><div className="flex justify-end gap-2"><Button onClick={onClose} type="button" variant="secondary">返回</Button><Button disabled={loading || !valid} type="submit">确认调整</Button></div></form></DialogShell>
 }
 
 export function BookingStatusBadge({ status }: { status: string }) {
@@ -139,8 +139,7 @@ function bookingEventLabel(type: string) {
 
 function actorLabel(role: string) { return ({ student: '学员操作', teacher: '教师操作', admin: '教务操作', worker: '系统任务' } as Record<string, string>)[role] || role }
 function claimOwnerLabel(type: string) { return type === 'teacher' ? '教师时间' : type === 'student' ? '学员时间' : '教室时间' }
-function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' }) }
-function formatDateTime(value?: string | null) { if (!value) return '无'; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false }) }
-function formatTimeRange(startAt: string, endAt: string) { const format = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }); return `${format(startAt)}-${format(endAt)}` }
+function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Shanghai' }) }
+function formatDateTime(value?: string | null) { if (!value) return '无'; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' }) }
+function formatTimeRange(startAt: string, endAt: string) { const format = (value: string) => new Date(value).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' }); return `${format(startAt)}-${format(endAt)}` }
 function groupByDate(items: BookingAppointment[]) { const groups = new Map<string, BookingAppointment[]>(); items.forEach((item) => { const key = dateKeyInShanghai(item.startAt); groups.set(key, [...(groups.get(key) || []), item]) }); return [...groups.entries()].sort(([left], [right]) => left.localeCompare(right)) }
-function toLocalInput(value: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return value.slice(0, 16); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16) }

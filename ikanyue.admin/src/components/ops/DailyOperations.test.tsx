@@ -4,7 +4,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi } from '../../app/api'
-import { lessonStep } from '../../app/coursePresentation'
+import { shanghaiLocalInput, shanghaiLocalInputToIso } from '../../app/calendarLogic'
+import { formatDate, formatDateTime, lessonStep, localDateKey } from '../../app/coursePresentation'
 import { NotifyProvider } from '../ui/Notify'
 import { useNotify } from '../ui/notifyContext'
 import { BookingWorkspace } from './BookingWorkspace'
@@ -92,6 +93,14 @@ describe('admin daily operations', () => {
     await user.click(screen.getByRole('button', { name: '新增兑换规则' }))
     await user.click(screen.getByRole('button', { name: '保存' }))
     expect(create).toHaveBeenCalledWith('token', 'conversion-rules', expect.objectContaining({ validFrom: '2026-10-19T01:30:00.000Z' }))
+  })
+
+  it('formats and groups instants by the Shanghai day whatever the browser zone', () => {
+    // 2026-10-18 23:30 UTC is 07:30 on 10-19 in Shanghai and still 10-18 in Los Angeles.
+    expect(localDateKey('2026-10-18T23:30:00.000Z')).toBe('2026-10-19')
+    expect(formatDateTime('2026-10-18T23:30:00.000Z')).toContain('07:30')
+    expect(formatDate('2026-10-18T23:30:00.000Z')).toContain('19')
+    expect(shanghaiLocalInputToIso(shanghaiLocalInput('2026-10-18T23:30:00.000Z'))).toBe('2026-10-18T23:30:00.000Z')
   })
 
   it('derives the lesson-day step from status and roster', () => {

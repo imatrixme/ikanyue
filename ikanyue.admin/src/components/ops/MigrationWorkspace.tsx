@@ -2,6 +2,7 @@ import { CheckCircle2, RefreshCw, ScanSearch, UploadCloud } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
+import { shanghaiLocalInput } from '../../app/calendarLogic'
 import type { MigrationInventory, MigrationPlan, MigrationPreview, MigrationTarget } from '../../app/migrationTypes'
 import { PageHeader, SectionHeader, SummaryBand, SummaryMetric, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
@@ -100,7 +101,7 @@ function ProgramMappings({ inventory, onChange, plan }: MappingProps) {
 
 function SessionMappings({ inventory, onChange, plan }: MappingProps) {
   if (!inventory.sessions.length) return null
-  return <section className="grid gap-4 border-t border-[var(--border)] px-5 py-5"><SectionHeader description="历史课堂固定标记为不扣点；这里仅确认课程点类型和原始起止时间。" title="历史课堂与出勤" /><div className="grid gap-5">{inventory.sessions.map((source, index) => { const mapping = plan.sessions[index]; return <div className="grid gap-3 border-b border-[var(--border)] pb-5" key={source.id}><div><strong>{source.title}</strong><span className="block text-xs text-[var(--muted-foreground)]">{source.id}</span></div><div className="grid gap-3 md:grid-cols-3"><Field label="目标课程点"><Select aria-label={`${source.title}目标课程点`} onChange={(event) => onChange(withSession(plan, index, { requiredCreditTypeId: event.target.value }))} options={targetOptions(inventory.targets.creditTypes)} value={mapping?.requiredCreditTypeId || ''} /></Field><Field label="开始时间"><Input aria-label={`${source.title}开始时间`} onChange={(event) => onChange(withSession(plan, index, { startAt: event.target.value }))} type="datetime-local" value={localDateTime(mapping?.startAt)} /></Field><Field label="结束时间"><Input aria-label={`${source.title}结束时间`} onChange={(event) => onChange(withSession(plan, index, { endAt: event.target.value }))} type="datetime-local" value={localDateTime(mapping?.endAt)} /></Field></div></div> })}</div></section>
+  return <section className="grid gap-4 border-t border-[var(--border)] px-5 py-5"><SectionHeader description="历史课堂固定标记为不扣点；这里仅确认课程点类型和原始起止时间。" title="历史课堂与出勤" /><div className="grid gap-5">{inventory.sessions.map((source, index) => { const mapping = plan.sessions[index]; return <div className="grid gap-3 border-b border-[var(--border)] pb-5" key={source.id}><div><strong>{source.title}</strong><span className="block text-xs text-[var(--muted-foreground)]">{source.id}</span></div><div className="grid gap-3 md:grid-cols-3"><Field label="目标课程点"><Select aria-label={`${source.title}目标课程点`} onChange={(event) => onChange(withSession(plan, index, { requiredCreditTypeId: event.target.value }))} options={targetOptions(inventory.targets.creditTypes)} value={mapping?.requiredCreditTypeId || ''} /></Field><Field label="开始时间"><Input aria-label={`${source.title}开始时间`} onChange={(event) => onChange(withSession(plan, index, { startAt: event.target.value }))} type="datetime-local" value={shanghaiLocalInput(mapping?.startAt || null)} /></Field><Field label="结束时间"><Input aria-label={`${source.title}结束时间`} onChange={(event) => onChange(withSession(plan, index, { endAt: event.target.value }))} type="datetime-local" value={shanghaiLocalInput(mapping?.endAt || null)} /></Field></div></div> })}</div></section>
 }
 
 function TeacherMappings({ inventory, plan }: { inventory: MigrationInventory; plan: MigrationPlan }) {
@@ -134,5 +135,4 @@ function withProgramType(plan: MigrationPlan, index: number, targetType: 'class'
 function withProgramTarget(plan: MigrationPlan, index: number, targetId: string) { const next = structuredClone(plan); next.programs[index].targetId = targetId; return next }
 function withSession(plan: MigrationPlan, index: number, changes: Partial<MigrationPlan['sessions'][number]>) { const next = structuredClone(plan); Object.assign(next.sessions[index], changes); return next }
 function normalizedAttendance(value: string) { return ['present', 'late', 'leave', 'absent', 'cancelled'].includes(value) ? value : 'present' }
-function localDateTime(value?: string) { if (!value || !Number.isFinite(Date.parse(value))) return ''; const date = new Date(value); return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) }
 function message(error: unknown, fallback: string) { return error instanceof Error ? error.message : fallback }

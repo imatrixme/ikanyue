@@ -246,7 +246,7 @@ export function formatDateTime(value: unknown, fallback = '时间待定') {
   if (!text) return fallback
   const date = new Date(text)
   if (Number.isNaN(date.getTime())) return fallback
-  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short', hour12: false }).format(date)
+  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short', hour12: false, timeZone: 'Asia/Shanghai' }).format(date)
 }
 
 export function formatDate(value: unknown, fallback = '日期待定') {
@@ -254,7 +254,7 @@ export function formatDate(value: unknown, fallback = '日期待定') {
   if (!text) return fallback
   const date = new Date(text)
   if (Number.isNaN(date.getTime())) return fallback
-  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(date)
+  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeZone: 'Asia/Shanghai' }).format(date)
 }
 
 export function safeDisplayValue(value: unknown) {
@@ -321,7 +321,7 @@ export const followUpStatusLabels: Record<FollowUpStatus, string> = { contacted:
 export function localDateKey(value: Date | string | number) {
   const date = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
 }
 
 export function technicalValue(value: unknown) {

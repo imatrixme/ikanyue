@@ -6,7 +6,7 @@ import type { OpsApi } from '../../app/api'
 import { listAllStudents } from '../../app/studentDirectory'
 import { listAllCourseResource } from '../../app/courseApi'
 import type { BookingReferenceData } from '../../app/bookingTypes'
-import { shanghaiLocalInput, shanghaiLocalInputToIso } from '../../app/calendarLogic'
+import { shanghaiDayStartIso, shanghaiLocalInput, shanghaiLocalInputToIso } from '../../app/calendarLogic'
 import { creditStatusLabel, formatDate, formatDateTime, lessonActions, lessonStep, localDateKey, personName, roleLabel, statusLabel } from '../../app/coursePresentation'
 import type { CourseRecord, CourseResourceInput, Lesson, SettlementPreview } from '../../app/courseTypes'
 import type { OpsProfile, StudentRecord } from '../../app/types'
@@ -208,7 +208,7 @@ export function LessonsWorkspace({ api, profile, token }: LessonsWorkspaceProps)
   }
 
   const scope = lessonScope(searchParams.get('scope'))
-  const todayStart = new Date(`${localDateKey(now)}T00:00:00`).getTime()
+  const todayStart = Date.parse(shanghaiDayStartIso(localDateKey(now)))
   const scoped: Record<LessonScope, Lesson[]> = {
     upcoming: lessons.filter((lesson) => Date.parse(lesson.startAt) >= todayStart && lesson.status !== 'cancelled' && lesson.status !== 'settled').sort(byStart),
     todo: lessons.filter((lesson) => lessonActions(lesson, now).complete || lesson.status === 'completed' || lesson.status === 'correction_pending').sort(byStart),

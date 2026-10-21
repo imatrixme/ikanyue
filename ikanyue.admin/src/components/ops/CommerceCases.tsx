@@ -25,7 +25,7 @@ export function CommerceCases({ token }: { token: string }) {
 }
 function CaseRow({ item, busy, review, recover, openOrder }: { item: CommerceCase; busy: boolean; review: (note: string, status: string) => void; recover: (note: string) => void; openOrder: () => void }) {
   const [note, setNote] = useState(item.note)
-  return <div className="space-y-3 py-4"><div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">{item.label}</h3><span className="text-sm">{item.status === 'resolved' ? '已处理' : '待处理'}</span></div><p className="text-xs text-[var(--muted-foreground)]">{new Date(item.createdAt).toLocaleString('zh-CN')}</p>
+  return <div className="space-y-3 py-4"><div className="flex flex-wrap justify-between gap-2"><h3 className="font-semibold">{item.label}</h3><span className="text-sm">{item.status === 'resolved' ? '已处理' : '待处理'}</span></div><p className="text-xs text-[var(--muted-foreground)]">{new Date(item.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
     {item.student ? <p className="text-sm">{item.student.name} · {item.student.cellphone} · {item.orderName}</p> : null}
     {item.orderId ? <Button variant="secondary" icon={<FileSearch />} onClick={openOrder}>查看关联订单</Button> : null}
     <label className="grid gap-1 text-sm">处理记录<Textarea value={note} maxLength={500} onChange={(event) => setNote(event.target.value)} /></label>
