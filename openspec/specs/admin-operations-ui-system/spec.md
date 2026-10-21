@@ -11,7 +11,7 @@ The Admin redesign SHALL include only the current hard-fork workflows for operat
 - **THEN** it does not expose removed teaching operations, assessment, reporting, shipping, refund, or resource-management modules
 
 ### Requirement: Structured operations workspace
-Each Admin module SHALL use a stable operations layout composed from a page header, optional summary band, filter or action toolbar, primary table or operational list, and focused detail or mutation surface.
+Each Admin module SHALL use a stable operations layout composed from a one-line page header (title and actions only), optional actionable summary band, filter or action toolbar, primary table or operational list, and focused detail or mutation surface. Modules that belong to one task section SHALL be reached through that section's tabs.
 
 #### Scenario: An operator changes modules
 - **WHEN** the operator chooses students, points, or rewards from primary navigation
@@ -20,6 +20,10 @@ Each Admin module SHALL use a stable operations layout composed from a page head
 #### Scenario: An operator inspects a record
 - **WHEN** the operator opens student, point-event, or reward details
 - **THEN** the details appear in an accessible dialog or drawer while the originating list remains stable
+
+#### Scenario: An operator switches tabs within a section
+- **WHEN** the operator selects the 实物 tab inside 积分
+- **THEN** the URL changes to the tab route and the section stays highlighted in navigation
 
 ### Requirement: Local Admin primitive library
 The Admin SHALL provide token-driven local primitives for commands, form controls, navigation, feedback, data display, overlays, asynchronous states, media upload, and image preview.
