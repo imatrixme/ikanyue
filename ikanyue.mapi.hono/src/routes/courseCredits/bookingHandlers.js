@@ -268,6 +268,7 @@ function createCourseBookingHandlers(options) {
             });
         },
         createOpsAppointment: opsCommand('requestAppointment', async (_c, services, _user, body, metadata) => {
+            if (body.confirm === true) featureGate.require('reservation');
             const studentId = await existingStudent(services, body.studentId);
             const requested = await services.appointmentRequestService.createRequest({
                 offeringId: body.offeringId,
@@ -278,13 +279,28 @@ function createCourseBookingHandlers(options) {
                 studentId,
             });
             if (body.confirm !== true || requested.status !== 'pending') return requested;
-            featureGate.require('reservation');
-            const confirmed = await services.appointmentDecisionService.confirm({
-                ...metadata,
-                idempotencyKey: `${metadata.idempotencyKey}:confirm`,
-                appointmentId: requested.appointmentId,
-            });
-            return { ...requested, ...confirmed, appointmentId: requested.appointmentId };
+            try {
+                const confirmed = await services.appointmentDecisionService.confirm({
+                    ...metadata,
+                    idempotencyKey: `${metadata.idempotencyKey}:confirm`,
+                    appointmentId: requested.appointmentId,
+                });
+                // Confirmation can close the request instead (expired, credits gone); report that as a failure.
+                invariant(confirmed.status === 'confirmed', 'APPOINTMENT_CONFIRM_CLOSED',
+                    confirmed.status === 'eligibility_lost' ? '学员可用课时不足，预约未成立' : '预约未能确认，已关闭',
+                    { status: confirmed.status });
+                return { ...requested, ...confirmed, appointmentId: requested.appointmentId };
+            } catch (error) {
+                // A one-step booking must not strand a pending request that blocks the next attempt for this course.
+                await services.pendingAppointmentService.withdraw({
+                    ...metadata,
+                    idempotencyKey: `${metadata.idempotencyKey}:withdraw`,
+                    appointmentId: requested.appointmentId,
+                    studentId,
+                    reason: '代约确认失败，已自动撤回',
+                }).catch(() => {});
+                throw error;
+            }
         }),
         cancelOpsAppointment: opsCommand('cancelAppointment', (c, services, user, body, metadata) => {
             if (body.cancellationType === 'institution') requireCapability(user, capability.FINANCE);

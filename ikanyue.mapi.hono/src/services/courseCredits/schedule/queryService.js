@@ -1,6 +1,7 @@
 const { invariant } = require('../domain');
 const { escapeFilter, relationId } = require('../queryService');
 const { loadTeacherAvailabilityWindows } = require('./availabilityWindows');
+const { filterTime } = require('../booking/time');
 const {
     CALENDAR_TIMEZONE,
     UPCOMING_SESSION_STATUSES,
@@ -108,7 +109,7 @@ class ScheduleQueryService {
 
     async rangeSessions(range) {
         const result = await this.repository.page('sessions', 1, MAX_RANGE_ENTRIES, {
-            filter: `endAt>"${escapeFilter(range.from)}" && startAt<"${escapeFilter(range.to)}"`,
+            filter: `endAt>"${escapeFilter(filterTime(range.from))}" && startAt<"${escapeFilter(filterTime(range.to))}"`,
             sort: 'startAt',
             expand: SESSION_EXPAND,
         });
@@ -122,8 +123,8 @@ class ScheduleQueryService {
     async scopedSessionIds(collection, field, principalId, range, extra) {
         const rows = await this.repository.list(collection, {
             filter: `${field}="${escapeFilter(principalId)}" && ${extra}`
-                + ` && sessionId.endAt>"${escapeFilter(range.from)}"`
-                + ` && sessionId.startAt<"${escapeFilter(range.to)}"`,
+                + ` && sessionId.endAt>"${escapeFilter(filterTime(range.from))}"`
+                + ` && sessionId.startAt<"${escapeFilter(filterTime(range.to))}"`,
             sort: 'sessionId.startAt',
         });
         return unique(rows.map((row) => relationId(row.sessionId)));

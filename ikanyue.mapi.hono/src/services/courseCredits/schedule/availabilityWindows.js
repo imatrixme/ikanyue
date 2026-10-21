@@ -1,6 +1,6 @@
 const { effectiveWindows, mergeWindows, overrideWindowsForDate } = require('../booking/availability');
 const { normalizeBookingPolicy } = require('../booking/policy');
-const { addLocalDays, localDateMinuteToIso, localParts } = require('../booking/time');
+const { addLocalDays, filterTime, localDateMinuteToIso, localParts } = require('../booking/time');
 const { escapeFilter, relation, relationId } = require('../queryService');
 
 async function loadTeacherAvailabilityWindows(repository, teacherId, range) {
@@ -15,8 +15,8 @@ async function loadTeacherAvailabilityWindows(repository, teacherId, range) {
             filter: `teacherId="${escaped}" && status="active"`, sort: 'weekday,startMinute',
         }),
         repository.list('teacher_availability_overrides', {
-            filter: `teacherId="${escaped}" && status="active" && endAt>"${escapeFilter(range.from)}"`
-                + ` && startAt<"${escapeFilter(range.to)}"`,
+            filter: `teacherId="${escaped}" && status="active" && endAt>"${escapeFilter(filterTime(range.from))}"`
+                + ` && startAt<"${escapeFilter(filterTime(range.to))}"`,
             sort: 'startAt',
         }),
     ]);

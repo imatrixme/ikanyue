@@ -31,6 +31,7 @@
     "commerce:worker": "node scripts/commerce-worker.js",
     "commerce:test": "node --test 'test/commerce*.test.js'",
     "course-bookings:seed:local": "node scripts/pb-seed-course-booking-local.js",
+    "course-bookings:smoke:local": "node scripts/smoke-operator-booking-local.js",
     "ops:seed:local": "node scripts/pb-seed-points-lite-local.js",
     "ops:smoke:local": "node scripts/smoke-points-lite-local.js",
     "check-docs": "./scripts/check-docs.sh",

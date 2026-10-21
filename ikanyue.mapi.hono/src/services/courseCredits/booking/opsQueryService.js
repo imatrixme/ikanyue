@@ -2,6 +2,7 @@ const { invariant } = require('../domain');
 const { escapeFilter } = require('../repositories/operationRepository');
 const { mapPage, pagination } = require('../queryService');
 const { teacherAppointment } = require('./projection');
+const { filterTime } = require('./time');
 
 const OPS_EXPAND = 'studentId,teacherId,offeringId,courseSpecId,creditTypeId,policyId,sessionId';
 
@@ -55,8 +56,8 @@ class BookingOpsQueryService {
         relationFilter(filters, 'teacherId', query.teacherId);
         relationFilter(filters, 'studentId', query.studentId);
         relationFilter(filters, 'courseSpecId', query.courseSpecId);
-        if (query.from) filters.push(`requestedEndAt>"${escapeFilter(query.from)}"`);
-        if (query.to) filters.push(`requestedStartAt<"${escapeFilter(query.to)}"`);
+        if (query.from) filters.push(`requestedEndAt>"${escapeFilter(filterTime(query.from))}"`);
+        if (query.to) filters.push(`requestedStartAt<"${escapeFilter(filterTime(query.to))}"`);
         const result = await this.repository.page('appointment_requests', page.page, page.perPage, {
             filter: filters.join(' && '), sort: query.sort || '-requestedAt', expand: OPS_EXPAND,
         });

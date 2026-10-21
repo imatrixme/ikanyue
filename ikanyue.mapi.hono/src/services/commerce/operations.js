@@ -1,6 +1,7 @@
 const { invariant } = require('../courseCredits/domain');
 const { id, escape } = require('./planning');
 const { create } = require('../courseCredits/reservationRequests');
+const { filterTime } = require('../courseCredits/booking/time');
 
 class CommerceOperations {
     constructor(checkout, refunds) { this.checkout = checkout; this.refunds = refunds; this.repo = checkout.repo; }
@@ -26,7 +27,7 @@ class CommerceOperations {
         for (const [key, comparison] of [['from', '>='], ['to', '<=']]) if (query[key]) {
             invariant(/^\d{4}-\d{2}-\d{2}$/.test(query[key]) && Number.isFinite(Date.parse(query[key]))
                 && new Date(query[key]).toISOString().slice(0, 10) === query[key], 'INVALID_DATE_FILTER', '日期无效');
-            const boundary = new Date(`${query[key]}T${key === 'from' ? '00:00:00' : '23:59:59.999'}+08:00`).toISOString();
+            const boundary = filterTime(`${query[key]}T${key === 'from' ? '00:00:00' : '23:59:59.999'}+08:00`);
             filters.push(`created${comparison}"${boundary}"`);
         }
         invariant(!query.from || !query.to || query.from <= query.to, 'INVALID_DATE_FILTER', '结束日期不能早于开始日期');

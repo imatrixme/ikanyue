@@ -28,6 +28,9 @@ test('slot query combines teacher rules, overrides, claims, and exact lesson eli
     });
     assert.deepEqual(result.slots, [{ startAt: START, endAt: END }]);
     assert.match(repository.queries.schedule_claims[0].filter, /sourceId!="current-session"/);
+    // PocketBase compares stored 'YYYY-MM-DD HH:MM:SS.sssZ' text, so ISO 'T' literals must be normalized.
+    assert.ok(repository.queries.schedule_claims[0].filter.includes(`cellEndAt>"${START.replace('T', ' ')}"`));
+    assert.equal(repository.queries.schedule_claims[0].filter.includes('T0'), false);
     assert.match(repository.queries.credit_batches.filter, /status="active"/);
 });
 

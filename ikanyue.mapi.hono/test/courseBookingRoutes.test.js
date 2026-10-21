@@ -136,6 +136,10 @@ test('Admin can book a one-to-one lesson on behalf of an existing student', asyn
         fixture.calls.push({ name: 'appointmentRequestService.createRequest', input });
         return { appointmentId: 'appointment', status: 'pending', startAt: input.startAt };
     };
+    fixture.services.appointmentDecisionService.confirm = async (input) => {
+        fixture.calls.push({ name: 'appointmentDecisionService.confirm', input });
+        return { appointmentId: input.appointmentId, status: 'confirmed' };
+    };
     const app = createApp(fixture.services);
     const auth = token({ id: 'operator', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'] });
 
@@ -174,6 +178,34 @@ test('Admin can book a one-to-one lesson on behalf of an existing student', asyn
     }), { studentId: 'student' });
     assert.equal(teacher.code, 403);
     assert.ok(students.every(([collection]) => collection === 'students'));
+});
+
+test('One-step operator booking withdraws the request when confirmation fails or closes it', async () => {
+    const fixture = bookingFixture();
+    fixture.services.repository = { async get(_collection, id) { return { id }; } };
+    fixture.services.appointmentRequestService.createRequest = async (input) => {
+        fixture.calls.push({ name: 'appointmentRequestService.createRequest', input });
+        return { appointmentId: 'appointment', status: 'pending' };
+    };
+    const outcomes = [
+        async () => { throw Object.assign(new Error('该时段已不可预约'), { code: 'BOOKING_SLOT_TAKEN', status: 409 }); },
+        async (input) => ({ appointmentId: input.appointmentId, status: 'eligibility_lost' }),
+    ];
+    fixture.services.appointmentDecisionService.confirm = async (input) => outcomes.shift()(input);
+    const app = createApp(fixture.services);
+    const auth = token({ id: 'operator', role: 'teacher', courseCreditCapabilities: ['course_credit.academic'] });
+    const body = { studentId: 'student', offeringId: 'offering', startAt: '2026-08-04T01:00:00Z', endAt: '2026-08-04T02:00:00Z', confirm: true };
+
+    const taken = await request(app, 'POST', '/ops/course-bookings/appointments', auth, body);
+    assert.notEqual(taken.code, 10000);
+    const withdraw = fixture.calls.find((call) => call.name === 'pendingAppointmentService.withdraw');
+    assert.equal(withdraw.input.appointmentId, 'appointment');
+    assert.equal(withdraw.input.studentId, 'student');
+    assert.equal(withdraw.input.idempotencyKey, 'key-POST-/ops/course-bookings/appointments:withdraw');
+
+    const closed = await request(app, 'POST', '/ops/course-bookings/appointments', auth, body);
+    assert.notEqual(closed.code, 10000);
+    assert.equal(closed.errorCode, 'APPOINTMENT_CONFIRM_CLOSED');
 });
 
 function bookingFixture() {

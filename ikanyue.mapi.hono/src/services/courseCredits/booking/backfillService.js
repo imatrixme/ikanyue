@@ -13,6 +13,7 @@ const {
 const { claimKey } = require('./claims');
 const { sessionClaimPlan } = require('./claimPlanning');
 const { SCHEDULE_CLAIM_GRANULARITY_MINUTES } = require('./policy');
+const { filterTime } = require('./time');
 
 const BACKFILL_BATCH_LIMIT = 400;
 
@@ -28,13 +29,13 @@ class ScheduleClaimBackfillService {
         const to = input.to ? new Date(input.to).toISOString() : '';
         const sessions = await this.repository.list('sessions', {
             filter: '(status="scheduled" || status="enrollment_closed")'
-                + ` && startAt>="${escapeFilter(from)}"`
-                + (to ? ` && startAt<"${escapeFilter(to)}"` : ''),
+                + ` && startAt>="${escapeFilter(filterTime(from))}"`
+                + (to ? ` && startAt<"${escapeFilter(filterTime(to))}"` : ''),
             sort: 'startAt,id',
         });
         const existing = await this.repository.list('schedule_claims', {
-            filter: `status="active" && cellEndAt>"${escapeFilter(from)}"`
-                + (to ? ` && cellStartAt<"${escapeFilter(to)}"` : ''),
+            filter: `status="active" && cellEndAt>"${escapeFilter(filterTime(from))}"`
+                + (to ? ` && cellStartAt<"${escapeFilter(filterTime(to))}"` : ''),
             sort: 'cellStartAt,ownerType,ownerId',
         });
         return buildReport(await this.materialize(sessions), existing);

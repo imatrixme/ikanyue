@@ -27,4 +27,11 @@ function sameRange(startA, endA, startB, endB) {
     return Date.parse(startA) === Date.parse(startB) && Date.parse(endA) === Date.parse(endB);
 }
 
-module.exports = { addLocalDays, localDateMinuteToIso, localParts, overlaps, sameRange };
+// PocketBase stores dates as "YYYY-MM-DD HH:MM:SS.sssZ" and compares filter literals as text,
+// so an ISO "T" literal mis-orders against stored values on the same UTC day.
+function filterTime(value) {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString().replace('T', ' ') : String(value ?? '');
+}
+
+module.exports = { addLocalDays, filterTime, localDateMinuteToIso, localParts, overlaps, sameRange };

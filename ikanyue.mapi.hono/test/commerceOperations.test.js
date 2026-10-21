@@ -15,8 +15,9 @@ test('order filters use China calendar days and reject invalid or reversed dates
     const repo = { page: async (_name, _page, _size, query) => { options = query; return { items: [] }; } };
     const service = new CommerceOperations({ repo }, {});
     await service.orders({ from: '2026-09-06', to: '2026-09-06' });
-    assert.match(options.filter, /2026-09-05T16:00:00.000Z/);
-    assert.match(options.filter, /2026-09-06T15:59:59.999Z/);
+    // PocketBase compares stored "YYYY-MM-DD HH:MM:SS.sssZ" text, so bounds use that format.
+    assert.match(options.filter, /created>="2026-09-05 16:00:00.000Z"/);
+    assert.match(options.filter, /created<="2026-09-06 15:59:59.999Z"/);
     await assert.rejects(service.orders({ from: '2026-02-30' }), { code: 'INVALID_DATE_FILTER' });
     await assert.rejects(service.orders({ from: '2026-09-06', to: '2026-09-05' }), { code: 'INVALID_DATE_FILTER' });
 });

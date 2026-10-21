@@ -6,6 +6,7 @@ const { mapPage, pagination, relation, relationId } = require('../queryService')
 const { generateAvailableSlots } = require('./availability');
 const { normalizeBookingPolicy } = require('./policy');
 const { bookingOption, studentAppointment, teacherAppointment } = require('./projection');
+const { filterTime } = require('./time');
 
 const APPOINTMENT_EXPAND = 'studentId,teacherId,offeringId,courseSpecId,sessionId';
 
@@ -143,8 +144,8 @@ class CourseBookingQueryService {
             `teacherId="${escapeFilter(teacherId)}"`,
             '(status="confirmed" || status="rescheduled" || status="fulfilled")',
         ];
-        if (query.from) filters.push(`requestedEndAt>"${escapeFilter(query.from)}"`);
-        if (query.to) filters.push(`requestedStartAt<"${escapeFilter(query.to)}"`);
+        if (query.from) filters.push(`requestedEndAt>"${escapeFilter(filterTime(query.from))}"`);
+        if (query.to) filters.push(`requestedStartAt<"${escapeFilter(filterTime(query.to))}"`);
         const result = await this.repository.page('appointment_requests', page.page, page.perPage, {
             filter: filters.join(' && '), sort: 'requestedStartAt', expand: APPOINTMENT_EXPAND,
         });
@@ -190,7 +191,7 @@ async function related(repository, record, field, collection) {
 function claims(repository, ownerType, ownerId, from, to, excludeSourceId = '') {
     return repository.list('schedule_claims', {
         filter: `ownerType="${ownerType}" && ownerId="${escapeFilter(ownerId)}" && status="active"`
-            + ` && cellStartAt<"${escapeFilter(to)}" && cellEndAt>"${escapeFilter(from)}"`
+            + ` && cellStartAt<"${escapeFilter(filterTime(to))}" && cellEndAt>"${escapeFilter(filterTime(from))}"`
             + (excludeSourceId ? ` && sourceId!="${escapeFilter(excludeSourceId)}"` : ''),
         sort: 'cellStartAt',
     });
