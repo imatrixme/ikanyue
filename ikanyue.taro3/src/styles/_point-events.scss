@@ -1,0 +1,125 @@
+.point-events {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+.point-event {
+    align-items: flex-start;
+    display: flex;
+    padding: 15px 14px;
+}
+
+.point-event + .point-event {
+    border-top: 1px solid $ky-line;
+}
+
+.point-event__rail {
+    display: flex;
+    flex: 0 0 14px;
+    justify-content: center;
+    margin-right: 10px;
+    padding-top: 4px;
+    width: 14px;
+}
+
+.point-event__dot {
+    background: $ky-success;
+    border: 3px solid $ky-success-soft;
+    border-radius: 50%;
+    box-sizing: border-box;
+    font-size: 0;
+    height: 13px;
+    width: 13px;
+}
+
+.point-event--spend .point-event__dot {
+    background: $ky-danger;
+    border-color: $ky-danger-soft;
+}
+
+.point-event__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.point-event__title,
+.point-event__reason,
+.point-event__remark,
+.point-event__meta,
+.point-event__delta {
+    display: block;
+}
+
+.point-event__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
+}
+
+.point-event__reason {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.point-event__remark {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 3px;
+}
+
+.point-event__meta {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 8px;
+}
+
+.point-event__amount {
+    flex: 0 0 auto;
+    margin-left: 10px;
+    min-width: 62px;
+    text-align: right;
+}
+
+.point-event__delta {
+    color: $ky-success;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+    background: $ky-success-soft;
+    border-radius: $ky-radius-sm;
+    padding: 3px 5px;
+}
+
+.point-event--spend .point-event__delta {
+    background: $ky-danger-soft;
+    color: $ky-danger;
+}
+
+.point-event__balance {
+    color: $ky-text-muted;
+    display: block;
+    font-size: $ky-font-size-xs;
+    margin-top: 5px;
+}
+
+@media (max-width: 350px) {
+    .point-event {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .point-event__rail {
+        margin-right: 8px;
+    }
+
+    .point-event__amount {
+        margin-left: 8px;
+        min-width: 54px;
+    }
+}

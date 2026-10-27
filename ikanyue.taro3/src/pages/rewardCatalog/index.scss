@@ -1,0 +1,19 @@
+@import '../../styles/tokens';
+
+.catalog-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: $ky-space-4 $ky-space-3 $ky-space-8;
+}
+
+.catalog-tabs {
+    margin-top: $ky-space-4;
+}
+
+@media (max-width: 350px) {
+    .catalog-page {
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
+    }
+}

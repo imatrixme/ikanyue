@@ -1,0 +1,426 @@
+@import '../../styles/tokens';
+@import '../../styles/hero-texture';
+
+.profile-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding-bottom: $ky-space-8;
+}
+
+.profile-hero {
+    @include ky-hero-texture-host;
+    background-color: $ky-immersive-surface;
+    box-sizing: border-box;
+    color: $ky-on-primary;
+    padding: $ky-space-4 $ky-space-4 $ky-space-5;
+}
+
+.profile-hero__texture {
+    @include ky-hero-texture-layer;
+}
+
+.profile-hero > view,
+.profile-hero > text {
+    position: relative;
+    z-index: 1;
+}
+
+.profile-brand {
+    display: block;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+    text-align: center;
+}
+
+.profile-member-pass {
+    align-items: center;
+    background: $ky-surface;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-raised;
+    box-sizing: border-box;
+    color: $ky-ink-strong;
+    display: flex;
+    gap: $ky-space-3;
+    margin-top: $ky-space-4;
+    padding: $ky-space-4;
+}
+
+.profile-member-pass__avatar {
+    align-items: center;
+    background: $ky-primary-wash;
+    border-radius: 50%;
+    color: $ky-primary-strong;
+    display: flex;
+    flex-shrink: 0;
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-black;
+    height: 52px;
+    justify-content: center;
+    overflow: hidden;
+    width: 52px;
+}
+
+.profile-member-pass__avatar-image {
+    height: 100%;
+    width: 100%;
+}
+
+.profile-member-pass__copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-member-pass__name,
+.profile-member-pass__meta {
+    display: block;
+}
+
+.profile-member-pass__name {
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-black;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-member-pass__meta {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-xs;
+    margin-top: $ky-space-1;
+}
+
+.profile-member-pass__edit {
+    color: $ky-primary-strong;
+    flex-shrink: 0;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-bold;
+}
+
+.profile-content {
+    padding: 0 $ky-space-4;
+}
+
+.profile-row-group {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    overflow: hidden;
+}
+
+.profile-welcome {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    margin-top: -$ky-space-4;
+    padding: $ky-space-6 $ky-space-5;
+    position: relative;
+}
+
+.profile-welcome__title,
+.profile-welcome__desc {
+    display: block;
+}
+
+.profile-welcome__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-display-sm;
+    font-weight: $ky-font-weight-black;
+}
+
+.profile-welcome__desc {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-readable;
+    margin-top: $ky-space-2;
+}
+
+.profile-primary-action {
+    background: $ky-primary-strong;
+    border-radius: $ky-radius-md;
+    color: $ky-surface;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+    margin-top: $ky-space-5;
+    padding: 13px $ky-space-4;
+    text-align: center;
+}
+
+.profile-note {
+    align-items: center;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-sm;
+    gap: $ky-space-2;
+    margin-top: $ky-space-4;
+}
+
+.profile-note__dot {
+    background: $ky-primary;
+    border-radius: 50%;
+    height: 7px;
+    width: 7px;
+}
+
+.login-popup-shell {
+    border-radius: $ky-radius-lg $ky-radius-lg 0 0;
+    max-height: 84%;
+    min-height: 52%;
+    overflow-y: auto;
+}
+
+.role-popup-shell {
+    border-radius: $ky-radius-lg $ky-radius-lg 0 0;
+    min-height: 48%;
+}
+
+.role-popup {
+    box-sizing: border-box;
+    padding: $ky-space-5 $ky-space-5 calc(env(safe-area-inset-bottom) + 32px);
+}
+
+.role-options {
+    margin-top: $ky-space-5;
+}
+
+.role-option {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    min-height: 72px;
+    padding: $ky-space-3 $ky-space-4;
+}
+
+.role-option + .role-option {
+    margin-top: $ky-space-3;
+}
+
+.role-option--active {
+    background: $ky-primary-wash;
+    border-color: $ky-primary-line;
+}
+
+.role-option__icon {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    display: flex;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+}
+
+.role-option__icon .app-icon {
+    transform: scale(1.32);
+}
+
+.role-option__copy {
+    flex: 1;
+    padding-left: $ky-space-3;
+}
+
+.role-option__title,
+.role-option__name {
+    display: block;
+}
+
+.role-option__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+}
+
+.role-option__name {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 3px;
+}
+
+.role-option__current {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
+}
+
+.role-popup__loading {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    padding-top: $ky-space-4;
+    text-align: center;
+}
+
+.login-popup {
+    box-sizing: border-box;
+    padding: $ky-space-5 $ky-space-5 $ky-space-8;
+    position: relative;
+}
+
+.login-popup__close {
+    align-items: center;
+    color: $ky-text-muted;
+    display: flex;
+    font-size: $ky-font-size-display-md;
+    height: 44px;
+    justify-content: center;
+    position: absolute;
+    right: $ky-space-2;
+    top: $ky-space-2;
+    width: 44px;
+}
+
+.login-popup__bar {
+    background: $ky-primary;
+    height: 5px;
+    margin-bottom: $ky-space-5;
+    width: 44px;
+}
+
+.login-title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-heading-lg;
+    font-weight: $ky-font-weight-black;
+    margin-top: $ky-space-2;
+}
+
+.login-desc {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-readable;
+    margin-top: $ky-space-3;
+}
+
+.login-mode-switch {
+    margin-top: $ky-space-5;
+}
+
+.password-login-form {
+    margin-top: $ky-space-5;
+}
+
+.password-login-field {
+    background: $ky-primary-wash;
+    border: 1px solid $ky-input-line;
+    border-radius: $ky-radius-md;
+    box-sizing: border-box;
+    padding: $ky-space-2 $ky-space-3;
+}
+
+.password-login-field + .password-login-field {
+    margin-top: $ky-space-3;
+}
+
+.password-login-field__label {
+    color: $ky-text-muted;
+    display: block;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-semibold;
+}
+
+.password-login-field__input {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body-lg;
+    height: 34px;
+    margin-top: 2px;
+    width: 100%;
+}
+
+.password-login-field__input::placeholder {
+    color: $ky-text-muted;
+}
+
+.wechat-login-btn {
+    align-items: center;
+    background: $ky-wechat;
+    border: none;
+    border-radius: $ky-radius-md;
+    color: $ky-surface;
+    display: flex;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-bold;
+    height: 48px;
+    justify-content: center;
+    margin-top: $ky-space-6;
+    width: 100%;
+}
+
+.password-login-btn {
+    align-items: center;
+    background: $ky-primary-strong;
+    border: none;
+    border-radius: $ky-radius-md;
+    color: $ky-surface;
+    display: flex;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-bold;
+    height: 48px;
+    justify-content: center;
+    margin-top: $ky-space-5;
+    width: 100%;
+}
+
+.wechat-login-btn[disabled='true'],
+.wechat-login-btn[disabled='disabled'],
+.wechat-login-btn:disabled,
+.password-login-btn[disabled='true'],
+.password-login-btn[disabled='disabled'],
+.password-login-btn:disabled {
+    opacity: 0.6;
+}
+
+.login-consent {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: $ky-font-size-body-sm;
+    margin-top: $ky-space-3;
+    min-height: 44px;
+}
+
+.login-consent__toggle {
+    align-items: center;
+    display: flex;
+    min-height: 44px;
+}
+
+.login-consent__check {
+    align-items: center;
+    border: 1px solid $ky-input-line;
+    border-radius: $ky-radius-sm;
+    box-sizing: border-box;
+    color: $ky-on-primary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    height: 18px;
+    justify-content: center;
+    margin-right: $ky-space-2;
+    width: 18px;
+}
+
+.login-consent__check--on {
+    background: $ky-primary-strong;
+    border-color: $ky-primary-strong;
+}
+
+.login-consent__text {
+    color: $ky-text-secondary;
+}
+
+.login-consent__link {
+    color: $ky-primary-strong;
+    font-weight: $ky-font-weight-semibold;
+    padding: $ky-space-3 0;
+}
+
+@media (max-width: 350px) {
+    .profile-hero {
+        padding-left: $ky-space-3;
+        padding-right: $ky-space-3;
+    }
+
+    .profile-content {
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
+    }
+}

@@ -1,0 +1,79 @@
+@import '../../styles/tokens';
+
+.venues-page {
+    background: $ky-canvas;
+    color: $ky-ink;
+    min-height: 100vh;
+}
+
+.venues-content {
+    box-sizing: border-box;
+    padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
+}
+
+.venues-state { min-height: 240px; }
+
+.venues-list {
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-3;
+}
+
+.venue-card {
+    background: $ky-surface;
+    border: 1px solid $ky-line-tinted;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    min-height: 44px;
+    padding: $ky-space-4;
+}
+
+.venue-card:active { background: $ky-primary-wash; }
+
+.venue-card--current {
+    border-color: $ky-primary-strong;
+    box-shadow: $ky-shadow-subtle;
+}
+
+.venue-card__header {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-2;
+    justify-content: space-between;
+}
+
+.venue-card__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-bold;
+}
+
+.venue-card__current {
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-pill;
+    color: $ky-primary-strong;
+    flex-shrink: 0;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-semibold;
+    padding: $ky-space-1 $ky-space-2;
+}
+
+.venue-card__intro,
+.venue-card__fact {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+}
+
+.venue-card__fact {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-2;
+}
+
+.venue-card__booking {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-semibold;
+}

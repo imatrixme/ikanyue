@@ -1,0 +1,67 @@
+import { themeColors } from './styles/theme.mjs';
+
+export default defineAppConfig({
+    pages: [
+        'pages/home/index',
+        'pages/activity/index',
+        'pages/courses/index',
+        'pages/points/index',
+        'pages/profile/index',
+        'pages/courseDetail/index',
+        'pages/courseShop/index',
+        'pages/courseOrder/index',
+        'pages/courseLessons/index',
+        'pages/courseLessonDetail/index',
+        'pages/teacherLessonDetail/index',
+        'pages/courseRecords/index',
+        'pages/appointmentBooking/index',
+        'pages/appointmentSlots/index',
+        'pages/appointments/index',
+        'pages/appointmentDetail/index',
+        'pages/venues/index',
+        'pages/teacherAvailability/index',
+        'pages/pointsHistory/index',
+        'pages/rewardCatalog/index',
+        'pages/userinfo/index',
+        'pages/activityDetail/index',
+        'pages/imageDetail/index',
+        'pages/webview/index',
+        'pages/agreement/index',
+    ],
+    window: {
+        backgroundTextStyle: 'light',
+        navigationBarBackgroundColor: themeColors.surface,
+        navigationBarTitleText: '看乐艺术',
+        navigationBarTextStyle: 'black',
+    },
+    tabBar: {
+        color: themeColors.tab,
+        selectedColor: themeColors.primaryStrong,
+        backgroundColor: themeColors.surface,
+        borderStyle: 'black',
+        list: [
+            {
+                pagePath: 'pages/home/index',
+                iconPath: 'imgs/icons/tab-home.png',
+                selectedIconPath: 'imgs/icons/tab-home-selected.png',
+                text: '首页',
+            },
+            {
+                pagePath: 'pages/appointmentBooking/index',
+                iconPath: 'imgs/icons/tab-booking.png',
+                selectedIconPath: 'imgs/icons/tab-booking-selected.png',
+                text: '约课',
+            },
+            {
+                pagePath: 'pages/profile/index',
+                iconPath: 'imgs/icons/tab-profile.png',
+                selectedIconPath: 'imgs/icons/tab-profile-selected.png',
+                text: '我的',
+            },
+        ],
+    },
+    networkTimeout: {
+        request: 10000,
+        downloadFile: 60000,
+    },
+});

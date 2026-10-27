@@ -1,0 +1,36 @@
+@import '../../styles/tokens';
+
+.appointments-page {
+    background: $ky-canvas;
+    min-height: 100vh;
+    padding-bottom: $ky-space-8;
+}
+
+.appointments-content { padding: $ky-space-4; }
+
+@media (max-width: 350px) {
+    .appointments-content { padding-left: $ky-space-3; padding-right: $ky-space-3; }
+}
+
+.appointments-state {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-4;
+    min-height: 250px;
+}
+
+.appointments-list {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    margin-top: $ky-space-4;
+    overflow: hidden;
+}
+
+.appointments-footer {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    padding: $ky-space-5 0;
+    text-align: center;
+}

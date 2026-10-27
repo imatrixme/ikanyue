@@ -1,0 +1,23 @@
+@import './styles/tokens';
+
+page {
+    background: $ky-canvas;
+    color: $ky-ink;
+    font-family: $ky-font-sans;
+}
+
+button {
+    font-family: $ky-font-sans;
+}
+
+button::after {
+    border: none;
+}
+
+/* Rich Text 组件样式 */
+.rich-text-container {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+/* 以下样式通过内联样式在getSafeHtml函数中应用到HTML元素 */

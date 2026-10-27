@@ -1,0 +1,26 @@
+{
+  "generator": "OpenAI built-in ImageGen",
+  "assetType": "WeChat mini program list-row icons",
+  "style": "restrained polished flat 2.5D bitmap iconography",
+  "palette": {
+    "primaryStrong": "#006241",
+    "primarySoft": "#D4E9E2",
+    "highlight": "#FFFFFF",
+    "accent": "#F5C400"
+  },
+  "constraints": [
+    "clear at 18-24px",
+    "centered on a square canvas",
+    "no text, letters, numbers, watermark, badge, or container",
+    "generated on #FF00FF chroma key and converted to transparent PNG"
+  ],
+  "icons": {
+    "account-points.png": "two overlapping reward tokens with a musical note",
+    "account-rewards.png": "gift box with a ribbon and music-note tag",
+    "account-name.png": "profile silhouette with a blank nameplate and music accent",
+    "account-phone.png": "smartphone with a verified-link badge",
+    "account-profile.png": "identity document card",
+    "account-teaching.png": "open music score with a teaching pointer",
+    "account-about.png": "music academy facade"
+  }
+}

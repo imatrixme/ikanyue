@@ -1,0 +1,145 @@
+@import '../../styles/tokens';
+
+.slot-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: $ky-space-4 $ky-space-3 104px;
+}
+
+.slot-summary {
+    align-items: center;
+    background: $ky-primary-strong;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-raised;
+    color: $ky-on-primary;
+    display: flex;
+    min-height: 92px;
+    padding: $ky-space-4;
+}
+
+.slot-summary__icon {
+    align-items: center;
+    background: $ky-on-primary-overlay;
+    border: 1px solid $ky-on-primary-divider;
+    border-radius: $ky-radius-md;
+    display: flex;
+    flex: 0 0 50px;
+    height: 50px;
+    justify-content: center;
+    width: 50px;
+}
+
+.slot-summary__icon .app-icon { transform: scale(1.42); }
+
+.slot-summary__copy { min-width: 0; padding-left: $ky-space-3; }
+
+.slot-summary__course,
+.slot-summary__teacher,
+.slot-summary__meta { display: block; }
+
+.slot-summary__course { font-size: $ky-font-size-section; font-weight: $ky-font-weight-black; }
+.slot-summary__teacher { font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; margin-top: 4px; }
+.slot-summary__meta { color: $ky-on-primary-muted; font-size: $ky-font-size-xs; margin-top: 3px; }
+
+.slot-state {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-4;
+    min-height: 260px;
+}
+
+.slot-intro { margin: $ky-space-6 $ky-space-1 $ky-space-3; }
+.slot-intro__title,
+.slot-intro__description { display: block; }
+.slot-intro__title { color: $ky-ink-strong; font-size: $ky-font-size-section; font-weight: $ky-font-weight-black; }
+.slot-intro__description { color: $ky-text-secondary; font-size: $ky-font-size-body-sm; margin-top: 4px; }
+
+.slot-group {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    padding: $ky-space-4;
+}
+
+.slot-group + .slot-group { margin-top: $ky-space-3; }
+
+.slot-group__date { align-items: baseline; display: flex; gap: $ky-space-2; }
+.slot-group__day { color: $ky-ink-strong; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-black; }
+.slot-group__weekday { color: $ky-text-muted; font-size: $ky-font-size-xs; }
+
+.slot-grid {
+    display: grid;
+    gap: $ky-space-2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: $ky-space-3;
+}
+
+.slot-chip {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border: 1px solid $ky-line-tinted;
+    border-radius: $ky-radius-md;
+    box-sizing: border-box;
+    color: $ky-ink;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
+    height: 40px;
+    justify-content: center;
+}
+
+.slot-chip--selected {
+    background: $ky-primary-strong;
+    border-color: $ky-primary-strong;
+    color: $ky-on-primary;
+}
+
+.slot-note {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-4;
+    padding: $ky-space-4;
+    position: relative;
+}
+
+.slot-note__label { color: $ky-ink-strong; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-bold; }
+.slot-note__input {
+    background: $ky-primary-wash;
+    border: 1px solid $ky-input-line;
+    border-radius: $ky-radius-md;
+    box-sizing: border-box;
+    font-size: $ky-font-size-body;
+    height: 112px;
+    margin-top: $ky-space-3;
+    padding: $ky-space-3;
+    width: 100%;
+}
+.slot-note__placeholder { color: $ky-text-muted; }
+.slot-note__count { color: $ky-text-muted; font-size: $ky-font-size-2xs; position: absolute; right: $ky-space-5; bottom: $ky-space-5; }
+
+.slot-action {
+    align-items: center;
+    background: $ky-primary-strong;
+    border-radius: $ky-radius-md;
+    bottom: calc(env(safe-area-inset-bottom) + 16px);
+    box-shadow: $ky-shadow-raised;
+    color: $ky-on-primary;
+    display: flex;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+    height: 48px;
+    justify-content: center;
+    left: $ky-space-3;
+    position: fixed;
+    right: $ky-space-3;
+    z-index: $ky-z-sticky;
+}
+
+.slot-action--disabled { opacity: $ky-disabled-opacity; }
+
+@media (max-width: 350px) {
+    .slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

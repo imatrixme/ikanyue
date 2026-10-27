@@ -1,0 +1,90 @@
+@import '../../styles/tokens';
+@import '../../styles/point-events';
+@import './reward-list';
+
+.points-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    color: $ky-ink;
+    min-height: 100vh;
+    padding: $ky-space-4 $ky-space-3 $ky-space-8;
+}
+
+.points-loading,
+.points-page__state {
+    margin-top: $ky-space-4;
+}
+
+.reward-voucher-list {
+    width: 100%;
+}
+
+.reward-voucher-more {
+    align-items: center;
+    color: $ky-primary-strong;
+    display: flex;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-bold;
+    justify-content: center;
+    min-height: 40px;
+    padding-top: $ky-space-2;
+}
+
+.reward-voucher-more text {
+    margin-right: $ky-space-1;
+}
+
+.points-empty-row {
+    box-shadow: none;
+}
+
+.points-page .account-row {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+}
+
+.points-page .point-events {
+    box-shadow: none;
+}
+
+.skeleton-card__media,
+.skeleton-line {
+    animation: points-pulse 1.2s ease-in-out infinite;
+    background: $ky-skeleton;
+}
+
+.skeleton-line {
+    border-radius: $ky-radius-sm;
+    height: 10px;
+    margin-top: 9px;
+    width: 100%;
+}
+
+.skeleton-line--title {
+    height: 15px;
+    margin-top: 0;
+    width: 55%;
+}
+
+.skeleton-line--short {
+    width: 35%;
+}
+
+@keyframes points-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}
+
+@media (max-width: 350px) {
+    .points-page {
+        padding-left: $ky-space-2;
+        padding-right: $ky-space-2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-card__media,
+    .skeleton-line {
+        animation: none;
+    }
+}

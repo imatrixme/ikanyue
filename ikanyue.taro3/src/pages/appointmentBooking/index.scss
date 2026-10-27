@@ -1,0 +1,60 @@
+@import '../../styles/tokens';
+
+.booking-page {
+    background: $ky-canvas;
+    min-height: 100vh;
+    padding-bottom: $ky-space-8;
+}
+
+.booking-content {
+    padding: $ky-space-4;
+}
+
+.booking-state {
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-4;
+    min-height: 240px;
+}
+
+.booking-options {
+    padding: $ky-space-3;
+}
+
+.booking-recent-list {
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    overflow: hidden;
+}
+
+.booking-empty-row {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    min-height: 78px;
+    padding: $ky-space-4;
+}
+
+.booking-empty-row__copy {
+    padding-left: $ky-space-3;
+}
+
+.booking-empty-row__title,
+.booking-empty-row__description {
+    display: block;
+}
+
+.booking-empty-row__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-bold;
+}
+
+.booking-empty-row__description {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 4px;
+}
