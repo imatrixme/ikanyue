@@ -78,3 +78,6 @@ dump.rdb
 
 # Optional backup location for old nested Git repositories during final migration
 .monorepo/git-backups/
+
+# Playwright MCP session logs
+.playwright-mcp/

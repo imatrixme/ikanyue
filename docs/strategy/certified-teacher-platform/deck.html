@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>看乐认证教师平台 · 需求推演</title>
+<style>
+  :root {
+    --green50: #f6faf8; --green100: #edf4f1; --green200: #d4e9e2; --green300: #9fc9bb;
+    --green500: #00754a; --green600: #006241; --green700: #004f3d; --green900: #1e3932;
+    --n0: #ffffff; --n50: #f9faf9; --n100: #f4f4f2; --n200: #eeece8; --n300: #dededb;
+    --n500: #87928e; --n600: #5f6f69; --n700: #31443e;
+    --blue100: #eaf5fc; --blue500: #0079c8; --blue600: #005f9e;
+    --yellow100: #fff8d6; --yellow600: #d9a900; --yellow800: #7d6200;
+    --red50: #fff0ee; --red300: #dfbbb7; --red600: #b42318;
+    --ink: var(--green900); --ink2: var(--n700); --muted: var(--n600);
+    --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #1b2b26; font-family: var(--font); color: var(--ink); }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: 0 0; }
+  .slide {
+    position: absolute; inset: 0; display: none; overflow: hidden;
+    background: var(--n0); padding: 56px 72px 64px; flex-direction: column;
+  }
+  .slide.active { display: flex; }
+  .slide.dark { background: var(--green600); color: var(--n0); }
+  .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: .12em; color: var(--green500); margin-bottom: 10px; }
+  .dark .eyebrow { color: var(--green200); }
+  h1 { font-size: 56px; line-height: 1.15; font-weight: 800; }
+  h2 { font-size: 36px; line-height: 1.3; font-weight: 700; margin-bottom: 28px; }
+  h3 { font-size: 21px; line-height: 1.4; font-weight: 700; margin-bottom: 8px; }
+  p, li { font-size: 19px; line-height: 1.6; color: var(--ink2); }
+  .dark p, .dark li { color: var(--green100); }
+  .lead { font-size: 23px; line-height: 1.6; color: var(--ink2); }
+  .small { font-size: 16px; color: var(--muted); }
+  .foot { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between; font-size: 13px; color: var(--n500); }
+  .dark .foot { color: var(--green300); }
+  .grow { flex: 1; min-height: 0; }
+  .row { display: flex; gap: 24px; }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card { background: var(--green50); border: 1px solid var(--green200); border-radius: 8px; padding: 20px 22px; }
+  .card.plain { background: var(--n50); border-color: var(--n300); }
+  .card.warn { background: var(--red50); border-color: var(--red300); }
+  .card.hi { background: var(--green600); border-color: var(--green600); color: var(--n0); }
+  .card.hi p, .card.hi li { color: var(--green100); }
+  .card.hi ul.clean li::before, .phase.now ul.clean li::before { background: var(--green200); }
+  .card p { font-size: 17px; }
+  .card li { font-size: 17px; }
+  ul.clean { list-style: none; }
+  ul.clean li { padding-left: 18px; position: relative; }
+  ul.clean li::before { content: ''; position: absolute; left: 2px; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--green500); }
+  .tag { display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--green200); color: var(--green700); }
+  .tag.red { background: var(--red50); color: var(--red600); border: 1px solid var(--red300); }
+  .tag.y { background: var(--yellow100); color: var(--yellow800); }
+  .tag.b { background: var(--blue100); color: var(--blue600); }
+  .num { font-size: 15px; font-weight: 700; color: var(--green500); }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 11px 14px; font-size: 17px; line-height: 1.45; border-bottom: 1px solid var(--n300); vertical-align: top; }
+  th { font-size: 14px; color: var(--muted); font-weight: 600; letter-spacing: .04em; background: var(--n50); }
+  td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+  /* flow */
+  .flow { display: flex; align-items: stretch; gap: 0; }
+  .flow .step { flex: 1; background: var(--green50); border: 1px solid var(--green200); border-radius: 8px; padding: 18px 16px; text-align: center; }
+  .flow .step b { display: block; font-size: 20px; margin-bottom: 6px; }
+  .flow .step span { font-size: 15px; color: var(--muted); line-height: 1.5; display: block; }
+  .flow .arrow { width: 36px; display: flex; align-items: center; justify-content: center; color: var(--green500); font-size: 22px; font-weight: 700; }
+
+  /* vicious loop */
+  .loop { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+  .loop .pill { background: var(--red50); border: 1px solid var(--red300); color: var(--red600); border-radius: 999px; padding: 8px 16px; font-size: 17px; font-weight: 600; white-space: nowrap; }
+  .loop .to { color: var(--red600); font-weight: 700; }
+
+  /* risk matrix */
+  .matrix { display: grid; grid-template-columns: 56px 1fr 1fr; grid-template-rows: 1fr 1fr 40px; gap: 10px; height: 100%; }
+  .matrix .ylab { writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--muted); font-weight: 600; }
+  .matrix .xlab { display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--muted); font-weight: 600; }
+  .matrix .q { border-radius: 8px; padding: 16px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; border: 1px solid var(--n300); background: var(--n50); position: relative; }
+  .matrix .q.hot { background: var(--red50); border-color: var(--red300); }
+  .matrix .q.warm { background: var(--yellow100); border-color: #f0e2a6; }
+  .matrix .q .qt { width: 100%; font-size: 14px; font-weight: 700; color: var(--muted); }
+  .matrix .chip { background: var(--n0); border: 1px solid var(--n300); border-radius: 6px; padding: 6px 12px; font-size: 17px; font-weight: 600; color: var(--ink); }
+
+  /* bars */
+  .bar-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .bar-row .lab { font-size: 17px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+  .bar-row .lab small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; }
+  .track { position: relative; height: 40px; }
+  .bar { position: absolute; top: 0; height: 40px; border-radius: 0 4px 4px 0; }
+  .bar.range { background: var(--green300); }
+  .bar.solid { background: var(--green500); }
+  .bar:hover { filter: brightness(1.08); }
+  .bar-val { position: absolute; top: 9px; font-size: 16px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .axis { position: relative; height: 22px; margin-left: 166px; border-top: 1px solid var(--n300); }
+  .axis span { position: absolute; top: 4px; white-space: nowrap; font-size: 13px; color: var(--muted); transform: translateX(-50%); }
+  .gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--n200); }
+
+  .stack { display: flex; height: 64px; gap: 2px; }
+  .stack div { height: 100%; }
+  .stack div:first-child { border-radius: 4px 0 0 4px; }
+  .stack div:last-child { border-radius: 0 4px 4px 0; }
+  .legend { display: flex; gap: 22px; font-size: 15px; color: var(--ink2); }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* roadmap */
+  .road { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .phase { border-radius: 8px; padding: 18px; background: var(--green50); border: 1px solid var(--green200); display: flex; flex-direction: column; gap: 10px; }
+  .phase.now { background: var(--green600); border-color: var(--green600); color: var(--n0); }
+  .phase.now p, .phase.now li { color: var(--green100); }
+  .phase .when { font-size: 14px; font-weight: 700; color: var(--green500); }
+  .phase.now .when { color: var(--green200); }
+  .phase h3 { margin: 0; font-size: 20px; }
+  .phase li { font-size: 15px; line-height: 1.5; }
+  .gate { margin-top: auto; min-height: 80px; border-top: 1px dashed var(--green300); padding-top: 10px; font-size: 14px; line-height: 1.5; color: var(--ink2); }
+  .phase.now .gate { color: var(--n0); border-color: var(--green300); }
+  .gate b { display: block; font-size: 13px; color: var(--green500); margin-bottom: 2px; }
+  .phase.now .gate b { color: var(--green200); }
+
+  .big { font-size: 64px; font-weight: 800; color: var(--green500); line-height: 1; }
+  .formula { display: flex; align-items: center; gap: 22px; justify-content: center; }
+  .formula .term { background: var(--green50); border: 1px solid var(--green200); border-radius: 8px; padding: 24px 28px; text-align: center; min-width: 330px; }
+  .formula .term b { display: block; font-size: 28px; margin-bottom: 8px; }
+  .formula .op { font-size: 44px; font-weight: 800; color: var(--green500); }
+
+  /* nav */
+  #nav { position: fixed; right: 18px; top: 10px; display: flex; gap: 8px; align-items: center; z-index: 9; font-family: var(--font); }
+  #nav button { border: 0; background: rgba(255,255,255,.14); color: #fff; width: 38px; height: 34px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+  #nav button:hover { background: rgba(255,255,255,.26); }
+  #nav span { color: #cfe3db; font-size: 13px; min-width: 56px; text-align: center; }
+  #progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--green300); z-index: 9; transition: width .22s; }
+  .hint { position: fixed; left: 18px; top: 14px; color: #8fb3a6; font-size: 12px; z-index: 9; }
+  #nav, .hint { opacity: 0; transition: opacity .32s; }
+  body.ui #nav, body.ui .hint { opacity: 1; }
+
+  @media print {
+    @page { size: 1280px 720px; margin: 0; }
+    html, body { background: #fff; }
+    #stage { position: static; transform: none !important; width: 1280px; height: auto; }
+    .slide { position: relative; display: flex !important; width: 1280px; height: 720px; page-break-after: always; break-after: page; }
+    #nav, #progress, .hint { display: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="stage">
+
+<!-- 1 封面 -->
+<section class="slide dark" style="justify-content:center">
+  <div class="eyebrow">看乐 · 需求推演 · 草案 v0.1</div>
+  <h1>让好的音乐教育<br>可以被复制</h1>
+  <p class="lead" style="margin-top:28px;color:var(--green100)">看乐认证教师平台：合理性、机会、坑点、规模与路线</p>
+  <p class="small" style="margin-top:56px;color:var(--green300)">所有金额、比例与周期均为待验证假设；法规描述需律师确认。详细论证见 PRD.md 与 data-model.md</p>
+  <div class="foot"><span>2026-10-21（America/Los_Angeles）</span><span>供创始人讨论</span></div>
+</section>
+
+<!-- 2 一句话 -->
+<section class="slide" style="justify-content:center">
+  <div class="eyebrow">一句话</div>
+  <h2 style="font-size:40px;line-height:1.45;max-width:1080px">看乐不再以“卖了多少节课”衡量自己，<br>而以“有多少合格的老师在按看乐的方法教、<br>有多少学生因此真正进步”衡量自己。</h2>
+  <p class="lead" style="color:var(--green500);font-weight:600">平台是推广教学法的工具，不是目的。</p>
+  <div class="foot"><span>PRD §1</span><span>2</span></div>
+</section>
+
+<!-- 3 前因：行业 -->
+<section class="slide">
+  <div class="eyebrow">前因 ①　行业现实</div>
+  <h2>音乐教育陷在一个恶性循环里</h2>
+  <div class="loop" style="margin-bottom:36px">
+    <span class="pill">老师自己没理解透</span><span class="to">→</span>
+    <span class="pill">教不对</span><span class="to">→</span>
+    <span class="pill">学生学不好</span><span class="to">→</span>
+    <span class="pill">归因“没天赋”</span><span class="to">→</span>
+    <span class="pill">放弃 / 不敢学</span><span class="to">→</span>
+    <span class="pill">行业整体走弱</span>
+  </div>
+  <div class="grid3">
+    <div class="card plain"><h3>天赋论与成名论</h3><p>学不好怪天赋，学音乐是为了成名或加分。音乐没有被当作与数理化同等的基础素养。</p></div>
+    <div class="card plain"><h3>师资质量参差</h3><p>大量老师原理没吃透、技艺有欠缺，教学凭经验和模仿。</p></div>
+    <div class="card plain"><h3>缺少“怎么教”的标准</h3><p>考级回答“考什么”，很少回答“每节课该怎么教、每一步该达到什么”。</p></div>
+  </div>
+  <div class="foot"><span>PRD §2.1</span><span>3</span></div>
+</section>
+
+<!-- 4 前因：看乐 -->
+<section class="slide">
+  <div class="eyebrow">前因 ②　看乐现实</div>
+  <h2>门店模式能活，但改变不了全民素质</h2>
+  <div class="grid4">
+    <div class="card warn"><h3>重资产</h3><p>租金、装修、人员成本高，单店复制慢、风险大。</p></div>
+    <div class="card warn"><h3>获客难</h3><p>依赖地推和口碑，半径有限、成本高。</p></div>
+    <div class="card warn"><h3>影响力天花板</h3><p>一家机构能覆盖的学生，相对全民素质的目标微不足道。</p></div>
+    <div class="card hi"><h3 style="color:#fff">唯一不可复制的资产</h3><p>看乐的教学理念与方法，以及认同它的老师和学生。</p></div>
+  </div>
+  <p class="lead" style="margin-top:40px">所以重中之重是<b style="color:var(--green500)">推广教学法、培训师资</b>，而不是多卖几节课。</p>
+  <div class="foot"><span>PRD §2.2</span><span>4</span></div>
+</section>
+
+<!-- 5 设想 -->
+<section class="slide">
+  <div class="eyebrow">创始人的设想</div>
+  <h2>轻资产：认证老师 + 统一品牌 + 统一结算</h2>
+  <div class="flow" style="margin-top:12px">
+    <div class="step"><b>师资培训</b><span>学习看乐教学法</span></div><div class="arrow">→</div>
+    <div class="step"><b>体系认证</b><span>考核通过获得认证</span></div><div class="arrow">→</div>
+    <div class="step"><b>加盟平台</b><span>成为看乐认证老师</span></div><div class="arrow">→</div>
+    <div class="step"><b>就近约课</b><span>机构琴房、临时场地等</span></div><div class="arrow">→</div>
+    <div class="step"><b>看乐结算</b><span>统一收款、统一分账</span></div>
+  </div>
+  <div class="grid3" style="margin-top:40px">
+    <div class="card"><h3>轻资产扩张</h3><p>场地和教师的固定成本交给加盟方。</p></div>
+    <div class="card"><h3>推广教学法</h3><p>每一位认证老师都是体系的传播节点。</p></div>
+    <div class="card"><h3>“学生在跟看乐学”</h3><p>统一收款，解决财务问题，也掌握数据。</p></div>
+  </div>
+  <div class="foot"><span>PRD §2.3</span><span>5</span></div>
+</section>
+
+<!-- 6 两门生意 -->
+<section class="slide">
+  <div class="eyebrow">核心判断 ①</div>
+  <h2>这其实是两门生意：A 是目的，B 是手段</h2>
+  <div class="grid2 grow">
+    <div class="card hi">
+      <span class="tag" style="background:var(--green200)">A　目的</span>
+      <h3 style="color:#fff;font-size:26px;margin-top:12px">推广体系、认证师资</h3>
+      <ul class="clean" style="margin-top:12px">
+        <li>本质：标准输出，类似奥尔夫、柯达伊、铃木、英皇</li>
+        <li>壁垒：教学法、分级标准、认证公信力</li>
+        <li>风险：体系能否标准化、培训产能</li>
+        <li>与理念：直接对齐</li>
+      </ul>
+    </div>
+    <div class="card plain">
+      <span class="tag y">B　手段</span>
+      <h3 style="font-size:26px;margin-top:12px">就近约课撮合</h3>
+      <ul class="clean" style="margin-top:12px">
+        <li>本质：双边市场，类似家教 O2O</li>
+        <li>壁垒：本地老师密度、获客效率</li>
+        <li>风险：冷启动、跳单、获客成本</li>
+        <li>与理念：不加约束会把指标拉回“课时数”</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:22px">顺序必须是 <b style="color:var(--green500)">体系 → 工具 → 撮合</b>，反过来大概率卡在冷启动、跳单与质量失控。</p>
+  <div class="foot"><span>PRD §3.1</span><span>6</span></div>
+</section>
+
+<!-- 7 飞轮 -->
+<section class="slide">
+  <div class="eyebrow">核心判断 ②</div>
+  <h2 style="margin-bottom:8px">飞轮：每个功能都要能指出它推动了哪一环</h2>
+  <div class="row grow" style="align-items:center;gap:40px">
+    <div style="position:relative;width:600px;height:520px;flex:none">
+      <svg width="600" height="520" style="position:absolute;inset:0" aria-hidden="true">
+        <circle cx="300" cy="260" r="200" fill="none" stroke="#9fc9bb" stroke-width="2" stroke-dasharray="6 6"/>
+        <g fill="#00754a">
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(400,87) rotate(30)"/>
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(500,260) rotate(90)"/>
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(400,433) rotate(150)"/>
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(200,433) rotate(210)"/>
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(100,260) rotate(270)"/>
+          <polygon points="-8,-7 8,0 -8,7" transform="translate(200,87) rotate(330)"/>
+        </g>
+        <text x="300" y="252" text-anchor="middle" font-size="18" font-weight="700" fill="#1e3932">看乐</text>
+        <text x="300" y="278" text-anchor="middle" font-size="15" fill="#5f6f69">标准的公信力</text>
+      </svg>
+      <div class="fw" style="left:300px;top:60px">可考核的体系</div>
+      <div class="fw" style="left:473px;top:160px">认证有公信力</div>
+      <div class="fw" style="left:473px;top:360px">老师按体系教</div>
+      <div class="fw" style="left:300px;top:460px">学生进步可见</div>
+      <div class="fw" style="left:127px;top:360px">品牌被信任</div>
+      <div class="fw" style="left:127px;top:160px">更多老师与学生</div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card warn"><h3>如果反过来</h3><p>没有可考核的体系 → 认证只能看感觉 → 变成卖证 → 品牌被稀释。</p></div>
+      <div class="card warn"><h3>如果没有过程数据</h3><p>无法证明“跟看乐学更有效” → 学生没理由通过平台 → 跳单。</p></div>
+      <div class="card warn"><h3>如果没有本地密度</h3><p>就近约课约不到人 → 学生流失 → 老师没生源 → 老师流失。</p></div>
+    </div>
+  </div>
+  <style>.fw{position:absolute;transform:translate(-50%,-50%);width:170px;padding:12px 8px;text-align:center;background:#fff;border:2px solid #00754a;border-radius:8px;font-size:17px;font-weight:700;color:#1e3932}</style>
+  <div class="foot"><span>PRD §3.2</span><span>7</span></div>
+</section>
+
+<!-- 8 机会 -->
+<section class="slide">
+  <div class="eyebrow">机会</div>
+  <h2>为什么值得做</h2>
+  <div class="grid3" style="grid-template-rows:auto auto">
+    <div class="card"><span class="num">01</span><h3>“怎么教”的标准是空位</h3><p>市场不缺考试标准，缺的是教学过程标准，以及证明教学有效的过程数据。</p></div>
+    <div class="card"><span class="num">02</span><h3>独立老师的真实痛点</h3><p>缺方法、缺生源、缺背书，还要自己收款排课。体系＋生源＋工具＋结算一起打包。</p></div>
+    <div class="card"><span class="num">03</span><h3>小机构的真实痛点</h3><p>有场地有学生，缺教研和差异化品牌。“看乐认证机构”可以成为招生卖点。</p></div>
+    <div class="card"><span class="num">04</span><h3>复制速度取决于培训</h3><p>体系标准化后，扩张受培训产能约束，而不是门店资金。</p></div>
+    <div class="card"><span class="num">05</span><h3>常态化带来增量人群</h3><p>触达因为“我没天赋”而不敢学的成人和普通家庭；小组课天然匹配。</p></div>
+    <div class="card plain"><h3 style="margin-top:22px">注</h3><p>以上是方向判断；市场规模需另行调研，本稿不给具体数字。</p></div>
+  </div>
+  <div class="foot"><span>PRD §4</span><span>8</span></div>
+</section>
+
+<!-- 9 坑点总览 -->
+<section class="slide">
+  <div class="eyebrow">坑点总览</div>
+  <h2 style="margin-bottom:16px">右上角的坑必须在上线前就有对策</h2>
+  <div class="grow">
+    <div class="matrix">
+      <div class="ylab">影响 · 高</div>
+      <div class="q warm"><div class="qt">高影响 · 中可能</div>
+        <span class="chip">资金合规（二清 / 预收费）</span><span class="chip">品牌连带责任</span><span class="chip">未成年人与场地</span><span class="chip">获客成本</span></div>
+      <div class="q hot"><div class="qt">高影响 · 高可能　→ 先解决</div>
+        <span class="chip">跳单</span><span class="chip">认证≠持续质量</span><span class="chip">冷启动与本地密度</span><span class="chip">培训产能 / 创始人时间</span><span class="chip">激励漂移回“课时数”</span></div>
+      <div class="ylab">影响 · 中</div>
+      <div class="q"><div class="qt">中影响 · 中可能</div>
+        <span class="chip">加盟与劳动关系认定</span><span class="chip">体系被复制</span></div>
+      <div class="q warm"><div class="qt">中影响 · 高可能</div>
+        <span class="chip">一对一定价与“常态化”冲突</span></div>
+      <div></div>
+      <div class="xlab">可能性 · 中</div>
+      <div class="xlab">可能性 · 高</div>
+    </div>
+  </div>
+  <div class="foot"><span>PRD §5、§16（影响与可能性为主观判断）</span><span>9</span></div>
+</section>
+
+<!-- 10 跳单 -->
+<section class="slide">
+  <div class="eyebrow">坑点 ①　跳单</div>
+  <h2>第一次撮合成功后，平台对双方的价值迅速下降</h2>
+  <p class="lead" style="margin-bottom:24px">声乐一对一是强关系、长期固定老师的服务；私下交易能各省掉 20–30% 抽成。这是家教撮合平台最常见的死因。<br><b style="color:var(--green500)">光靠禁止没用，要让离开平台的成本高于抽成。</b></p>
+  <div class="grid2">
+    <div class="card"><h3>让学生的价值留在平台</h3><ul class="clean">
+      <li>看乐分级测评与证书</li><li>学习档案与进度（换老师也保留）</li><li>教材、作业、练习打卡</li><li>课时资产</li></ul></div>
+    <div class="card"><h3>让老师离开有成本</h3><ul class="clean">
+      <li>认证等级与平台数据挂钩，决定课酬与派单优先级</li><li>平台承担收款、开票、纠纷兜底</li><li>早期“年费＋低抽成”，降低私下交易动机</li><li>监测：平台学员停课而老师仍活跃的比例</li></ul></div>
+  </div>
+  <div class="foot"><span>PRD §5.1</span><span>10</span></div>
+</section>
+
+<!-- 11 质量 -->
+<section class="slide">
+  <div class="eyebrow">坑点 ②　质量</div>
+  <h2>一张证书管不住三个月后怎么教</h2>
+  <p class="lead" style="margin-bottom:28px">否则创始人要解决的“乱教”，会在自己的平台上重现，而且算在看乐头上。</p>
+  <div class="flow">
+    <div class="step"><b>认证</b><span>按体系线＋等级颁发，有有效期</span></div><div class="arrow">→</div>
+    <div class="step"><b>过程数据</b><span>测评进步、出勤、作业、评价</span></div><div class="arrow">→</div>
+    <div class="step"><b>抽查</b><span>课堂录音 / 视频按标准评分</span></div><div class="arrow">→</div>
+    <div class="step"><b>预警工单</b><span>指标低于阈值或收到投诉</span></div><div class="arrow">→</div>
+    <div class="step" style="background:var(--green600);border-color:var(--green600)"><b style="color:#fff">复训 / 降级 / 暂停</b><span style="color:var(--green100)">暂停后系统自动禁止接新课、收新款</span></div>
+  </div>
+  <div class="card plain" style="margin-top:32px"><p><b>同时要解决培训产能：</b>如果只有创始人能讲透教学法，年认证人数有硬上限。要尽早建立“培训师的培训”，创始人逐步从讲课转到定标准、审标准。</p></div>
+  <div class="foot"><span>PRD §5.2、§5.5</span><span>11</span></div>
+</section>
+
+<!-- 12 合规 -->
+<section class="slide">
+  <div class="eyebrow">坑点 ③　合规（需律师按城市确认）</div>
+  <h2 style="margin-bottom:18px">“统一收款”的方向对，但钱不能进看乐账户再转出</h2>
+  <table>
+    <tr><th>事项</th><th>风险</th><th>对策方向</th></tr>
+    <tr><td>二清</td><td>平台先收款再分给老师，可能构成资金二次清分</td><td>持牌通道分账（微信支付服务商分账 / 电商收付通），资金直达收款方</td></tr>
+    <tr><td>预收费监管</td><td>多地对艺术类培训预收费有课时或期限上限、监管账户要求</td><td>课时包规格受城市参数约束，按课消释放</td></tr>
+    <tr><td>未成年人场地</td><td>营业性歌舞娱乐场所不得允许未成年人进入（KTV 包房只适合成人）</td><td>场地分类，系统限制少儿课只能约合规场地；老师须有入职查询</td></tr>
+    <tr><td>特许经营</td><td>以“加盟”收费适用特许经营条例（“两店一年”、备案、披露）</td><td>确认主体资质，或设计为“认证＋平台服务”</td></tr>
+    <tr><td>个税与劳动关系</td><td>个人老师收入代扣、发票；管得过细可能被认定为劳动关系</td><td>明确代扣方；平台管标准与质量，老师自主接课</td></tr>
+  </table>
+  <div class="foot"><span>PRD §5.7–5.9、§14</span><span>12</span></div>
+</section>
+
+<!-- 13 冷启动 & 漂移 -->
+<section class="slide">
+  <div class="eyebrow">坑点 ④⑤　冷启动 · 激励漂移 · 定价</div>
+  <h2>三个会悄悄拖垮项目的坑</h2>
+  <div class="grid3 grow">
+    <div class="card"><h3>冷启动与本地密度</h3><p>“就近约课”要求目标商圈 3 公里内有 3 位以上可约老师，否则约不到人，两边都留不住。</p><p style="margin-top:12px;color:var(--green600);font-weight:600">→ 先带存量学生，一城打透再复制，不撒点。</p></div>
+    <div class="card"><h3>激励漂移</h3><p>按课时抽成，所有运营动作会自然向“多卖课时”靠拢，最终变成又一个卖课平台。</p><p style="margin-top:12px;color:var(--green600);font-weight:600">→ 北极星用“达标老师 × 学生进步”，课时 GMV 只看健康度。</p></div>
+    <div class="card"><h3>一对一与“常态化”冲突</h3><p>一对一单价高，难以普及。</p><p style="margin-top:12px;color:var(--green600);font-weight:600">→ 主推 4–6 人小组课：学生更便宜，老师时薪更高；理论类做线上小组课，绕开场地。</p></div>
+  </div>
+  <div class="foot"><span>PRD §5.3、§5.10、§5.11</span><span>13</span></div>
+</section>
+
+<!-- 14 单位经济 -->
+<section class="slide">
+  <div class="eyebrow">单位经济（假设）</div>
+  <h2>一节 250 元的声乐课，钱去了哪里</h2>
+  <div class="legend" style="margin-bottom:14px">
+    <span><i style="background:#00754a"></i>老师 / 机构所得</span>
+    <span><i style="background:#0079c8"></i>平台份额</span>
+    <span><i style="background:#d9a900"></i>支付通道费</span>
+  </div>
+  <div class="stack" role="img" aria-label="250 元拆分：老师或机构 187.5 元，平台 61 元，通道费 1.5 元">
+    <div style="flex:187.5;background:#00754a" title="老师 / 机构所得：187.50 元（75%）"></div>
+    <div style="flex:61;background:#0079c8" title="平台份额：61.00 元（24.4%）"></div>
+    <div style="flex:1.5;background:#d9a900;min-width:4px" title="支付通道费：1.50 元（约 0.6%）"></div>
+  </div>
+  <div style="display:flex;margin-top:10px;font-size:16px;color:var(--ink2)">
+    <div style="flex:187.5"><b style="font-size:24px;color:var(--ink)">187.50 元</b>　老师 / 机构（75%，场地自理）</div>
+    <div style="flex:62.5;text-align:right"><b style="font-size:24px;color:var(--ink)">61.00 元</b>　平台<br><span class="small">通道费 1.50 元（约 0.6%）</span></div>
+  </div>
+  <table style="margin-top:34px">
+    <tr><th>待定参数</th><th>为什么重要</th></tr>
+    <tr><td>抽成比例</td><td>越高越容易跳单；早期建议“年费＋低抽成”</td></tr>
+    <tr><td>通道费由谁承担</td><td>影响老师到手金额与定价</td></tr>
+    <tr><td>场地成本归属</td><td>老师自理、机构承担，还是平台集中采购</td></tr>
+  </table>
+  <div class="foot"><span>PRD §8.2（悬停色块可看金额）</span><span>14</span></div>
+</section>
+
+<!-- 15 规模 -->
+<section class="slide">
+  <div class="eyebrow">规模推演（假设）</div>
+  <h2 style="margin-bottom:8px">平台月抽成：瓶颈不在技术</h2>
+  <p class="small" style="margin-bottom:22px">每位老师每月 60 节平台课时 × 250 元 × 25% 抽成 ≈ 3750 元。浅色段为区间上下限之间的不确定范围。</p>
+  <div style="position:relative">
+    <div class="bar-row"><div class="lab">单城验证<small>30–50 位老师</small></div>
+      <div class="track"><div class="bar solid" style="left:0;width:2.75%;border-radius:0" title="单城验证：11–19 万元 / 月"></div><div class="bar range" style="left:2.75%;width:2%" title="单城验证：11–19 万元 / 月"></div><span class="bar-val" style="left:calc(4.75% + 10px)">11–19 万元 / 月</span></div></div>
+    <div class="bar-row"><div class="lab">3–5 城<small>200–300 位老师</small></div>
+      <div class="track"><div class="bar solid" style="left:0;width:18.75%;border-radius:0" title="3–5 城：75–110 万元 / 月"></div><div class="bar range" style="left:18.75%;width:8.75%" title="3–5 城：75–110 万元 / 月"></div><span class="bar-val" style="left:calc(27.5% + 10px)">75–110 万元 / 月</span></div></div>
+    <div class="bar-row"><div class="lab">约 20 城<small>1000+ 位老师</small></div>
+      <div class="track"><div class="bar solid" style="left:0;width:93.75%" title="约 20 城：375 万元 / 月以上"></div><span class="bar-val" style="left:calc(93.75% - 160px);color:#fff">375 万元+ / 月</span></div></div>
+    <div class="axis"><span style="left:0">0</span><span style="left:25%">100 万</span><span style="left:50%">200 万</span><span style="left:75%">300 万</span><span style="left:100%">400 万</span></div>
+  </div>
+  <div class="grid3" style="margin-top:22px">
+    <div class="card"><h3>培训产能</h3><p>一年能认证多少合格老师？</p></div>
+    <div class="card"><h3>单城密度</h3><p>撮合开放前老师是否足够密？</p></div>
+    <div class="card"><h3>获客成本</h3><p>买量是否比抽成还贵？</p></div>
+  </div>
+  <div class="foot"><span>PRD §9 · 早期收入更可能以培训认证费与年费为主</span><span>15</span></div>
+</section>
+
+<!-- 16 路线 -->
+<section class="slide">
+  <div class="eyebrow">路线</div>
+  <h2 style="margin-bottom:20px">每个阶段过关才进入下一阶段</h2>
+  <div class="road grow">
+    <div class="phase now"><div class="when">0–3 个月</div><h3>0　体系产品化</h3>
+      <ul class="clean"><li>分级大纲、教案、测评标准</li><li>教师考核标准、试讲评分表</li><li>开 1–2 期付费培训</li></ul>
+      <div class="gate"><b>过关条件</b>老师愿意付费；结业后真的按体系教</div></div>
+    <div class="phase"><div class="when">3–9 个月</div><h3>1　工具与结算（MVP）</h3>
+      <ul class="clean"><li>认证老师带存量学生上平台</li><li>持牌通道分账结算</li><li>质检闭环</li></ul>
+      <div class="gate"><b>过关条件</b>学生留存与测评进步；老师续认证；觉得比私下收款省事</div></div>
+    <div class="phase"><div class="when">9–18 个月</div><h3>2　单城撮合</h3>
+      <ul class="clean"><li>一个城市开放就近约课</li><li>合作场地</li><li>线上理论小组课</li></ul>
+      <div class="gate"><b>过关条件</b>复购率、跳单率、老师平台收入占比达标</div></div>
+    <div class="phase"><div class="when">18 个月后</div><h3>3　多城复制</h3>
+      <ul class="clean"><li>城市合伙人 / 认证机构</li><li>先完成合规</li><li>达到密度门槛才开放撮合</li></ul>
+      <div class="gate"><b>过关条件</b>新城市复现单城指标</div></div>
+  </div>
+  <div class="foot"><span>PRD §10 · 时间为假设</span><span>16</span></div>
+</section>
+
+<!-- 17 MVP -->
+<section class="slide">
+  <div class="eyebrow">MVP 范围</div>
+  <h2 style="margin-bottom:8px">让首批 20–50 位认证老师用看乐的体系和工具，<br>教自己现有的学生，钱由看乐合规结算</h2>
+  <div class="grid2 grow" style="grid-template-columns:1.6fr 1fr;margin-top:18px">
+    <div class="grid2" style="gap:14px">
+      <div class="card"><h3>运营后台 · 体系与认证</h3><ul class="clean"><li>体系线 → 级别 → 课</li><li>测评标准（版本化）</li><li>培训期次、考核、认证状态</li></ul></div>
+      <div class="card"><h3>教师端（小程序）</h3><ul class="clean"><li>学员管理、排课、签到</li><li>作业、阶段测评</li><li>课酬与结算单</li></ul></div>
+      <div class="card"><h3>学员 / 监护人端（小程序）</h3><ul class="clean"><li>购买课时包、课表、请假</li><li>学习档案与级别进度</li><li>课后评价</li></ul></div>
+      <div class="card"><h3>交易结算 · 质检</h3><ul class="clean"><li>持牌分账、退款、对账</li><li>教师质量看板、抽查、工单</li><li>投诉处理</li></ul></div>
+    </div>
+    <div class="card plain"><h3>明确不做</h3><ul class="clean">
+      <li>学生找新老师（撮合）</li><li>就近推荐、可约时段搜索</li><li>场地在线预订</li><li>多城市运营</li><li>原生 App、自研视频课</li><li>积分商城、复杂营销</li></ul></div>
+  </div>
+  <div class="foot"><span>PRD §6、§11</span><span>17</span></div>
+</section>
+
+<!-- 18 第一天做对 -->
+<section class="slide">
+  <div class="eyebrow">全新项目 · 第一天就要做对的事</div>
+  <h2 style="margin-bottom:18px">这些事后补等于重写；撮合可以等</h2>
+  <table>
+    <tr><th>设计点</th><th>为什么不能后补</th></tr>
+    <tr><td>多主体归属</td><td>每笔订单、课时、课酬都要知道属于谁、结算给谁（平台 / 机构 / 独立老师 / 学员）</td></tr>
+    <tr><td>持牌分账</td><td>支付通道上线后很难迁移；从源头避开二清</td></tr>
+    <tr><td>学员资产归平台</td><td>档案、测评、课时与“某个老师”解耦，这是防跳单的核心</td></tr>
+    <tr><td>认证有状态</td><td>等级、有效期、复训、暂停、吊销；暂停后系统自动拦截</td></tr>
+    <tr><td>未成年人与合规字段</td><td>监护人授权、入职查询、场地类型、预收费上限</td></tr>
+    <tr><td>不可变流水</td><td>课时、资金、课酬的每次变化都追加流水，不改余额</td></tr>
+  </table>
+  <p class="small" style="margin-top:16px">技术建议：小程序 Taro、后台 React、API Hono 可沿用团队熟悉的栈；数据库建议用 PostgreSQL（多主体分账与对账需要事务和约束能力）。</p>
+  <div class="foot"><span>data-model.md §0、§5</span><span>18</span></div>
+</section>
+
+<!-- 19 数据模型 -->
+<section class="slide">
+  <div class="eyebrow">数据模型概览</div>
+  <h2 style="margin-bottom:22px">六个领域，三条主线</h2>
+  <div class="grid3" style="gap:18px">
+    <div class="card"><span class="num">①</span><h3>身份与主体</h3><p>账号、学员、监护人、老师、机构、收款方</p></div>
+    <div class="card"><span class="num">②</span><h3>课程体系</h3><p>体系线、级别、教案、测评标准（版本化）、课程规格</p></div>
+    <div class="card"><span class="num">③</span><h3>培训与认证</h3><p>期次、考核、认证、认证事件、背景审查</p></div>
+    <div class="card"><span class="num">④</span><h3>交易与资金</h3><p>课时包与价格版本、订单快照、支付、分账、退款、对账</p></div>
+    <div class="card"><span class="num">⑤</span><h3>课时与课堂</h3><p>课时批次与流水、课堂、出勤、场地、课酬流水、结算单</p></div>
+    <div class="card"><span class="num">⑥</span><h3>学习与质检</h3><p>学习档案、作业、测评结果、评价、抽查、质检工单、投诉</p></div>
+  </div>
+  <div class="grid3" style="margin-top:22px;gap:18px">
+    <div class="card hi"><h3 style="color:#fff">钱的线</h3><p>价格版本 → 订单 → 支付 → 分账到收款方</p></div>
+    <div class="card hi"><h3 style="color:#fff">课的线</h3><p>课时批次 → 冻结 → 课堂消费 → 课酬 → 结算</p></div>
+    <div class="card hi"><h3 style="color:#fff">质量的线</h3><p>认证 → 过程数据 → 抽查 → 工单 → 认证变更</p></div>
+  </div>
+  <div class="foot"><span>data-model.md §1–§4（含 ER 图与状态机）</span><span>19</span></div>
+</section>
+
+<!-- 20 北极星 -->
+<section class="slide" style="justify-content:center">
+  <div class="eyebrow" style="text-align:center">北极星指标</div>
+  <h2 style="text-align:center;margin-bottom:40px">衡量的是影响力，不是课时</h2>
+  <div class="formula">
+    <div class="term"><b>达标认证教师数</b><p>认证有效且质检达标</p></div>
+    <div class="op">×</div>
+    <div class="term"><b>学员测评通过率</b><p>按看乐标准的阶段进步</p></div>
+  </div>
+  <p class="lead" style="text-align:center;margin-top:44px">课时 GMV 是<b>健康度指标</b>，不作为团队首要考核。</p>
+  <div class="foot"><span>PRD §13</span><span>20</span></div>
+</section>
+
+<!-- 21 待拍板 -->
+<section class="slide">
+  <div class="eyebrow">需要创始人拍板</div>
+  <h2 style="margin-bottom:20px">这些答案会直接改变产品与数据模型</h2>
+  <div class="grid2" style="gap:14px 28px">
+    <div class="card plain"><span class="num">1</span><h3>首批客群</h3><p>成人、少儿，还是都有？决定场地、合规与定价。</p></div>
+    <div class="card plain"><span class="num">2</span><h3>加盟主体</h3><p>独立老师、小机构，还是都有？前者要生源，后者要体系与品牌。</p></div>
+    <div class="card plain"><span class="num">3</span><h3>收入结构</h3><p>培训认证费＋年费为主，还是课时抽成为主？抽成比例多少？</p></div>
+    <div class="card plain"><span class="num">4</span><h3>课时包能否跨老师通用</h3><p>通用更像“跟看乐学”，但分账更复杂。<b>会影响 MVP 设计。</b></p></div>
+    <div class="card plain"><span class="num">5</span><h3>教学法能否写成可考核标准</h3><p>谁来写，多久写完？这是阶段 0 的全部。</p></div>
+    <div class="card plain"><span class="num">6</span><h3>首个城市与主体</h3><p>在哪个城市验证？用哪个公司主体做支付服务商与签约？</p></div>
+  </div>
+  <div class="foot"><span>PRD §15</span><span>21</span></div>
+</section>
+
+<!-- 22 下一步 -->
+<section class="slide dark" style="justify-content:center">
+  <div class="eyebrow">下一步</div>
+  <h2 style="font-size:44px;margin-bottom:36px">先回答上面六个问题，<br>再启动阶段 0</h2>
+  <div class="grid3" style="max-width:1080px">
+    <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)"><h3 style="color:#fff">业务</h3><p>拍板客群、主体、收入结构；确定首个城市与种子老师名单。</p></div>
+    <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)"><h3 style="color:#fff">合规</h3><p>请律师确认分账主体、预收费、特许经营、个税与未成年人保护。</p></div>
+    <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)"><h3 style="color:#fff">产品</h3><p>根据答案定稿 PRD 与数据模型，再开始 MVP 设计。</p></div>
+  </div>
+  <div class="foot"><span>详见 PRD.md · data-model.md</span><span>22</span></div>
+</section>
+
+</div>
+
+<div class="hint">← → 翻页 · F 全屏 · 打印可导出 PDF</div>
+<div id="nav"><button id="prev" aria-label="上一页">‹</button><span id="pg"></span><button id="next" aria-label="下一页">›</button></div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = document.getElementById('stage');
+  let i = Math.min(Math.max(parseInt(location.hash.slice(1), 10) - 1 || 0, 0), slides.length - 1);
+  function fit() {
+    const s = Math.min(innerWidth / 1280, innerHeight / 720);
+    stage.style.transform = `scale(${s}) translate(-640px, -360px)`;
+  }
+  function show(n) {
+    i = Math.min(Math.max(n, 0), slides.length - 1);
+    slides.forEach((el, k) => el.classList.toggle('active', k === i));
+    document.getElementById('pg').textContent = `${i + 1} / ${slides.length}`;
+    document.querySelectorAll('#progress').forEach(p => p.style.width = `${(i + 1) / slides.length * 100}%`);
+    history.replaceState(null, '', `#${i + 1}`);
+  }
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  let uiTimer;
+  function wake() { document.body.classList.add('ui'); clearTimeout(uiTimer); uiTimer = setTimeout(() => document.body.classList.remove('ui'), 2200); }
+  addEventListener('mousemove', wake);
+  addEventListener('resize', fit);
+  fit(); show(i); wake();
+</script>
+</body>
+</html>
