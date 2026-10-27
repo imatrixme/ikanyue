@@ -31,17 +31,19 @@ type Config struct {
 // Runs before PocketBase's own middlewares so storage routes never reach a handler.
 const internalOnlyPriority = -99998
 
-func Register(app core.App, cfg Config) error {
-	proxy, err := NewHonoProxy(cfg.HonoURL)
-	if err != nil {
-		return err
-	}
+// Register wires routes on serve; HONO_UPSTREAM_URL is only required there, so
+// migrate and superuser commands run without it.
+func Register(app core.App, cfg Config) {
 	handedBack := map[string]bool{}
 	for _, name := range cfg.HonoModules {
 		handedBack[strings.TrimSpace(name)] = true
 	}
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		proxy, err := NewHonoProxy(cfg.HonoURL)
+		if err != nil {
+			return err
+		}
 		se.Router.Bind(&hook.Handler[*core.RequestEvent]{
 			Id:       "kanyueInternalOnly",
 			Priority: internalOnlyPriority,
@@ -61,7 +63,6 @@ func Register(app core.App, cfg Config) error {
 		})
 		return se.Next()
 	})
-	return nil
 }
 
 // NewHonoProxy forwards requests to Hono unchanged; upstream failures keep the client envelope.
@@ -91,10 +92,14 @@ func NewHonoProxy(rawURL string) (http.Handler, error) {
 }
 
 // internalOnly hides PocketBase's REST API and dashboard from anything that came
-// through a reverse proxy or from a public address.
+// through a reverse proxy or from a public address. File downloads stay public:
+// stored avatar and image URLs point at /api/files, and collection file rules still apply.
 func internalOnly(e *core.RequestEvent) error {
 	path := e.Request.URL.Path
 	if !strings.HasPrefix(path, "/api/") && path != "/_" && !strings.HasPrefix(path, "/_/") {
+		return e.Next()
+	}
+	if strings.HasPrefix(path, "/api/files/") && (e.Request.Method == http.MethodGet || e.Request.Method == http.MethodHead) {
 		return e.Next()
 	}
 	if IsInternalRequest(e.Request) {

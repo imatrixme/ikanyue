@@ -54,11 +54,11 @@ PocketBase's built-in `/api/*` and dashboard `/_/` SHALL be reachable only by in
 
 ### Requirement: Explicit Schema Migration
 
-Schema changes SHALL be versioned Go migrations applied by an explicit `migrate up` command and SHALL be idempotent on existing databases. Startup SHALL NOT migrate automatically and SHALL refuse to start when a required collection is missing.
+Schema changes SHALL be versioned Go migrations applied by an explicit `migrate up` command and SHALL be idempotent on existing databases. Startup SHALL NOT migrate automatically and SHALL refuse to start while a Go migration is pending.
 
 #### Scenario: Release order
-- **WHEN** a release adds a collection and `migrate up` has not been run
-- **THEN** the server refuses to start and names the missing collection
+- **WHEN** a release adds a migration and `migrate up` has not been run
+- **THEN** the server refuses to start and names the pending migration
 
 ### Requirement: In-Process Scheduled Jobs
 

@@ -4,7 +4,9 @@ go 1.26.6
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/pocketbase/dbx v1.11.0
 	github.com/pocketbase/pocketbase v0.32.0
+	github.com/spf13/cobra v1.10.1
 )
 
 require (
@@ -21,10 +23,8 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
-	github.com/pocketbase/dbx v1.11.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/spf13/cobra v1.10.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect

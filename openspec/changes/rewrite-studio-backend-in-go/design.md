@@ -50,7 +50,7 @@
 ### D4. 表结构与迁移
 
 - Go 版本化迁移（`migrations/`）对已有数据库幂等：集合存在就跳过或补字段，不重建，不删字段。
-- 迁移通过 `kanyue-server migrate up` 显式执行；启动时不自动迁移，只检查必需集合。
+- 迁移通过 `kanyue-server migrate up` 显式执行；启动时不自动迁移；有未执行的 Go 迁移时拒绝启动并列出迁移名。
 - 全部模块迁完后，删除 `ikanyue.mapi.hono/pocketbase/pb_migrations` 和 `ops:schema:apply` 这两处来源。
 
 ### D5. 进程内定时任务
@@ -66,6 +66,7 @@
 ### D6. PocketBase 原生接口只对内
 
 - 中间件对 `/api/*` 和 `/_/` 的请求，只放行来自回环或内网、且没有经过公网反代（没有 `X-Forwarded-For` 或 `X-Real-IP`）的请求，其余返回 404。
+- 例外：`GET`/`HEAD /api/files/*` 对外开放，因为已存的头像、奖品图片 URL 指向 `data.ikanyue.com/api/files/...`；集合自身的文件访问规则仍然生效。
 - 线上 OpenResty 只转发 `/v1`、`/ops`、`/internal` 和后台页面路径。
 
 ### D7. 后台：Svelte 单页，打包进 Go
@@ -131,8 +132,18 @@
 - **请求体会被读两遍**：PocketBase 把请求体包成读到结尾会自动重读的 reader，直接交给 `httputil.ReverseProxy` 会让 body 重复（`ContentLength=16 with Body length 32`）。转发时要按 `Content-Length` 截断，已有单元测试覆盖。
 - **`serve` 会自动执行 `core.AppMigrations`**：业务迁移不能注册到这里，要放在自己的列表里，由显式的 `migrate up` 命令执行，才符合 D4。
 - **不能执行 `migrate history-sync`**：它会删掉 `_migrations` 里现有的 JS 迁移记录。其他情况下 PocketBase 会忽略这些记录。
-- **PocketBase 的 Logger 写进 `auxiliary.db`，不打到标准输出**：启动和运维信息（例如模块交回 Hono）要打到标准输出。本地 `auxiliary.db` 已有 553 MB，阶段 1 要设置请求日志保留天数。
+- **PocketBase 的 Logger 写进 `auxiliary.db`，不打到标准输出**：启动和运维信息（例如模块交回 Hono）要打到标准输出。本地 `auxiliary.db` 已有 553 MB，但保留天数已是默认的 5 天，清理任务只在服务运行时执行，所以不需要改设置（阶段 1 核实）。
 - **系统迁移靠 `github.com/pocketbase/pocketbase/migrations` 包的 `init()` 注册**：`pocketbase.New()` 会间接导入它；用 `core.NewBaseApp` 写测试时要手动导入。
 - 可执行文件约 33 MB（darwin/arm64，含 PocketBase 和 SQLite）。
 
 结论：D1、D2、D6 和 JWT 兼容这几个前提都成立，可以进入阶段 1。
+
+## 阶段 1 记录（2026-10-27，America/Los_Angeles）
+
+Go 接管场馆、公开课程目录、身份（小程序密码/微信登录、身份选择、刷新、资料更新、后台登录/注册/me/改密）。`/v1/user/avatar` 仍走 Hono（没有调用方，且 Hono 实现本身不可用）。本地 native stack 上，契约测试分别对 Hono 和 Go 跑都是 11/11，读接口与 Hono 逐字节一致；身份接口全量比对只剩易变字段和本地环境差异（Hono 会读 `ikanyue.mapi.hono/.env` 里的 `DEFAULT_AVATAR`）。
+
+为保持行为一致而照搬的 Hono 现状（后续阶段再决定是否修正）：
+- 教师账号只能用 email 作身份字段做密码校验（`teachers.passwordAuth.identityFields = ["email"]`），没有 email 的教师无法用密码登录。
+- 匿名或无角色的审计（登录失败、注册关闭）写入会因 `actorRole` 只允许 teacher/admin 而失败，只打日志。
+- 后台注册不传 email，而 `teachers.email` 必填，开启注册后创建会失败（默认关闭）。Go 版顺带把姓名写进 `realName`（Hono 写的是不存在的 `realname`）。
+- `students`、`teachers` 的 `created` 字段开着 onUpdate，每次登录都会覆盖注册时间；修正需要一次表结构迁移，等确认后再做。

@@ -10,11 +10,11 @@
 
 ## 1. Foundation
 
-- [ ] 1.1 Server skeleton: config, envelope helpers, JWT, auth middlewares, module ownership registry with `KANYUE_HONO_MODULES` fallback.
-- [ ] 1.2 Contract test harness (`kanyue.server/contract`) runnable against Hono and Go via `BASE_URL`.
-- [ ] 1.3 `migrate up` command with idempotent Go migrations for existing collections; startup checks required collections only.
-- [ ] 1.4 Native stack and `compose.yaml` run `kanyue.server` in place of the business PocketBase; Hono `PB_URL` points to it.
-- [ ] 1.5 Migrate venues, public course catalog and identity endpoints with contract tests.
+- [x] 1.1 Server skeleton: config, envelope helpers, JWT, auth middlewares, module ownership registry with `KANYUE_HONO_MODULES` fallback.
+- [x] 1.2 Contract test harness (`kanyue.server/contract`) runnable against Hono and Go via `BASE_URL`.
+- [x] 1.3 `migrate up` command with idempotent Go migrations for existing collections; `serve` refuses to start while one is pending.
+- [x] 1.4 Native stack and `compose.yaml` run `kanyue.server` in place of the business PocketBase; Hono `PB_URL` points to it.
+- [x] 1.5 Migrate venues, public course catalog and identity endpoints with contract tests.
 
 ## 2. Students and catalog
 

@@ -24,19 +24,23 @@ test('PID reuse and malformed process identities never establish ownership', () 
 });
 test('native definitions do not run Docker or schema initialization during startup', () => {
   const config = { BUN_BIN: '/runtime/bun-1.4.1/bun', POCKETBASE_BIN: '/runtime/pocketbase',
-    PB_PORT: '18190', PAY_PB_PORT: '18192', PORT: '1437', PAY_PORT: '1440', ADMIN_PORT: '18180',
+    PAY_PB_PORT: '18192', PORT: '1437', HONO_PORT: '1438', PAY_PORT: '1440', ADMIN_PORT: '18180',
     PAY_GATEWAY_URL: 'http://127.0.0.1:1440' };
-  for (const name of ['pocketbase', 'pay-pocketbase', 'gateway', 'hono', 'commerce-worker', 'admin', 'miniapp']) {
+  for (const name of ['server', 'pay-pocketbase', 'gateway', 'hono', 'commerce-worker', 'admin', 'miniapp']) {
     const service = definition(name, config);
     assert.doesNotMatch(service.command.join(' '), /docker|schema|seed|superuser|upsert/);
   }
-  const business = definition('pocketbase', config).command.join(' ');
+  const business = definition('server', config).command.join(' ');
   const payment = definition('pay-pocketbase', config).command.join(' ');
-  assert.match(business, /--migrationsDir=\S+business-data-migrations --automigrate=false/);
+  // kanyue.server owns the API port over the existing business data; migrations only run in init.
+  assert.match(business, /^go run \. serve --http=127\.0\.0\.1:1437 --dir=\S+business-data$/);
+  assert.equal(definition('hono', config).env.PORT, '1438');
   assert.match(payment, /--migrationsDir=\S+payment-data-migrations --automigrate=false/);
   const env = environment(config);
   assert.equal(env.VITE_OPS_API_BASE, '/ops');
   assert.equal(env.KANYUE_LOCAL_API_ORIGIN, 'http://127.0.0.1:1437');
+  assert.equal(env.PB_URL, 'http://127.0.0.1:1437');
+  assert.equal(env.HONO_UPSTREAM_URL, 'http://127.0.0.1:1438');
   assert.equal(env.HOST, '127.0.0.1');
   assert.equal(env.NODE_ENV, 'development');
   assert.ok(env.PATH.startsWith('/runtime/bun-1.4.1:'));
