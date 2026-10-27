@@ -23,8 +23,8 @@
 
 ## 3. Enrollment and credit ledger
 
-- [ ] 3.1 Enrollment, grant, accounts, batch extend/restore, learning views.
-- [ ] 3.2 Credit expiry and reconciliation as in-process jobs; ledger parity check against Hono on a data copy.
+- [x] 3.1 Enrollment, grant, accounts, batch extend/restore, learning views.
+- [x] 3.2 Credit expiry and reconciliation as in-process jobs; ledger parity check against Hono on a data copy.
 
 ## 4. Booking
 

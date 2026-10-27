@@ -87,7 +87,9 @@ func TestCatalogUnavailableWhenSchemaMissing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := app.Delete(collection); err != nil {
+	// Ledger collections reference price_versions, so hide it by renaming instead of deleting.
+	collection.Name = "price_versions_missing"
+	if err := app.Save(collection); err != nil {
 		t.Fatal(err)
 	}
 	handler := testkit.Serve(t, app, Module{}.Register)

@@ -75,10 +75,14 @@ func Fail(code, message string, details map[string]any) *Error {
 	return &Error{Code: code, Message: message, Details: details}
 }
 
-// storeError is a PocketBase REST failure as Hono's SDK saw it (ClientResponseError).
+// storeError is a non-business failure with an HTTP status: a PocketBase REST
+// failure as Hono's SDK saw it (ClientResponseError), optionally tagged with the
+// `error.code` a Hono service assigned before rethrowing it.
 type storeError struct {
 	status  int
+	code    string
 	message string
+	details map[string]any
 	cause   error
 }
 
@@ -88,10 +92,22 @@ func (e *storeError) Unwrap() error { return e.cause }
 // batchFailed is how a rejected write reached Hono through the PocketBase batch API.
 func batchFailed(err error) error {
 	var business *Error
-	if errors.As(err, &business) {
+	var store *storeError
+	if errors.As(err, &business) || errors.As(err, &store) {
 		return err
 	}
 	return &storeError{status: 400, message: "Batch transaction failed.", cause: err}
+}
+
+// withCode is Hono's `error.code = error.code || code` on a failed write.
+func withCode(err error, code string) error {
+	var store *storeError
+	if errors.As(err, &store) && store.code == "" {
+		tagged := *store
+		tagged.code = code
+		return &tagged
+	}
+	return err
 }
 
 func HasCapability(user auth.Claims, capability string) bool {
@@ -221,7 +237,15 @@ func sendError(e *core.RequestEvent, err error) error {
 		}
 	case errors.As(err, &store):
 		status, message = store.status, store.message
-		log.Printf("%s %s: %v", e.Request.Method, e.Request.URL.Path, store.cause)
+		if store.code != "" {
+			code = store.code
+		}
+		if store.details != nil {
+			details = store.details
+		}
+		if store.cause != nil {
+			log.Printf("%s %s: %v", e.Request.Method, e.Request.URL.Path, store.cause)
+		}
 	case errors.Is(err, sql.ErrNoRows):
 		status, message = 404, "The requested resource wasn't found."
 	default:

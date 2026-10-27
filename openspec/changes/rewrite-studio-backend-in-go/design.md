@@ -84,7 +84,7 @@
 | 场馆 | `/v1/public/venues`；`/ops/venues*` | 小程序、后台 | Go |
 | 学员 | `/ops/students*`；`/ops/course-credits/students/:id/follow-ups` | 后台 | Go |
 | 课程与课时包 | `/ops/course-credits/{catalog,packages,price-versions,package-grant-lines,…}`；`/v1/public/course-catalog*` | 后台、官网 | Go |
-| 报课与账本 | `/ops/course-operations/enrollments*`；`/ops/course-credits/{orders/:id/grant,accounts,batches/*,reconciliation/*,settlement-exceptions,audit-logs}`；`/v1/student/learning/*` | 后台、小程序 | Go |
+| 报课与账本 | `/ops/course-operations/enrollments*`；`/ops/course-credits/{orders*,enrollments*,accounts*,student-overview,batches/*,workers/expiry/run,reconciliation/*,settlement-exceptions*,audit-logs*}`；`/v1/student/learning/*` | 后台、小程序 | Go |
 | 约课 | `/v1/student/{booking-options,booking-slots,appointments*}`；`/v1/teacher/{appointments*,offerings/*,availability-overrides/*,booking/dashboard}`；`/ops/course-bookings/*`（除 backfill） | 小程序、后台 | Go |
 | 课表与结算 | `/ops/course-credits/{classes*,sessions*,class-*,session-*}`；`/ops/course-operations/lessons/*`；`/ops/course-calendar`；`/v1/teacher/{calendar,schedule}`；`/v1/schedule/upcoming` | 后台、小程序 | Go |
 | 线上收款 | `/v1/student/commerce/*`；`/ops/commerce/*`；`/internal/commerce/payment-events` | 小程序、后台、支付网关 | Go |
@@ -158,3 +158,19 @@ Go 接管学员目录（`/ops/students` 列表/新建/修改）、续费跟进�
 - 课点类型没有写接口；课时没有状态接口；价格是版本化资源，修改和改状态都会新建下一版本，旧版本不动。
 - 课程点命令的执行计数在 Hono 进程内存里（`/ops/course-credits/metrics` 仍走 Hono），Go 执行的命令不计入，直到 metrics 迁移。
 - 未预期错误：Hono 会把原始错误信息回给客户端，Go 统一回“服务器内部错误”并记日志。
+
+## 阶段 3 记录（2026-10-27，America/Los_Angeles）
+
+Go 接管报课与账本，模块名 `ledger`：订单发放课程点（受 `COURSE_CREDIT_GRANTS_ENABLED` 控制，默认值与 Hono 相同，非 production 开、production 关）、后台报课与班级未来课堂同步（预览、确认）、批次延期与过期补偿、手动过期、对账，账本查询（订单、报课、账户、学员概览、结算异常、对账结果、审计日志），以及小程序 `/v1/student/learning/*` 五个学习视图。写入沿用 Hono 的批量计划语义：版本占位做乐观并发，`credit_operations.idempotencyKey` 做幂等重放，同一事务内落库；重放、冲突、版本冲突重试一次、错误码都照 Hono。测试用的账本集合结构从本地库导出（`internal/testkit/ledger_collections.json`），保证测试与真实表结构一致。
+
+定时任务（D5）：模块被 Go 接管时注册两个 PocketBase cron，只在 `serve` 时运行；交还 Hono 时不注册，避免两边重复执行。
+- 课时过期每 5 分钟一次，每次最多 100 个批次，操作人 `course-credit-expiry-worker`（system）。每个批次的幂等键带批次版本，重跑或与手动触发并发都不会重复过期。
+- 增量对账每天 03:00（Asia/Shanghai，cron 按 UTC 写作 `0 19 * * *`），窗口 25 小时；有差异时记 warn 日志，差异明细照常写入 `reconciliation_exceptions`。Hono 没有定时对账，这是新增行为。
+
+验证：契约测试对 Hono 与 Go 均通过（新增 `contract/ledger.test.mjs`，含账本读接口逐字节一致）；临时停掉 Hono 时 Go 仍能响应账本路由，未迁移路由返回 502，证明请求确由 Go 处理。在两份业务数据副本上分别起 Go（接管账本）与 Hono，用同样的幂等键和 trace 依次执行发放、重放、报课（含班级）、重放与冲突、同步预览与确认、手动过期、过期补偿、延期、全量对账以及账本和学习视图读取：28 个响应在替换生成的编号、时间和哈希后一致，15 张相关表的落库行一致，账本对账结果为 passed。
+
+照搬的 Hono 现状与差异：
+- 列表查询直接在进程内按过滤条件取全量，不再受 PocketBase REST 的过滤长度与表达式数量上限约束，比 Hono 宽松。
+- 课程名排序用 `golang.org/x/text/collate` 的根排序规则代替 `localeCompare`，常见中英文课程名的顺序一致；极端字符的细微排序可能不同。
+- 学习视图按 Hono 的字段顺序输出，内部字段与内部术语的拦截顺序和报错路径一致。
+- outbox 事件照常写入，投递仍由 Hono 的 outbox worker 负责；命令执行计数仍只在 Hono 进程内（同阶段 2）。

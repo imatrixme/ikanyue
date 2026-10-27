@@ -44,6 +44,7 @@ func main() {
 				coursecredit.FollowUpsModule{Signer: signer}.Register(se)
 			}},
 			{Name: "course-catalog", Register: coursecredit.CatalogModule{Signer: signer}.Register},
+			{Name: "ledger", Register: coursecredit.LedgerModule{Signer: signer, GrantsEnabled: cfg.CourseCreditGrants}.Register},
 		},
 	})
 

@@ -4,6 +4,7 @@ package testkit
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -121,7 +122,49 @@ func NewApp(t *testing.T) *tests.TestApp {
 	prices.Fields.Add(&core.JSONField{Name: "grantSnapshot"})
 	addAutodates(prices)
 	save(t, app, prices)
+	importLedger(t, app)
 	return app
+}
+
+// ledgerCollections are the ledger and teaching collections exported from a migrated
+// local business DB (`_collections` rows, relation targets rewritten to names).
+//
+//go:embed ledger_collections.json
+var ledgerCollections []byte
+
+// importLedger imports ledgerCollections; relations to collections the test schema
+// does not have yet (later stages) are dropped.
+func importLedger(t *testing.T, app core.App) {
+	t.Helper()
+	collections := []map[string]any{}
+	if err := json.Unmarshal(ledgerCollections, &collections); err != nil {
+		t.Fatal(err)
+	}
+	ids := map[string]string{}
+	for _, collection := range collections {
+		ids[collection["name"].(string)] = collection["id"].(string)
+	}
+	for _, collection := range collections {
+		fields := []any{}
+		for _, raw := range collection["fields"].([]any) {
+			field := raw.(map[string]any)
+			if field["type"] == "relation" {
+				target := field["collectionId"].(string)
+				if id, ok := ids[target]; ok {
+					field["collectionId"] = id
+				} else if existing, err := app.FindCollectionByNameOrId(target); err == nil {
+					field["collectionId"] = existing.Id
+				} else {
+					continue
+				}
+			}
+			fields = append(fields, field)
+		}
+		collection["fields"] = fields
+	}
+	if err := app.ImportCollections(collections, false); err != nil {
+		t.Fatalf("import ledger collections: %v", err)
+	}
 }
 
 // Create saves a record; password sets an auth record's password.
