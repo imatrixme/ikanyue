@@ -140,6 +140,7 @@ async function collectThemeSourceFiles(directory) {
 }
 
 assert.deepEqual(appConfig.pages, [
+    'pages/home/index',
     'pages/activity/index',
     'pages/courses/index',
     'pages/points/index',
@@ -155,6 +156,7 @@ assert.deepEqual(appConfig.pages, [
     'pages/appointmentSlots/index',
     'pages/appointments/index',
     'pages/appointmentDetail/index',
+    'pages/venues/index',
     'pages/teacherAvailability/index',
     'pages/pointsHistory/index',
     'pages/rewardCatalog/index',
@@ -165,24 +167,21 @@ assert.deepEqual(appConfig.pages, [
     'pages/agreement/index',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.pagePath), [
-    'pages/activity/index',
-    'pages/courses/index',
-    'pages/points/index',
+    'pages/home/index',
+    'pages/appointmentBooking/index',
     'pages/profile/index',
 ]);
-assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['活动', '课程', '积分', '我的']);
+assert.deepEqual(appConfig.tabBar.list.map((item) => item.text), ['首页', '约课', '我的']);
 assert.equal(appConfig.tabBar.color, '#5f6f69');
 assert.equal(appConfig.tabBar.selectedColor, '#006241');
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.iconPath), [
-    'imgs/icons/tab-activity.png',
-    'imgs/icons/tab-courses.png',
-    'imgs/icons/tab-points.png',
+    'imgs/icons/tab-home.png',
+    'imgs/icons/tab-booking.png',
     'imgs/icons/tab-profile.png',
 ]);
 assert.deepEqual(appConfig.tabBar.list.map((item) => item.selectedIconPath), [
-    'imgs/icons/tab-activity-selected.png',
-    'imgs/icons/tab-courses-selected.png',
-    'imgs/icons/tab-points-selected.png',
+    'imgs/icons/tab-home-selected.png',
+    'imgs/icons/tab-booking-selected.png',
     'imgs/icons/tab-profile-selected.png',
 ]);
 

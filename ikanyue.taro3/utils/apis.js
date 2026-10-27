@@ -115,6 +115,9 @@ const listRewardItems = (params = {}) => {
     return iNet.get('/v1/reward-items', params);
 };
 
+// Public: the home page shows venues before sign-in.
+const listPublicVenues = () => iNet.get('/v1/public/venues', {}, false);
+
 const getLearningOverview = () => iNet.get('/v1/student/learning/overview');
 
 const getLearningCourse = (courseId) => iNet.get(`/v1/student/learning/courses/${courseId}`);
@@ -206,6 +209,7 @@ const Api = {
     getMyPointSummary,
     listRewardItems,
     getLearningOverview,
+    listPublicVenues,
     getLearningCourse,
     listLearningLessons,
     getLearningLesson,

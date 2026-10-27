@@ -19,11 +19,11 @@ Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers
 
 ## Structure
 
-- `src/app.config.js` — pages and tab bar: 活动 / 课程 / 积分 / 我的. Teachers get a different tab bar at runtime via `RoleManager.applyTabBar`.
+- `src/app.config.js` — pages and tab bar: 首页 / 约课 / 我的 (活动、课程、积分 stay registered but are reached from 我的, not tabs). Teachers reuse the same three slots as 工作台 / 日历 / 我的 via `RoleManager.applyTabBar`; the home and booking pages render the teacher workbench/calendar for teachers.
 - `src/pages/<camelCase>/` — `index.vue`, `index.scss`, `index.config.js`, optional `pageLogic.js` (pure logic with tests).
 - `src/components/` — shared PascalCase components (`EmptyState`, `AsyncState`, `StickyActionBar`, teacher calendar/booking homes, …).
 - `src/styles/` — `_tokens.scss` (imports `_brand.generated.scss`, generated from the root `design-system/brand-tokens.json`), `theme.mjs` (`canvasPageChrome`, `immersivePageChrome`, `themeColors`, `iconSizes`).
-- `utils/` (repo root, not `src/`) — `request` (envelope, auth header, clears the session on `AUTH_SESSION_INVALID`), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `commerce`, `cashier`, `academyTime` (academy clock, UTC+08:00), `commandKeys` (retry-safe idempotency keys).
+- `utils/` (repo root, not `src/`) — `request` (envelope, auth header, clears the session on `AUTH_SESSION_INVALID`), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `venuemanager` (public venue list, remembered current venue, phone hand-off), `commerce`, `cashier`, `academyTime` (academy clock, UTC+08:00), `commandKeys` (retry-safe idempotency keys).
 - `config/` — Taro config; `SERVICE_URL` is `https://mapi.ikanyue.com` in prod and `KANYUE_LOCAL_API_URL` (default `http://127.0.0.1:1337`) in dev.
 - `scripts/` — build guards (`verify-student-course-boundary.mjs`, weapp output checks), icon generation.
 - `tests/e2e/` — Node scripts asserting on `dist/` output.

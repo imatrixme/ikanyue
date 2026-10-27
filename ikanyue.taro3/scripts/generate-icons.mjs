@@ -11,6 +11,8 @@ const TEXTURE_OUTPUT_DIR = path.join(ROOT, 'src/imgs/textures');
 const BUILD_DIR = path.join(ROOT, 'tmp/icon-build');
 
 const ICONS = [
+    ['tab-home.png', 'tab-home.svg', themeColors.tab],
+    ['tab-home-selected.png', 'tab-home-selected.svg', themeColors.primaryStrong],
     ['tab-activity.png', 'tab-activity.svg', themeColors.tab],
     ['tab-activity-selected.png', 'tab-activity-selected.svg', themeColors.primaryStrong],
     ['tab-courses.png', 'tab-courses.svg', themeColors.tab],

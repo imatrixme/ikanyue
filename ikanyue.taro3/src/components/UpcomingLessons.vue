@@ -50,7 +50,7 @@ export default {
     },
     methods: {
         goFullSchedule() {
-            if (this.role === 'teacher') Taro.switchTab({ url: '/pages/points/index' });
+            if (this.role === 'teacher') Taro.switchTab({ url: '/pages/appointmentBooking/index' });
             else Taro.navigateTo({ url: '/pages/courseLessons/index' });
         },
         goLesson(lesson) {

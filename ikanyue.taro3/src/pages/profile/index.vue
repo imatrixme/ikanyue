@@ -29,11 +29,25 @@
                             @select="goAppointments"
                         />
                         <account-row
+                            description="剩余课时、课程安排与课时记录"
+                            icon="course-calendar"
+                            interactive
+                            title="我的课程"
+                            @select="goCourses"
+                        />
+                        <account-row
                             description="购买课程与查看订单"
                             icon="course-book"
                             interactive
                             title="选课与订单"
                             @select="goShop"
+                        />
+                        <account-row
+                            description="积分余额与可兑换实物"
+                            icon="account-points"
+                            interactive
+                            title="积分与兑换"
+                            @select="goPoints"
                         />
                     </view>
                 </ticket-section>
@@ -70,7 +84,7 @@
             <template v-else>
                 <view class="profile-welcome">
                     <text class="profile-welcome__title">登录你的看乐账户</text>
-                    <text class="profile-welcome__desc">登录后，即可查看活动、课程安排、预约与账户信息。</text>
+                    <text class="profile-welcome__desc">登录后，即可查看剩余课时、预约上课与账户信息。</text>
                     <view class="profile-primary-action" aria-role="button" @tap="showLoginPopup">登录 / 注册</view>
                 </view>
                 <view class="profile-note">
@@ -316,6 +330,12 @@ export default {
         },
         goShop() {
             Taro.navigateTo({ url: '/pages/courseShop/index' });
+        },
+        goCourses() {
+            Taro.navigateTo({ url: '/pages/courses/index' });
+        },
+        goPoints() {
+            Taro.navigateTo({ url: '/pages/points/index' });
         },
         openKanyueInfo(link) {
             const url = buildImageDetailUrl(link);

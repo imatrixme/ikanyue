@@ -131,7 +131,7 @@ export default {
     methods: {
         goShop() { Taro.navigateTo({ url: '/pages/courseShop/index' }); },
         goCourse(course) { Taro.navigateTo({ url: courseDetailUrl(course.courseId) }); },
-        goBooking() { Taro.navigateTo({ url: '/pages/appointmentBooking/index' }); },
+        goBooking() { Taro.switchTab({ url: '/pages/appointmentBooking/index' }); },
         goAppointments() { Taro.navigateTo({ url: '/pages/appointments/index' }); },
         goLesson(lesson) { if (lesson.lessonId) Taro.navigateTo({ url: lessonDetailUrl(lesson.lessonId) }); },
         goLessons() { Taro.navigateTo({ url: courseListUrl('courseLessons') }); },

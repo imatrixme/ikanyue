@@ -3,28 +3,28 @@ import { UserManager } from './usermanager';
 
 const STUDENT_TABS = Object.freeze([
     {
-        index: 1,
-        text: '课程',
-        iconPath: 'imgs/icons/tab-courses.png',
-        selectedIconPath: 'imgs/icons/tab-courses-selected.png',
+        index: 0,
+        text: '首页',
+        iconPath: 'imgs/icons/tab-home.png',
+        selectedIconPath: 'imgs/icons/tab-home-selected.png',
     },
     {
-        index: 2,
-        text: '积分',
-        iconPath: 'imgs/icons/tab-points.png',
-        selectedIconPath: 'imgs/icons/tab-points-selected.png',
+        index: 1,
+        text: '约课',
+        iconPath: 'imgs/icons/tab-booking.png',
+        selectedIconPath: 'imgs/icons/tab-booking-selected.png',
     },
 ]);
 
 const TEACHER_TABS = Object.freeze([
     {
-        index: 1,
+        index: 0,
         text: '工作台',
         iconPath: 'imgs/icons/tab-workbench.png',
         selectedIconPath: 'imgs/icons/tab-workbench-selected.png',
     },
     {
-        index: 2,
+        index: 1,
         text: '日历',
         iconPath: 'imgs/icons/tab-booking.png',
         selectedIconPath: 'imgs/icons/tab-booking-selected.png',

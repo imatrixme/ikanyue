@@ -1,8 +1,11 @@
 <template>
-    <page-chrome class="booking-page">
+    <teacher-calendar-home v-if="role === 'teacher'" ref="teacherCalendar" />
+    <page-chrome v-else class="booking-page">
 
         <view class="booking-content">
-            <view v-if="pageState !== 'ready'" class="booking-state">
+            <!-- The current venue takes no online bookings: hand off to phone instead of listing options. -->
+            <venue-handoff v-if="closed" :venue="venue" />
+            <view v-else-if="pageState !== 'ready'" class="booking-state">
                 <async-state
                     :action-label="stateAction"
                     :description="stateDescription"
@@ -51,12 +54,15 @@ import Taro from '@tarojs/taro';
 import { Api } from '../../../utils/apis';
 import { RoleManager } from '../../../utils/rolemanager';
 import { UserManager } from '../../../utils/usermanager';
+import { VenueManager } from '../../../utils/venuemanager';
 import AppIcon from '../../components/AppIcon.vue';
 import AppointmentRow from '../../components/AppointmentRow.vue';
 import AsyncState from '../../components/AsyncState.vue';
 import BookingOptionCard from '../../components/BookingOptionCard.vue';
 import PageChrome from '../../components/PageChrome.vue';
+import TeacherCalendarHome from '../../components/TeacherCalendarHome.vue';
 import TicketSection from '../../components/TicketSection.vue';
+import VenueHandoff from '../../components/VenueHandoff.vue';
 import {
     appointmentDetailUrl, bookingErrorMessage, bookingSlotsUrl, normalizeAppointmentPage,
     normalizeBookingOption,
@@ -65,56 +71,65 @@ import './index.scss';
 
 export default {
     components: {
-        AppIcon, AppointmentRow, AsyncState, BookingOptionCard, PageChrome, TicketSection,
+        AppIcon, AppointmentRow, AsyncState, BookingOptionCard, PageChrome, TeacherCalendarHome, TicketSection, VenueHandoff,
     },
     data() {
         return {
             errorMessage: '', isLogin: false, loading: false, options: [],
-            recentAppointments: [], requestSerial: 0, role: 'student',
+            recentAppointments: [], requestSerial: 0, role: 'student', venue: null,
         };
     },
     computed: {
+        closed() { return VenueManager.venueClosed(this.venue); },
         pageState() {
             if (this.loading) return 'loading';
-            if (!this.isLogin || this.role !== 'student') return 'empty';
+            if (!this.isLogin) return 'empty';
             if (this.errorMessage) return 'error';
             return this.options.length || this.recentAppointments.length ? 'ready' : 'empty';
         },
         stateAction() {
-            if (!this.isLogin || this.role !== 'student') return '前往我的';
+            if (!this.isLogin) return '去登录';
             if (this.errorMessage) return '重新加载';
             return '';
         },
         stateDescription() {
             if (!this.isLogin) return '登录后可以使用当前课程的剩余课时发起预约。';
-            if (this.role !== 'student') return '教师工作台不发起学员预约，请切换到学员身份。';
             if (this.errorMessage) return this.errorMessage;
-            return '当前没有同时满足剩余课时和教师开放条件的课程。';
+            return '报课后，或老师开放可预约时间后，可预约的课程会显示在这里。';
         },
         stateTitle() {
             if (!this.isLogin) return '登录后预约课程';
-            if (this.role !== 'student') return '当前是教师身份';
             if (this.errorMessage) return '预约信息加载失败';
             return '暂无可预约课程';
         },
     },
     onShow() {
-        RoleManager.applyTabBar();
-        this.loadData();
+        this.role = RoleManager.getRole();
+        RoleManager.applyTabBar(this.role);
+        Taro.setNavigationBarTitle({ title: this.role === 'teacher' ? '课程日历' : '约课' });
+        if (this.role === 'teacher') this.$nextTick(() => this.$refs.teacherCalendar?.refresh());
+        else this.loadVenueAndData();
     },
     async onPullDownRefresh() {
-        try { await this.loadData(true); } finally { Taro.stopPullDownRefresh(); }
+        try {
+            if (this.role === 'teacher') await this.$refs.teacherCalendar?.refresh(true);
+            else await this.loadVenueAndData(true);
+        } finally { Taro.stopPullDownRefresh(); }
     },
     methods: {
         goSlots(option) { Taro.navigateTo({ url: bookingSlotsUrl(option) }); },
         goAppointments() { Taro.navigateTo({ url: '/pages/appointments/index' }); },
         goAppointment(item) { Taro.navigateTo({ url: appointmentDetailUrl(item.appointmentId) }); },
         handleStateAction() {
-            if (!this.isLogin || this.role !== 'student') {
+            if (!this.isLogin) {
                 Taro.switchTab({ url: '/pages/profile/index' });
                 return;
             }
             this.loadData(true);
+        },
+        async loadVenueAndData(force = false) {
+            this.venue = (await VenueManager.loadVenues()).current;
+            if (!this.closed) await this.loadData(force);
         },
         async loadData(force = false) {
             this.isLogin = UserManager.isLogin();

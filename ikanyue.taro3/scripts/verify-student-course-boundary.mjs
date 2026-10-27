@@ -3,6 +3,7 @@ import { extname, join, resolve } from 'node:path';
 
 const root = resolve(process.cwd());
 const activeCourseDirectories = [
+    'src/pages/home',
     'src/pages/courses',
     'src/pages/courseDetail',
     'src/pages/courseLessons',
@@ -87,7 +88,8 @@ const sourceFiles = [
 for (const page of legacyPages) {
     assert(!appConfig.includes(`'${page}'`), `legacy student page is still published: ${page}`);
 }
-assert(appConfig.includes("pagePath: 'pages/courses/index'"), 'course tab is not registered');
+assert(appConfig.includes("pagePath: 'pages/home/index'"), 'home tab is not registered');
+assert(appConfig.includes("pagePath: 'pages/appointmentBooking/index'"), 'booking tab is not registered');
 assert(!apiSource.includes('/v1/course-credits'), 'legacy student course API remains callable');
 assert(!/const\s+(convert|reserve|authorize|enroll)[A-Za-z]*\s*=/i.test(apiSource), 'student mutation wrapper remains exported');
 

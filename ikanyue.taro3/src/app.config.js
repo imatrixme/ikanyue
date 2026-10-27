@@ -2,6 +2,7 @@ import { themeColors } from './styles/theme.mjs';
 
 export default defineAppConfig({
     pages: [
+        'pages/home/index',
         'pages/activity/index',
         'pages/courses/index',
         'pages/points/index',
@@ -17,6 +18,7 @@ export default defineAppConfig({
         'pages/appointmentSlots/index',
         'pages/appointments/index',
         'pages/appointmentDetail/index',
+        'pages/venues/index',
         'pages/teacherAvailability/index',
         'pages/pointsHistory/index',
         'pages/rewardCatalog/index',
@@ -39,22 +41,16 @@ export default defineAppConfig({
         borderStyle: 'black',
         list: [
             {
-                pagePath: 'pages/activity/index',
-                iconPath: 'imgs/icons/tab-activity.png',
-                selectedIconPath: 'imgs/icons/tab-activity-selected.png',
-                text: '活动',
+                pagePath: 'pages/home/index',
+                iconPath: 'imgs/icons/tab-home.png',
+                selectedIconPath: 'imgs/icons/tab-home-selected.png',
+                text: '首页',
             },
             {
-                pagePath: 'pages/courses/index',
-                iconPath: 'imgs/icons/tab-courses.png',
-                selectedIconPath: 'imgs/icons/tab-courses-selected.png',
-                text: '课程',
-            },
-            {
-                pagePath: 'pages/points/index',
-                iconPath: 'imgs/icons/tab-points.png',
-                selectedIconPath: 'imgs/icons/tab-points-selected.png',
-                text: '积分',
+                pagePath: 'pages/appointmentBooking/index',
+                iconPath: 'imgs/icons/tab-booking.png',
+                selectedIconPath: 'imgs/icons/tab-booking-selected.png',
+                text: '约课',
             },
             {
                 pagePath: 'pages/profile/index',

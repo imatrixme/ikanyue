@@ -58,7 +58,7 @@ export default {
   methods: {
     money, orderStatus, policyText,
     // Replace the order page so back from booking returns to the shop instead of a settled order.
-    book() { Taro.redirectTo({ url: '/pages/appointmentBooking/index' }); },
+    book() { Taro.switchTab({ url: '/pages/appointmentBooking/index' }); },
     shop() {
       const pages = Taro.getCurrentPages();
       if (pages[pages.length - 2]?.route === 'pages/courseShop/index') Taro.navigateBack();

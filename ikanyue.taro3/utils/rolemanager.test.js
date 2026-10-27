@@ -22,11 +22,12 @@ describe('RoleManager', () => {
         expect(RoleManager.isTeacher()).toBe(true);
         await expect(RoleManager.applyTabBar()).resolves.toBe(true);
         expect(taroMock.setTabBarItem.mock.calls.map(([item]) => item)).toEqual(TEACHER_TABS);
-        expect(TEACHER_TABS[1].text).toBe('日历');
+        expect(TEACHER_TABS.map((tab) => tab.text)).toEqual(['工作台', '日历']);
 
         taroMock.setTabBarItem.mockClear();
         await RoleManager.applyTabBar('student');
         expect(taroMock.setTabBarItem.mock.calls.map(([item]) => item)).toEqual(STUDENT_TABS);
+        expect(STUDENT_TABS.map((tab) => tab.text)).toEqual(['首页', '约课']);
     });
 
     it('degrades safely when the platform API is absent or rejects an update', async () => {

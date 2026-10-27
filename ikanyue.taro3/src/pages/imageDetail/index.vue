@@ -61,7 +61,7 @@ export default {
             Taro.navigateBack({
                 fail: () => {
                     Taro.switchTab({
-                        url: '/pages/activity/index',
+                        url: '/pages/home/index',
                     });
                 },
             });
