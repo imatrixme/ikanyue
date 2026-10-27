@@ -18,12 +18,33 @@ const maxPlanSteps = 500
 func exported(app core.App, items []*core.Record, expand []string) []map[string]any {
 	if len(expand) > 0 && len(items) > 0 {
 		app.ExpandRecords(items, expand, nil)
+		for _, record := range items {
+			unhideExpanded(record)
+		}
 	}
 	result := make([]map[string]any, len(items))
 	for i, record := range items {
 		result[i] = records.JSON(record)
 	}
 	return result
+}
+
+// unhideExpanded gives expanded relations the superuser view records.Export gives the root.
+func unhideExpanded(record *core.Record) {
+	for _, value := range record.Expand() {
+		related := []*core.Record{}
+		switch v := value.(type) {
+		case *core.Record:
+			related = append(related, v)
+		case []*core.Record:
+			related = v
+		}
+		for _, child := range related {
+			child.Unhide(child.Collection().Fields.FieldNames()...)
+			child.IgnoreEmailVisibility(true)
+			unhideExpanded(child)
+		}
+	}
 }
 
 // list is getFullList: every matching record in sort order.

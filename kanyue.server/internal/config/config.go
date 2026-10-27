@@ -7,32 +7,34 @@ import (
 )
 
 type Config struct {
-	JWTSecret              string
-	HonoURL                string
-	HonoModules            []string
-	WechatAppID            string
-	WechatSecret           string
-	WechatSessionURL       string
-	DefaultAvatar          string
-	PublicAssetBaseURL     string
-	PBPublicURL            string
-	OpsRegistrationEnabled bool
-	CourseCreditGrants     bool
+	JWTSecret               string
+	HonoURL                 string
+	HonoModules             []string
+	WechatAppID             string
+	WechatSecret            string
+	WechatSessionURL        string
+	DefaultAvatar           string
+	PublicAssetBaseURL      string
+	PBPublicURL             string
+	OpsRegistrationEnabled  bool
+	CourseCreditGrants      bool
+	CourseCreditReservation bool
 }
 
 func FromEnv() Config {
 	return Config{
-		JWTSecret:              os.Getenv("JWT_SECRET"),
-		HonoURL:                os.Getenv("HONO_UPSTREAM_URL"),
-		HonoModules:            list(os.Getenv("KANYUE_HONO_MODULES")),
-		WechatAppID:            os.Getenv("WECHAT_APPID"),
-		WechatSecret:           os.Getenv("WECHAT_SECRET"),
-		WechatSessionURL:       fallback(os.Getenv("WECHAT_JSCODE2SESSION"), "https://api.weixin.qq.com/sns/jscode2session"),
-		DefaultAvatar:          os.Getenv("DEFAULT_AVATAR"),
-		PublicAssetBaseURL:     os.Getenv("PUBLIC_ASSET_BASE_URL"),
-		PBPublicURL:            fallback(os.Getenv("PB_PUBLIC_URL"), os.Getenv("PB_URL")),
-		OpsRegistrationEnabled: Truthy(os.Getenv("OPS_REGISTRATION_ENABLED")),
-		CourseCreditGrants:     featureSwitch(os.Getenv("COURSE_CREDIT_GRANTS_ENABLED"), os.Getenv("NODE_ENV") != "production"),
+		JWTSecret:               os.Getenv("JWT_SECRET"),
+		HonoURL:                 os.Getenv("HONO_UPSTREAM_URL"),
+		HonoModules:             list(os.Getenv("KANYUE_HONO_MODULES")),
+		WechatAppID:             os.Getenv("WECHAT_APPID"),
+		WechatSecret:            os.Getenv("WECHAT_SECRET"),
+		WechatSessionURL:        fallback(os.Getenv("WECHAT_JSCODE2SESSION"), "https://api.weixin.qq.com/sns/jscode2session"),
+		DefaultAvatar:           os.Getenv("DEFAULT_AVATAR"),
+		PublicAssetBaseURL:      os.Getenv("PUBLIC_ASSET_BASE_URL"),
+		PBPublicURL:             fallback(os.Getenv("PB_PUBLIC_URL"), os.Getenv("PB_URL")),
+		OpsRegistrationEnabled:  Truthy(os.Getenv("OPS_REGISTRATION_ENABLED")),
+		CourseCreditGrants:      featureSwitch(os.Getenv("COURSE_CREDIT_GRANTS_ENABLED"), os.Getenv("NODE_ENV") != "production"),
+		CourseCreditReservation: featureSwitch(os.Getenv("COURSE_CREDIT_RESERVATION_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 	}
 }
 

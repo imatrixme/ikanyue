@@ -28,8 +28,8 @@
 
 ## 4. Booking
 
-- [ ] 4.1 Policies, offerings, availability and overrides.
-- [ ] 4.2 Student, teacher and ops appointments, conflicts; expire/fulfill jobs.
+- [x] 4.1 Policies, offerings, availability and overrides.
+- [x] 4.2 Student, teacher and ops appointments, conflicts; expire/fulfill jobs.
 
 ## 5. Sessions and settlement
 

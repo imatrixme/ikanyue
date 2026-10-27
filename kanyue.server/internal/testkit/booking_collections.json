@@ -1,0 +1,2095 @@
+[
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "course_specs",
+        "hidden": false,
+        "id": "relation2358571780",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "courseSpecId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select1466534506",
+        "maxSelect": 1,
+        "name": "role",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "lead",
+          "assistant",
+          "observer",
+          "evaluator"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "number650849401",
+        "max": null,
+        "min": 0,
+        "name": "baseQuantity",
+        "onlyInt": false,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number1011630038",
+        "max": null,
+        "min": 0,
+        "name": "durationFactor",
+        "onlyInt": false,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number2702814227",
+        "max": null,
+        "min": 0,
+        "name": "participantFactor",
+        "onlyInt": false,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "json1847162837",
+        "maxSize": 0,
+        "name": "cancellationCompensation",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "date1321367048",
+        "max": "",
+        "min": "",
+        "name": "validFrom",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2274640688",
+        "max": "",
+        "min": "",
+        "name": "validTo",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "draft",
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_1241988280",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_teacher_credit_rules_version ON teacher_credit_rules (courseSpecId, role, version)"
+    ],
+    "name": "teacher_credit_rules",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1997877400",
+        "max": 0,
+        "min": 0,
+        "name": "code",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1579384326",
+        "max": 0,
+        "min": 0,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text922858135",
+        "max": 0,
+        "min": 0,
+        "name": "timezone",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json842551511",
+        "maxSize": 0,
+        "name": "defaultWindows",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "number1056276267",
+        "max": null,
+        "min": 1,
+        "name": "slotStepMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number786332665",
+        "max": null,
+        "min": 1,
+        "name": "claimGranularityMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number2751871726",
+        "max": null,
+        "min": 0,
+        "name": "minLeadMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number623129614",
+        "max": null,
+        "min": 1,
+        "name": "maxAdvanceDays",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number3898310482",
+        "max": null,
+        "min": 1,
+        "name": "responseTtlMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number829877214",
+        "max": null,
+        "min": 0,
+        "name": "responseCutoffMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number899112157",
+        "max": null,
+        "min": 0,
+        "name": "cancellationCutoffMinutes",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "date3010959846",
+        "max": "",
+        "min": "",
+        "name": "effectiveFrom",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2631055313",
+        "max": "",
+        "min": "",
+        "name": "effectiveTo",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "draft",
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_3318783942",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_booking_policies_code_version ON booking_policies (code, version)",
+      "CREATE UNIQUE INDEX idx_booking_policies_active ON booking_policies (code) WHERE status = 'active'",
+      "CREATE INDEX idx_booking_policies_effective ON booking_policies (status, effectiveFrom, effectiveTo)"
+    ],
+    "name": "booking_policies",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "course_specs",
+        "hidden": false,
+        "id": "relation2358571780",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "courseSpecId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "credit_types",
+        "hidden": false,
+        "id": "relation1309668244",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "creditTypeId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "booking_policies",
+        "hidden": false,
+        "id": "relation1179644631",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "policyId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1587448267",
+        "max": 0,
+        "min": 0,
+        "name": "location",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select3052874261",
+        "maxSelect": 1,
+        "name": "availabilityMode",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "default",
+          "custom"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "draft",
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_2678868799",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_teacher_offerings_version ON teacher_course_offerings (teacherId, courseSpecId, version)",
+      "CREATE UNIQUE INDEX idx_teacher_offerings_active ON teacher_course_offerings (teacherId, courseSpecId) WHERE status = 'active'",
+      "CREATE INDEX idx_teacher_offerings_course_status ON teacher_course_offerings (courseSpecId, status)"
+    ],
+    "name": "teacher_course_offerings",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1997877400",
+        "max": 0,
+        "min": 0,
+        "name": "code",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "students",
+        "hidden": false,
+        "id": "relation2562666392",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "studentId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_course_offerings",
+        "hidden": false,
+        "id": "relation215527605",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "offeringId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "course_specs",
+        "hidden": false,
+        "id": "relation2358571780",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "courseSpecId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "credit_types",
+        "hidden": false,
+        "id": "relation1309668244",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "creditTypeId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "booking_policies",
+        "hidden": false,
+        "id": "relation1179644631",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "policyId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "sessions",
+        "hidden": false,
+        "id": "relation961590774",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "sessionId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "pending",
+          "confirmed",
+          "declined",
+          "withdrawn",
+          "expired",
+          "slot_taken",
+          "eligibility_lost",
+          "cancelled",
+          "rescheduled",
+          "fulfilled"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "date1973508795",
+        "max": "",
+        "min": "",
+        "name": "requestedStartAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date3755158172",
+        "max": "",
+        "min": "",
+        "name": "requestedEndAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2445521319",
+        "max": "",
+        "min": "",
+        "name": "responseDeadline",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3485334036",
+        "max": 500,
+        "min": 0,
+        "name": "note",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text2790963958",
+        "max": 500,
+        "min": 0,
+        "name": "responseReason",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json3261017642",
+        "maxSize": 0,
+        "name": "policySnapshot",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text621540990",
+        "max": 0,
+        "min": 0,
+        "name": "idempotencyKey",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1361431903",
+        "max": 0,
+        "min": 0,
+        "name": "requestFingerprint",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "date1546201094",
+        "max": "",
+        "min": "",
+        "name": "requestedAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date1105713005",
+        "max": "",
+        "min": "",
+        "name": "respondedAt",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date3291632782",
+        "max": "",
+        "min": "",
+        "name": "confirmedAt",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date1359432310",
+        "max": "",
+        "min": "",
+        "name": "cancelledAt",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_1133281921",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_appointment_requests_code ON appointment_requests (code)",
+      "CREATE UNIQUE INDEX idx_appointment_requests_idempotency ON appointment_requests (idempotencyKey)",
+      "CREATE UNIQUE INDEX idx_appointment_requests_pending_course ON appointment_requests (studentId, courseSpecId) WHERE status = 'pending'",
+      "CREATE INDEX idx_appointment_requests_teacher_status_time ON appointment_requests (teacherId, status, requestedStartAt)",
+      "CREATE INDEX idx_appointment_requests_student_status_time ON appointment_requests (studentId, status, requestedStartAt)"
+    ],
+    "name": "appointment_requests",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "appointment_requests",
+        "hidden": false,
+        "id": "relation231624165",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "appointmentId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select1883776062",
+        "maxSelect": 1,
+        "name": "eventType",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "requested",
+          "confirmed",
+          "declined",
+          "withdrawn",
+          "expired",
+          "slot_taken",
+          "eligibility_lost",
+          "cancelled",
+          "rescheduled",
+          "fulfilled"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3487738281",
+        "max": 0,
+        "min": 0,
+        "name": "fromStatus",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text4255694214",
+        "max": 0,
+        "min": 0,
+        "name": "toStatus",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1842063794",
+        "max": 0,
+        "min": 0,
+        "name": "actorId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1207772737",
+        "max": 0,
+        "min": 0,
+        "name": "actorRole",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1001949196",
+        "max": 500,
+        "min": 0,
+        "name": "reason",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1796790618",
+        "max": 0,
+        "min": 0,
+        "name": "traceId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json1326724116",
+        "maxSize": 0,
+        "name": "metadata",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_2129921262",
+    "indexes": [
+      "CREATE INDEX idx_appointment_events_appointment_created ON appointment_events (appointmentId, created)"
+    ],
+    "name": "appointment_events",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select3461152679",
+        "maxSelect": 1,
+        "name": "ownerType",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "teacher",
+          "student",
+          "room"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3764321573",
+        "max": 0,
+        "min": 0,
+        "name": "ownerId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "date2725562463",
+        "max": "",
+        "min": "",
+        "name": "cellStartAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2465337652",
+        "max": "",
+        "min": "",
+        "name": "cellEndAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "select812901548",
+        "maxSelect": 1,
+        "name": "sourceType",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "session",
+          "manual_block"
+        ]
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text3994376928",
+        "max": 0,
+        "min": 0,
+        "name": "sourceId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "appointment_requests",
+        "hidden": false,
+        "id": "relation231624165",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "appointmentId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "active",
+          "released"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "date3657352898",
+        "max": "",
+        "min": "",
+        "name": "releasedAt",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_2999892531",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_schedule_claims_active_cell ON schedule_claims (ownerType, ownerId, cellStartAt) WHERE status = 'active'",
+      "CREATE INDEX idx_schedule_claims_source ON schedule_claims (sourceType, sourceId, status)",
+      "CREATE INDEX idx_schedule_claims_owner_time ON schedule_claims (ownerType, ownerId, status, cellStartAt)"
+    ],
+    "name": "schedule_claims",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_course_offerings",
+        "hidden": false,
+        "id": "relation215527605",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "offeringId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "number1267652495",
+        "max": 7,
+        "min": 1,
+        "name": "weekday",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number2516801774",
+        "max": 1439,
+        "min": 0,
+        "name": "startMinute",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "number2462647578",
+        "max": 1440,
+        "min": 1,
+        "name": "endMinute",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "date3010959846",
+        "max": "",
+        "min": "",
+        "name": "effectiveFrom",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2631055313",
+        "max": "",
+        "min": "",
+        "name": "effectiveTo",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_2151972096",
+    "indexes": [
+      "CREATE INDEX idx_teacher_availability_rules_lookup ON teacher_availability_rules (teacherId, status, weekday, effectiveFrom)"
+    ],
+    "name": "teacher_availability_rules",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_course_offerings",
+        "hidden": false,
+        "id": "relation215527605",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "offeringId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select2363381545",
+        "maxSelect": 1,
+        "name": "type",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "available",
+          "unavailable"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "date1489594136",
+        "max": "",
+        "min": "",
+        "name": "startAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date3185387405",
+        "max": "",
+        "min": "",
+        "name": "endAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1001949196",
+        "max": 0,
+        "min": 0,
+        "name": "reason",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "active",
+          "cancelled"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_3114120618",
+    "indexes": [
+      "CREATE INDEX idx_teacher_availability_overrides_lookup ON teacher_availability_overrides (teacherId, status, startAt, endAt)"
+    ],
+    "name": "teacher_availability_overrides",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "select2363381545",
+        "maxSelect": 1,
+        "name": "type",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "teacher_overlap",
+          "student_overlap",
+          "claim_failed",
+          "eligibility_lost",
+          "backfill_overlap"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "open",
+          "resolved",
+          "ignored"
+        ]
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "students",
+        "hidden": false,
+        "id": "relation2562666392",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "studentId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "sessions",
+        "hidden": false,
+        "id": "relation961590774",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "sessionId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "appointment_requests",
+        "hidden": false,
+        "id": "relation231624165",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "appointmentId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "date1489594136",
+        "max": "",
+        "min": "",
+        "name": "startAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date3185387405",
+        "max": "",
+        "min": "",
+        "name": "endAt",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "json1915095946",
+        "maxSize": 0,
+        "name": "details",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text4258467722",
+        "max": 0,
+        "min": 0,
+        "name": "resolution",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "date2892703397",
+        "max": "",
+        "min": "",
+        "name": "resolvedAt",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_1406458109",
+    "indexes": [
+      "CREATE INDEX idx_booking_conflicts_status_time ON booking_conflicts (status, startAt)"
+    ],
+    "name": "booking_conflicts",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "students",
+        "hidden": false,
+        "id": "relation2562666392",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "studentId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "orders",
+        "hidden": false,
+        "id": "relation4196627511",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "orderId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "pending",
+          "granting",
+          "completed",
+          "failed"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "json2918445923",
+        "maxSize": 0,
+        "name": "data",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_1612551300",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_commerce_order ON commerce_orders (orderId)",
+      "CREATE INDEX idx_commerce_student_status ON commerce_orders (studentId, status)"
+    ],
+    "name": "commerce_orders",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "orders",
+        "hidden": false,
+        "id": "relation4196627511",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "orderId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "students",
+        "hidden": false,
+        "id": "relation2562666392",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "studentId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "processing",
+          "succeeded",
+          "failed"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "json2918445923",
+        "maxSize": 0,
+        "name": "data",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "number3206337475",
+        "max": null,
+        "min": 1,
+        "name": "version",
+        "onlyInt": true,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_3540484342",
+    "indexes": [],
+    "name": "commerce_refunds",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text2324736937",
+        "max": 0,
+        "min": 0,
+        "name": "key",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_999389908",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_commerce_claim ON commerce_claims (key)"
+    ],
+    "name": "commerce_claims",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1040987371",
+        "max": 0,
+        "min": 0,
+        "name": "subjectId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1842063794",
+        "max": 0,
+        "min": 0,
+        "name": "actorId",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1204587666",
+        "max": 0,
+        "min": 0,
+        "name": "action",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json2918445923",
+        "maxSize": 0,
+        "name": "data",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_3309391147",
+    "indexes": [],
+    "name": "commerce_audit",
+    "type": "base"
+  }
+]

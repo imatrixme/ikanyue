@@ -19,9 +19,10 @@ services:
       PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
       JWT_SECRET: "${JWT_SECRET:?Set a random JWT_SECRET of at least 32 characters}"
       OPS_REGISTRATION_ENABLED: "${OPS_REGISTRATION_ENABLED:-false}"
-      # The ledger module reads the same grant switch as Hono (default on outside production).
+      # The ledger and booking modules read the same feature switches as Hono (default on outside production).
       NODE_ENV: "${NODE_ENV:-production}"
       COURSE_CREDIT_GRANTS_ENABLED: "${COURSE_CREDIT_GRANTS_ENABLED:-false}"
+      COURSE_CREDIT_RESERVATION_ENABLED: "${COURSE_CREDIT_RESERVATION_ENABLED:-false}"
       PUBLIC_ASSET_BASE_URL: "${PUBLIC_ASSET_BASE_URL:-https://kyoss.abcmem.com/ikanyue-mp}"
       DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
       WECHAT_APPID: "${WECHAT_APPID:-}"

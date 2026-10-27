@@ -126,19 +126,27 @@ func NewApp(t *testing.T) *tests.TestApp {
 	return app
 }
 
-// ledgerCollections are the ledger and teaching collections exported from a migrated
-// local business DB (`_collections` rows, relation targets rewritten to names).
+// ledgerCollections and bookingCollections are the ledger, teaching and booking
+// collections exported from a migrated local business DB (`_collections` rows,
+// relation targets rewritten to names).
 //
 //go:embed ledger_collections.json
 var ledgerCollections []byte
 
-// importLedger imports ledgerCollections; relations to collections the test schema
-// does not have yet (later stages) are dropped.
+//go:embed booking_collections.json
+var bookingCollections []byte
+
+// importLedger imports both exports in one call so their relations to each other
+// resolve; relations to collections the test schema does not have are dropped.
 func importLedger(t *testing.T, app core.App) {
 	t.Helper()
 	collections := []map[string]any{}
-	if err := json.Unmarshal(ledgerCollections, &collections); err != nil {
-		t.Fatal(err)
+	for _, raw := range [][]byte{ledgerCollections, bookingCollections} {
+		part := []map[string]any{}
+		if err := json.Unmarshal(raw, &part); err != nil {
+			t.Fatal(err)
+		}
+		collections = append(collections, part...)
 	}
 	ids := map[string]string{}
 	for _, collection := range collections {
