@@ -18,8 +18,8 @@
 
 ## 2. Students and catalog
 
-- [ ] 2.1 Students, follow-ups.
-- [ ] 2.2 Course specs, credit types, packages, price versions, package grant lines.
+- [x] 2.1 Students, follow-ups.
+- [x] 2.2 Course specs, credit types, packages, price versions, package grant lines.
 
 ## 3. Enrollment and credit ledger
 

@@ -3,7 +3,6 @@ package httpx
 import (
 	"encoding/json"
 	"strings"
-	"unicode/utf16"
 
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -54,9 +53,4 @@ func (b Body) Text(key string) string {
 func (b Body) Has(key string) bool {
 	_, ok := b[key]
 	return ok
-}
-
-// JSLength counts UTF-16 code units like String.prototype.length.
-func JSLength(text string) int {
-	return len(utf16.Encode([]rune(text)))
 }

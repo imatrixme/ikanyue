@@ -3,6 +3,7 @@
 // COMPARE_URL adds read parity checks against a second server on the same data.
 // Credentials are optional; tests needing them skip when they are absent:
 //   CONTRACT_STUDENT_CELLPHONE, CONTRACT_STUDENT_PASSWORD, CONTRACT_OPS_ACCOUNT, CONTRACT_OPS_PASSWORD
+// CONTRACT_OPS_TOKEN (an admin ops token) runs the admin-only stage 2 checks without an admin password.
 // The suite never changes business data beyond login timestamps.
 
 export const BASE_URL = (process.env.BASE_URL || 'http://127.0.0.1:1437').replace(/\/+$/, '');
@@ -10,6 +11,7 @@ export const COMPARE_URL = (process.env.COMPARE_URL || '').replace(/\/+$/, '');
 
 export const student = credentials('CONTRACT_STUDENT_CELLPHONE', 'CONTRACT_STUDENT_PASSWORD');
 export const ops = credentials('CONTRACT_OPS_ACCOUNT', 'CONTRACT_OPS_PASSWORD');
+export const OPS_TOKEN = process.env.CONTRACT_OPS_TOKEN || '';
 
 function credentials(accountKey, passwordKey) {
   const account = process.env[accountKey];

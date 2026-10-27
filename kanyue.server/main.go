@@ -9,9 +9,11 @@ import (
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/catalog"
 	"kanyue.server/internal/config"
+	"kanyue.server/internal/coursecredit"
 	"kanyue.server/internal/identity"
 	"kanyue.server/internal/migrations"
 	"kanyue.server/internal/server"
+	"kanyue.server/internal/students"
 	"kanyue.server/internal/venues"
 )
 
@@ -37,6 +39,11 @@ func main() {
 			{Name: "venues", Register: venues.Module{Signer: signer}.Register},
 			{Name: "catalog", Register: catalog.Module{}.Register},
 			{Name: "identity", Register: identity.Module{Signer: signer, Config: cfg}.Register},
+			{Name: "students", Register: func(se *core.ServeEvent) {
+				students.Module{Signer: signer}.Register(se)
+				coursecredit.FollowUpsModule{Signer: signer}.Register(se)
+			}},
+			{Name: "course-catalog", Register: coursecredit.CatalogModule{Signer: signer}.Register},
 		},
 	})
 

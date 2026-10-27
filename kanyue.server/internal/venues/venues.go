@@ -13,6 +13,7 @@ import (
 	"kanyue.server/internal/audit"
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/httpx"
+	"kanyue.server/internal/jsx"
 )
 
 const collection = "venues"
@@ -146,7 +147,7 @@ func validate(input httpx.Body) (map[string]any, error) {
 		return nil, userError("场馆名称不能为空")
 	}
 	for _, field := range fieldLimits {
-		if httpx.JSLength(payload[field.name].(string)) > field.limit {
+		if jsx.Length(payload[field.name].(string)) > field.limit {
 			return nil, userError(fmt.Sprintf("%s不能超过 %d 个字", field.label, field.limit))
 		}
 	}

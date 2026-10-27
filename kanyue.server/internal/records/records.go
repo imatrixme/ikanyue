@@ -3,9 +3,11 @@
 package records
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/search"
 )
 
 // privateUserFields never leave the API (Hono's PRIVATE_USER_FIELDS).
@@ -104,4 +106,51 @@ func Capabilities(record *core.Record, field string) []string {
 		result = append(result, text)
 	}
 	return result
+}
+
+// PageResult is PocketBase's list response metadata.
+type PageResult struct {
+	Page       int
+	PerPage    int
+	TotalItems int
+	TotalPages int
+	Items      []*core.Record
+}
+
+// Page runs a filtered, sorted page query the way the superuser REST list endpoint does.
+func Page(app core.App, collectionName, filter, sort string, page, perPage int) (PageResult, error) {
+	collection, err := app.FindCollectionByNameOrId(collectionName)
+	if err != nil {
+		return PageResult{}, err
+	}
+	resolver := core.NewRecordFieldResolver(app, collection, nil, true)
+	provider := search.NewProvider(resolver).
+		Query(app.RecordQuery(collection)).
+		Page(page).
+		PerPage(perPage)
+	if sort != "" {
+		provider.Sort(search.ParseSortFromString(sort))
+	}
+	if filter != "" {
+		provider.Filter([]search.FilterData{search.FilterData(filter)})
+	}
+	items := []*core.Record{}
+	result, err := provider.Exec(&items)
+	if err != nil {
+		return PageResult{}, err
+	}
+	return PageResult{Page: result.Page, PerPage: result.PerPage, TotalItems: result.TotalItems, TotalPages: result.TotalPages, Items: items}, nil
+}
+
+// JSON is a record as Hono decoded it from REST JSON: dates as strings, json fields decoded.
+func JSON(record *core.Record) map[string]any {
+	raw, _ := json.Marshal(Export(record))
+	data := map[string]any{}
+	_ = json.Unmarshal(raw, &data)
+	return data
+}
+
+// EscapeFilter quotes a value for a filter string literal (Hono's escapeFilter).
+func EscapeFilter(value string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(value, `\`, `\\`), `"`, `\"`)
 }

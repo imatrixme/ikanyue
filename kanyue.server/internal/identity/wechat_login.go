@@ -13,6 +13,7 @@ import (
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/httpx"
+	"kanyue.server/internal/ids"
 )
 
 var (
@@ -126,8 +127,8 @@ func (s *service) createWechatStudent(e *core.RequestEvent, ref wechatRef, info 
 	student := core.NewRecord(target)
 	student.Set("cellphone", cellphone)
 	student.Set("password", "")
-	student.Set("tokenKey", uuidV4())
-	student.Set("sn", uuidV4())
+	student.Set("tokenKey", ids.UUID())
+	student.Set("sn", ids.UUID())
 	student.Set("nickName", firstNonEmpty(info["nickName"].(string), "微信用户"+lastFour(cellphone)))
 	student.Set("avatar", firstNonEmpty(info["avatarUrl"].(string), s.cfg.DefaultAvatar))
 	student.Set("gender", gender)

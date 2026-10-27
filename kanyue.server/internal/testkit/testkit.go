@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/apis"
@@ -41,6 +42,7 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addNumber(students, "gender", "age")
 	addDate(students, "lastLoginAt")
 	students.Fields.Add(&core.JSONField{Name: "wechatUserInfo"})
+	addAutodates(students)
 	students.AddIndex("idx_students_cellphone", true, "cellphone", "cellphone != ''")
 	save(t, app, students)
 
@@ -57,6 +59,7 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addText(audits, "action", "resourceType", "resourceId")
 	audits.Fields.Add(&core.SelectField{Name: "outcome", MaxSelect: 1, Required: true, Values: []string{"allowed", "denied", "success", "failed"}})
 	audits.Fields.Add(&core.JSONField{Name: "metadata"})
+	addAutodates(audits)
 	save(t, app, audits)
 
 	venues := core.NewBaseCollection("venues")
@@ -66,29 +69,57 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addNumber(venues, "sortOrder")
 	save(t, app, venues)
 
+	// Catalog collections mirror Hono's catalogSchemas field types; required flags are
+	// left off so tests can create partial fixtures.
+	statuses := []string{"draft", "active", "inactive"}
 	courseSpecs := core.NewBaseCollection("course_specs")
-	addText(courseSpecs, "code", "name", "deliveryMode", "teacherTier", "status", "defaultCreditTypeId")
+	addText(courseSpecs, "code", "name", "teacherTier")
+	addSelect(courseSpecs, "deliveryMode", "one_to_one", "group", "workshop", "online", "hybrid")
 	addNumber(courseSpecs, "durationMinutes")
+	addSelect(courseSpecs, "status", statuses...)
+	courseSpecs.Fields.Add(&core.JSONField{Name: "metadata"})
+	addAutodates(courseSpecs)
 	save(t, app, courseSpecs)
 
 	creditTypes := core.NewBaseCollection("credit_types")
-	addText(creditTypes, "code", "name", "kind", "courseSpecId", "unitLabel", "status")
+	addText(creditTypes, "code", "name", "unitLabel")
+	addSelect(creditTypes, "kind", "universal", "course")
+	creditTypes.Fields.Add(&core.RelationField{Name: "courseSpecId", CollectionId: courseSpecs.Id, MaxSelect: 1})
+	addBool(creditTypes, "consumable")
+	addNumber(creditTypes, "referenceUnitValue")
+	addSelect(creditTypes, "status", statuses...)
+	addAutodates(creditTypes)
 	save(t, app, creditTypes)
 
+	courseSpecs.Fields.Add(&core.RelationField{Name: "defaultCreditTypeId", CollectionId: creditTypes.Id, MaxSelect: 1})
+	save(t, app, courseSpecs)
+
 	packages := core.NewBaseCollection("packages")
-	addText(packages, "code", "name", "description", "saleChannel", "activationMode", "expiryPolicy", "status")
+	addText(packages, "code", "name", "description")
+	addSelect(packages, "saleChannel", "admin", "wechat", "website", "offline", "all")
+	addSelect(packages, "activationMode", "GRANT_TIME", "FIRST_RESERVATION", "FIRST_CHECK_IN", "FIRST_COMPLETED_SESSION", "TERM_START")
 	addNumber(packages, "activationDeadlineDays", "validityDurationDays")
+	addSelect(packages, "expiryPolicy", "FIXED_DURATION", "TERM_END", "NO_EXPIRY")
+	addSelect(packages, "status", statuses...)
+	addAutodates(packages)
 	save(t, app, packages)
 
 	grantLines := core.NewBaseCollection("package_grant_lines")
-	addText(grantLines, "packageId", "creditTypeId")
+	grantLines.Fields.Add(&core.RelationField{Name: "packageId", CollectionId: packages.Id, MaxSelect: 1})
+	grantLines.Fields.Add(&core.RelationField{Name: "creditTypeId", CollectionId: creditTypes.Id, MaxSelect: 1})
 	addNumber(grantLines, "quantity")
+	addAutodates(grantLines)
+	grantLines.AddIndex("idx_package_grant_lines_unique", true, "packageId, creditTypeId", "")
 	save(t, app, grantLines)
 
 	prices := core.NewBaseCollection("price_versions")
-	addText(prices, "packageId", "currency", "status")
+	prices.Fields.Add(&core.RelationField{Name: "packageId", CollectionId: packages.Id, MaxSelect: 1})
+	addText(prices, "currency")
 	addNumber(prices, "listAmount", "saleAmount", "version")
 	addDate(prices, "validFrom", "validTo")
+	addSelect(prices, "status", statuses...)
+	prices.Fields.Add(&core.JSONField{Name: "grantSnapshot"})
+	addAutodates(prices)
 	save(t, app, prices)
 	return app
 }
@@ -176,6 +207,23 @@ func Call(t *testing.T, handler http.Handler, method, url string, body any, head
 	return result
 }
 
+// Raw sends body verbatim as application/json, for malformed or hand-ordered payloads.
+func Raw(t *testing.T, handler http.Handler, method, url, body string, headers map[string]string) Response {
+	t.Helper()
+	request := httptest.NewRequest(method, url, strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	for key, value := range headers {
+		request.Header.Set(key, value)
+	}
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	result := Response{Status: recorder.Code, Body: map[string]any{}}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &result.Body); err != nil {
+		t.Fatalf("%s %s: invalid JSON %q", method, url, recorder.Body.String())
+	}
+	return result
+}
+
 func Bearer(token string) map[string]string {
 	return map[string]string{"Authorization": "Bearer " + token}
 }
@@ -203,6 +251,17 @@ func addNumber(collection *core.Collection, names ...string) {
 	for _, name := range names {
 		collection.Fields.Add(&core.NumberField{Name: name})
 	}
+}
+
+func addSelect(collection *core.Collection, name string, values ...string) {
+	collection.Fields.Add(&core.SelectField{Name: name, MaxSelect: 1, Values: values})
+}
+
+func addAutodates(collection *core.Collection) {
+	collection.Fields.Add(
+		&core.AutodateField{Name: "created", OnCreate: true},
+		&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
+	)
 }
 
 func addDate(collection *core.Collection, names ...string) {

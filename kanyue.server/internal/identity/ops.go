@@ -12,6 +12,7 @@ import (
 	"kanyue.server/internal/audit"
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/httpx"
+	"kanyue.server/internal/jsx"
 	"kanyue.server/internal/records"
 )
 
@@ -143,7 +144,7 @@ func (s *service) changePassword(e *core.RequestEvent, body httpx.Body) (any, er
 	switch {
 	case current == "" || next == "":
 		return nil, &httpx.CodedError{Code: 400, Message: "当前密码和新密码不能为空"}
-	case httpx.JSLength(next) < minPasswordLength:
+	case jsx.Length(next) < minPasswordLength:
 		return nil, &httpx.CodedError{Code: 400, Message: fmt.Sprintf("新密码至少需要 %d 位", minPasswordLength)}
 	case next == current:
 		return nil, &httpx.CodedError{Code: 400, Message: "新密码不能与当前密码相同"}
@@ -210,7 +211,7 @@ func (s *service) register(e *core.RequestEvent, body httpx.Body) (any, error) {
 		return nil, &httpx.CodedError{Code: 400, Message: "手机号格式不正确"}
 	case password == "":
 		return nil, &httpx.CodedError{Code: 400, Message: "密码不能为空"}
-	case httpx.JSLength(password) < minPasswordLength:
+	case jsx.Length(password) < minPasswordLength:
 		return nil, &httpx.CodedError{Code: 400, Message: "密码至少需要 8 位"}
 	case realName == "" && nickName == "":
 		return nil, &httpx.CodedError{Code: 400, Message: "姓名不能为空"}

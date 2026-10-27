@@ -147,3 +147,14 @@ Go 接管场馆、公开课程目录、身份（小程序密码/微信登录、�
 - 匿名或无角色的审计（登录失败、注册关闭）写入会因 `actorRole` 只允许 teacher/admin 而失败，只打日志。
 - 后台注册不传 email，而 `teachers.email` 必填，开启注册后创建会失败（默认关闭）。Go 版顺带把姓名写进 `realName`（Hono 写的是不存在的 `realname`）。
 - 已修正：`students`、`teachers`、`activities` 的 `created` 字段开着 onUpdate（来自 Hono 本地建表脚本），每次登录都会覆盖注册时间。迁移 `kanyue_0002_freeze_created` 关掉它，建表脚本同步改正；已被覆盖的时间无法恢复。
+
+## 阶段 2 记录（2026-10-27，America/Los_Angeles）
+
+Go 接管学员目录（`/ops/students` 列表/新建/修改）、续费跟进（`/ops/course-credits/students/{id}/follow-ups`）、课程目录查询（课程、课点类型、课包、课时、价格的 list/get），以及 `/ops/course-operations` 下课程、课包、课时、价格的新建/修改/状态。模块名 `students`、`course-catalog`。`coursecredit` 包承载课程点路由共用的请求处理（errorCode/details/traceId 错误信封、能力校验、拒绝审计、`X-Trace-Id`），资源查询和后台写入按配置表扩展，后续阶段往表里加资源即可。
+
+验证：契约测试对 Hono 和 Go 都是 14/14（另 2 个需要真实账号密码的阶段 1 用例跳过），读接口逐字节一致；在业务数据副本上起一对隔离的 Go + Hono，用同样的写命令各跑一遍，响应、错误码与落库行一致（含唯一冲突时 PocketBase 批量接口的 `Batch transaction failed.`）。
+
+照搬的 Hono 现状与差异：
+- 课点类型没有写接口；课时没有状态接口；价格是版本化资源，修改和改状态都会新建下一版本，旧版本不动。
+- 课程点命令的执行计数在 Hono 进程内存里（`/ops/course-credits/metrics` 仍走 Hono），Go 执行的命令不计入，直到 metrics 迁移。
+- 未预期错误：Hono 会把原始错误信息回给客户端，Go 统一回“服务器内部错误”并记日志。
