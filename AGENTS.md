@@ -107,6 +107,7 @@ DAO impact:
 | `ikanyue.admin` | `npm run lint`、`TZ=Asia/Shanghai npm test`、`npm run build` |
 | `ikanyue.website` | `npm run lint`、`npm test`、`npm run build`、`npm run test:e2e` |
 | `kanyue.pay` | `bun run typecheck`、`bun test` |
+| `kanyue.server` | `gofmt -l .`、`go vet ./...`、`go test ./...` |
 | 根脚本 | `node --test scripts/native-stack.test.mjs`；OpenSpec 用 `openspec validate <change> --strict` |
 <!--VERIFY-ATTENTION:END-->
 
@@ -141,6 +142,7 @@ DAO impact:
 | `ikanyue.admin` | 运营后台 | React / Vite / SSR | — |
 | `ikanyue.website` | 声乐官网与公开课程目录 | Nuxt 4 | — |
 | `kanyue.pay` | 独立支付网关（当前仅 mock 渠道） | Hono / Bun / 独立 PocketBase | — |
+| `kanyue.server` | Go 重写中的业务服务（内嵌 PocketBase，未迁移接口转发给 Hono）；当前只有小样 | Go / PocketBase v0.32.0 | `openspec/changes/rewrite-studio-backend-in-go` |
 | `ikanyue.m.nuxt`、`ikanyue.flutter` | 旧活动页与规划中的 App，不在当前版本线 | Nuxt / Flutter | — |
 
 - 跨子项目约束见 `GEB.MD` §8“看乐系统边界”；产品与架构文档在 `docs/product`、`docs/architecture`；需求级变更在 `openspec/changes`。
