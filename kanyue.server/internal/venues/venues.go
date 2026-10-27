@@ -61,11 +61,11 @@ func (m Module) Register(se *core.ServeEvent) {
 	}))
 	se.Router.POST("/ops/venues", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 		body := httpx.ReadBody(e)
-		return httpx.Respond(e, func() (any, error) { return save(e, "", body) })
+		return httpx.Respond(e, func() (any, error) { return save(e, "", false, body) })
 	}))
 	se.Router.POST("/ops/venues/{id}", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 		body := httpx.ReadBody(e)
-		return httpx.Respond(e, func() (any, error) { return save(e, strings.TrimSpace(e.Request.PathValue("id")), body) })
+		return httpx.Respond(e, func() (any, error) { return save(e, strings.TrimSpace(e.Request.PathValue("id")), true, body) })
 	}))
 }
 
@@ -81,9 +81,13 @@ func list(app core.App, filter string, admin bool) (listResult, error) {
 	return listResult{Items: items}, nil
 }
 
-func save(e *core.RequestEvent, id string, input httpx.Body) (any, error) {
+func save(e *core.RequestEvent, id string, update bool, input httpx.Body) (any, error) {
 	if err := assertAdmin(e); err != nil {
 		return nil, err
+	}
+	// A blank path id must not fall through to creating a venue.
+	if update && id == "" {
+		return nil, userError("场馆不能为空")
 	}
 	target, err := e.App.FindCollectionByNameOrId(collection)
 	if err != nil {
@@ -91,7 +95,7 @@ func save(e *core.RequestEvent, id string, input httpx.Body) (any, error) {
 	}
 	record := core.NewRecord(target)
 	merged := httpx.Body{}
-	if id != "" {
+	if update {
 		if record, err = e.App.FindRecordById(collection, id); err != nil {
 			return nil, err
 		}
@@ -114,7 +118,7 @@ func save(e *core.RequestEvent, id string, input httpx.Body) (any, error) {
 	}
 	result := project(record, true)
 	action := "ops.venue.create"
-	if id != "" {
+	if update {
 		action = "ops.venue.update"
 	}
 	user := auth.User(e)

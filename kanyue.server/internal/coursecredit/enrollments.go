@@ -99,7 +99,7 @@ func enroll(app core.App, body Body, actor Actor, now time.Time) (map[string]any
 	futureLessons := []map[string]any{}
 	if classRecord != nil {
 		membershipID = ids.Record()
-		if futureLessons, err = futureClassLessons(app, jsx.String(classRecord["id"]), filterTime(at)); err != nil {
+		if futureLessons, err = futureClassLessons(app, jsx.String(classRecord["id"]), at); err != nil {
 			return nil, err
 		}
 	}
@@ -259,7 +259,7 @@ func enrollmentClass(app core.App, classID, studentID string, lines []map[string
 // futureClassLessons lists the class's published lessons starting at or after `from`.
 func futureClassLessons(app core.App, classID, from string) ([]map[string]any, error) {
 	return list(app, "session_classes",
-		`classId="`+records.EscapeFilter(classID)+`" && sessionId.startAt>="`+records.EscapeFilter(from)+`"`+
+		`classId="`+records.EscapeFilter(classID)+`" && sessionId.startAt>="`+records.EscapeFilter(filterTime(from))+`"`+
 			` && sessionId.status!="draft" && sessionId.status!="cancelled"`,
 		"sessionId.startAt", "sessionId")
 }
@@ -368,7 +368,7 @@ func previewRosterSync(app core.App, orderID string, now time.Time) (map[string]
 			"orderId": order["id"], "studentId": order["studentId"], "classId": nil, "lessons": lessons,
 		}), nil
 	}
-	links, err := futureClassLessons(app, jsx.String(classID), filterTime(iso(now)))
+	links, err := futureClassLessons(app, jsx.String(classID), iso(now))
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"regexp"
 	"strings"
@@ -26,7 +27,7 @@ var (
 // or phone, offers a role choice when the phone also belongs to a teacher, and
 // otherwise creates the student.
 func (s *service) wechatLogin(e *core.RequestEvent) error {
-	body := httpx.ReadBody(e)
+	body := readWechatBody(e)
 	query := e.Request.URL.Query()
 	code := firstNonEmpty(
 		strings.TrimSpace(paramText(body["code"])), strings.TrimSpace(paramText(body["authCode"])),
@@ -287,6 +288,27 @@ func isDuplicate(err error) bool {
 		}
 	}
 	return false
+}
+
+// readWechatBody also accepts a JSON body that is itself an encoded object string,
+// as Hono's normalizeRequestBody does.
+func readWechatBody(e *core.RequestEvent) httpx.Body {
+	if !strings.Contains(e.Request.Header.Get("Content-Type"), "application/json") {
+		return httpx.ReadBody(e)
+	}
+	raw, err := io.ReadAll(e.Request.Body)
+	if err != nil {
+		return httpx.Body{}
+	}
+	var text string
+	if json.Unmarshal(raw, &text) == nil {
+		raw = []byte(text)
+	}
+	body := httpx.Body{}
+	if json.Unmarshal(raw, &body) != nil || body == nil {
+		return httpx.Body{}
+	}
+	return body
 }
 
 // objectParam accepts an object or its JSON string form, as WeChat form posts send.

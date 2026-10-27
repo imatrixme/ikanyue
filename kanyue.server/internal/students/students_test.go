@@ -1,7 +1,9 @@
 package students
 
 import (
+	"maps"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -25,6 +27,7 @@ func setup(t *testing.T) (core.App, http.Handler, func(isAdmin bool) map[string]
 	return app, testkit.Serve(t, app, Module{Signer: signer}.Register), token
 }
 
+// Hono: opsStudentAdmin › student management routes require an admin and return normalized lists
 func TestListFiltersSortsAndPages(t *testing.T) {
 	app, handler, token := setup(t)
 	testkit.Create(t, app, "students", map[string]any{"cellphone": "13800000001", "realName": "张三", "nickName": "小张"})
@@ -44,6 +47,10 @@ func TestListFiltersSortsAndPages(t *testing.T) {
 	if _, leaked := first["password"]; leaked || first["created"] == "" || first["lastLoginAt"] != "" {
 		t.Fatalf("projection = %v", first)
 	}
+	keys := slices.Sorted(maps.Keys(first))
+	if !slices.Equal(keys, []string{"avatar", "blocked", "cellphone", "created", "id", "lastLoginAt", "nickName", "realName", "updated"}) {
+		t.Fatalf("projection keys = %v", keys)
+	}
 
 	cases := map[string]int{
 		"/ops/students?q=138":                        2,
@@ -61,6 +68,8 @@ func TestListFiltersSortsAndPages(t *testing.T) {
 	}
 }
 
+// Hono: opsStudentAdmin › admin creates and edits students without replacing a blank password
+// Hono: opsStudentAdmin › student management validates required fields, duplicate cellphones, and missing records
 func TestCreateAndUpdateStudent(t *testing.T) {
 	app, handler, token := setup(t)
 	testkit.Create(t, app, "students", map[string]any{"cellphone": "13800000009", "realName": "已存在"})

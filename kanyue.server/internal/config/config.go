@@ -20,6 +20,18 @@ type Config struct {
 	CourseCreditGrants      bool
 	CourseCreditReservation bool
 	CourseCreditSettlement  bool
+	// Commerce reads Hono's strict switch: only "true" enables online purchase.
+	CourseCommerce  bool
+	PayGatewayURL   string
+	PayServiceToken string
+	PayMockToken    string
+	PayEventToken   string
+	PayMockEnabled  bool
+	// Outbox webhook; Hono's variable names, validated by coursecredit.NewNotificationDispatcher.
+	OutboxWebhookURL       string
+	OutboxWebhookSecret    string
+	OutboxWebhookTimeoutMs string
+	NodeEnv                string
 }
 
 func FromEnv() Config {
@@ -37,6 +49,17 @@ func FromEnv() Config {
 		CourseCreditGrants:      featureSwitch(os.Getenv("COURSE_CREDIT_GRANTS_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCreditReservation: featureSwitch(os.Getenv("COURSE_CREDIT_RESERVATION_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCreditSettlement:  featureSwitch(os.Getenv("COURSE_CREDIT_SETTLEMENT_ENABLED"), os.Getenv("NODE_ENV") != "production"),
+		CourseCommerce:          os.Getenv("COURSE_COMMERCE_ENABLED") == "true",
+		PayGatewayURL:           os.Getenv("PAY_GATEWAY_URL"),
+		PayServiceToken:         os.Getenv("PAY_SERVICE_TOKEN"),
+		PayMockToken:            os.Getenv("PAY_MOCK_TOKEN"),
+		PayEventToken:           os.Getenv("PAY_EVENT_TOKEN"),
+		PayMockEnabled: (os.Getenv("NODE_ENV") == "development" || os.Getenv("NODE_ENV") == "test") &&
+			os.Getenv("PAY_MOCK_ENABLED") == "true",
+		OutboxWebhookURL:       os.Getenv("COURSE_CREDIT_OUTBOX_WEBHOOK_URL"),
+		OutboxWebhookSecret:    os.Getenv("COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET"),
+		OutboxWebhookTimeoutMs: os.Getenv("COURSE_CREDIT_OUTBOX_WEBHOOK_TIMEOUT_MS"),
+		NodeEnv:                os.Getenv("NODE_ENV"),
 	}
 }
 

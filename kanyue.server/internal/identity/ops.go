@@ -89,9 +89,13 @@ func (s *service) loginOps(e *core.RequestEvent, body httpx.Body) (any, error) {
 	if account == "" || !truthy(body["password"]) {
 		return nil, &httpx.CodedError{Code: 400, Message: "账号和密码不能为空"}
 	}
-	teacher, err := e.App.FindFirstRecordByFilter("teachers",
-		"(cellphone = {:account} || username = {:account} || email = {:account})", dbx.Params{"account": account})
-	if err != nil && !isNoRows(err) {
+	// A bound SQL match, not a filter: PocketBase filter text cannot end in a backslash.
+	teacher := &core.Record{}
+	err := e.App.RecordQuery("teachers").AndWhere(dbx.Or(dbx.HashExp{"cellphone": account},
+		dbx.HashExp{"username": account}, dbx.HashExp{"email": account})).Limit(1).One(teacher)
+	if isNoRows(err) {
+		teacher = nil
+	} else if err != nil {
 		return nil, err
 	}
 	if teacher == nil || !teacherPasswordMatches(teacher, password) {

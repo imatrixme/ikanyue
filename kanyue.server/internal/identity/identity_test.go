@@ -213,6 +213,7 @@ func encryptPhone(t *testing.T, sessionKey, iv string, phone map[string]any) str
 	return base64.StdEncoding.EncodeToString(out)
 }
 
+// Hono: courseBookingWechatRoleRoutes › wechat role handlers complete a challenge, list bound roles, and switch by token identity
 func TestWechatLoginCreatesStudentThenOffersRoleChoice(t *testing.T) {
 	sessionKey := base64.StdEncoding.EncodeToString([]byte("0123456789abcdef"))
 	iv := base64.StdEncoding.EncodeToString([]byte("fedcba9876543210"))

@@ -13,11 +13,14 @@ import (
 
 // LedgerModule serves the course-credit ledger: order grants, enrollment and
 // roster sync, batch extend/restore, expiry and reconciliation, the ops
-// ledger reads and the student learning views. It also schedules expiry and
-// daily reconciliation, which Hono left to manual runs.
+// ledger reads, metrics and the student learning views. It also schedules
+// expiry, daily reconciliation and outbox delivery, which Hono left to manual
+// runs or an external worker.
 type LedgerModule struct {
 	Signer        *auth.Signer
 	GrantsEnabled bool
+	// Dispatcher sends outbox events; nil leaves them queued and the delivery route refuses.
+	Dispatcher Dispatcher
 }
 
 // ledgerReads maps ops query routes to resources and the capability they need.
@@ -49,9 +52,9 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 			})
 		})
 	}
-	command := func(fn func(e *core.RequestEvent) (map[string]any, error)) func(*core.RequestEvent) error {
+	command := func(name string, fn func(e *core.RequestEvent) (map[string]any, error)) func(*core.RequestEvent) error {
 		return ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) { return fn(e) })
+			return Command(e, name, func() (map[string]any, error) { return fn(e) })
 		})
 	}
 	router := se.Router
@@ -81,7 +84,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		return getResource(e.App, "settlementExceptions", e.Request.PathValue("id"))
 	}))
 
-	router.POST("/ops/course-credits/orders/{orderId}/grant", command(func(e *core.RequestEvent) (map[string]any, error) {
+	router.POST("/ops/course-credits/orders/{orderId}/grant", command("grantOrderCredits", func(e *core.RequestEvent) (map[string]any, error) {
 		if !m.GrantsEnabled {
 			return nil, Fail("COURSE_CREDIT_FEATURE_DISABLED", "课程点发放尚未开放", map[string]any{"feature": "grants"})
 		}
@@ -90,11 +93,15 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		}
 		return grantOrderCredits(e.App, e.Request.PathValue("orderId"), actorOf(e), clock())
 	}))
-	for path, run := range map[string]func(core.App, batchCommand, int) (map[string]any, error){
-		"extend":          extendBatchExpiry,
-		"restore-expired": restoreExpiredQuantity,
+	for _, batch := range []struct {
+		path, name string
+		run        func(core.App, batchCommand, int) (map[string]any, error)
+	}{
+		{"extend", "extendBatchExpiry", extendBatchExpiry},
+		{"restore-expired", "restoreExpiredQuantity", restoreExpiredQuantity},
 	} {
-		router.POST("/ops/course-credits/batches/{batchId}/"+path, command(func(e *core.RequestEvent) (map[string]any, error) {
+		run := batch.run
+		router.POST("/ops/course-credits/batches/{batchId}/"+batch.path, command(batch.name, func(e *core.RequestEvent) (map[string]any, error) {
 			if err := RequireCapability(auth.User(e), Settlement); err != nil {
 				return nil, err
 			}
@@ -105,7 +112,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 			return run(e.App, batchCommand{BatchID: e.Request.PathValue("batchId"), Body: body, Actor: actorOf(e), Clock: clock}, 0)
 		}))
 	}
-	router.POST("/ops/course-credits/workers/expiry/run", command(func(e *core.RequestEvent) (map[string]any, error) {
+	router.POST("/ops/course-credits/workers/expiry/run", command("expireBatches", func(e *core.RequestEvent) (map[string]any, error) {
 		if err := RequireCapability(auth.User(e), Settlement); err != nil {
 			return nil, err
 		}
@@ -115,7 +122,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		}
 		return expireDue(e.App, actorOf(e), body.Get("limit"), clock())
 	}))
-	router.POST("/ops/course-credits/reconciliation/runs", command(func(e *core.RequestEvent) (map[string]any, error) {
+	router.POST("/ops/course-credits/reconciliation/runs", command("runReconciliation", func(e *core.RequestEvent) (map[string]any, error) {
 		if err := RequireCapability(auth.User(e), Audit); err != nil {
 			return nil, err
 		}
@@ -125,8 +132,25 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		}
 		return runReconciliation(e.App, body.Get("scope"), body.Get("since"), clock)
 	}))
+	outboxes := &outboxRunner{dispatcher: m.Dispatcher}
+	router.POST("/ops/course-credits/workers/outbox/deliver", command("deliverOutbox", func(e *core.RequestEvent) (map[string]any, error) {
+		if err := RequireCapability(auth.User(e), Audit); err != nil {
+			return nil, err
+		}
+		body, err := readOptionalJSONBody(e)
+		if err != nil {
+			return nil, err
+		}
+		return outboxes.deliver(e.App, body.Get("limit"))
+	}))
+	router.GET("/ops/course-credits/outbox/dead-letters", query(Audit, func(e *core.RequestEvent) (any, error) {
+		return newOutbox(e.App, m.Dispatcher).listDeadLetters(queryParams(e, "page", "perPage"))
+	}))
+	router.GET("/ops/course-credits/metrics", query(Audit, func(e *core.RequestEvent) (any, error) {
+		return metricsSnapshot(e.App, defaultMetrics, clock())
+	}))
 
-	router.POST("/ops/course-operations/enrollments", command(func(e *core.RequestEvent) (map[string]any, error) {
+	router.POST("/ops/course-operations/enrollments", command("automaticEnrollment", func(e *core.RequestEvent) (map[string]any, error) {
 		body, err := readJSONBody(e)
 		if err != nil {
 			return nil, err
@@ -145,7 +169,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 	router.GET("/ops/course-operations/enrollments/{orderId}/sync-preview", query(Academic, func(e *core.RequestEvent) (any, error) {
 		return previewRosterSync(e.App, e.Request.PathValue("orderId"), clock())
 	}))
-	router.POST("/ops/course-operations/enrollments/{orderId}/sync", command(func(e *core.RequestEvent) (map[string]any, error) {
+	router.POST("/ops/course-operations/enrollments/{orderId}/sync", command("confirmEnrollmentRosterSync", func(e *core.RequestEvent) (map[string]any, error) {
 		if err := RequireCapability(auth.User(e), Academic); err != nil {
 			return nil, err
 		}
@@ -184,12 +208,15 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		return view.records(studentID, queryParams(e, "page", "perPage", "courseId"))
 	}))
 
-	m.schedule(se.App)
+	m.schedule(se.App, outboxes)
 }
 
-// schedule registers the in-process expiry and reconciliation jobs. They only
-// exist while this module is owned by Go, so Hono never runs them twice.
-func (m LedgerModule) schedule(app core.App) {
+// schedule registers the in-process expiry, reconciliation and outbox jobs. They
+// only exist while this module is owned by Go, so Hono never runs them twice.
+func (m LedgerModule) schedule(app core.App, outboxes *outboxRunner) {
+	if m.Dispatcher != nil {
+		app.Cron().MustAdd("courseCreditOutbox", outboxSchedule, func() { outboxes.tick(app) })
+	}
 	app.Cron().MustAdd("courseCreditExpiry", expirySchedule, func() {
 		actor := Actor{Role: "system", TraceID: "cron-expiry-" + ids.Record()}
 		if _, err := expireDue(app, actor, jsx.Undefined{}, clock()); err != nil {

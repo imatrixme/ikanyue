@@ -11,6 +11,7 @@ import (
 	"kanyue.server/internal/testkit"
 )
 
+// Hono: opsVenues › ops schema defines venues and the default venue is seeded only once
 func TestUpCreatesVenuesOnceAndSeedsTheStudio(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
@@ -24,6 +25,10 @@ func TestUpCreatesVenuesOnceAndSeedsTheStudio(t *testing.T) {
 	applied, err := Up(app)
 	if err != nil || len(applied) != 2 {
 		t.Fatalf("Up = %v, %v", applied, err)
+	}
+	schema, err := app.FindCollectionByNameOrId("venues")
+	if err != nil || schema.Fields.GetByName("bookable").Type() != core.FieldTypeBool {
+		t.Fatalf("venues schema = %v, %v", schema, err)
 	}
 	venues, err := app.FindAllRecords("venues")
 	if err != nil || len(venues) != 1 || venues[0].GetString("name") != "看乐艺术" || !venues[0].GetBool("bookable") {

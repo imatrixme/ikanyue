@@ -61,7 +61,7 @@ func (m CatalogModule) Register(se *core.ServeEvent) {
 		name := route.resource
 		base := "/ops/course-operations/" + route.path
 		se.Router.POST(base, ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, "create"+name, func() (map[string]any, error) {
 				body, err := financeBody(e)
 				if err != nil {
 					return nil, err
@@ -70,7 +70,7 @@ func (m CatalogModule) Register(se *core.ServeEvent) {
 			})
 		}))
 		se.Router.PATCH(base+"/{id}", ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, "update"+name, func() (map[string]any, error) {
 				body, err := financeBody(e)
 				if err != nil {
 					return nil, err
@@ -80,7 +80,7 @@ func (m CatalogModule) Register(se *core.ServeEvent) {
 		}))
 		if route.status {
 			se.Router.POST(base+"/{id}/status", ops(func(e *core.RequestEvent) error {
-				return Command(e, func() (map[string]any, error) {
+				return Command(e, "set"+name+"Status", func() (map[string]any, error) {
 					body, err := financeBody(e)
 					if err != nil {
 						return nil, err
@@ -112,7 +112,7 @@ func (m FollowUpsModule) Register(se *core.ServeEvent) {
 		})
 	}))
 	se.Router.POST(path, m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
-		return Command(e, func() (map[string]any, error) {
+		return Command(e, "recordStudentFollowUp", func() (map[string]any, error) {
 			body, err := financeBody(e)
 			if err != nil {
 				return nil, err

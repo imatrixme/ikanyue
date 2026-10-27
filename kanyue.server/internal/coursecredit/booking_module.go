@@ -78,10 +78,10 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 			})
 		})
 	}
-	studentCommand := func(route func(e *core.RequestEvent, studentID string) map[string]any,
+	studentCommand := func(name string, route func(e *core.RequestEvent, studentID string) map[string]any,
 		run func(core.App, map[string]any) (map[string]any, error)) func(*core.RequestEvent) error {
 		return session(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, name, func() (map[string]any, error) {
 				studentID, err := requireStudent(auth.User(e))
 				if err != nil {
 					return nil, err
@@ -105,9 +105,9 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 			})
 		})
 	}
-	teacherCommand := func(param string, run func(core.App, map[string]any) (map[string]any, error), gated bool) func(*core.RequestEvent) error {
+	teacherCommand := func(name, param string, run func(core.App, map[string]any) (map[string]any, error), gated bool) func(*core.RequestEvent) error {
 		return session(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, name, func() (map[string]any, error) {
 				if gated {
 					if err := m.requireReservation(); err != nil {
 						return nil, err
@@ -135,9 +135,9 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 			})
 		})
 	}
-	opsCommand := func(fn bookingCommand, gated bool) func(*core.RequestEvent) error {
+	opsCommand := func(name string, fn bookingCommand, gated bool) func(*core.RequestEvent) error {
 		return ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, name, func() (map[string]any, error) {
 				if gated {
 					if err := m.requireReservation(); err != nil {
 						return nil, err
@@ -157,8 +157,8 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 		})
 	}
 	// opsRoute runs a command with one path parameter merged over the body.
-	opsRoute := func(param string, run func(core.App, map[string]any) (map[string]any, error), gated bool) func(*core.RequestEvent) error {
-		return opsCommand(func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
+	opsRoute := func(name, param string, run func(core.App, map[string]any) (map[string]any, error), gated bool) func(*core.RequestEvent) error {
+		return opsCommand(name, func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
 			if param != "" {
 				input[param] = path(e, param)
 			}
@@ -181,14 +181,14 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 	router.GET("/v1/student/appointments/{appointmentId}/cancellation-preview", studentQuery(func(e *core.RequestEvent, studentID string) (any, error) {
 		return previewCancellation(e.App, studentID, path(e, "appointmentId"))
 	}))
-	router.POST("/v1/student/appointments", studentCommand(func(_ *core.RequestEvent, studentID string) map[string]any {
+	router.POST("/v1/student/appointments", studentCommand("requestAppointment", func(_ *core.RequestEvent, studentID string) map[string]any {
 		return map[string]any{"studentId": studentID}
 	}, requestAppointment))
 	appointmentOf := func(e *core.RequestEvent, studentID string) map[string]any {
 		return map[string]any{"appointmentId": path(e, "appointmentId"), "studentId": studentID}
 	}
-	router.POST("/v1/student/appointments/{appointmentId}/withdraw", studentCommand(appointmentOf, withdrawAppointment))
-	router.POST("/v1/student/appointments/{appointmentId}/cancel", studentCommand(appointmentOf, cancelAppointment))
+	router.POST("/v1/student/appointments/{appointmentId}/withdraw", studentCommand("withdrawAppointment", appointmentOf, withdrawAppointment))
+	router.POST("/v1/student/appointments/{appointmentId}/cancel", studentCommand("cancelAppointment", appointmentOf, cancelAppointment))
 
 	router.GET("/v1/teacher/booking/dashboard", teacherQuery(func(e *core.RequestEvent, teacherID string) (any, error) {
 		return teacherBookingDashboard(e.App, teacherID)
@@ -202,13 +202,13 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 	router.GET("/v1/teacher/offerings/{offeringId}/availability", teacherQuery(func(e *core.RequestEvent, teacherID string) (any, error) {
 		return teacherAvailability(e.App, teacherID, path(e, "offeringId"))
 	}))
-	router.POST("/v1/teacher/appointments/{appointmentId}/confirm", teacherCommand("appointmentId", confirmAppointment, true))
-	router.POST("/v1/teacher/appointments/{appointmentId}/decline", teacherCommand("appointmentId", declineAppointment, false))
-	router.POST("/v1/teacher/appointments/{appointmentId}/cancel", teacherCommand("appointmentId", cancelAppointment, false))
-	router.POST("/v1/teacher/appointments/{appointmentId}/reschedule", teacherCommand("appointmentId", rescheduleAppointment, false))
-	router.PUT("/v1/teacher/offerings/{offeringId}/availability", teacherCommand("offeringId", saveWeeklyAvailability, false))
-	router.POST("/v1/teacher/offerings/{offeringId}/availability-overrides", teacherCommand("offeringId", createAvailabilityOverride, false))
-	router.POST("/v1/teacher/availability-overrides/{overrideId}/cancel", teacherCommand("overrideId", cancelAvailabilityOverride, false))
+	router.POST("/v1/teacher/appointments/{appointmentId}/confirm", teacherCommand("confirmAppointment", "appointmentId", confirmAppointment, true))
+	router.POST("/v1/teacher/appointments/{appointmentId}/decline", teacherCommand("declineAppointment", "appointmentId", declineAppointment, false))
+	router.POST("/v1/teacher/appointments/{appointmentId}/cancel", teacherCommand("cancelAppointment", "appointmentId", cancelAppointment, false))
+	router.POST("/v1/teacher/appointments/{appointmentId}/reschedule", teacherCommand("rescheduleAppointment", "appointmentId", rescheduleAppointment, false))
+	router.PUT("/v1/teacher/offerings/{offeringId}/availability", teacherCommand("saveTeacherAvailability", "offeringId", saveWeeklyAvailability, false))
+	router.POST("/v1/teacher/offerings/{offeringId}/availability-overrides", teacherCommand("createTeacherAvailabilityOverride", "offeringId", createAvailabilityOverride, false))
+	router.POST("/v1/teacher/availability-overrides/{overrideId}/cancel", teacherCommand("cancelTeacherAvailabilityOverride", "overrideId", cancelAvailabilityOverride, false))
 
 	router.GET("/ops/course-bookings/dashboard", opsQuery(func(e *core.RequestEvent) (any, error) {
 		return opsBookingDashboard(e.App)
@@ -249,11 +249,11 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 		return opsConflicts(e.App, queryParams(e, "page", "perPage", "status", "teacherId"))
 	}))
 
-	router.POST("/ops/course-bookings/appointments", opsCommand(m.createOpsAppointment, false))
-	router.POST("/ops/course-bookings/appointments/{appointmentId}/confirm", opsRoute("appointmentId", confirmAppointment, true))
-	router.POST("/ops/course-bookings/appointments/{appointmentId}/decline", opsRoute("appointmentId", declineAppointment, false))
-	router.POST("/ops/course-bookings/appointments/{appointmentId}/reschedule", opsRoute("appointmentId", rescheduleAppointment, false))
-	router.POST("/ops/course-bookings/appointments/{appointmentId}/cancel", opsCommand(func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
+	router.POST("/ops/course-bookings/appointments", opsCommand("requestAppointment", m.createOpsAppointment, false))
+	router.POST("/ops/course-bookings/appointments/{appointmentId}/confirm", opsRoute("confirmAppointment", "appointmentId", confirmAppointment, true))
+	router.POST("/ops/course-bookings/appointments/{appointmentId}/decline", opsRoute("declineAppointment", "appointmentId", declineAppointment, false))
+	router.POST("/ops/course-bookings/appointments/{appointmentId}/reschedule", opsRoute("rescheduleAppointment", "appointmentId", rescheduleAppointment, false))
+	router.POST("/ops/course-bookings/appointments/{appointmentId}/cancel", opsCommand("cancelAppointment", func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
 		if input["cancellationType"] == "institution" {
 			if err := RequireCapability(auth.User(e), Finance); err != nil {
 				return nil, err
@@ -262,23 +262,23 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 		input["appointmentId"] = path(e, "appointmentId")
 		return cancelAppointment(e.App, input)
 	}, false))
-	router.POST("/ops/course-bookings/policies", opsRoute("", createPolicyRevision, false))
-	saveOfferingRoute := opsCommand(func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
+	router.POST("/ops/course-bookings/policies", opsRoute("configureBookingPolicy", "", createPolicyRevision, false))
+	saveOfferingRoute := opsCommand("configureBookingOffering", func(e *core.RequestEvent, _ Body, input map[string]any) (map[string]any, error) {
 		input["offeringId"] = orChain(path(e, "offeringId"), input["offeringId"], "")
 		return saveOffering(e.App, input)
 	}, false)
 	router.POST("/ops/course-bookings/offerings", saveOfferingRoute)
 	router.PATCH("/ops/course-bookings/offerings/{offeringId}", saveOfferingRoute)
-	router.PUT("/ops/course-bookings/offerings/{offeringId}/availability", opsRoute("offeringId", func(app core.App, input map[string]any) (map[string]any, error) {
+	router.PUT("/ops/course-bookings/offerings/{offeringId}/availability", opsRoute("saveTeacherAvailability", "offeringId", func(app core.App, input map[string]any) (map[string]any, error) {
 		return forOfferingTeacher(app, input, saveWeeklyAvailability)
 	}, false))
-	router.POST("/ops/course-bookings/offerings/{offeringId}/availability-overrides", opsRoute("offeringId", func(app core.App, input map[string]any) (map[string]any, error) {
+	router.POST("/ops/course-bookings/offerings/{offeringId}/availability-overrides", opsRoute("createTeacherAvailabilityOverride", "offeringId", func(app core.App, input map[string]any) (map[string]any, error) {
 		return forOfferingTeacher(app, input, createAvailabilityOverride)
 	}, false))
-	router.POST("/ops/course-bookings/availability-overrides/{overrideId}/cancel", opsRoute("overrideId", cancelOverrideForOperator, false))
-	router.POST("/ops/course-bookings/conflicts/{conflictId}/resolve", opsRoute("conflictId", resolveConflict, false))
-	router.POST("/ops/course-bookings/workers/expire", opsRoute("", expireAppointments, false))
-	router.POST("/ops/course-bookings/workers/fulfill", opsRoute("", fulfillAppointments, false))
+	router.POST("/ops/course-bookings/availability-overrides/{overrideId}/cancel", opsRoute("cancelTeacherAvailabilityOverride", "overrideId", cancelOverrideForOperator, false))
+	router.POST("/ops/course-bookings/conflicts/{conflictId}/resolve", opsRoute("resolveBookingConflict", "conflictId", resolveConflict, false))
+	router.POST("/ops/course-bookings/workers/expire", opsRoute("expireAppointments", "", expireAppointments, false))
+	router.POST("/ops/course-bookings/workers/fulfill", opsRoute("fulfillAppointments", "", fulfillAppointments, false))
 
 	m.schedule(se.App)
 }

@@ -38,8 +38,8 @@
 
 ## 6. Commerce
 
-- [ ] 6.1 Student commerce, ops commerce, payment-event callback, recovery job.
-- [ ] 6.2 Mock payment end-to-end smoke (`scripts/commerce-smoke.mjs`).
+- [x] 6.1 Student commerce, ops commerce, payment-event callback, recovery job.
+- [x] 6.2 Mock payment end-to-end smoke (`scripts/commerce-smoke.mjs`).
 
 ## 7. Admin console (`kanyue.server/ui`)
 

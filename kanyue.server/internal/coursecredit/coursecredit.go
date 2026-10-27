@@ -207,9 +207,10 @@ func Query(e *core.RequestEvent, query func() (any, error)) error {
 	return httpx.Data(e, result)
 }
 
-// Command is Hono's safeCommand: results carry operationId and traceId.
-func Command(e *core.RequestEvent, command func() (map[string]any, error)) error {
-	result, err := command()
+// Command is Hono's safeCommand: results carry operationId and traceId, and the
+// named command is counted in the process metrics.
+func Command(e *core.RequestEvent, name string, command func() (map[string]any, error)) error {
+	result, err := defaultMetrics.measure(name, command)
 	if err != nil {
 		return sendError(e, err)
 	}

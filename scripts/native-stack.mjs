@@ -32,6 +32,8 @@ function settings() {
 }
 const honoPort = (config) => config.HONO_PORT || '1438';
 const goBin = (config) => config.GO_BIN || 'go';
+const honoOwns = (config, module) => String({ ...process.env, ...config }.KANYUE_HONO_MODULES || '')
+  .split(',').map((item) => item.trim()).includes(module);
 function environment(config) {
   // kanyue.server owns PORT and proxies unmigrated routes to Hono; Hono and the seed scripts reach PocketBase through it.
   return { ...process.env, ...config, NODE_ENV: 'development', KANYUE_ENV_FILE: '/dev/null',
@@ -52,7 +54,9 @@ function definition(name, config) {
     gateway: { cwd: pay, command: [config.BUN_BIN, '--watch', 'src/index.ts'], port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
     hono: { cwd: backend, command: [process.execPath, '--watch', 'src/app.js'], env: { PORT: honoPort(config) },
       port: Number(honoPort(config)), url: `http://127.0.0.1:${honoPort(config)}/` },
-    'commerce-worker': { cwd: backend, command: [process.execPath, '--watch', 'scripts/commerce-worker.js'] },
+    // kanyue.server runs commerce recovery in process; the Hono worker idles unless commerce is handed back to Hono.
+    'commerce-worker': { cwd: backend, command: [process.execPath, '--watch', 'scripts/commerce-worker.js'],
+      env: honoOwns(config, 'commerce') ? {} : { COURSE_COMMERCE_ENABLED: 'false' } },
     admin: { cwd: join(root, 'ikanyue.admin'), command: [process.execPath, 'node_modules/vite/bin/vite.js',
       '--host', '127.0.0.1', '--port', config.ADMIN_PORT, '--strictPort'], port: Number(config.ADMIN_PORT), url: `http://127.0.0.1:${config.ADMIN_PORT}/` },
     miniapp: { cwd: join(root, 'ikanyue.taro3'), command: [process.execPath, 'node_modules/@tarojs/cli/bin/taro', 'build', '--type', 'weapp', '--watch'] },

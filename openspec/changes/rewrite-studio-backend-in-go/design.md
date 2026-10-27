@@ -84,11 +84,11 @@
 | 场馆 | `/v1/public/venues`；`/ops/venues*` | 小程序、后台 | Go |
 | 学员 | `/ops/students*`；`/ops/course-credits/students/:id/follow-ups` | 后台 | Go |
 | 课程与课时包 | `/ops/course-credits/{catalog,packages,price-versions,package-grant-lines,…}`；`/v1/public/course-catalog*` | 后台、官网 | Go |
-| 报课与账本 | `/ops/course-operations/enrollments*`；`/ops/course-credits/{orders*,enrollments*,accounts*,student-overview,batches/*,workers/expiry/run,reconciliation/*,settlement-exceptions*,audit-logs*}`；`/v1/student/learning/*` | 后台、小程序 | Go |
+| 报课与账本 | `/ops/course-operations/enrollments*`；`/ops/course-credits/{orders*,enrollments*,accounts*,student-overview,batches/*,workers/expiry/run,workers/outbox/deliver,outbox/dead-letters,metrics,reconciliation/*,settlement-exceptions*,audit-logs*}`；`/v1/student/learning/*` | 后台、小程序 | Go |
 | 约课 | `/v1/student/{booking-options,booking-slots,appointments*}`；`/v1/teacher/{appointments*,offerings/*,availability-overrides/*,booking/dashboard}`；`/ops/course-bookings/*`（除 backfill） | 小程序、后台 | Go |
 | 课表与结算 | `/ops/course-credits/{classes*,sessions*,class-*,session-*,assigned-*}`；`/ops/course-operations/{classes,lessons}*`；`/ops/course-calendar`；`/v1/teacher/{calendar,schedule}`；`/v1/schedule/upcoming` | 后台、小程序 | Go |
 | 线上收款 | `/v1/student/commerce/*`；`/ops/commerce/*`；`/internal/commerce/payment-events` | 小程序、后台、支付网关 | Go |
-| 范围外 | `/v1/activity/*`、`/v1/points/*`、`/v1/reward-items`、`/ops/points/*`、`/ops/reward-items*`、`/ops/course-credits/{migration,shadow,teacher-events,conversion-rules,metrics,outbox}/*`、`/ops/course-bookings/backfill*`、`/v1/course-credits/*`、素材与其他无调用方接口 | — | 继续由 Hono 提供 |
+| 范围外 | `/v1/activity/*`、`/v1/points/*`、`/v1/reward-items`、`/ops/points/*`、`/ops/reward-items*`、`/ops/course-credits/{migration,shadow,teacher-events,conversion-rules}/*`、`/ops/course-bookings/backfill*`、`/v1/course-credits/*`、素材与其他无调用方接口 | — | 继续由 Hono 提供 |
 
 具体端点以契约测试清单为准；迁移某个模块时，先把它的端点逐条列进契约测试。
 
@@ -214,3 +214,54 @@ Go 接管课表与结算，模块名 `sessions`。覆盖范围：
 - 后台“我的学员”（`/ops/course-credits/assigned-students`）在 Hono 中按不存在的 `realname`/`nickname` 字段排序和搜索，PocketBase 返回 400，所以这个接口一直不可用（后台与课堂工作台都在调用）。Go 改用 `realName`/`nickName`，接口恢复正常；这是唯一有意的行为差异，Hono 侧不再修，阶段 8 一并删除。
 - 日历筛选项按 `zh-CN` 排序，Go 用 `x/text/collate` 对应 `localeCompare`。
 - outbox 投递与命令执行计数同阶段 3。
+
+## 阶段 6 记录（2026-10-27，America/Los_Angeles）
+
+Go 接管线上收款，模块名 `commerce`。覆盖范围：
+- 学员端：课程商品目录、下单、收银、订单详情与刷新、模拟支付、退款预览、退款申请与查询。
+- 后台：财务总览、对账与全量恢复、订单列表与详情、代学员退款、单笔订单同步、预约退款重试、课程商品的草稿/发布/下架、异常处理，以及对账单与恢复任务对支付网关的透传。
+- 支付网关回调 `/internal/commerce/payment-events`：只在 `PAY_EVENT_TOKEN` 不少于 32 位时注册，返回裸 JSON，不包信封。
+
+开关与 Hono 一致：
+- `COURSE_COMMERCE_ENABLED` 必须严格等于 `true`，否则不注册任何收款路由。
+- 模拟支付与模拟到账只在 `NODE_ENV` 为 development/test 且 `PAY_MOCK_ENABLED=true` 时注册。
+- compose 默认关闭，服务端新增 `COURSE_COMMERCE_ENABLED`、`PAY_GATEWAY_URL`、`PAY_SERVICE_TOKEN`、`PAY_EVENT_TOKEN` 透传。
+- 发课不受 `COURSE_CREDIT_GRANTS_ENABLED` 控制，与 Hono 相同。
+
+收款恢复（D5）没有用 cron：cron 最小粒度是分钟，Hono 的 `commerce-worker` 每 3 秒一轮。
+- Go 改为进程内 3 秒的定时循环；上一轮未结束时跳过本轮，进程退出时停止。
+- 日志文案与 Hono worker 相同。
+- 本地栈的 Hono `commerce-worker` 进程保留，便于回退；只有 `KANYUE_HONO_MODULES` 含 `commerce` 时才开启它的收款开关，否则空转，避免两边同时恢复。
+- 测试用的 `commerce_offers`、`commerce_cases` 集合结构从本地库导出。
+
+`scripts/commerce-smoke.mjs` 改为黑盒脚本，不再加载 Hono 内部模块：
+- 业务只走 HTTP 接口。
+- 核对数据通过 PocketBase 超级用户 REST 读取。
+- 模拟渠道直接调用支付网关。
+- 原先直接调用的 `sync` 改为后台“同步订单”接口。
+
+验证：
+- Go 测试用内存假网关覆盖下单→支付→发课→预览→退款→到账、退款失败恢复课时、全量恢复、关单、回调鉴权与各类返回、定时恢复、商品草稿/发布/下架与冲突，以及开关关闭。
+- 本地栈上 smoke 普通与阶梯退费两种模式，在 Go 接管和把 `commerce` 交还 Hono 时都通过。阶梯模式包括预约取消的现金退款、渠道失败后重试、网关重启后恢复。
+- 两边 smoke 落库后，对订单、业务订单、支付事件、退款、审计、版本占位、账本操作/批次/事件、版本声明、outbox 共 11 张表做比对：替换编号、时间、哈希后，两种模式的 22 组比对全部一致。
+- 同一份数据分别由 Hono 与 Go 响应 53 个读请求（后台财务、订单各种筛选与拒绝、详情、商品、异常、对账单、恢复任务，学员目录、订单、详情、退款预览、他人订单、退款详情），逐字节一致。
+- 新增契约测试 `contract/commerce.test.mjs`，对 Hono 与 Go 均通过，含后台收款读接口的一致性比对；未开启收款的服务器上自动跳过。
+
+照搬的 Hono 现状与差异：
+- 同一提交键重放商品草稿时，Go 比较退费规则不看键顺序，Hono 用 `JSON.stringify` 比较、键顺序不同会判为冲突。这是唯一有意的行为差异。
+- 回调请求体不是合法 JSON 时照 Hono 返回 503 `RECOVERY_PENDING`。
+- 订单不存在时照 Hono 透出 PocketBase 的 404 文案。
+
+## outbox 与 metrics 接管记录（2026-10-27，America/Los_Angeles）
+
+阶段 3–5 记录里“outbox 投递仍由 Hono 负责、命令执行计数只在 Hono 进程内”的说法已不再成立，以本节为准：
+- `/ops/course-credits/workers/outbox/deliver`、`/ops/course-credits/outbox/dead-letters`、`/ops/course-credits/metrics` 随账本模块（`ledger`）由 Go 提供。
+- outbox 投递（D5）在进程内每分钟一轮；只有配置了 `COURSE_CREDIT_OUTBOX_WEBHOOK_URL` 时才注册定时任务，未配置时事件照常写入并保持排队，手动投递接口返回 `OUTBOX_DISPATCHER_REQUIRED`。
+- 命令执行计数记在 Go 进程内，只统计 Go 执行的命令；把模块交还 Hono 时，两边各自计数。
+
+Hono 业务单元测试的 Go 对照见 `test-parity.md`：每条范围内的 Hono 用例都有 `// Hono:` 标注的 Go 测试，其余列明原因。补测试时修正的 Go 行为：
+- 场馆更新接口的 id 为空时返回 400，不再新建场馆。
+- 运营登录和手机号查找改用参数绑定的 SQL：PocketBase 过滤表达式里的字符串不能以反斜杠结尾，以 `\` 结尾的账号原先返回 500。
+- 微信登录接受被整体编码成 JSON 字符串的请求体，与 Hono 的 `normalizeRequestBody` 一致。
+- `filterTime` 接受毫秒时间戳和时间值；报课查询的未来课节过滤改为在函数内部归一化时间，由源码守卫测试检查所有时间比较。
+

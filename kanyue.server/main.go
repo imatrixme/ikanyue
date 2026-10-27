@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -23,11 +24,16 @@ func main() {
 
 	app.RootCmd.AddCommand(migrations.Command(app))
 
-	// Only serving needs the secret; migrate and superuser commands run without it.
+	// Only serving needs the secret and a valid outbox webhook; migrate and superuser commands run without them.
 	signer, signerErr := auth.NewSigner(cfg.JWTSecret)
+	dispatcher, dispatcherErr := coursecredit.NewNotificationDispatcher(cfg.OutboxWebhookURL, cfg.OutboxWebhookSecret,
+		cfg.OutboxWebhookTimeoutMs, cfg.NodeEnv)
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		if signerErr != nil {
 			return signerErr
+		}
+		if dispatcherErr != nil {
+			return dispatcherErr
 		}
 		return se.Next()
 	})
@@ -44,9 +50,14 @@ func main() {
 				coursecredit.FollowUpsModule{Signer: signer}.Register(se)
 			}},
 			{Name: "course-catalog", Register: coursecredit.CatalogModule{Signer: signer}.Register},
-			{Name: "ledger", Register: coursecredit.LedgerModule{Signer: signer, GrantsEnabled: cfg.CourseCreditGrants}.Register},
+			{Name: "ledger", Register: coursecredit.LedgerModule{Signer: signer, GrantsEnabled: cfg.CourseCreditGrants,
+				Dispatcher: dispatcher}.Register},
 			{Name: "booking", Register: coursecredit.BookingModule{Signer: signer, ReservationEnabled: cfg.CourseCreditReservation}.Register},
 			{Name: "sessions", Register: coursecredit.SessionsModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
+			{Name: "commerce", Register: coursecredit.CommerceModule{Signer: signer, Enabled: cfg.CourseCommerce,
+				Config: coursecredit.CommerceConfig{GatewayURL: cfg.PayGatewayURL, ServiceToken: cfg.PayServiceToken,
+					MockToken: cfg.PayMockToken, EventToken: cfg.PayEventToken, WechatAppID: cfg.WechatAppID, Mock: cfg.PayMockEnabled},
+				RecoveryInterval: 3 * time.Second}.Register},
 		},
 	})
 

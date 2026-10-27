@@ -81,6 +81,7 @@ func TestCatalogProjectsCurrentPricesAndCourseLinks(t *testing.T) {
 	}
 }
 
+// Hono: courseCreditPublicCatalog › public route normalizes unexpected storage failures without leaking details
 func TestCatalogUnavailableWhenSchemaMissing(t *testing.T) {
 	app := testkit.NewApp(t)
 	collection, err := app.FindCollectionByNameOrId("price_versions")
@@ -94,7 +95,7 @@ func TestCatalogUnavailableWhenSchemaMissing(t *testing.T) {
 	}
 	handler := testkit.Serve(t, app, Module{}.Register)
 	result := testkit.Call(t, handler, http.MethodGet, "/v1/public/course-catalog", nil, nil)
-	if result.Code() != 500 || result.Body["errorCode"] != "PUBLIC_CATALOG_UNAVAILABLE" || result.Body["message"] != "公开课程暂时不可用" {
+	if result.Code() != 500 || result.Body["errorCode"] != "PUBLIC_CATALOG_UNAVAILABLE" || result.Body["message"] != "公开课程暂时不可用" || result.Body["data"] != nil {
 		t.Fatalf("got %v", result.Body)
 	}
 }

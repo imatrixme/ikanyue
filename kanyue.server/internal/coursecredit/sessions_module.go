@@ -60,10 +60,10 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 	}
 	path := func(e *core.RequestEvent, name string) string { return e.Request.PathValue(name) }
 	// command runs a checked ops command over Hono's commandMetadata and named fields.
-	command := func(check func(auth.Claims) error, optional bool, input func(e *core.RequestEvent, body Body, actor Actor) map[string]any,
+	command := func(name string, check func(auth.Claims) error, optional bool, input func(e *core.RequestEvent, body Body, actor Actor) map[string]any,
 		run func(core.App, map[string]any) (map[string]any, error)) func(*core.RequestEvent) error {
 		return ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, name, func() (map[string]any, error) {
 				if err := check(auth.User(e)); err != nil {
 					return nil, err
 				}
@@ -108,29 +108,29 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 		}
 	}
 
-	router.POST("/ops/course-credits/classes/{classId}/students/{studentId}/membership", command(academic, false,
+	router.POST("/ops/course-credits/classes/{classId}/students/{studentId}/membership", command("setStudentMembership", academic, false,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			return fields(actor, map[string]any{"classId": path(e, "classId"), "studentId": path(e, "studentId"),
 				"status": body.Get("status"), "effectiveFrom": body.Get("effectiveFrom"), "effectiveTo": body.Get("effectiveTo"),
 				"sourceOrderId": body.Get("sourceOrderId")})
 		}, setStudentMembership))
-	router.POST("/ops/course-credits/classes/{classId}/students/{studentId}/transfer", command(academic, false,
+	router.POST("/ops/course-credits/classes/{classId}/students/{studentId}/transfer", command("transferStudent", academic, false,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			return fields(actor, map[string]any{"fromClassId": path(e, "classId"), "toClassId": body.Get("toClassId"),
 				"studentId": path(e, "studentId"), "effectiveAt": body.Get("effectiveAt"), "sourceOrderId": body.Get("sourceOrderId")})
 		}, transferStudent))
-	router.POST("/ops/course-credits/classes/{classId}/teachers/{teacherId}/assignment", command(academic, false,
+	router.POST("/ops/course-credits/classes/{classId}/teachers/{teacherId}/assignment", command("setTeacherAssignment", academic, false,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			return fields(actor, map[string]any{"classId": path(e, "classId"), "teacherId": path(e, "teacherId"),
 				"role": body.Get("role"), "status": body.Get("status"), "effectiveFrom": body.Get("effectiveFrom"),
 				"effectiveTo": body.Get("effectiveTo")})
 		}, setTeacherAssignment))
-	router.POST("/ops/course-credits/sessions/{sessionId}/publish", command(academic, false,
+	router.POST("/ops/course-credits/sessions/{sessionId}/publish", command("publishSession", academic, false,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			return fields(actor, map[string]any{"sessionId": path(e, "sessionId"), "classIds": body.Get("classIds"),
 				"teacherOverrides": body.Get("teacherOverrides")})
 		}, publishSession))
-	router.POST("/ops/course-credits/sessions/{sessionId}/reschedule", command(academic, false,
+	router.POST("/ops/course-credits/sessions/{sessionId}/reschedule", command("rescheduleSession", academic, false,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			return fields(actor, map[string]any{"newEndAt": body.Get("newEndAt"), "newStartAt": body.Get("newStartAt"),
 				"reason": body.Get("reason"), "sessionId": path(e, "sessionId")})
@@ -138,18 +138,18 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 	settlementInput := func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 		return fields(actor, map[string]any{"reason": body.Get("reason"), "sessionId": path(e, "sessionId")})
 	}
-	router.POST("/ops/course-credits/sessions/{sessionId}/settle", command(settlement, true, settlementInput, settleSession))
-	router.POST("/ops/course-credits/sessions/{sessionId}/reverse-settlement", command(settlement, false, settlementInput, reverseSessionSettlement))
-	router.POST("/ops/course-credits/sessions/{sessionId}/cancel", command(academic, true,
+	router.POST("/ops/course-credits/sessions/{sessionId}/settle", command("settleSession", settlement, true, settlementInput, settleSession))
+	router.POST("/ops/course-credits/sessions/{sessionId}/reverse-settlement", command("reverseSessionSettlement", settlement, false, settlementInput, reverseSessionSettlement))
+	router.POST("/ops/course-credits/sessions/{sessionId}/cancel", command("cancelSession", academic, true,
 		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 			actor.Role = "admin"
 			return bookingInput(body, actor, map[string]any{"sessionId": path(e, "sessionId")})
 		}, cancelSession))
 
 	base := "/ops/course-operations/lessons/{sessionId}"
-	router.POST(base+"/students/{sessionStudentId}/attendance", command(teaching, false, lessonInput("sessionId", "sessionStudentId"), setAttendance))
-	router.POST(base+"/attendance/all-present", command(teaching, false, lessonInput("sessionId"), markAllPresent))
-	router.POST(base+"/teachers/{sessionTeacherId}/actual-status", command(teaching, false, lessonInput("sessionId", "sessionTeacherId"), setActualTeacher))
+	router.POST(base+"/students/{sessionStudentId}/attendance", command("setManualAttendance", teaching, false, lessonInput("sessionId", "sessionStudentId"), setAttendance))
+	router.POST(base+"/attendance/all-present", command("markAllPresent", teaching, false, lessonInput("sessionId"), markAllPresent))
+	router.POST(base+"/teachers/{sessionTeacherId}/actual-status", command("setActualTeacher", teaching, false, lessonInput("sessionId", "sessionTeacherId"), setActualTeacher))
 	router.GET(base+"/settlement-preview", ops(func(e *core.RequestEvent) error {
 		return Query(e, func() (any, error) {
 			if err := RequireCapability(auth.User(e), Settlement); err != nil {
@@ -169,7 +169,7 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 		}
 		root := "/ops/course-operations/" + resource
 		router.POST(root, ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, "create"+resource, func() (map[string]any, error) {
 				body, err := academicBody(e)
 				if err != nil {
 					return nil, err
@@ -178,7 +178,7 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 			})
 		}))
 		router.PATCH(root+"/{id}", ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, "update"+resource, func() (map[string]any, error) {
 				body, err := academicBody(e)
 				if err != nil {
 					return nil, err
@@ -187,7 +187,7 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 			})
 		}))
 		router.POST(root+"/{id}/status", ops(func(e *core.RequestEvent) error {
-			return Command(e, func() (map[string]any, error) {
+			return Command(e, "set"+resource+"Status", func() (map[string]any, error) {
 				body, err := academicBody(e)
 				if err != nil {
 					return nil, err

@@ -50,6 +50,15 @@ func addDays(value string, days float64) string {
 // filterTime renders a time literal the way PocketBase stores dates
 // ("YYYY-MM-DD HH:MM:SS.sssZ") so text comparison orders correctly.
 func filterTime(value any) string {
+	// new Date(value) in Hono: epoch milliseconds and Date values are instants too.
+	switch v := value.(type) {
+	case float64:
+		if !math.IsInf(v, 0) && !math.IsNaN(v) {
+			return strings.Replace(fromMillis(int64(v)), "T", " ", 1)
+		}
+	case time.Time:
+		return strings.Replace(iso(v), "T", " ", 1)
+	}
 	if ms, ok := millis(value); ok {
 		return strings.Replace(fromMillis(ms), "T", " ", 1)
 	}

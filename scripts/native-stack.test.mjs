@@ -35,6 +35,9 @@ test('native definitions do not run Docker or schema initialization during start
   // kanyue.server owns the API port over the existing business data; migrations only run in init.
   assert.match(business, /^go run \. serve --http=127\.0\.0\.1:1437 --dir=\S+business-data$/);
   assert.equal(definition('hono', config).env.PORT, '1438');
+  // Go runs commerce recovery; the Hono worker only works when commerce is handed back to Hono.
+  assert.equal(definition('commerce-worker', { ...config, KANYUE_HONO_MODULES: '' }).env.COURSE_COMMERCE_ENABLED, 'false');
+  assert.deepEqual(definition('commerce-worker', { ...config, KANYUE_HONO_MODULES: 'booking, commerce' }).env, {});
   assert.match(payment, /--migrationsDir=\S+payment-data-migrations --automigrate=false/);
   const env = environment(config);
   assert.equal(env.VITE_OPS_API_BASE, '/ops');

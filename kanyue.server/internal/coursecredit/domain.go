@@ -1,6 +1,8 @@
 package coursecredit
 
 import (
+	"slices"
+
 	"kanyue.server/internal/jsx"
 )
 
@@ -129,6 +131,9 @@ func validateBatchQuantities(batch map[string]any) error {
 }
 
 func moveQuantity(batch map[string]any, from, to string, quantity float64) (map[string]any, error) {
+	if !slices.Contains(bucketNames, from) || !slices.Contains(bucketNames, to) || from == to {
+		return nil, Fail("INVALID_CREDIT_BUCKET", "credit buckets must be known and differ", nil)
+	}
 	if _, err := nonNegativeQuantity(quantity, "quantity"); err != nil {
 		return nil, err
 	}

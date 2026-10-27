@@ -204,6 +204,8 @@ func TestInvalidJSONBody(t *testing.T) {
 	}
 }
 
+// Hono: courseCreditStudentFollowUp › renewal follow-up is an append-only audit entry with a future snooze date
+// Hono: courseCreditStudentFollowUp › renewal follow-up rejects unknown results, past snooze dates and missing students
 func TestFollowUpsRecordAndList(t *testing.T) {
 	app, handler, tokens := setup(t)
 	student := testkit.Create(t, app, "students", map[string]any{"realName": "学员"})
@@ -242,5 +244,13 @@ func TestFollowUpsRecordAndList(t *testing.T) {
 	row, _ := app.FindRecordById("ops_audit_logs", recorded["id"].(string))
 	if row == nil || row.GetString("actorRole") != "teacher" || row.GetString("action") != followUpAction {
 		t.Fatalf("stored follow-up = %v", row)
+	}
+	// Follow-ups are appended; a later one does not rewrite the first.
+	testkit.Call(t, handler, http.MethodPost, path, map[string]any{"status": "contacted", "snoozeUntil": future}, tokens.finance)
+	if items, _ := testkit.Call(t, handler, http.MethodGet, path, nil, tokens.finance).Data()["items"].([]any); len(items) != 2 {
+		t.Fatalf("follow-ups = %v", items)
+	}
+	if kept, _ := app.FindRecordById("ops_audit_logs", recorded["id"].(string)); kept == nil || !strings.Contains(kept.GetString("metadata"), "declined") {
+		t.Fatalf("first follow-up = %v", kept)
 	}
 }

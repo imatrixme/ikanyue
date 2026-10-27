@@ -101,7 +101,9 @@ var resources = map[string]resource{
 var sessionStatuses = []string{"draft", "scheduled", "enrollment_closed", "in_progress", "completed",
 	"settled", "cancelled", "correction_pending"}
 
-// startRangeFilters is Hono's session start-time window for list queries.
+// startRangeFilters is Hono's session start-time window for list queries, rendered in
+// PocketBase's stored format: Hono's ISO "T" literal sorts after every stored time of
+// the same UTC date, which turned the window into whole UTC days.
 func startRangeFilters(query map[string]string) ([]string, error) {
 	filters := []string{}
 	for _, pair := range [][2]string{{"from", ">="}, {"to", "<"}} {
@@ -113,7 +115,7 @@ func startRangeFilters(query map[string]string) ([]string, error) {
 		if !ok {
 			return nil, Fail("OPS_FILTER_DATE_INVALID", "Date filter is invalid", nil)
 		}
-		filters = append(filters, `startAt`+pair[1]+`"`+jsx.ISO(at)+`"`)
+		filters = append(filters, `startAt`+pair[1]+`"`+filterTime(jsx.ISO(at))+`"`)
 	}
 	return filters, nil
 }

@@ -24,6 +24,15 @@ services:
       COURSE_CREDIT_GRANTS_ENABLED: "${COURSE_CREDIT_GRANTS_ENABLED:-false}"
       COURSE_CREDIT_RESERVATION_ENABLED: "${COURSE_CREDIT_RESERVATION_ENABLED:-false}"
       COURSE_CREDIT_SETTLEMENT_ENABLED: "${COURSE_CREDIT_SETTLEMENT_ENABLED:-false}"
+      # Online purchase needs the payment gateway; only "true" enables it. Mock payment never runs in production.
+      COURSE_COMMERCE_ENABLED: "${COURSE_COMMERCE_ENABLED:-false}"
+      PAY_GATEWAY_URL: "${PAY_GATEWAY_URL:-}"
+      PAY_SERVICE_TOKEN: "${PAY_SERVICE_TOKEN:-}"
+      PAY_EVENT_TOKEN: "${PAY_EVENT_TOKEN:-}"
+      # Outbox events go to this signed webhook every minute; URL and secret are set together or not at all.
+      COURSE_CREDIT_OUTBOX_WEBHOOK_URL: "${COURSE_CREDIT_OUTBOX_WEBHOOK_URL:-}"
+      COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET: "${COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET:-}"
+      COURSE_CREDIT_OUTBOX_WEBHOOK_TIMEOUT_MS: "${COURSE_CREDIT_OUTBOX_WEBHOOK_TIMEOUT_MS:-}"
       PUBLIC_ASSET_BASE_URL: "${PUBLIC_ASSET_BASE_URL:-https://kyoss.abcmem.com/ikanyue-mp}"
       DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
       WECHAT_APPID: "${WECHAT_APPID:-}"

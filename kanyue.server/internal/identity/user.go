@@ -216,11 +216,15 @@ func stampLogin(e *core.RequestEvent, record *core.Record, method string) {
 
 // findByCellphone returns nil when no record matches.
 func findByCellphone(app core.App, collection, cellphone string) (*core.Record, error) {
-	record, err := app.FindFirstRecordByFilter(collection, "cellphone = {:cellphone}", dbx.Params{"cellphone": cellphone})
+	record := &core.Record{}
+	err := app.RecordQuery(collection).AndWhere(dbx.HashExp{"cellphone": cellphone}).Limit(1).One(record)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
-	return record, err
+	if err != nil {
+		return nil, err
+	}
+	return record, nil
 }
 
 func isNoRows(err error) bool {
