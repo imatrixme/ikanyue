@@ -661,7 +661,7 @@ func cancelAppointment(app core.App, input map[string]any) (map[string]any, erro
 	} else {
 		cancelled := copyMap(session)
 		cancelled["status"] = "cancelled"
-		if settlement, err = cancellationReleasePlan(cancelled, student, allocations, batches, t.operationID, t.at,
+		if settlement, _, err = studentSettlementPlan(cancelled, student, allocations, batches, t.operationID, t.at,
 			jsx.String(or(input["actorId"], ""))); err != nil {
 			return nil, err
 		}
@@ -788,13 +788,13 @@ func rescheduleAppointment(app core.App, input map[string]any) (map[string]any, 
 			}
 		}
 	}
-	credit, reserved, err := rescheduleCreditPlan(rescheduleInput{session: session, sessionStudent: student, creditType: creditType,
+	credit, outcome, err := rescheduleCreditPlan(rescheduleInput{session: session, sessionStudent: student, creditType: creditType,
 		allocations: allocations, candidates: candidates, allocated: allocated, newStartAt: startAt, at: t.at,
 		operationID: t.operationID, actorID: jsx.String(or(input["actorId"], ""))})
 	if err != nil {
 		return nil, err
 	}
-	if !reserved {
+	if !outcome.reserved {
 		return nil, Fail("APPOINTMENT_ELIGIBILITY_LOST", "新时间没有可用的对应课时", nil)
 	}
 	appointmentID := jsx.String(appointment["id"])

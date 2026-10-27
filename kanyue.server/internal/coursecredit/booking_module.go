@@ -9,7 +9,7 @@ import (
 
 // BookingModule serves one-to-one course booking: student requests, the
 // teacher workbench, ops booking configuration and the appointment workers.
-// Teacher calendar, ops course calendar and schedule backfill stay in Hono.
+// Calendars live in SessionsModule; schedule backfill stays in Hono.
 // It also schedules the expire/fulfill workers, which Hono left to manual runs.
 type BookingModule struct {
 	Signer             *auth.Signer

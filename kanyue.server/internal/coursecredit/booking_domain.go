@@ -675,7 +675,7 @@ func teacherRuleSnapshot(rule map[string]any, courseSpecID string) (map[string]a
 		return nil, Fail("TEACHER_RULE_COURSE_REQUIRED", "Teacher rule course specification is required", map[string]any{"role": "lead"})
 	}
 	if jsx.Truthy(compensation) {
-		if err := validateCancellationCompensation(compensation); err != nil {
+		if err := validateCancellationCompensation(compensation, "lead"); err != nil {
 			return nil, err
 		}
 		lead["cancellationCompensation"] = compensation
@@ -699,8 +699,8 @@ func normalizeCancellationCompensation(value any) any {
 }
 
 // validateCancellationCompensation is the domain's check of a compensation policy.
-func validateCancellationCompensation(value any) error {
-	details := map[string]any{"role": "lead"}
+func validateCancellationCompensation(value any, role string) error {
+	details := map[string]any{"role": role}
 	policy, ok := value.(map[string]any)
 	if !ok {
 		return Fail("TEACHER_CANCELLATION_POLICY_INVALID", "Cancellation compensation must be an object", details)

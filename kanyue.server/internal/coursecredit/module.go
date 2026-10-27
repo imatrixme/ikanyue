@@ -75,7 +75,7 @@ func (m CatalogModule) Register(se *core.ServeEvent) {
 				if err != nil {
 					return nil, err
 				}
-				return updateResource(e.App, name, e.Request.PathValue("id"), actorOf(e), body)
+				return updateResource(e.App, name, e.Request.PathValue("id"), actorOf(e), body, nil)
 			})
 		}))
 		if route.status {
@@ -85,7 +85,7 @@ func (m CatalogModule) Register(se *core.ServeEvent) {
 					if err != nil {
 						return nil, err
 					}
-					return setStatus(e.App, name, e.Request.PathValue("id"), body.Get("status"), actorOf(e))
+					return setStatus(e.App, name, e.Request.PathValue("id"), body.Get("status"), body.Get("reason"), actorOf(e))
 				})
 			}))
 		}

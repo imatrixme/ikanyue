@@ -13,8 +13,8 @@ import (
 	"kanyue.server/internal/jsx"
 )
 
-// Hono's reservationPlanning, reservationRequests, settlementPlanning (release
-// on cancellation), reschedulePlanning and commerce/reservationCancellation:
+// Hono's reservationPlanning, reservationRequests,
+// reschedulePlanning and commerce/reservationCancellation:
 // how an appointment freezes, moves and returns course credit.
 
 const fefoSort = "effectiveExpiresAt,priority,created,id"
@@ -404,114 +404,6 @@ func validateReservedAllocation(allocation map[string]any, seen map[string]bool,
 	return nil
 }
 
-// cancellationReleasePlan is buildStudentSettlementRequests for a cancelled appointment session:
-// every reserved allocation is released back to its batch.
-func cancellationReleasePlan(session, sessionStudent map[string]any, allocations []map[string]any, batches map[string]map[string]any, operationID, at, actorID string) ([]step, error) {
-	if sessionStudent["creditStatus"] != "reserved" {
-		return nil, Fail("SESSION_STUDENT_NOT_RESERVED", "Session student must have reserved credit before settlement", nil)
-	}
-	if len(allocations) == 0 {
-		return nil, Fail("SESSION_ALLOCATION_REQUIRED", "Reserved session credit allocations are required", nil)
-	}
-	ruleVersion, err := cancelledSettlementVersion(session, sessionStudent)
-	if err != nil {
-		return nil, err
-	}
-	context := reservationSession{sessionID: jsx.String(session["id"]), sessionStudent: sessionStudent, operationID: operationID, at: at, actorID: actorID}
-	plan := []step{}
-	seen := map[string]bool{}
-	for _, allocation := range allocations {
-		if err := validateReservedAllocation(allocation, seen, "SETTLEMENT_BATCH_ID_REQUIRED",
-			"DUPLICATE_SETTLEMENT_BATCH", "A batch can appear only once per student settlement"); err != nil {
-			return nil, err
-		}
-		record := batches[jsx.String(allocation["batchId"])]
-		if record == nil {
-			return nil, Fail("SETTLEMENT_BATCH_NOT_FOUND", "Reserved allocation batch was not found", map[string]any{"batchId": allocation["batchId"]})
-		}
-		if record["studentId"] != sessionStudent["studentId"] {
-			return nil, Fail("SETTLEMENT_BATCH_STUDENT_MISMATCH", "Allocation batch belongs to another student", nil)
-		}
-		batch := normalizeBookingBatch(record, map[string]any{"kind": "course", "consumable": true})
-		quantity := allocation["quantity"].(float64)
-		next, target, err := releaseFrozen(batch, quantity, at)
-		if err != nil {
-			return nil, err
-		}
-		version := positiveVersion(batch["version"])
-		next["version"] = version + 1
-		status := "released"
-		if target == "expiredQuantity" {
-			status = "expired"
-		}
-		id := jsx.String(next["id"])
-		plan = append(plan,
-			versionClaim("credit_batch", id, version, operationID),
-			update("credit_batches", id, map[string]any{
-				"availableQuantity": next["availableQuantity"], "consumedQuantity": next["consumedQuantity"],
-				"expiredQuantity": next["expiredQuantity"], "frozenQuantity": next["frozenQuantity"],
-				"status": next["status"], "version": next["version"],
-			}),
-			update("session_credit_allocations", jsx.String(allocation["id"]), map[string]any{"status": status}),
-			create("credit_events", context.creditEvent(next, "RELEASE", quantity, "frozenQuantity", target, "session_settlement", map[string]any{
-				"allocationId": allocation["id"], "attendanceStatus": sessionStudent["attendanceStatus"],
-				"immediateExpiry": target == "expiredQuantity", "ruleSource": "institution_cancelled", "ruleVersion": ruleVersion,
-			})))
-	}
-	version := positiveVersion(sessionStudent["version"])
-	studentID := jsx.String(sessionStudent["id"])
-	return append(plan,
-		versionClaim("session_student", studentID, version, operationID),
-		update("session_students", studentID, map[string]any{"creditStatus": "released", "settledAt": at, "version": version + 1}),
-	), nil
-}
-
-// cancelledSettlementVersion is settlementDecision for a cancelled session: rule snapshots must be valid.
-func cancelledSettlementVersion(session, sessionStudent map[string]any) (any, error) {
-	if _, ok := sessionStudent["attendanceStatus"].(string); !ok {
-		return nil, Fail("ATTENDANCE_STATUS_REQUIRED", "Session student attendance status is required", nil)
-	}
-	attendance, err := ruleSnapshot(session["attendanceRuleSnapshot"], "ATTENDANCE_RULE_SNAPSHOT_REQUIRED")
-	if err != nil {
-		return nil, err
-	}
-	settlement, err := ruleSnapshot(session["settlementRuleSnapshot"], "SETTLEMENT_RULE_SNAPSHOT_REQUIRED")
-	if err != nil {
-		return nil, err
-	}
-	for _, status := range []string{"present", "late", "leave", "absent"} {
-		if err := settlementAction(attendance[status], status, "attendance"); err != nil {
-			return nil, err
-		}
-	}
-	if err := settlementAction(settlement["cancelled"], "cancelled", "settlement"); err != nil {
-		return nil, err
-	}
-	return settlement["version"], nil
-}
-
-func ruleSnapshot(value any, code string) (map[string]any, error) {
-	snapshot, ok := value.(map[string]any)
-	if !ok || len(snapshot) == 0 {
-		return nil, Fail(code, "Session requires an immutable rule snapshot", nil)
-	}
-	if !isInt(snapshot["version"]) || snapshot["version"].(float64) <= 0 {
-		return nil, Fail("RULE_SNAPSHOT_VERSION_INVALID", "Rule snapshot version must be a positive integer", nil)
-	}
-	return snapshot, nil
-}
-
-func settlementAction(action any, status, source string) error {
-	if action == "consume" || action == "release" {
-		return nil
-	}
-	details := map[string]any{"source": source, "status": status}
-	if action != nil {
-		details["action"] = action
-	}
-	return Fail("SETTLEMENT_ACTION_INVALID", "Settlement action for "+status+" must be consume or release", details)
-}
-
 // rescheduleInput is planRescheduledStudent's input.
 type rescheduleInput struct {
 	session, sessionStudent, creditType map[string]any
@@ -521,21 +413,29 @@ type rescheduleInput struct {
 	actorID                             string
 }
 
+// rescheduleOutcome is planRescheduledStudent's summary: whether credit stayed reserved,
+// the quantity still missing, and the allocations kept, released and newly frozen.
+type rescheduleOutcome struct {
+	reserved                  bool
+	missing                   float64
+	retained, released, added []any
+}
+
 // rescheduleCreditPlan is buildRescheduleStudentRequests: keep allocations still valid at the new
-// start, release the rest and freeze replacements FEFO. It reports whether credit stayed reserved.
-func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
+// start, release the rest and freeze replacements FEFO.
+func rescheduleCreditPlan(input rescheduleInput) ([]step, rescheduleOutcome, error) {
 	if input.sessionStudent["creditStatus"] != "reserved" {
-		return nil, false, Fail("RESCHEDULE_STUDENT_NOT_RESERVED", "Only reserved session students require revalidation", nil)
+		return nil, rescheduleOutcome{}, Fail("RESCHEDULE_STUDENT_NOT_RESERVED", "Only reserved session students require revalidation", nil)
 	}
 	required := input.session["requiredQuantity"]
 	if !isInt(required) || required.(float64) <= 0 {
-		return nil, false, Fail("SESSION_CREDIT_QUANTITY_INVALID", "Session required quantity must be a positive integer", nil)
+		return nil, rescheduleOutcome{}, Fail("SESSION_CREDIT_QUANTITY_INVALID", "Session required quantity must be a positive integer", nil)
 	}
 	if input.creditType["kind"] != "course" || input.creditType["consumable"] != true {
-		return nil, false, Fail("SESSION_CREDIT_TYPE_INVALID", "Session must require an exact consumable course credit", nil)
+		return nil, rescheduleOutcome{}, Fail("SESSION_CREDIT_TYPE_INVALID", "Session must require an exact consumable course credit", nil)
 	}
 	if len(input.allocations) == 0 {
-		return nil, false, Fail("SESSION_ALLOCATION_REQUIRED", "Reserved session credit allocations are required", nil)
+		return nil, rescheduleOutcome{}, Fail("SESSION_ALLOCATION_REQUIRED", "Reserved session credit allocations are required", nil)
 	}
 	// mergeBatchRecords: candidates in FEFO order, allocated batches overriding or appended.
 	order := []string{}
@@ -560,37 +460,39 @@ func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
 	metadata := func(allocationID any) map[string]any {
 		return map[string]any{"allocationId": allocationID, "newStartAt": input.newStartAt, "oldStartAt": input.session["startAt"]}
 	}
+	outcome := rescheduleOutcome{retained: []any{}, released: []any{}, added: []any{}}
 	retained, released := []step{}, []step{}
 	retainedQuantity := 0.0
 	seen := map[string]bool{}
 	for _, allocation := range input.allocations {
 		if err := validateReservedAllocation(allocation, seen, "RESCHEDULE_BATCH_ID_REQUIRED",
 			"DUPLICATE_RESCHEDULE_BATCH", "A batch can appear only once per student revalidation"); err != nil {
-			return nil, false, err
+			return nil, rescheduleOutcome{}, err
 		}
 		batchID := jsx.String(allocation["batchId"])
 		record := batches[batchID]
 		if record == nil {
-			return nil, false, Fail("RESCHEDULE_BATCH_NOT_FOUND", "Reserved allocation batch was not found", nil)
+			return nil, rescheduleOutcome{}, Fail("RESCHEDULE_BATCH_NOT_FOUND", "Reserved allocation batch was not found", nil)
 		}
 		if record["studentId"] != input.sessionStudent["studentId"] {
-			return nil, false, Fail("RESCHEDULE_BATCH_STUDENT_MISMATCH", "Allocation batch belongs to another student", nil)
+			return nil, rescheduleOutcome{}, Fail("RESCHEDULE_BATCH_STUDENT_MISMATCH", "Allocation batch belongs to another student", nil)
 		}
 		batch := normalizeBookingBatch(record, input.creditType)
 		quantity := allocation["quantity"].(float64)
 		valid, err := serviceTimeValid(batch, input.newStartAt)
 		if err != nil {
-			return nil, false, err
+			return nil, rescheduleOutcome{}, err
 		}
 		if valid {
 			retainedQuantity += quantity
+			outcome.retained = append(outcome.retained, allocation["id"])
 			retained = append(retained, update("session_credit_allocations", jsx.String(allocation["id"]),
 				map[string]any{"reservedForStartAt": input.newStartAt}))
 			continue
 		}
 		next, target, err := releaseFrozen(batch, quantity, input.at)
 		if err != nil {
-			return nil, false, err
+			return nil, rescheduleOutcome{}, err
 		}
 		version := positiveVersion(batch["version"])
 		next["version"] = float64(version + 1)
@@ -599,6 +501,7 @@ func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
 		if target == "expiredQuantity" {
 			status = "expired"
 		}
+		outcome.released = append(outcome.released, allocation["id"])
 		released = append(released,
 			versionClaim("credit_batch", batchID, version, input.operationID),
 			update("credit_batches", batchID, map[string]any{
@@ -609,11 +512,12 @@ func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
 			create("credit_events", context.creditEvent(next, "RELEASE", quantity, "frozenQuantity", target, "session_reschedule", metadata(allocation["id"]))))
 	}
 	if retainedQuantity > required.(float64) {
-		return nil, false, Fail("RESCHEDULE_ALLOCATION_EXCESS", "Retained allocation exceeds session requirement", nil)
+		return nil, rescheduleOutcome{}, Fail("RESCHEDULE_ALLOCATION_EXCESS", "Retained allocation exceeds session requirement", nil)
 	}
 	plan := append(retained, released...)
 	reserved := true
-	if remaining := required.(float64) - retainedQuantity; remaining > 0 {
+	remaining := required.(float64) - retainedQuantity
+	if remaining > 0 {
 		values := make([]map[string]any, len(order))
 		for i, id := range order {
 			values[i] = batches[id]
@@ -621,13 +525,16 @@ func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
 		reservation, err := planReservation(values, remaining, reservationContext{creditType: input.creditType, now: input.at,
 			creditTypeID: jsx.String(input.session["requiredCreditTypeId"]), sessionStart: input.newStartAt})
 		if err != nil {
-			return nil, false, err
+			return nil, rescheduleOutcome{}, err
 		}
 		reserved = reservation.missing == 0
 		if reserved {
 			movements, err := buildReservationMovements(reservation)
 			if err != nil {
-				return nil, false, err
+				return nil, rescheduleOutcome{}, err
+			}
+			for _, movement := range movements {
+				outcome.added = append(outcome.added, movement.allocationID)
 			}
 			plan = append(plan, context.movementPlan(movements, input.newStartAt, "session_reschedule", func(allocationID string) map[string]any {
 				return metadata(allocationID)
@@ -637,13 +544,15 @@ func rescheduleCreditPlan(input rescheduleInput) ([]step, bool, error) {
 	status, reason := "reserved", ""
 	if !reserved {
 		status, reason = "credit_insufficient", "reschedule_credit_insufficient"
+		outcome.missing = remaining
 	}
+	outcome.reserved = reserved
 	version := positiveVersion(input.sessionStudent["version"])
 	studentID := jsx.String(input.sessionStudent["id"])
 	return append(plan,
 		versionClaim("session_student", studentID, version, input.operationID),
 		update("session_students", studentID, map[string]any{"creditStatus": status, "eligibilityReason": reason, "version": version + 1}),
-	), reserved, nil
+	), outcome, nil
 }
 
 // commerceID is commerce/planning's id(): a short hash of the JSON-encoded parts.

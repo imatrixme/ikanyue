@@ -33,8 +33,8 @@
 
 ## 5. Sessions and settlement
 
-- [ ] 5.1 Classes, sessions, publish/cancel/reschedule, calendars and schedules.
-- [ ] 5.2 Attendance, settlement, reverse settlement; parity check against Hono.
+- [x] 5.1 Classes, sessions, publish/cancel/reschedule, calendars and schedules.
+- [x] 5.2 Attendance, settlement, reverse settlement; parity check against Hono.
 
 ## 6. Commerce
 

@@ -19,6 +19,7 @@ type Config struct {
 	OpsRegistrationEnabled  bool
 	CourseCreditGrants      bool
 	CourseCreditReservation bool
+	CourseCreditSettlement  bool
 }
 
 func FromEnv() Config {
@@ -35,6 +36,7 @@ func FromEnv() Config {
 		OpsRegistrationEnabled:  Truthy(os.Getenv("OPS_REGISTRATION_ENABLED")),
 		CourseCreditGrants:      featureSwitch(os.Getenv("COURSE_CREDIT_GRANTS_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCreditReservation: featureSwitch(os.Getenv("COURSE_CREDIT_RESERVATION_ENABLED"), os.Getenv("NODE_ENV") != "production"),
+		CourseCreditSettlement:  featureSwitch(os.Getenv("COURSE_CREDIT_SETTLEMENT_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 	}
 }
 

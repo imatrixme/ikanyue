@@ -52,6 +52,70 @@ var resources = map[string]resource{
 			"validTo", "version", "status", "created"},
 		statuses: []string{"draft", "active", "inactive"},
 	},
+	"classes": {
+		collection: "classes", sort: "-termStart,name",
+		fields: []string{"id", "code", "name", "courseSpecId", "defaultCreditTypeId", "termStart",
+			"termEnd", "capacity", "location", "status", "created", "updated"},
+		statuses: []string{"draft", "active", "completed", "cancelled"},
+	},
+	"classStudents": {
+		collection: "class_students", sort: "-effectiveFrom",
+		fields: []string{"id", "classId", "studentId", "status", "effectiveFrom", "effectiveTo",
+			"sourceOrderId", "created", "updated"},
+		statuses:     []string{"invited", "active", "paused", "completed", "cancelled"},
+		filterFields: []string{"classId", "studentId"},
+	},
+	"classTeachers": {
+		collection: "class_teachers", sort: "role,teacherId",
+		fields: []string{"id", "classId", "teacherId", "role", "status", "effectiveFrom", "effectiveTo",
+			"created", "updated"},
+		statuses:     []string{"active", "inactive"},
+		filterFields: []string{"classId", "teacherId"},
+	},
+	"sessions": {
+		collection: "sessions", sort: "-startAt",
+		fields: []string{"id", "code", "title", "status", "startAt", "endAt", "location",
+			"requiredCreditTypeId", "requiredQuantity", "rosterVersion", "version",
+			"settlementOperationId", "correctionBaseStatus", "created", "updated"},
+		statuses: sessionStatuses,
+	},
+	"sessionClasses": {
+		collection: "session_classes", sort: "sessionId",
+		fields:       []string{"id", "sessionId", "classId", "created", "updated"},
+		filterFields: []string{"sessionId", "classId"},
+	},
+	"sessionStudents": {
+		collection: "session_students", sort: "studentId",
+		fields: []string{"id", "sessionId", "studentId", "sourceClassIds", "attendanceStatus", "creditStatus",
+			"eligibilityReason", "checkedInAt", "settledAt", "version", "created", "updated"},
+		filterFields: []string{"sessionId", "studentId", "attendanceStatus", "creditStatus"},
+	},
+	"sessionTeachers": {
+		collection: "session_teachers", sort: "role,teacherId",
+		fields: []string{"id", "sessionId", "teacherId", "role", "assignmentSource", "actualStatus",
+			"creditStatus", "created", "updated"},
+		filterFields: []string{"sessionId", "teacherId", "actualStatus", "creditStatus"},
+	},
+}
+
+var sessionStatuses = []string{"draft", "scheduled", "enrollment_closed", "in_progress", "completed",
+	"settled", "cancelled", "correction_pending"}
+
+// startRangeFilters is Hono's session start-time window for list queries.
+func startRangeFilters(query map[string]string) ([]string, error) {
+	filters := []string{}
+	for _, pair := range [][2]string{{"from", ">="}, {"to", "<"}} {
+		value := query[pair[0]]
+		if value == "" {
+			continue
+		}
+		at, ok := jsx.DateParse(value)
+		if !ok {
+			return nil, Fail("OPS_FILTER_DATE_INVALID", "Date filter is invalid", nil)
+		}
+		filters = append(filters, `startAt`+pair[1]+`"`+jsx.ISO(at)+`"`)
+	}
+	return filters, nil
 }
 
 // listQueryNames are the query parameters Hono's generic list handler forwards.
@@ -89,6 +153,13 @@ func listResource(app core.App, name string, query map[string]string) (page, err
 		if value := query[field]; value != "" {
 			filters = append(filters, field+`="`+records.EscapeFilter(value)+`"`)
 		}
+	}
+	if name == "sessions" {
+		ranges, err := startRangeFilters(query)
+		if err != nil {
+			return page{}, err
+		}
+		filters = append(filters, ranges...)
 	}
 	result, err := records.Page(app, config.collection, strings.Join(filters, " && "), config.sort, pageNumber, perPage)
 	if err != nil {

@@ -18,6 +18,7 @@ type bookingFixture struct {
 	ops, student, teacher, otherTeacher    map[string]string
 	studentID, teacherID, specID, creditID string
 	policyID, offeringID                   string
+	signer                                 *auth.Signer
 }
 
 func bookingSetup(t *testing.T, reservation bool) bookingFixture {
@@ -47,7 +48,8 @@ func bookingSetup(t *testing.T, reservation bool) bookingFixture {
 
 	handler := testkit.Serve(t, app,
 		LedgerModule{Signer: signer, GrantsEnabled: true}.Register,
-		BookingModule{Signer: signer, ReservationEnabled: reservation}.Register)
+		BookingModule{Signer: signer, ReservationEnabled: reservation}.Register,
+		SessionsModule{Signer: signer, SettlementEnabled: true}.Register)
 	f := bookingFixture{
 		app: app, handler: handler,
 		ops:          sign(operator.Id, "teacher", auth.Claims{"scope": auth.OpsScope, "courseCreditCapabilities": []string{Finance, Academic}}),
@@ -55,6 +57,7 @@ func bookingSetup(t *testing.T, reservation bool) bookingFixture {
 		teacher:      sign(teacher.Id, "teacher", auth.Claims{"courseCreditCapabilities": []string{Teacher}}),
 		otherTeacher: sign(other.Id, "teacher", auth.Claims{"courseCreditCapabilities": []string{Teacher}}),
 		studentID:    student.Id, teacherID: teacher.Id, specID: spec.Id, creditID: credit.Id,
+		signer: signer,
 	}
 	ok(t, f.call(t, f.ops, http.MethodPost, "/ops/course-operations/enrollments",
 		map[string]any{"studentId": student.Id, "packageId": pkg.Id, "priceVersionId": price.Id}, "enroll"), "enroll")

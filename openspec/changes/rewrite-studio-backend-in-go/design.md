@@ -86,7 +86,7 @@
 | 课程与课时包 | `/ops/course-credits/{catalog,packages,price-versions,package-grant-lines,…}`；`/v1/public/course-catalog*` | 后台、官网 | Go |
 | 报课与账本 | `/ops/course-operations/enrollments*`；`/ops/course-credits/{orders*,enrollments*,accounts*,student-overview,batches/*,workers/expiry/run,reconciliation/*,settlement-exceptions*,audit-logs*}`；`/v1/student/learning/*` | 后台、小程序 | Go |
 | 约课 | `/v1/student/{booking-options,booking-slots,appointments*}`；`/v1/teacher/{appointments*,offerings/*,availability-overrides/*,booking/dashboard}`；`/ops/course-bookings/*`（除 backfill） | 小程序、后台 | Go |
-| 课表与结算 | `/ops/course-credits/{classes*,sessions*,class-*,session-*}`；`/ops/course-operations/lessons/*`；`/ops/course-calendar`；`/v1/teacher/{calendar,schedule}`；`/v1/schedule/upcoming` | 后台、小程序 | Go |
+| 课表与结算 | `/ops/course-credits/{classes*,sessions*,class-*,session-*,assigned-*}`；`/ops/course-operations/{classes,lessons}*`；`/ops/course-calendar`；`/v1/teacher/{calendar,schedule}`；`/v1/schedule/upcoming` | 后台、小程序 | Go |
 | 线上收款 | `/v1/student/commerce/*`；`/ops/commerce/*`；`/internal/commerce/payment-events` | 小程序、后台、支付网关 | Go |
 | 范围外 | `/v1/activity/*`、`/v1/points/*`、`/v1/reward-items`、`/ops/points/*`、`/ops/reward-items*`、`/ops/course-credits/{migration,shadow,teacher-events,conversion-rules,metrics,outbox}/*`、`/ops/course-bookings/backfill*`、`/v1/course-credits/*`、素材与其他无调用方接口 | — | 继续由 Hono 提供 |
 
@@ -186,4 +186,31 @@ Go 接管约课，模块名 `booking`：学员可约课程与时段、预约申�
 照搬的 Hono 现状与差异：
 - 展开的关联记录（教师、学员等）按超级用户视图输出，与 Hono 经 PocketBase REST 读到的一致（含 `email`）；这同时修正了阶段 3 账本查询中展开记录少字段的差异。冲突列表等原样输出记录的接口因此会带出关联账号的邮箱等字段，后台改造时再收窄。
 - `cutoffAt` 无效时照 Hono 返回 500 `Invalid time value`。
+- outbox 投递与命令执行计数同阶段 3。
+
+## 阶段 5 记录（2026-10-27，America/Los_Angeles）
+
+Go 接管课表与结算，模块名 `sessions`。覆盖范围：
+- 班级与课堂的增改和状态，包括 `/ops/course-operations/{classes,lessons}*` 与 `/ops/course-credits/` 下的列表和详情。
+- 学员入班、转班与教师任课。
+- 课堂发布、改期和取消：排课占位、预留课程点的保留/释放/补扣，取消时按结算规则释放。
+- 出勤与一键全到、教师实到确认、结算预览、结算与撤销结算。
+- 机构日历、教师后台日历、教师端日历与课表、首页近期课程，以及后台“我的学员/班级/课堂”。
+
+结算与撤销结算受 `COURSE_CREDIT_SETTLEMENT_ENABLED` 控制，默认值与 Hono 相同（非 production 开、production 关），compose 默认关。本阶段没有新增定时任务。`/v1/course-credits/*`（学员课堂列表与自助预留）、`teacher-events` 和排课回填仍留在 Hono。测试用的 `class_teachers` 集合结构从本地库导出。
+
+验证：
+- Go 测试覆盖两条完整链路：
+  - 建班→入班→任课→建课→发布→改期→冲突→取消。
+  - 约课课堂的出勤→实到→完成→预览→结算→重放→撤销→更正出勤→重新结算，含功能开关、权限与各类拒绝路径。
+- 新增契约测试 `contract/sessions.test.mjs`，对 Hono 与 Go 均通过，含后台课表读接口和结算预览的一致性比对。
+- 对账方法同阶段 4：两份数据副本，一份由 Go 接管全部模块，另一份把 `sessions` 交还 Hono，同样的幂等键与 trace 执行 126 个请求。
+  - 写操作包括建班、入班、转班与重放、任课、建课、发布与重放、教师替换、冲突、改期、出勤、实到、取消、约课课堂的完整结算与撤销链路。
+  - 每轮写操作后再读一遍全部日历、课表和列表。
+  - 替换生成的编号、时间和哈希后，响应全部一致，18 张相关表的落库行一致。
+  - 同一课堂内多个班级、学员的排列顺序依赖随机 id，两侧本来就不固定，比较时按内容排序后再比。
+
+照搬的 Hono 现状与差异：
+- 后台“我的学员”（`/ops/course-credits/assigned-students`）在 Hono 中按不存在的 `realname`/`nickname` 字段排序和搜索，PocketBase 返回 400，所以这个接口一直不可用（后台与课堂工作台都在调用）。Go 改用 `realName`/`nickName`，接口恢复正常；这是唯一有意的行为差异，Hono 侧不再修，阶段 8 一并删除。
+- 日历筛选项按 `zh-CN` 排序，Go 用 `x/text/collate` 对应 `localeCompare`。
 - outbox 投递与命令执行计数同阶段 3。

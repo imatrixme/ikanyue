@@ -49,6 +49,40 @@ var adminSchemas = map[string]adminSchema{
 		validate:   validatePriceVersion,
 		revisioned: true,
 	},
+	"classes": {
+		collection: "classes",
+		fields: []string{"code", "name", "courseSpecId", "defaultCreditTypeId", "termStart", "termEnd",
+			"capacity", "location", "status", "metadata"},
+		statuses: []string{"draft", "active", "completed", "cancelled"},
+		validate: validateClass,
+	},
+	"lessons": {
+		collection: "sessions",
+		fields: []string{"code", "title", "status", "startAt", "endAt", "location", "requiredCreditTypeId",
+			"requiredQuantity", "attendanceRuleSnapshot", "settlementRuleSnapshot", "teacherRuleSnapshot",
+			"rosterVersion", "version", "originType"},
+		statuses: []string{"draft", "scheduled", "enrollment_closed", "in_progress", "completed", "cancelled"},
+		validate: validateLesson,
+	},
+}
+
+// lessonDefaults are server-owned on create; clients only send lesson facts.
+func lessonDefaults() map[string]any {
+	return map[string]any{
+		"attendanceRuleSnapshot": map[string]any{"version": 1.0},
+		"settlementRuleSnapshot": map[string]any{"version": 1.0},
+		"teacherRuleSnapshot":    map[string]any{"version": 1.0},
+		"rosterVersion":          1.0,
+		"version":                1.0,
+	}
+}
+
+// lessonTransitions are the direct status edits; publishing a draft needs the publish command.
+var lessonTransitions = map[string][]string{
+	"draft":             {"cancelled"},
+	"scheduled":         {"enrollment_closed", "in_progress", "completed", "cancelled"},
+	"enrollment_closed": {"in_progress", "completed", "cancelled"},
+	"in_progress":       {"completed", "cancelled"},
 }
 
 func createResource(app core.App, name string, actor Actor, input Body) (map[string]any, error) {
@@ -57,6 +91,9 @@ func createResource(app core.App, name string, actor Actor, input Body) (map[str
 	if err != nil {
 		return nil, err
 	}
+	if name == "lessons" && data["status"] != "draft" {
+		return nil, Fail("LESSON_MUST_START_DRAFT", "新课堂必须先保存为草稿", nil)
+	}
 	id := ids.Record()
 	if err := commit(app, config.collection, "", id, data, auditEntry(actor, name, id, "create", map[string]any{})); err != nil {
 		return nil, err
@@ -64,7 +101,8 @@ func createResource(app core.App, name string, actor Actor, input Body) (map[str
 	return map[string]any{"id": id, "resource": name, "status": or(data["status"], "active")}, nil
 }
 
-func updateResource(app core.App, name, id string, actor Actor, input Body) (map[string]any, error) {
+// updateResource edits a resource in place; reason is the status command's reason, if any.
+func updateResource(app core.App, name, id string, actor Actor, input Body, reason any) (map[string]any, error) {
 	if id == "" {
 		return nil, Fail("ADMIN_RESOURCE_ID_REQUIRED", "资源编号不能为空", nil)
 	}
@@ -74,9 +112,15 @@ func updateResource(app core.App, name, id string, actor Actor, input Body) (map
 		return nil, err
 	}
 	current := records.JSON(record)
+	if name == "lessons" && (current["status"] == "settled" || current["status"] == "correction_pending") {
+		return nil, Fail("LESSON_IMMUTABLE_AFTER_SETTLEMENT", "已核销课堂不能直接修改", nil)
+	}
 	data, err := normalizeResourceInput(name, input, current)
 	if err != nil {
 		return nil, err
+	}
+	if name == "lessons" {
+		return updateLesson(app, id, current, data, actor, reason)
 	}
 	if config.revisioned {
 		return createRevision(app, name, current, data, actor)
@@ -87,7 +131,7 @@ func updateResource(app core.App, name, id string, actor Actor, input Body) (map
 	return map[string]any{"id": id, "resource": name, "status": or(data["status"], or(current["status"], "active"))}, nil
 }
 
-func setStatus(app core.App, name, id string, status any, actor Actor) (map[string]any, error) {
+func setStatus(app core.App, name, id string, status, reason any, actor Actor) (map[string]any, error) {
 	if text, ok := status.(string); !ok || !slices.Contains(adminSchemas[name].statuses, text) {
 		return nil, Fail("ADMIN_RESOURCE_STATUS_INVALID", "资源状态无效", map[string]any{"status": status})
 	}
@@ -96,7 +140,41 @@ func setStatus(app core.App, name, id string, status any, actor Actor) (map[stri
 			return nil, err
 		}
 	}
-	return updateResource(app, name, id, actor, Body{Values: map[string]any{"status": status}, Keys: []string{"status"}})
+	return updateResource(app, name, id, actor, Body{Values: map[string]any{"status": status}, Keys: []string{"status"}}, reason)
+}
+
+// updateLesson is AdminResourceCommandService.updateLesson: a versioned teaching
+// command, because published lessons carry rosters, claims and credit.
+func updateLesson(app core.App, id string, current, data map[string]any, actor Actor, reason any) (map[string]any, error) {
+	from, _ := current["status"].(string)
+	if from != data["status"] && !slices.Contains(lessonTransitions[from], jsx.String(data["status"])) {
+		return nil, Fail("LESSON_STATUS_TRANSITION_INVALID", "课堂状态流转无效；草稿发布必须使用发布命令",
+			map[string]any{"current": current["status"], "next": data["status"]})
+	}
+	if data["status"] == "completed" && from != "completed" {
+		if start, ok := millis(current["startAt"]); !ok || start > clock().UnixMilli() {
+			return nil, Fail("LESSON_NOT_STARTED", "课堂开始后才能结束", nil)
+		}
+	}
+	if data["status"] == "cancelled" && from != "draft" {
+		return nil, Fail("LESSON_CANCELLATION_COMMAND_REQUIRED", "已排课课堂必须使用课堂取消命令", nil)
+	}
+	input := map[string]any{"actorId": actor.ID, "actorRole": actor.Role, "idempotencyKey": actor.IdempotencyKey,
+		"traceId": actor.TraceID, "reason": reason}
+	t, err := prepareTeaching(app, "updateLesson", input, map[string]any{"id": id, "data": data})
+	if err != nil || t.replayed != nil {
+		return t.replayed, err
+	}
+	version := positiveVersion(current["version"])
+	result := map[string]any{"id": id, "operationId": t.operationID, "resource": "lessons", "status": data["status"]}
+	changes := copyMap(data)
+	changes["version"] = version + 1
+	return t.commit(app, []step{
+		t.operation(input, "adjust", "session", id, "", map[string]any{"id": id, "status": data["status"]}, result),
+		versionClaim("session", id, version, t.operationID),
+		update("sessions", id, changes),
+		create("ops_audit_logs", auditEntry(actor, "lessons", id, "update", map[string]any{})),
+	}, result)
 }
 
 func validatePackagePublication(app core.App, packageID string) error {
@@ -199,8 +277,21 @@ func normalizeResourceInput(name string, input Body, current map[string]any) (ma
 	if len(unknown) > 0 {
 		return nil, Fail("ADMIN_RESOURCE_FIELD_INVALID", "请求包含不支持的字段", map[string]any{"fields": unknown})
 	}
+	values := input.Values
+	var defaults map[string]any
+	if name == "lessons" {
+		if _, ok := values["originType"]; !ok {
+			if _, stored := current["originType"]; current == nil || !stored {
+				values = copyMap(values)
+				values["originType"] = "admin"
+			}
+		}
+		if current == nil {
+			defaults = lessonDefaults()
+		}
+	}
 	data := map[string]any{}
-	for _, source := range []map[string]any{current, input.Values} {
+	for _, source := range []map[string]any{defaults, current, values} {
 		for _, field := range config.fields {
 			if value, ok := source[field]; ok {
 				data[field] = value
@@ -221,6 +312,43 @@ func validateCourseSpec(data map[string]any) error {
 		positiveInteger(data, "durationMinutes", "COURSE_DURATION_INVALID"),
 		oneOf(data, "status", []string{"draft", "active", "inactive"}, "COURSE_STATUS_INVALID"),
 	)
+}
+
+func validateClass(data map[string]any) error {
+	return first(
+		requiredText(data, "code", "CLASS_CODE_REQUIRED"),
+		requiredText(data, "name", "CLASS_NAME_REQUIRED"),
+		requiredText(data, "courseSpecId", "COURSE_ID_REQUIRED"),
+		requiredText(data, "defaultCreditTypeId", "CREDIT_TYPE_ID_REQUIRED"),
+		optional(data, "capacity", positiveInteger, "CLASS_CAPACITY_INVALID"),
+		optionalLaterDate(data, "termEnd", "termStart", "CLASS_TERM_INVALID"),
+		oneOf(data, "status", []string{"draft", "active", "completed", "cancelled"}, "CLASS_STATUS_INVALID"),
+	)
+}
+
+func validateLesson(data map[string]any) error {
+	return first(
+		requiredText(data, "code", "LESSON_CODE_REQUIRED"),
+		requiredText(data, "title", "LESSON_TITLE_REQUIRED"),
+		oneOf(data, "status", []string{"draft", "scheduled", "enrollment_closed", "in_progress", "completed", "cancelled"}, "LESSON_STATUS_INVALID"),
+		validDate(data, "startAt", "LESSON_START_INVALID"),
+		laterDate(data, "endAt", "startAt", "LESSON_END_INVALID"),
+		requiredText(data, "requiredCreditTypeId", "CREDIT_TYPE_ID_REQUIRED"),
+		positiveInteger(data, "requiredQuantity", "LESSON_QUANTITY_INVALID"),
+		requiredObject(data, "attendanceRuleSnapshot", "ATTENDANCE_RULE_SNAPSHOT_REQUIRED"),
+		requiredObject(data, "settlementRuleSnapshot", "SETTLEMENT_RULE_SNAPSHOT_REQUIRED"),
+		requiredObject(data, "teacherRuleSnapshot", "TEACHER_RULE_SNAPSHOT_REQUIRED"),
+		positiveInteger(data, "rosterVersion", "LESSON_ROSTER_VERSION_INVALID"),
+		positiveInteger(data, "version", "LESSON_VERSION_INVALID"),
+		oneOf(data, "originType", []string{"class", "appointment", "admin"}, "LESSON_ORIGIN_TYPE_INVALID"),
+	)
+}
+
+func requiredObject(data map[string]any, key, code string) error {
+	if object, ok := data[key].(map[string]any); ok && len(object) > 0 {
+		return nil
+	}
+	return Fail(code, "规则快照不能为空", nil)
 }
 
 func validatePackage(data map[string]any) error {
@@ -374,12 +502,17 @@ func optionalLaterDate(data map[string]any, key, startKey, code string) error {
 	if err := validDate(data, startKey, code); err != nil {
 		return err
 	}
+	return laterDate(data, key, startKey, code)
+}
+
+// laterDate: a valid end strictly after the start; an invalid start never passes.
+func laterDate(data map[string]any, key, startKey, code string) error {
 	if err := validDate(data, key, code); err != nil {
 		return err
 	}
 	end, _ := jsx.DateParse(jsx.Get(data, key))
-	start, _ := jsx.DateParse(jsx.Get(data, startKey))
-	if !end.After(start) {
+	start, ok := jsx.DateParse(jsx.Get(data, startKey))
+	if !ok || !end.After(start) {
 		return Fail(code, "结束时间必须晚于开始时间", nil)
 	}
 	return nil

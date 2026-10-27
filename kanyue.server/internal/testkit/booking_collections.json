@@ -2091,5 +2091,311 @@
     "indexes": [],
     "name": "commerce_audit",
     "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "session_teachers",
+        "hidden": false,
+        "id": "relation3470418728",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "sessionTeacherId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_credit_rules",
+        "hidden": false,
+        "id": "relation2459071147",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "ruleId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select1883776062",
+        "maxSelect": 1,
+        "name": "eventType",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "earn",
+          "compensate",
+          "confirm",
+          "reverse",
+          "adjust"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "number1305137124",
+        "max": null,
+        "min": null,
+        "name": "quantityDelta",
+        "onlyInt": false,
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "pending",
+          "confirmed",
+          "reversed"
+        ]
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "credit_operations",
+        "hidden": false,
+        "id": "relation3311094084",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "operationId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_credit_events",
+        "hidden": false,
+        "id": "relation1417504201",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "confirmationOfEventId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teacher_credit_events",
+        "hidden": false,
+        "id": "relation2869567275",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "reversalOfEventId",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text1001949196",
+        "max": 0,
+        "min": 0,
+        "name": "reason",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_3113323990",
+    "indexes": [
+      "CREATE INDEX idx_teacher_credit_events_teacher_created ON teacher_credit_events (teacherId, created)",
+      "CREATE INDEX idx_teacher_credit_events_session_teacher ON teacher_credit_events (sessionTeacherId)",
+      "CREATE UNIQUE INDEX idx_teacher_credit_events_confirmation ON teacher_credit_events (confirmationOfEventId) WHERE confirmationOfEventId IS NOT NULL AND confirmationOfEventId != ''"
+    ],
+    "name": "teacher_credit_events",
+    "type": "base"
+  },
+  {
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "classes",
+        "hidden": false,
+        "id": "relation3088027820",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "classId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "teachers",
+        "hidden": false,
+        "id": "relation3913794691",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "teacherId",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "relation"
+      },
+      {
+        "hidden": false,
+        "id": "select1466534506",
+        "maxSelect": 1,
+        "name": "role",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "lead",
+          "assistant",
+          "observer",
+          "evaluator"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "select2063623452",
+        "maxSelect": 1,
+        "name": "status",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "active",
+          "inactive"
+        ]
+      },
+      {
+        "hidden": false,
+        "id": "date3010959846",
+        "max": "",
+        "min": "",
+        "name": "effectiveFrom",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "date2631055313",
+        "max": "",
+        "min": "",
+        "name": "effectiveTo",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "date"
+      },
+      {
+        "hidden": false,
+        "id": "autodate2990389176",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate3332085495",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "id": "pbc_2116198705",
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_class_teachers_open ON class_teachers (classId, teacherId, role) WHERE effectiveTo IS NULL OR effectiveTo = ''",
+      "CREATE INDEX idx_class_teachers_class_status ON class_teachers (classId, status)",
+      "CREATE INDEX idx_class_teachers_teacher_status ON class_teachers (teacherId, status)"
+    ],
+    "name": "class_teachers",
+    "type": "base"
   }
 ]

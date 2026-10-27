@@ -46,6 +46,7 @@ func main() {
 			{Name: "course-catalog", Register: coursecredit.CatalogModule{Signer: signer}.Register},
 			{Name: "ledger", Register: coursecredit.LedgerModule{Signer: signer, GrantsEnabled: cfg.CourseCreditGrants}.Register},
 			{Name: "booking", Register: coursecredit.BookingModule{Signer: signer, ReservationEnabled: cfg.CourseCreditReservation}.Register},
+			{Name: "sessions", Register: coursecredit.SessionsModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
 		},
 	})
 
