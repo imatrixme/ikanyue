@@ -1,0 +1,162 @@
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  align-items: stretch;
+  gap: var(--ky-space-12);
+}
+
+.contact-search-card {
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--ky-space-8);
+  color: var(--primary-foreground);
+  background: var(--primary-hover);
+  border-radius: var(--ky-radius-md);
+}
+
+.contact-search-card > p:first-of-type {
+  margin-top: var(--ky-space-5);
+  color: var(--on-primary-muted);
+  font-size: var(--ky-web-caption);
+  font-weight: var(--ky-font-weight-bold);
+}
+
+.contact-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ky-space-2);
+  margin-top: var(--ky-space-2);
+  color: var(--primary-foreground);
+  font-size: var(--ky-web-title-sm);
+  font-weight: var(--ky-font-weight-bold);
+  line-height: var(--ky-web-title-line);
+}
+
+.contact-phone svg {
+  flex: 0 0 auto;
+  color: var(--on-primary-muted);
+}
+
+.contact-wechat-qr {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 220px);
+  margin: var(--ky-space-6) 0 0;
+}
+
+.contact-wechat-qr img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--card);
+  border-radius: var(--ky-radius-sm);
+}
+
+.contact-wechat-qr figcaption {
+  margin-top: var(--ky-space-2);
+  color: var(--on-primary-muted);
+  font-size: var(--ky-web-body-sm);
+  text-align: center;
+}
+
+.contact-preparation {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: var(--ky-space-4);
+}
+
+.contact-preparation__eyebrow {
+  color: var(--primary);
+  font-size: var(--ky-web-caption);
+  font-weight: var(--ky-font-weight-bold);
+}
+
+.contact-preparation h2 {
+  max-width: 14em;
+  margin-top: var(--ky-space-3);
+  color: var(--card-foreground);
+  font-size: var(--ky-web-heading);
+  line-height: var(--ky-web-title-line);
+}
+
+.contact-preparation ul {
+  display: grid;
+  gap: var(--ky-space-5);
+  margin-top: var(--ky-space-8);
+  list-style: none;
+}
+
+.contact-preparation li {
+  display: grid;
+  grid-template-columns: var(--ky-icon-size-md) 1fr;
+  gap: var(--ky-space-3);
+  padding-bottom: var(--ky-space-5);
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+}
+
+.contact-preparation li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.contact-preparation li svg {
+  color: var(--primary);
+}
+
+.contact-preparation li span {
+  display: grid;
+  gap: var(--ky-space-1);
+}
+
+.contact-preparation strong {
+  color: var(--card-foreground);
+}
+
+.consultation-process .section-heading {
+  margin-bottom: var(--ky-space-8);
+}
+
+.consultation-process ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ky-space-8);
+  list-style: none;
+}
+
+.consultation-process li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ky-space-3) var(--ky-space-4);
+  padding-top: var(--ky-space-5);
+  border-top: 2px solid var(--primary);
+}
+
+.consultation-process li > span {
+  color: var(--primary);
+  font-size: var(--ky-web-caption);
+  font-weight: var(--ky-font-weight-bold);
+}
+
+.consultation-process li > svg {
+  justify-self: end;
+  color: var(--primary);
+}
+
+.consultation-process li > div {
+  grid-column: 1 / -1;
+}
+
+.consultation-process h3 {
+  color: var(--card-foreground);
+  font-size: var(--ky-web-title-sm);
+}
+
+.consultation-process p {
+  margin-top: var(--ky-space-2);
+  color: var(--muted-foreground);
+}
