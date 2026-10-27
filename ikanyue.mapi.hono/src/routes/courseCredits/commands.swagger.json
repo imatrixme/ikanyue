@@ -1,0 +1,277 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "课程点命令接口",
+    "version": "2.0.0",
+    "description": "课程点业务命令由 Hono 执行，PocketBase 仅通过 SDK Batch API 提供事务存储。"
+  },
+  "paths": {
+    "/ops/course-credits/orders/{orderId}/grant": {
+      "post": {
+        "summary": "按已支付订单发放课程点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "发放结果或稳定业务错误。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/students/{studentId}/membership": {
+      "post": {
+        "summary": "设置学员班级成员状态",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "studentId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClassMembershipCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "班级成员关系变更结果，不直接改变课程点。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/students/{studentId}/transfer": {
+      "post": {
+        "summary": "将学员转入另一班级",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "studentId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClassTransferCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "跨班转移结果，不直接改变课程点。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/classes/{classId}/teachers/{teacherId}/assignment": {
+      "post": {
+        "summary": "设置班级教师和角色",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "classId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "teacherId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClassTeacherAssignmentCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "班级教师有效期关系变更结果。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/sessions/{sessionId}/publish": {
+      "post": {
+        "summary": "发布课堂并固化去重名单及实际教师",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionPublicationCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "课堂发布、名单快照和教师快照结果。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/teacher-events/{teacherCreditEventId}/confirm": {
+      "post": {
+        "summary": "确认待结算教师课堂点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "teacherCreditEventId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TeacherCreditConfirmationCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "追加确认事件并更新课堂教师状态，原收益事件保持不变。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/ops/course-credits/outbox/dead-letters": {
+      "get": {
+        "summary": "查看通知投递死信摘要",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "perPage", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "不包含原始通知 payload 的死信摘要分页。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    },
+    "/v1/course-credits/session-students/{sessionStudentId}/reserve": {
+      "post": {
+        "summary": "学员为自己的课堂冻结课程点",
+        "tags": ["CourseCredits"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "sessionStudentId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "X-Trace-Id", "in": "header", "required": false, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionReservationCommand" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "预约结果、兑换提示、余额不足或稳定业务错误。",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CourseCreditCommandResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClassMembershipCommand": {
+        "type": "object",
+        "required": ["status", "effectiveFrom"],
+        "properties": {
+          "status": { "type": "string", "enum": ["invited", "active", "paused", "completed", "cancelled"] },
+          "effectiveFrom": { "type": "string", "format": "date-time" },
+          "effectiveTo": { "type": "string", "format": "date-time", "nullable": true },
+          "sourceOrderId": { "type": "string", "nullable": true }
+        }
+      },
+      "ClassTransferCommand": {
+        "type": "object",
+        "required": ["toClassId", "effectiveAt"],
+        "properties": {
+          "toClassId": { "type": "string" },
+          "effectiveAt": { "type": "string", "format": "date-time" },
+          "sourceOrderId": { "type": "string", "nullable": true }
+        }
+      },
+      "ClassTeacherAssignmentCommand": {
+        "type": "object",
+        "required": ["role", "status", "effectiveFrom"],
+        "properties": {
+          "role": { "type": "string", "enum": ["lead", "assistant", "observer", "evaluator"] },
+          "status": { "type": "string", "enum": ["active", "inactive"] },
+          "effectiveFrom": { "type": "string", "format": "date-time" },
+          "effectiveTo": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "SessionPublicationCommand": {
+        "type": "object",
+        "required": ["classIds"],
+        "properties": {
+          "classIds": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "teacherOverrides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["teacherId", "role"],
+              "properties": {
+                "teacherId": { "type": "string" },
+                "role": { "type": "string", "enum": ["lead", "assistant", "observer", "evaluator"] },
+                "assignmentSource": { "type": "string", "enum": ["session_override", "substitute"] },
+                "actualStatus": { "type": "string", "enum": ["planned", "confirmed", "absent", "cancelled"] }
+              }
+            }
+          }
+        }
+      },
+      "SessionReservationCommand": {
+        "type": "object",
+        "properties": {
+          "authorizationId": {
+            "type": "string",
+            "description": "有效的自动兑换授权；仅在精确课程点不足时使用。"
+          },
+          "targetTermEnd": {
+            "type": "string",
+            "format": "date-time",
+            "description": "仅 TARGET_TERM_END 兑换规则需要。"
+          }
+        }
+      },
+      "TeacherCreditConfirmationCommand": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 4,
+            "description": "授权确认教师课堂点的审计原因。"
+          }
+        }
+      },
+      "CourseCreditCommandResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": { "type": "object", "nullable": true },
+          "errorCode": { "type": "string", "nullable": true },
+          "details": { "type": "object", "nullable": true },
+          "operationId": { "type": "string", "nullable": true },
+          "traceId": { "type": "string", "nullable": true }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

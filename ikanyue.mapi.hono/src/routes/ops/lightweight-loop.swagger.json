@@ -1,0 +1,517 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "积分兑换轻量运营接口",
+    "version": "2.0.0",
+    "description": "微信线上轻量分叉保留登录、学员积分、实物列表、线下兑换扣分和场馆管理接口。"
+  },
+  "paths": {
+    "/ops/auth/login": {
+      "post": {
+        "summary": "管理员登录",
+        "tags": ["OpsAuth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OpsLoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/auth/me": {
+      "get": {
+        "summary": "查看当前管理员",
+        "tags": ["OpsAuth"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/points/students/{studentId}": {
+      "get": {
+        "summary": "查看学员积分余额",
+        "tags": ["OpsPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "studentId", "in": "path", "required": true, "schema": { "type": "string", "example": "student_1" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 } },
+          { "name": "perPage", "in": "query", "schema": { "type": "integer", "example": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回余额和近期积分事件。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentPointsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/points/students": {
+      "get": {
+        "summary": "查看学员积分目录",
+        "description": "仅返回学员基础展示信息和积分余额，用于管理员选择学员加分或线下兑换。",
+        "tags": ["OpsPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string", "example": "张同学" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 } },
+          { "name": "perPage", "in": "query", "schema": { "type": "integer", "example": 20 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回学员积分目录。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentPointsListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/points/students/{studentId}/earn": {
+      "post": {
+        "summary": "为学员增加积分",
+        "tags": ["OpsPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "studentId", "in": "path", "required": true, "schema": { "type": "string", "example": "student_1" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddPointsRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "积分增加成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentPointsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/points/offline-redeem": {
+      "post": {
+        "summary": "线下实物兑换扣分",
+        "description": "管理员选择实物后由服务端按实物价格扣除积分，并记录兑换事件。",
+        "tags": ["OpsPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OfflineRedeemRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "兑换成功或余额不足等业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentPointsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/reward-items": {
+      "get": {
+        "summary": "管理员查看实物列表",
+        "tags": ["OpsRewards"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["active", "inactive"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "返回实物列表。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RewardItemsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "新增实物",
+        "tags": ["OpsRewards"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RewardItemInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "新增成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/reward-items/{id}/image": {
+      "post": {
+        "summary": "上传或替换实物图片",
+        "tags": ["OpsRewards"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["imageFile"],
+                "properties": {
+                  "imageFile": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功后返回带公开预览 URL 的实物。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OpsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/points/me": {
+      "get": {
+        "summary": "学员查看自己的积分",
+        "tags": ["StudentPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "返回当前学员余额和积分事件。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentPointsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reward-items": {
+      "get": {
+        "summary": "学员查看可兑换和不可兑换实物",
+        "tags": ["StudentPoints"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "按当前余额拆分可兑换和不可兑换列表。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RewardAvailabilityResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/public/venues": {
+      "get": {
+        "summary": "公开场馆列表",
+        "description": "无需登录；只返回启用场馆，按 sortOrder 排序。",
+        "tags": ["Venues"],
+        "responses": {
+          "200": {
+            "description": "启用场馆列表。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/venues": {
+      "get": {
+        "summary": "管理员查看场馆（含停用）",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "全部场馆。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "新增场馆",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VenueInput" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "新增成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/venues/{id}": {
+      "post": {
+        "summary": "编辑、停用或恢复场馆",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VenueInput" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OpsLoginRequest": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string", "example": "admin" },
+          "password": { "type": "string", "example": "secret" }
+        }
+      },
+      "AddPointsRequest": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": { "type": "integer", "minimum": 1, "example": 20 },
+          "reason": { "type": "string", "example": "课堂表现" },
+          "note": { "type": "string", "example": "线下活动奖励" }
+        }
+      },
+      "OfflineRedeemRequest": {
+        "type": "object",
+        "required": ["studentId", "itemId"],
+        "properties": {
+          "studentId": { "type": "string", "example": "student_1" },
+          "itemId": { "type": "string", "example": "reward_1" },
+          "note": { "type": "string", "example": "已线下领取" }
+        }
+      },
+      "RewardItemInput": {
+        "type": "object",
+        "required": ["name", "pointsPrice"],
+        "properties": {
+          "name": { "type": "string", "example": "文具礼包" },
+          "description": { "type": "string", "example": "线下领取" },
+          "image": { "type": "string", "format": "uri", "description": "兼容旧数据的外部图片 URL" },
+          "pointsPrice": { "type": "integer", "minimum": 1, "example": 80 },
+          "status": { "type": "string", "enum": ["active", "inactive"], "example": "active" }
+        }
+      },
+      "RewardItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "image": { "type": "string", "format": "uri" },
+          "pointsPrice": { "type": "integer" },
+          "status": { "type": "string" }
+        }
+      },
+      "StudentPointsResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "studentId": { "type": "string" },
+              "balance": { "type": "integer" },
+              "events": { "type": "array", "items": { "type": "object" } },
+              "pagination": { "type": "object" }
+            }
+          }
+        }
+      },
+      "StudentPointsListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "realName": { "type": "string" },
+                    "nickName": { "type": "string" },
+                    "cellphone": { "type": "string" },
+                    "avatar": { "type": "string" },
+                    "balance": { "type": "integer" }
+                  }
+                }
+              },
+              "pagination": { "type": "object" }
+            }
+          }
+        }
+      },
+      "RewardItemsResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } }
+        }
+      },
+      "RewardAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "currentPoints": { "type": "integer" },
+              "redeemableItems": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } },
+              "lockedItems": { "type": "array", "items": { "$ref": "#/components/schemas/RewardItem" } }
+            }
+          }
+        }
+      },
+      "OpsResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "message": { "type": "string", "nullable": true },
+          "data": { "type": "object" }
+        }
+      },
+      "Venue": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "example": "看乐艺术" },
+          "intro": { "type": "string" },
+          "address": { "type": "string" },
+          "openingHours": { "type": "string" },
+          "phone": { "type": "string" },
+          "bookable": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["active", "inactive"], "description": "仅 ops 接口返回" },
+          "sortOrder": { "type": "integer", "description": "仅 ops 接口返回" }
+        }
+      },
+      "VenueInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 40 },
+          "intro": { "type": "string", "maxLength": 120 },
+          "address": { "type": "string", "maxLength": 120 },
+          "openingHours": { "type": "string", "maxLength": 80 },
+          "phone": { "type": "string", "maxLength": 20 },
+          "bookable": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["active", "inactive"] },
+          "sortOrder": { "type": "integer" }
+        }
+      },
+      "VenueResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "data": { "$ref": "#/components/schemas/Venue" }
+        }
+      },
+      "VenueListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "data": {
+            "type": "object",
+            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Venue" } } }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

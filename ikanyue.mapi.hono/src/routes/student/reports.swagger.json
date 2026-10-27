@@ -1,0 +1,429 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "学员评估报告接口",
+    "version": "1.0.0",
+    "description": "学员在小程序端查看自己评估报告的列表和详情。接口从认证上下文获取学员身份，不允许跨学员读取报告。"
+  },
+  "paths": {
+    "/v1/student/reports": {
+      "get": {
+        "summary": "查询我的评估报告",
+        "description": "返回当前登录学员自己的评估报告摘要列表，默认按创建时间倒序排列。",
+        "tags": ["Student"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，从 1 开始",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "description": "每页数量，最大 100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "排序字段，默认 -created",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "-created",
+              "example": "-created"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。项目 Web 响应保持 HTTP 200，通过 code 表示业务状态。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportListResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "查询成功",
+                    "value": {
+                      "code": 10000,
+                      "message": null,
+                      "data": {
+                        "items": [
+                          {
+                            "id": "report_001",
+                            "title": "近期测评报告",
+                            "totalScore": 92,
+                            "grade": "A",
+                            "generatedAt": "2026-05-20T08:00:00.000Z",
+                            "summary": "节奏稳定，继续加强音准。"
+                          }
+                        ],
+                        "pagination": {
+                          "page": 1,
+                          "perPage": 20,
+                          "totalItems": 1,
+                          "totalPages": 1
+                        }
+                      }
+                    }
+                  },
+                  "forbidden": {
+                    "summary": "非学员账号",
+                    "value": {
+                      "code": 403,
+                      "message": "仅允许学员查看报告",
+                      "data": null
+                    }
+                  },
+                  "queryFailed": {
+                    "summary": "查询失败",
+                    "value": {
+                      "code": 500,
+                      "message": "查询报告失败",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/student/reports/{id}": {
+      "get": {
+        "summary": "查看我的评估报告详情",
+        "description": "返回当前登录学员自己的评估报告详情，包含摘要、分项、评语和练习建议，并过滤手机号、微信标识、token 等私密字段。",
+        "tags": ["Student"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "评估报告 ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "report_001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功或业务错误。项目 Web 响应保持 HTTP 200，通过 code 表示业务状态。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentReportDetailResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "查询成功",
+                    "value": {
+                      "code": 10000,
+                      "message": null,
+                      "data": {
+                        "id": "report_001",
+                        "reportId": "report_001",
+                        "title": "近期测评报告",
+                        "student": {
+                          "id": "student_001",
+                          "realName": "张三"
+                        },
+                        "teacher": {
+                          "id": "teacher_001",
+                          "realName": "李老师"
+                        },
+                        "score": {
+                          "totalScore": 92,
+                          "grade": "A",
+                          "sections": [
+                            {
+                              "key": "intonation",
+                              "title": "音准",
+                              "score": 45,
+                              "maxScore": 50,
+                              "comment": "音高稳定",
+                              "recommendations": ["每天练习慢速音阶"]
+                            }
+                          ]
+                        },
+                        "summary": "节奏稳定，继续加强音准。",
+                        "recommendations": ["每天练习慢速音阶"],
+                        "sections": [
+                          {
+                            "key": "intonation",
+                            "title": "音准",
+                            "score": 45,
+                            "maxScore": 50,
+                            "comment": "音高稳定",
+                            "recommendations": ["每天练习慢速音阶"]
+                          }
+                        ],
+                        "generatedAt": "2026-05-20T08:00:00.000Z"
+                      }
+                    }
+                  },
+                  "missingId": {
+                    "summary": "缺少报告 ID",
+                    "value": {
+                      "code": 400,
+                      "message": "缺少报告",
+                      "data": null
+                    }
+                  },
+                  "crossStudent": {
+                    "summary": "跨学员访问",
+                    "value": {
+                      "code": 403,
+                      "message": "无权查看该报告",
+                      "data": null
+                    }
+                  },
+                  "notFound": {
+                    "summary": "报告不存在",
+                    "value": {
+                      "code": 404,
+                      "message": "查询报告失败",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StudentReportSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "报告 ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "报告标题"
+          },
+          "totalScore": {
+            "type": "number",
+            "description": "总分"
+          },
+          "grade": {
+            "type": "string",
+            "description": "评级"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "报告生成时间"
+          },
+          "summary": {
+            "type": "string",
+            "description": "报告摘要"
+          }
+        }
+      },
+      "StudentReportSection": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "分项标识"
+          },
+          "title": {
+            "type": "string",
+            "description": "分项名称"
+          },
+          "score": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "分项得分"
+          },
+          "maxScore": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "分项满分"
+          },
+          "comment": {
+            "type": "string",
+            "description": "分项评语"
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "分项练习建议"
+          }
+        }
+      },
+      "StudentReportDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "报告 ID"
+          },
+          "reportId": {
+            "type": "string",
+            "description": "报告 ID 兼容字段"
+          },
+          "title": {
+            "type": "string",
+            "description": "报告标题"
+          },
+          "student": {
+            "type": "object",
+            "description": "学员快照，已过滤隐私字段"
+          },
+          "teacher": {
+            "type": "object",
+            "description": "教师快照，已过滤隐私字段"
+          },
+          "score": {
+            "type": "object",
+            "properties": {
+              "totalScore": {
+                "type": "number"
+              },
+              "grade": {
+                "type": "string"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StudentReportSection"
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentReportSection"
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StudentReportListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StudentReportSummary"
+                }
+              },
+              "pagination": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer"
+                  },
+                  "perPage": {
+                    "type": "integer"
+                  },
+                  "totalItems": {
+                    "type": "integer"
+                  },
+                  "totalPages": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "StudentReportDetailResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/StudentReportDetail"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

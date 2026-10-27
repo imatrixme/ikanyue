@@ -1,0 +1,55 @@
+'use strict';
+const { jwtAuth } = require('../utils/jwtAuth');
+
+/**
+ * 认证中间件
+ */
+function authMiddleware() {
+    return async (c, next) => {
+        const bearer = c.req.header('authorization') || '';
+        const tokenHeader = c.req.header('token') || c.req.header('jwtoken') || '';
+        const token = (() => {
+            if (tokenHeader) return tokenHeader;
+            if (bearer.toLowerCase().startsWith('bearer ')) {
+                return bearer.slice(7).trim();
+            }
+            return bearer;
+        })();
+
+        if (token.length === 0) {
+            return c.json(
+                {
+                    code: 403,
+                    errorCode: 'AUTH_SESSION_INVALID',
+                    message: '未授权，请登录后操作',
+                    data: null,
+                },
+                200
+            );
+        }
+
+        const isWeb = !!(c.req.header('sec-fetch-mode') && c.req.header('sec-fetch-site'));
+        const user = jwtAuth.check(token);
+
+        // 身份选择凭证只能用于完成选择，不能当作登录令牌。
+        if (user === undefined || user.challengeType) {
+            return c.json(
+                {
+                    code: 403,
+                    errorCode: 'AUTH_SESSION_INVALID',
+                    message: '登录已失效，请重新登录',
+                    data: null,
+                },
+                200
+            );
+        }
+
+        // 将用户信息存储到上下文中
+        c.set('user', user);
+        c.set('isWeb', isWeb);
+
+        await next();
+    };
+}
+
+module.exports = { authMiddleware };

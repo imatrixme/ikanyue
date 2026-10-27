@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "学员课程接口", "version": "2.0.0" },
+  "paths": {
+    "/v1/student/learning/overview": {
+      "get": {
+        "summary": "查询本人课程首页",
+        "tags": ["StudentLearning"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "$ref": "#/components/responses/StudentLearningResponse" } }
+      }
+    },
+    "/v1/student/learning/courses/{courseId}": {
+      "get": {
+        "summary": "查询本人课程详情",
+        "tags": ["StudentLearning"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "courseId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/StudentLearningResponse" } }
+      }
+    },
+    "/v1/student/learning/lessons": {
+      "get": {
+        "summary": "分页查询本人课程日程",
+        "tags": ["StudentLearning"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/LearningPage" },
+          { "$ref": "#/components/parameters/LearningPerPage" },
+          { "name": "scope", "in": "query", "schema": { "type": "string", "enum": ["all", "upcoming", "completed"] } },
+          { "name": "courseId", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "$ref": "#/components/responses/StudentLearningResponse" } }
+      }
+    },
+    "/v1/student/learning/lessons/{lessonId}": {
+      "get": {
+        "summary": "查询本人课堂详情",
+        "tags": ["StudentLearning"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "lessonId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "$ref": "#/components/responses/StudentLearningResponse" } }
+      }
+    },
+    "/v1/student/learning/records": {
+      "get": {
+        "summary": "分页查询本人课时记录",
+        "tags": ["StudentLearning"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/LearningPage" },
+          { "$ref": "#/components/parameters/LearningPerPage" },
+          { "name": "courseId", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "$ref": "#/components/responses/StudentLearningResponse" } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "LearningPage": { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
+      "LearningPerPage": { "name": "perPage", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } }
+    },
+    "responses": {
+      "StudentLearningResponse": {
+        "description": "只包含课程、课时、日程和上课记录的学员视图",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StudentLearningResponse" } } }
+      }
+    },
+    "schemas": {
+      "StudentLearningResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer" },
+          "message": { "type": "string", "nullable": true },
+          "data": { "type": "object", "nullable": true },
+          "errorCode": { "type": "string", "nullable": true }
+        }
+      }
+    }
+  }
+}

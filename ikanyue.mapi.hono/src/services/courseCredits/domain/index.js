@@ -1,0 +1,16 @@
+module.exports = {
+    ...require('./activation'),
+    ...require('./catalog'),
+    ...require('./conversion'),
+    ...require('./conversionAuthorization'),
+    ...require('./eligibility'),
+    ...require('./errors'),
+    ...require('./expiry'),
+    ...require('./idempotency'),
+    ...require('./ids'),
+    ...require('./quantities'),
+    ...require('./reconciliation'),
+    ...require('./settlement'),
+    ...require('./teacherEarning'),
+    ...require('./time'),
+};

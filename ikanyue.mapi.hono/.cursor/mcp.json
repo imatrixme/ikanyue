@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "git": {
+        "command": "uvx",
+        "args": ["mcp-server-git", "--repository", "./"]
+      },
+    "pocketbase-server": {
+      "command": "node",
+      "args": [
+        "~/Documents/mcps/pocketbase-mcp/build/index.js"
+      ],
+      "env": {
+        "POCKETBASE_URL": "http://127.0.0.1:8090",
+        "POCKETBASE_ADMIN_EMAIL": "cypmatrix@gmail.com",
+        "POCKETBASE_ADMIN_PASSWORD": "12345678"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "create_record",
+        "create_collection"
+      ]
+    }
+  }
+}

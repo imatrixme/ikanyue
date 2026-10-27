@@ -1,0 +1,520 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "活动查询接口",
+    "version": "1.0.0",
+    "description": "分页查询活动列表或获取单个活动详情，支持按状态、标签、类型、地点等多种条件进行过滤，并自动处理图片 URL 转换"
+  },
+  "paths": {
+    "/v1/activity/find": {
+      "get": {
+        "summary": "查询活动信息",
+        "description": "支持单个活动查询和分页列表查询，具有丰富的过滤条件",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "活动ID，如果提供则返回单个活动详情，忽略其他参数",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "record_123"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码，必须为正整数",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 2
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "每页数量，必须为正整数，最大100",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 10
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "排序：created / updated / startTime / sequence，可加 - 前缀，逗号分隔；其他值回退为 -created",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "-created",
+              "example": "-sequence"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "标签过滤，多个标签用逗号分隔，支持模糊匹配",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "教育,培训"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "活动类型过滤，精确匹配",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "workshop"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "地点过滤，支持模糊匹配",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "北京"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "title": "单个活动响应",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "example": 10000
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "查询成功"
+                        },
+                        "data": {
+                          "$ref": "#/components/schemas/ActivityDetail"
+                        }
+                      }
+                    },
+                    {
+                      "title": "活动列表响应",
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "example": 10000
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "查询成功"
+                        },
+                        "data": {
+                          "$ref": "#/components/schemas/ActivityList"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "single_activity": {
+                    "summary": "单个活动查询",
+                    "value": {
+                      "code": 10000,
+                      "message": "查询成功",
+                      "data": {
+                        "id": "activity_123",
+                        "title": "编程工作坊",
+                        "description": "学习 JavaScript 基础知识",
+                        "startTime": "2024-02-01 09:00:00",
+                        "endTime": "2024-02-01 17:00:00",
+                        "location": "北京市朝阳区",
+                        "price": 299,
+                        "type": "workshop",
+                        "status": "active",
+                        "tags": [
+                          "编程",
+                          "教育"
+                        ],
+                        "coverImage": "cover.jpg",
+                        "coverImageUrl": "https://example.com/api/files/activities/123/cover.jpg",
+                        "images": [
+                          "img1.jpg",
+                          "img2.jpg"
+                        ],
+                        "imageUrls": [
+                          "https://example.com/api/files/activities/123/img1.jpg",
+                          "https://example.com/api/files/activities/123/img2.jpg"
+                        ],
+                        "maxParticipants": 30,
+                        "currentParticipants": 15,
+                        "externalLink": "https://example.com",
+                        "sequence": 100,
+                        "creator": "teacher_id",
+                        "created": "2024-01-01 10:00:00",
+                        "updated": "2024-01-01 11:00:00"
+                      }
+                    }
+                  },
+                  "activity_list": {
+                    "summary": "活动列表查询",
+                    "value": {
+                      "code": 10000,
+                      "message": "查询成功",
+                      "data": {
+                        "items": [
+                          {
+                            "id": "activity_123",
+                            "title": "编程工作坊",
+                            "description": "学习 JavaScript 基础知识",
+                            "startTime": "2024-02-01 09:00:00",
+                            "endTime": "2024-02-01 17:00:00",
+                            "location": "北京市朝阳区",
+                            "price": 299,
+                            "status": "active",
+                            "coverImageUrl": "https://example.com/api/files/activities/123/cover.jpg"
+                          }
+                        ],
+                        "totalItems": 25,
+                        "totalPages": 3,
+                        "page": 1,
+                        "perPage": 10
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                },
+                "examples": {
+                  "invalid_page": {
+                    "summary": "页码参数错误",
+                    "value": {
+                      "code": 400,
+                      "message": "页码和每页数量必须为正整数",
+                      "data": null
+                    }
+                  },
+                  "limit_exceeded": {
+                    "summary": "数量超限",
+                    "value": {
+                      "code": 400,
+                      "message": "每页数量不能超过100",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "活动不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 404
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "活动不存在"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 500
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null",
+                      "example": null
+                    }
+                  }
+                },
+                "examples": {
+                  "query_failed": {
+                    "summary": "查询失败",
+                    "value": {
+                      "code": 500,
+                      "message": "查询失败，请稍后重试",
+                      "data": null
+                    }
+                  },
+                  "server_error": {
+                    "summary": "服务器异常",
+                    "value": {
+                      "code": 500,
+                      "message": "服务器内部错误",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivityDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "activity_123"
+          },
+          "title": {
+            "type": "string",
+            "example": "编程工作坊"
+          },
+          "description": {
+            "type": "string",
+            "example": "学习 JavaScript 基础知识"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "2024-02-01 09:00:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "2024-02-01 17:00:00"
+          },
+          "location": {
+            "type": "string",
+            "example": "北京市朝阳区"
+          },
+          "price": {
+            "type": "number",
+            "example": 299
+          },
+          "type": {
+            "type": "string",
+            "example": "workshop"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "cancelled",
+              "completed"
+            ],
+            "example": "active"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "编程",
+              "教育"
+            ]
+          },
+          "coverImage": {
+            "type": "string",
+            "example": "cover.jpg"
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/api/files/activities/123/cover.jpg"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "img1.jpg",
+              "img2.jpg"
+            ]
+          },
+          "imageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": [
+              "https://example.com/api/files/activities/123/img1.jpg",
+              "https://example.com/api/files/activities/123/img2.jpg"
+            ]
+          },
+          "maxParticipants": {
+            "type": "integer",
+            "example": 30
+          },
+          "currentParticipants": {
+            "type": "integer",
+            "example": 15
+          },
+          "externalLink": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com"
+          },
+          "sequence": {
+            "type": "integer",
+            "example": 100
+          },
+          "creator": {
+            "type": "string",
+            "example": "teacher_id"
+          },
+          "created": {
+            "type": "string",
+            "example": "2024-01-01 10:00:00"
+          },
+          "updated": {
+            "type": "string",
+            "example": "2024-01-01 11:00:00"
+          }
+        }
+      },
+      "ActivityList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            }
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 25
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 3
+          },
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "perPage": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "ActivitySummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "activity_123"
+          },
+          "title": {
+            "type": "string",
+            "example": "编程工作坊"
+          },
+          "description": {
+            "type": "string",
+            "example": "学习 JavaScript 基础知识"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "2024-02-01 09:00:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "2024-02-01 17:00:00"
+          },
+          "location": {
+            "type": "string",
+            "example": "北京市朝阳区"
+          },
+          "price": {
+            "type": "number",
+            "example": 299
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "cancelled",
+              "completed"
+            ],
+            "example": "active"
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/api/files/activities/123/cover.jpg"
+          },
+          "maxParticipants": {
+            "type": "integer",
+            "example": 30
+          },
+          "currentParticipants": {
+            "type": "integer",
+            "example": 15
+          }
+        }
+      }
+    }
+  }
+}

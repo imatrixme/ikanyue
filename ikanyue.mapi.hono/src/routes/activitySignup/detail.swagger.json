@@ -1,0 +1,59 @@
+{
+  "paths": {
+    "/v1/activity-signup/detail": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "报名记录详情",
+        "description": "查询单条报名记录详情（当前用户）",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "query", "required": true, "schema": { "type": "string", "example": "signup_123" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/activity-signup/{id}": {
+      "get": {
+        "tags": ["Activity"],
+        "summary": "报名记录详情（Path）",
+        "description": "通过路径参数查询单条报名记录详情（当前用户）",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "example": "signup_123" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StandardResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StandardResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "number", "example": 10000 },
+          "message": { "type": ["string", "null"] },
+          "data": { "type": ["object", "null"] }
+        }
+      }
+    }
+  }
+}
+

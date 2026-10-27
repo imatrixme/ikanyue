@@ -1,0 +1,361 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "创建学生信息",
+    "version": "1.0.0",
+    "description": "创建学生信息接口，允许具有相应权限的用户创建新的学生档案，并进行必要的数据验证。支持手机号唯一性检查和密码加密存储。"
+  },
+  "paths": {
+    "/v1/student/create": {
+      "post": {
+        "summary": "创建学生信息",
+        "description": "创建新的学生档案，需要教师或管理员权限。会自动检查手机号唯一性并加密存储密码。",
+        "tags": ["Student"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentRequest"
+              },
+              "example": {
+                "cellphone": "13800138000",
+                "password": "123456",
+                "realname": "张三",
+                "nickName": "小张",
+                "avatar": "https://example.com/avatar.jpg",
+                "gender": 1,
+                "age": 20,
+                "province": "广东省",
+                "city": "深圳市",
+                "address": "南山区科技园",
+                "hours": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "学生创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "code": 10000,
+                  "message": null,
+                  "data": {
+                    "id": "student_67894a2b-f8c7-4b2a-9d1e-3456789abcde",
+                    "sn": "sn_unique_id_12345",
+                    "cellphone": "13800138000",
+                    "realname": "张三",
+                    "nickName": "小张",
+                    "avatar": "https://example.com/avatar.jpg",
+                    "gender": 1,
+                    "age": 20,
+                    "province": "广东省",
+                    "city": "深圳市",
+                    "address": "南山区科技园",
+                    "hours": 0,
+                    "blocked": false,
+                    "tokenKey": "token_key_unique_id",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "role": "student",
+                    "isAdmin": false,
+                    "created": "2024-12-26 10:08:12.123Z",
+                    "updated": "2024-12-26 10:08:12.123Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "缺少必要信息（手机号、密码）",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "认证失败",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 403,
+                  "message": "权限不足，需要教师或管理员权限",
+                  "data": null
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "手机号已注册",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 409,
+                  "message": "手机号已注册",
+                  "data": null
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器内部错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "创建学生失败",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateStudentRequest": {
+        "type": "object",
+        "required": ["cellphone", "password"],
+        "properties": {
+          "cellphone": {
+            "type": "string",
+            "description": "手机号（唯一标识）",
+            "pattern": "^1[3-9]\\d{9}$",
+            "example": "13800138000"
+          },
+          "password": {
+            "type": "string",
+            "description": "密码",
+            "minLength": 6,
+            "example": "123456"
+          },
+          "realname": {
+            "type": "string",
+            "description": "真实姓名",
+            "example": "张三"
+          },
+          "nickName": {
+            "type": "string",
+            "description": "昵称",
+            "example": "小张"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL",
+            "format": "uri",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "gender": {
+            "type": "integer",
+            "description": "性别 (0:未知，1:男，2:女)",
+            "enum": [0, 1, 2],
+            "default": 0,
+            "example": 1
+          },
+          "age": {
+            "type": "integer",
+            "description": "年龄",
+            "minimum": 1,
+            "maximum": 150,
+            "default": 18,
+            "example": 20
+          },
+          "province": {
+            "type": "string",
+            "description": "省份",
+            "example": "广东省"
+          },
+          "city": {
+            "type": "string",
+            "description": "城市",
+            "example": "深圳市"
+          },
+          "address": {
+            "type": "string",
+            "description": "地址",
+            "example": "南山区科技园"
+          },
+          "hours": {
+            "type": "number",
+            "description": "课时",
+            "minimum": 0,
+            "default": 0,
+            "example": 0
+          }
+        }
+      },
+      "StudentData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "学生 ID"
+          },
+          "sn": {
+            "type": "string",
+            "description": "学生序列号"
+          },
+          "cellphone": {
+            "type": "string",
+            "description": "手机号"
+          },
+          "realname": {
+            "type": "string",
+            "description": "真实姓名"
+          },
+          "nickName": {
+            "type": "string",
+            "description": "昵称"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL"
+          },
+          "gender": {
+            "type": "integer",
+            "description": "性别 (0:未知，1:男，2:女)"
+          },
+          "age": {
+            "type": "integer",
+            "description": "年龄"
+          },
+          "province": {
+            "type": "string",
+            "description": "省份"
+          },
+          "city": {
+            "type": "string",
+            "description": "城市"
+          },
+          "address": {
+            "type": "string",
+            "description": "地址"
+          },
+          "hours": {
+            "type": "number",
+            "description": "课时"
+          },
+          "blocked": {
+            "type": "boolean",
+            "description": "是否被屏蔽"
+          },
+          "tokenKey": {
+            "type": "string",
+            "description": "Token 密钥"
+          },
+          "token": {
+            "type": "string",
+            "description": "JWT Token"
+          },
+          "role": {
+            "type": "string",
+            "description": "角色"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "description": "是否为管理员"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 10000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "data": {
+            "$ref": "#/components/schemas/StudentData"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "null",
+            "example": null
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "需要教师或管理员权限的 JWT Token"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Student",
+      "description": "学生管理相关接口"
+    }
+  ]
+} 

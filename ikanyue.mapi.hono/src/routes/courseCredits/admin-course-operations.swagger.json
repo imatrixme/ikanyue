@@ -1,0 +1,203 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "课程运营管理接口", "version": "2.0.0" },
+  "paths": {
+    "/ops/course-operations/course-specs": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/course-specs/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/course-specs/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/packages": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/packages/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/packages/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/grant-lines": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/grant-lines/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/price-versions": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/price-versions/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/price-versions/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/conversion-rules": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/conversion-rules/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/conversion-rules/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/classes": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/classes/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/classes/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/lessons": {
+      "post": { "$ref": "#/components/x-operations/CreateResource" }
+    },
+    "/ops/course-operations/lessons/{id}": {
+      "patch": { "$ref": "#/components/x-operations/UpdateResource" }
+    },
+    "/ops/course-operations/lessons/{id}/status": {
+      "post": { "$ref": "#/components/x-operations/SetStatus" }
+    },
+    "/ops/course-operations/enrollments": {
+      "post": {
+        "summary": "管理员自动报课",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnrollmentRequest" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/enrollments/{orderId}/sync-preview": {
+      "get": {
+        "summary": "预览已发布未来课堂名单同步",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrderId" }],
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/enrollments/{orderId}/sync": {
+      "post": {
+        "summary": "确认已发布未来课堂名单同步",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/OrderId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RosterSyncRequest" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/students/{sessionStudentId}/attendance": {
+      "post": {
+        "summary": "登记单名学员出勤",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/SessionStudentId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AttendanceRequest" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/attendance/all-present": {
+      "post": {
+        "summary": "批量标记全部到课",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/teachers/{sessionTeacherId}/actual-status": {
+      "post": {
+        "summary": "确认实际授课教师",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }, { "$ref": "#/components/parameters/SessionTeacherId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ActualTeacherRequest" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "/ops/course-operations/lessons/{sessionId}/settlement-preview": {
+      "get": {
+        "summary": "预览课堂核销结果",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }],
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    }
+  },
+  "components": {
+    "x-operations": {
+      "CreateResource": {
+        "summary": "创建课程运营资源",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      },
+      "UpdateResource": {
+        "summary": "更新课程运营资源",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ResourceId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      },
+      "SetStatus": {
+        "summary": "变更课程运营资源状态",
+        "tags": ["CourseOperations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ResourceId" }, { "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatusRequest" } } } },
+        "responses": { "200": { "$ref": "#/components/responses/CourseOperationResponse" } }
+      }
+    },
+    "parameters": {
+      "ResourceId": { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } },
+      "OrderId": { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "SessionId": { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "SessionStudentId": { "name": "sessionStudentId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "SessionTeacherId": { "name": "sessionTeacherId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string" } }
+    },
+    "responses": {
+      "CourseOperationResponse": {
+        "description": "课程运营命令结果或稳定业务错误",
+        "content": { "application/json": { "schema": { "type": "object" } } }
+      }
+    },
+    "schemas": {
+      "StatusRequest": {
+        "type": "object", "required": ["status"],
+        "properties": { "status": { "type": "string" }, "reason": { "type": "string" } }
+      },
+      "EnrollmentRequest": {
+        "type": "object",
+        "required": ["studentId", "packageId", "priceVersionId"],
+        "properties": {
+          "studentId": { "type": "string" }, "packageId": { "type": "string" },
+          "priceVersionId": { "type": "string" }, "classId": { "type": "string" },
+          "paidAmount": { "type": "number", "minimum": 0 }, "channel": { "type": "string", "enum": ["admin", "offline"] },
+          "paymentReference": { "type": "string" }, "reason": { "type": "string" }
+        }
+      },
+      "RosterSyncRequest": {
+        "type": "object", "required": ["previewHash"],
+        "properties": { "previewHash": { "type": "string" }, "lessonIds": { "type": "array", "items": { "type": "string" } } }
+      },
+      "AttendanceRequest": {
+        "type": "object", "required": ["attendanceStatus"],
+        "properties": { "attendanceStatus": { "type": "string", "enum": ["present", "late", "leave", "absent", "cancelled"] } }
+      },
+      "ActualTeacherRequest": {
+        "type": "object", "required": ["actualStatus"],
+        "properties": { "actualStatus": { "type": "string", "enum": ["confirmed", "absent", "cancelled"] } }
+      }
+    }
+  }
+}
