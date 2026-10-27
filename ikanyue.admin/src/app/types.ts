@@ -12,6 +12,7 @@ export type AppView =
   | 'lessons'
   | 'calendar'
   | 'appointments'
+  | 'bookingSettings'
   | 'accounts'
   | 'payments'
   | 'teachers'
@@ -20,6 +21,7 @@ export type AppView =
   | 'migration'
   | 'points'
   | 'rewards'
+  | 'venues'
 
 export interface OpsProfile {
   id: string

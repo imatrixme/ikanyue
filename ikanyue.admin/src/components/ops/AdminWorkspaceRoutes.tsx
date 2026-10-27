@@ -14,6 +14,8 @@ import { LessonsWorkspace } from './LessonsWorkspace'
 import { MigrationWorkspace } from './MigrationWorkspace'
 import { PointsWorkspace } from './PointsWorkspace'
 import { AccountsWorkspace, AuditWorkspace, ExceptionsWorkspace } from './ReadOnlyCourseWorkspaces'
+import { BookingSettingsWorkspace } from './BookingSettingsWorkspace'
+import { VenuesWorkspace } from './VenuesWorkspace'
 import { BookingWorkspace } from './BookingWorkspace'
 import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
@@ -54,12 +56,14 @@ export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
       <Route path={viewPaths.students} element={<Gate profile={props.profile} view="students"><StudentWorkspace api={props.api} errorMessage={props.managedStudentsError} loading={props.loading} onReload={props.onLoadManagedStudents} onSave={props.onSaveStudent} profile={props.profile} students={props.managedStudents} token={props.token} totalStudents={props.managedStudentsTotal} /></Gate>} />
       <Route path={`${viewPaths.students}/:studentId`} element={<Gate profile={props.profile} view="students"><StudentDetailRoute api={props.api} profile={props.profile} token={props.token} /></Gate>} />
       <Route path={viewPaths.courses} element={<Gate profile={props.profile} view="courses"><CoursesWorkspace {...courseProps} /></Gate>} />
+      <Route path={viewPaths.venues} element={<Gate profile={props.profile} view="venues"><VenuesWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.packages} element={<Gate profile={props.profile} view="packages"><PackagesWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.enrollments} element={<Gate profile={props.profile} view="enrollments"><EnrollmentsWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.classes} element={<Gate profile={props.profile} view="classes"><ClassesWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.lessons} element={<Gate profile={props.profile} view="lessons"><LessonsWorkspace {...courseProps} profile={props.profile} /></Gate>} />
       <Route path={viewPaths.calendar} element={<Gate profile={props.profile} view="calendar"><CourseCalendarWorkspace {...courseProps} profile={props.profile} /></Gate>} />
       <Route path={viewPaths.appointments} element={<Gate profile={props.profile} view="appointments"><BookingWorkspace {...courseProps} /></Gate>} />
+      <Route path={viewPaths.bookingSettings} element={<Gate profile={props.profile} view="bookingSettings"><BookingSettingsWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.accounts} element={<Gate profile={props.profile} view="accounts"><AccountsWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.payments} element={<Gate profile={props.profile} view="payments"><PaymentsWorkspace token={props.token} /></Gate>} />
       <Route path={viewPaths.teachers} element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} />

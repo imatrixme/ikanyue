@@ -63,7 +63,7 @@ export function canAccessView(profile: OpsProfile | null, view: AppView): boolea
   if (view === 'classes') return capabilities.has('course_credit.academic')
   if (view === 'calendar') return capabilities.has('course_credit.academic') || capabilities.has('course_credit.teacher')
   if (view === 'lessons') return capabilities.has('course_credit.academic') || capabilities.has('course_credit.teacher') || capabilities.has('course_credit.settlement')
-  if (view === 'appointments') return capabilities.has('course_credit.academic')
+  if (view === 'appointments' || view === 'bookingSettings') return capabilities.has('course_credit.academic')
   if (view === 'teachers') return capabilities.has('course_credit.teacher')
   if (view === 'exceptions') return capabilities.has('course_credit.settlement') || capabilities.has('course_credit.audit')
   if (view === 'audit') return capabilities.has('course_credit.audit')

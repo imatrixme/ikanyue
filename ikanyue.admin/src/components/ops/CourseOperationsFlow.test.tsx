@@ -41,7 +41,7 @@ describe('admin course operations', () => {
     await user.click(within(conversionDialog).getByRole('button', { name: '保存' }))
     expect((await screen.findAllByText('综合声乐课时')).length).toBeGreaterThan(0)
 
-    await open(user, ['账务', '报课'], '报课管理')
+    await open(user, ['收款', '报课'], '报课管理')
     await user.click(screen.getByRole('button', { name: '新建报课' }))
     const enrollmentDialog = screen.getByRole('dialog', { name: '管理员报课' })
     await chooseReference(user, enrollmentDialog, '学员', '张同学')
@@ -56,7 +56,7 @@ describe('admin course operations', () => {
     await user.click(screen.getByRole('button', { name: '确认同步' }))
     await waitFor(() => expect(screen.queryByRole('dialog', { name: '确认同步课堂名单' })).not.toBeInTheDocument())
 
-    await open(user, ['课表', '班级'], '班级管理')
+    await open(user, ['更多', '教学', '班级'], '班级管理')
     await user.click(screen.getAllByRole('button', { name: '班级详情' })[0])
     const classDrawer = await screen.findByRole('dialog', { name: '周六综合声乐班' })
     expect(classDrawer).toHaveTextContent('班级成员')
@@ -72,7 +72,7 @@ describe('admin course operations', () => {
     render(<App api={createMockOpsApi()} />)
     await login(user)
 
-    await open(user, ['课表', '课堂'], '课堂管理')
+    await open(user, ['更多', '教学', '课堂'], '课堂管理')
     await user.click(screen.getByRole('button', { name: /^切换到全部/ }))
     await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
     let lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
@@ -106,7 +106,7 @@ describe('admin course operations', () => {
     await user.click(screen.getAllByRole('button', { name: '查看张同学课时账户' })[0])
     expect(await screen.findByRole('dialog', { name: '课时账户明细' })).toHaveTextContent('课时来源')
     await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
-    await open(user, ['课表', '教师工作量'], '教师工作量')
+    await open(user, ['教学', '教师工作量'], '教师工作量')
     expect(screen.getByRole('table')).toHaveTextContent('林老师')
     await open(user, ['账务', '异常'], '核销异常')
     await user.click(screen.getByRole('tab', { name: '对账异常' }))
@@ -130,7 +130,7 @@ describe('admin course operations', () => {
     localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: 'teacher-token', profile: mockProfiles.teacher }))
     render(<App api={createMockOpsApi()} />)
     expect(await screen.findByRole('heading', { name: '当前账号无权访问' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '课表' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '约课' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '积分' })).not.toBeInTheDocument()
     expect(window.location.pathname).toBe('/points/students')
   })
@@ -154,7 +154,8 @@ describe('admin course operations', () => {
     expect(within(studentDrawer).queryByRole('button', { name: '为此学员报课' })).not.toBeInTheDocument()
     await user.click(within(studentDrawer).getByRole('button', { name: '关闭弹窗' }))
 
-    await open(user, ['我的课表', '课堂'], '我的课堂')
+    expect(screen.queryByRole('button', { name: '更多' })).not.toBeInTheDocument()
+    await open(user, ['教学', '课堂'], '我的课堂')
     await user.click(screen.getByRole('button', { name: /^切换到全部/ }))
     expect(screen.queryByRole('button', { name: '新增课堂' })).not.toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
@@ -201,7 +202,10 @@ async function login(user: ReturnType<typeof userEvent.setup>) {
 
 // Clicks a navigation section and/or a section tab, in order, then waits for the page heading.
 async function open(user: ReturnType<typeof userEvent.setup>, path: string[], heading: string) {
-  for (const label of path) await user.click(screen.getByRole('button', { name: label }))
+  for (const label of path) {
+    if (label === '更多') await expandMore(user)
+    else await user.click(screen.getByRole('button', { name: label }))
+  }
   await screen.findByRole('heading', { name: heading })
 }
 
@@ -210,4 +214,10 @@ async function chooseReference(user: ReturnType<typeof userEvent.setup>, scope: 
   await user.click(input)
   await user.type(input, query)
   await user.keyboard('{Enter}')
+}
+
+// 更多 remembers its state, so only expand it when it is collapsed.
+async function expandMore(user: ReturnType<typeof userEvent.setup>) {
+  const toggle = screen.getAllByRole('button', { name: '更多' })[0]
+  if (toggle.getAttribute('aria-expanded') !== 'true') await user.click(toggle)
 }

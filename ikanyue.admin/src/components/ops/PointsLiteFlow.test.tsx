@@ -68,7 +68,7 @@ describe('points lite app flow', () => {
     await user.type(screen.getByLabelText('密码'), 'secret')
     await user.click(screen.getByRole('button', { name: /^登录$/ }))
     expect(await screen.findByRole('heading', { name: /^今天/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '课表' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '约课' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '积分' })).not.toBeInTheDocument()
   })
 
@@ -290,6 +290,7 @@ async function login(user: ReturnType<typeof userEvent.setup>) {
 async function openPoints(user: ReturnType<typeof userEvent.setup>) {
   if (screen.queryByRole('heading', { name: '学员积分' })) return
   await screen.findByRole('heading', { name: /^今天/ })
+  await expandMore(user)
   await user.click(screen.getByRole('button', { name: '积分' }))
   await screen.findByRole('heading', { name: '学员积分' })
 }
@@ -302,4 +303,10 @@ function summary(balance: number, studentId = 'student_1'): StudentPointSummary 
 
 function createFailingApi(): OpsApi {
   return { ...createMockOpsApi(), login: async (): Promise<LoginResult> => ({ token: 'token', profile: mockProfiles.admin }), register: async () => ({ status: 'pending_activation', message: 'ok', profile: mockProfiles.teacher }), changePassword: async () => ({ token: 'token', profile: mockProfiles.admin }), listManagedStudents: async () => ({ items: [], pagination: { page: 1, perPage: 20, totalItems: 0, totalPages: 1 } }), createStudent: async () => { throw new Error('student create down') }, updateStudent: async () => { throw new Error('student update down') }, listStudents: async () => { throw new Error('students down') }, getStudentPoints: async () => summary(120), addPoints: async () => summary(120), offlineRedeem: async () => summary(120), listRewards: async () => mockRewards, createReward: async (_token, data) => ({ id: 'created', description: '', image: '', status: 'active', ...data }), updateReward: async (_token, id, data) => ({ id, description: '', image: '', status: 'active', ...data }), uploadRewardImage: async (_token, id) => ({ id, name: '图片实物', description: '', image: 'https://assets.test/image.png', pointsPrice: 10, status: 'active' }) }
+}
+
+// 更多 remembers its state, so only expand it when it is collapsed.
+async function expandMore(user: ReturnType<typeof userEvent.setup>) {
+  const toggle = screen.getAllByRole('button', { name: '更多' })[0]
+  if (toggle.getAttribute('aria-expanded') !== 'true') await user.click(toggle)
 }

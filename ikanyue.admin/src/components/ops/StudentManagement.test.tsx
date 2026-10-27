@@ -89,6 +89,7 @@ describe('student management', () => {
     await user.click(screen.getByRole('button', { name: '创建学员' }))
     expect(await screen.findByText('学员已创建')).toBeInTheDocument()
     expect(screen.getByRole('table')).toHaveTextContent('新增学员')
+    await user.click(screen.getByRole('button', { name: '更多' }))
     await user.click(screen.getByRole('button', { name: '积分' }))
     expect(screen.getByRole('table')).toHaveTextContent('新增学员')
   })

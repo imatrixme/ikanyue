@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockOpsApi } from '../../app/api'
+import { BookingSettingsWorkspace } from './BookingSettingsWorkspace'
 import { BookingWorkspace } from './BookingWorkspace'
 
 describe('booking workspace', () => {
@@ -101,15 +102,14 @@ describe('booking workspace', () => {
     expect(decline).toHaveBeenCalledWith('token', 'appointment_1', '教师当天无法授课')
   })
 
-  it('switches to configuration and conflict tabs using query state', async () => {
+  it('keeps everyday configuration in the workspace and moves rarely changed rules out', async () => {
     const user = userEvent.setup()
     const api = createMockOpsApi()
     renderWorkspace(api, '/appointments?tab=configuration')
     expect(await screen.findByRole('heading', { name: '教师可预约课程' })).toBeInTheDocument()
     expect(screen.getByTestId('location')).toHaveTextContent('tab=configuration')
-    await user.click(screen.getByRole('tab', { name: '冲突与迁移' }))
-    expect(await screen.findByRole('heading', { name: '冲突处理队列' })).toBeInTheDocument()
-    expect(screen.getByTestId('location')).toHaveTextContent('tab=conflicts')
+    expect(screen.queryByRole('tab', { name: '冲突与迁移' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '切换到预约策略' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: '预约队列' }))
     expect(await screen.findByLabelText('预约状态')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '刷新预约工作区' }))
@@ -144,6 +144,19 @@ describe('booking workspace', () => {
     const dialog = screen.getByRole('dialog', { name: '取消预约' })
     await userEvent.setup().click(within(dialog).getByRole('button', { name: '确认取消' }))
     expect(await screen.findByText('取消失败')).toBeInTheDocument()
+  })
+})
+
+describe('booking settings workspace', () => {
+  it('redirects old conflict links and switches between policies and conflicts', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    render(<MemoryRouter initialEntries={['/schedule/bookings?tab=conflicts']}><Routes><Route element={<BookingWorkspace api={api} token="token" />} path="/schedule/bookings" /><Route element={<BookingSettingsWorkspace api={api} token="token" />} path="/schedule/booking-settings" /></Routes><Location /></MemoryRouter>)
+    expect(await screen.findByRole('heading', { name: '冲突处理队列' })).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent('/schedule/booking-settings?tab=conflicts')
+    await user.click(screen.getByRole('tab', { name: '预约策略' }))
+    expect(await screen.findByRole('heading', { name: '机构预约策略' })).toBeInTheDocument()
+    expect(screen.getByTestId('location')).not.toHaveTextContent('tab=')
   })
 })
 
