@@ -329,10 +329,35 @@ function escapeFilter(value) {
     return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
+// Seed the studio itself once, so the mini program never starts with an empty venue list.
+// Existing venues (including deactivated ones) are left untouched.
+async function ensureDefaultVenue(pb) {
+    const list = await pb.collection('venues').getList(1, 1);
+    if (list.items?.[0]) {
+        return list.items[0];
+    }
+    const created = await pb.collection('venues').create(DEFAULT_VENUE);
+    console.log('created default venue');
+    return created;
+}
+
+const DEFAULT_VENUE = {
+    address: '',
+    bookable: true,
+    intro: '声乐课程与预约',
+    name: '看乐艺术',
+    openingHours: '',
+    phone: '18521301857',
+    sortOrder: 0,
+    status: 'active',
+};
+
 module.exports = {
+    DEFAULT_VENUE,
     LOCAL_CORE_COLLECTIONS,
     applyOpsSchemas,
     ensureBootstrapAdmin,
+    ensureDefaultVenue,
     ensureLocalCoreCollections,
     ensureTeacherOpsFields,
     listCollections,

@@ -3,7 +3,7 @@
   "info": {
     "title": "积分兑换轻量运营接口",
     "version": "2.0.0",
-    "description": "微信线上轻量分叉仅保留登录、学员积分、实物列表和线下兑换扣分接口。"
+    "description": "微信线上轻量分叉保留登录、学员积分、实物列表、线下兑换扣分和场馆管理接口。"
   },
   "paths": {
     "/ops/auth/login": {
@@ -256,6 +256,84 @@
           }
         }
       }
+    },
+    "/v1/public/venues": {
+      "get": {
+        "summary": "公开场馆列表",
+        "description": "无需登录；只返回启用场馆，按 sortOrder 排序。",
+        "tags": ["Venues"],
+        "responses": {
+          "200": {
+            "description": "启用场馆列表。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/venues": {
+      "get": {
+        "summary": "管理员查看场馆（含停用）",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "全部场馆。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "新增场馆",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VenueInput" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "新增成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/venues/{id}": {
+      "post": {
+        "summary": "编辑、停用或恢复场馆",
+        "tags": ["OpsVenues"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/VenueInput" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功或业务错误。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VenueResponse" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -380,6 +458,51 @@
           "code": { "type": "integer", "example": 10000 },
           "message": { "type": "string", "nullable": true },
           "data": { "type": "object" }
+        }
+      },
+      "Venue": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string", "example": "看乐艺术" },
+          "intro": { "type": "string" },
+          "address": { "type": "string" },
+          "openingHours": { "type": "string" },
+          "phone": { "type": "string" },
+          "bookable": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["active", "inactive"], "description": "仅 ops 接口返回" },
+          "sortOrder": { "type": "integer", "description": "仅 ops 接口返回" }
+        }
+      },
+      "VenueInput": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 40 },
+          "intro": { "type": "string", "maxLength": 120 },
+          "address": { "type": "string", "maxLength": 120 },
+          "openingHours": { "type": "string", "maxLength": 80 },
+          "phone": { "type": "string", "maxLength": 20 },
+          "bookable": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["active", "inactive"] },
+          "sortOrder": { "type": "integer" }
+        }
+      },
+      "VenueResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "data": { "$ref": "#/components/schemas/Venue" }
+        }
+      },
+      "VenueListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 10000 },
+          "data": {
+            "type": "object",
+            "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Venue" } } }
+          }
         }
       }
     },

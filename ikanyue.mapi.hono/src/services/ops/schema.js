@@ -10,6 +10,18 @@ const OPS_COLLECTION_SCHEMAS = [
     ], [
         'CREATE INDEX idx_reward_items_status_sort ON reward_items (status, sortOrder)',
     ]),
+    collection('venues', [
+        textField('name', { required: true, max: 40 }),
+        textField('intro', { max: 120 }),
+        textField('address', { max: 120 }),
+        textField('openingHours', { max: 80 }),
+        textField('phone', { max: 20 }),
+        boolField('bookable'),
+        selectField('status', ['active', 'inactive'], { required: true }),
+        numberField('sortOrder'),
+    ], [
+        'CREATE INDEX idx_venues_status_sort ON venues (status, sortOrder)',
+    ]),
     collection('student_points', [
         relationField('studentId', 'students', { required: true }),
         numberField('balance'),
@@ -86,6 +98,10 @@ function fileField(name) {
 
 function numberField(name) {
     return { name, type: 'number', required: false, min: null, max: null };
+}
+
+function boolField(name) {
+    return { name, type: 'bool', required: false };
 }
 
 function jsonField(name, options = {}) {

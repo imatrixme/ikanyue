@@ -20,6 +20,12 @@ function opsRoutes(routes, handlers = createOpsHandlers()) {
     routes.post('/ops/points/students/:studentId/earn').use(...opsAuth).handler(handlers.addStudentPoints);
     routes.post('/ops/points/offline-redeem').use(...opsAuth).handler(handlers.offlineRedeem);
 
+    // Ops-managed venues; the public list feeds the mini program before sign-in.
+    routes.get('/v1/public/venues').handler(handlers.listPublicVenues);
+    routes.get('/ops/venues').use(...opsAuth).handler(handlers.listVenues);
+    routes.post('/ops/venues').use(...opsAuth).handler(handlers.createVenue);
+    routes.post('/ops/venues/:id').use(...opsAuth).handler(handlers.updateVenue);
+
     routes.get('/ops/reward-items').use(...opsAuth).handler(handlers.listRewards);
     routes.post('/ops/reward-items').use(...opsAuth).handler(handlers.createReward);
     routes.post('/ops/reward-items/:id').use(...opsAuth).handler(handlers.updateReward);

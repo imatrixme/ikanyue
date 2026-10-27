@@ -5,6 +5,7 @@ const { OPS_COLLECTION_SCHEMAS, validateOpsSchemas } = require('../src/services/
 const {
     applyOpsSchemas,
     ensureBootstrapAdmin,
+    ensureDefaultVenue,
     ensureLocalCoreCollections,
     ensureTeacherOpsFields,
 } = require('./lib/points-lite-bootstrap');
@@ -29,6 +30,7 @@ async function main() {
     let byName = await ensureLocalCoreCollections(pb, envFlag('OPS_BOOTSTRAP_CORE_COLLECTIONS'));
     byName = await applyOpsSchemas(pb, OPS_COLLECTION_SCHEMAS, byName);
     await ensureTeacherOpsFields(pb, byName);
+    await ensureDefaultVenue(pb);
     await ensureBootstrapAdmin(pb, {
         enabled: envFlag('OPS_BOOTSTRAP_ADMIN_ENABLED'),
         username: process.env.OPS_BOOTSTRAP_ADMIN_USERNAME,

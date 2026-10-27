@@ -56,6 +56,24 @@ function createOpsHandlers(services = createDefaultOpsServices()) {
             return safe(c, () => services.pointService.offlineRedeem(c.get('user'), body, services.rewardService));
         },
 
+        async listPublicVenues(c) {
+            return safe(c, () => services.venueService.listPublic());
+        },
+
+        async listVenues(c) {
+            return safe(c, () => services.venueService.listForAdmin(c.get('user')));
+        },
+
+        async createVenue(c) {
+            const body = await readRequestBody(c);
+            return safe(c, () => services.venueService.create(c.get('user'), body));
+        },
+
+        async updateVenue(c) {
+            const body = await readRequestBody(c);
+            return safe(c, () => services.venueService.update(c.get('user'), c.req.param('id'), body));
+        },
+
         async listRewards(c) {
             return safe(c, () => services.rewardService.listForAdmin(c.get('user'), c.req.query()));
         },
