@@ -127,12 +127,12 @@ DAO impact:
 
 - 破坏性或难以回滚的操作（删除文件/目录、重建数据库、`git reset --hard`、`git push --force`、改公共 API、持久化格式或数据迁移）先说明风险和更安全的替代，并确认后再执行。
 - 未经要求不提交、不推送；不主动重写历史；GitHub 交互优先用 `gh`。
-- 子项目是独立仓库（git submodule）：在子项目内提交，再在根仓库提交 submodule 指针；不修改子项目的分支策略。
+- 单一 Git 仓库，只用 `master`：跨子项目改动在同一次提交里完成，不再开长期功能分支。`ikanyue.flutter`、`ikanyue.m.nuxt` 是根目录被忽略的独立旧仓库，不随本仓库提交。
 <!-- USER-REQUIREMENTS:END -->
 
 ## 项目地图
 
-根仓库是 submodule 编排仓库，没有根 `package.json` 或 workspace；进入子项目后按其锁文件与脚本操作。详情见 `README.md`。
+单一仓库，各子项目保留在原目录、各自的历史已并入；没有根 `package.json` 或 workspace，进入子项目后按其锁文件与脚本操作。详情见 `README.md`。
 
 | Path | 角色 | 技术栈 | 局部规则 |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 # kanyue
 
-看乐项目 monorepo。根仓库使用 Git submodule 管理各子项目入口，各子项目继续保持独立仓库、独立依赖、独立锁文件和独立发布节奏。
+看乐项目单一仓库（monorepo）。各子项目保留在原目录，原独立仓库的提交历史已并入本仓库；依赖、锁文件和发布节奏仍按子项目各自独立。
 
 ## Projects
 
@@ -11,14 +11,12 @@
 | `kanyue.pay` | 独立支付网关（当前仅 mock） | Hono / Bun 1.4.1 / 独立 PocketBase |
 | `ikanyue.admin` | 运营后台 | React / Vite |
 | `ikanyue.website` | 看乐声乐官网 | Nuxt 4 |
-| `ikanyue.m.nuxt` | 活动页网站 | Nuxt |
-| `ikanyue.flutter` | 规划中的 Flutter App | Flutter |
+
+`ikanyue.m.nuxt`（旧活动页）和 `ikanyue.flutter`（规划中的 App）不在本仓库内，仍是各自的独立仓库；需要时克隆到根目录同名位置即可，根 `.gitignore` 已忽略这两个目录。
 
 ## Usage
 
-这个仓库没有根 `package.json`，也没有根 workspace 配置。进入具体子模块后按该项目自己的 README、锁文件和脚本操作。
-
-`kanyue.pay` 保持独立仓库、依赖和锁文件，远程为 `git@github.com:imatrixme/ikanyue.pay.git`；根仓库通过 submodule 记录其提交引用。
+这个仓库没有根 `package.json`，也没有根 workspace 配置。进入具体子项目后按该项目自己的 README、锁文件和脚本操作。
 
 ```bash
 cd ikanyue.taro3
@@ -32,38 +30,11 @@ pnpm install
 pnpm dev
 ```
 
-```bash
-cd ikanyue.m.nuxt
-npm install
-npm run dev
-```
-
-```bash
-cd ikanyue.flutter
-flutter pub get
-flutter run
-```
-
 ## Git layout
 
-各子项目都作为 submodule 注册在根仓库中。根仓库记录的是每个子模块的远端地址、跟踪分支和当前 commit 指针。
+只有一个仓库、一条主线 `master`。跨子项目的改动（例如 API、后台、小程序同时改）放在同一次提交里，不再分仓库提交、也不再维护子模块指针。
 
-| Path | Remote | Branch |
-| --- | --- | --- |
-| `ikanyue.taro3` | `git@github.com:imatrixme/ikanyue.taro3.git` | `feature/payment-gateway-commerce` |
-| `ikanyue.mapi.hono` | `git@github.com:imatrixme/ikanyue.mapi.hono.git` | `feature/payment-gateway-commerce` |
-| `kanyue.pay` | `git@github.com:imatrixme/ikanyue.pay.git` | `master` |
-| `ikanyue.admin` | `git@github.com:imatrixme/ikanyue.admin.git` | `feature/payment-gateway-commerce` |
-| `ikanyue.website` | `git@github.com:imatrixme/ikanyue.website.git` | `feature/course-credit-system` |
-| `ikanyue.m.nuxt` | `git@github.com:imatrixme/ikanyue.m.nuxt.git` | `master` |
-| `ikanyue.flutter` | `git@github.com:imatrixme/ikanyue.flutter.git` | `douyin` |
-
-四个活跃产品项目与父仓库使用以下版本线：
-
-- 稳定基线：`release/2.0.0`
-- 课程点系统：`feature/course-credit-system`
-- 支付网关与课程购买（当前）：`feature/payment-gateway-commerce`（官网仍在 `feature/course-credit-system` 上开发）
-
+原独立仓库（`imatrixme/ikanyue.taro3`、`ikanyue.mapi.hono`、`ikanyue.admin`、`ikanyue.website`、`ikanyue.pay`）的历史已按目录并入，可用 `git log -- <目录>` 查看；这些旧仓库只作归档，不再提交。
 ## Course credit system documents
 
 - Product requirements: [`docs/product/course-credit-system-prd.md`](docs/product/course-credit-system-prd.md)
@@ -71,48 +42,6 @@ flutter run
 - Data model: [`docs/architecture/course-credit-system-data-model.md`](docs/architecture/course-credit-system-data-model.md)
 - OpenSpec change: [`openspec/changes/add-course-credit-system/`](openspec/changes/add-course-credit-system/)
 
-首次 clone：
-
-```bash
-git clone --recurse-submodules <repo-url>
-```
-
-已有 clone 初始化子模块：
-
-```bash
-git submodule update --init --recursive
-```
-
-拉取根仓库和子模块：
-
-```bash
-git pull
-git submodule update --init --recursive
-```
-
-把子模块更新到 `.gitmodules` 中配置的跟踪分支最新提交：
-
-```bash
-git submodule update --remote --merge
-```
-
-在子模块中独立开发：
-
-```bash
-cd ikanyue.taro3
-git switch release/wechat-points-lite
-git pull
-# edit, commit, push in this submodule repository
-```
-
-子模块提交推送后，回到根仓库提交新的子模块指针：
-
-```bash
-cd ..
-git status
-git add ikanyue.taro3
-git commit -m "Update ikanyue.taro3 submodule"
-```
 
 ## Unified environment startup
 
