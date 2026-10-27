@@ -1,0 +1,173 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, useLocation } from 'react-router-dom'
+import { describe, expect, it, vi } from 'vitest'
+
+import { createMockOpsApi } from '../../app/api'
+import { mockProfiles } from '../../app/mockData'
+import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
+
+describe('institution course calendar workspace', () => {
+  it('renders week, month, list, URL filters, and a narrow-screen agenda fallback', async () => {
+    const user = userEvent.setup()
+    renderWorkspace()
+    expect(await screen.findByRole('heading', { name: '机构课表' })).toBeInTheDocument()
+    expect((await screen.findAllByRole('button', { name: /少儿声乐小课/ })).length).toBeGreaterThan(0)
+    expect(screen.getByTestId('calendar-time-grid')).toBeInTheDocument()
+    expect(screen.getByTestId('calendar-agenda')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('教师'), 'teacher_1')
+    expect(screen.getByTestId('location')).toHaveTextContent('teacherId=teacher_1')
+    await user.selectOptions(screen.getByLabelText('学员'), 'student_1')
+    await user.selectOptions(screen.getByLabelText('班级'), 'class_1')
+    await user.selectOptions(screen.getByLabelText('课程'), 'course_1')
+    await user.selectOptions(screen.getByLabelText('课堂状态'), 'scheduled')
+    await user.selectOptions(screen.getByLabelText('排课来源'), 'class')
+    await user.selectOptions(screen.getByLabelText('教师'), '')
+    expect(screen.getByTestId('location')).not.toHaveTextContent('teacherId=')
+    await user.click(screen.getByRole('button', { name: '切换到月' }))
+    expect(await screen.findByTestId('calendar-month-grid')).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent('view=month')
+    await user.click(screen.getByRole('button', { name: '切换到列表' }))
+    expect((await screen.findAllByText('班级排课')).length).toBeGreaterThan(1)
+    await user.click(screen.getByRole('button', { name: '重置' }))
+    expect(screen.getByTestId('location')).not.toHaveTextContent('teacherId=')
+    await user.click(screen.getByRole('button', { name: '上一时间段' }))
+    await user.click(screen.getByRole('button', { name: '下一时间段' }))
+    await user.click(screen.getByRole('button', { name: '今天' }))
+    await user.click(screen.getByRole('button', { name: '刷新机构课表' }))
+  })
+
+  it('opens lesson detail, follows the lesson route, reschedules, and cancels', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    const reschedule = vi.spyOn(api, 'rescheduleLesson')
+    const cancel = vi.spyOn(api, 'cancelLesson')
+    const view = renderWorkspace(api, '/calendar?view=list&date=2026-08-03')
+    await user.click((await screen.findAllByText('少儿声乐小课'))[0])
+    let drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
+    expect(drawer).toHaveTextContent('周老师')
+    await user.click(within(drawer).getByRole('button', { name: '进入课堂管理' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/lessons?sessionId=lesson_1')
+    view.unmount()
+
+    renderWorkspace(api, '/calendar?view=list&date=2026-08-03')
+    await user.click((await screen.findAllByText('少儿声乐小课'))[0])
+    drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
+    await user.click(within(drawer).getByRole('button', { name: '调整时间' }))
+    let dialog = screen.getByRole('dialog', { name: '调整课堂时间' })
+    await user.clear(within(dialog).getByLabelText('新开始时间'))
+    await user.type(within(dialog).getByLabelText('新开始时间'), '2026-08-04T09:00')
+    await user.clear(within(dialog).getByLabelText('新结束时间'))
+    await user.type(within(dialog).getByLabelText('新结束时间'), '2026-08-04T10:00')
+    await user.click(within(dialog).getByRole('button', { name: '确认调整' }))
+    expect(reschedule).toHaveBeenCalledWith('token', 'lesson_1', expect.any(String), expect.any(String), '教学安排调整')
+
+    await user.click((await screen.findAllByText('少儿声乐小课'))[0])
+    drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
+    await user.click(within(drawer).getByRole('button', { name: '取消课堂' }))
+    dialog = screen.getByRole('dialog', { name: '取消课堂' })
+    await user.click(within(dialog).getByRole('button', { name: '确认取消' }))
+    expect(cancel).toHaveBeenCalledWith('token', 'lesson_1', '教学安排取消')
+  })
+
+  it('shows load, detail, command, and version-conflict recovery states', async () => {
+    const loadApi = createMockOpsApi()
+    vi.spyOn(loadApi, 'getCourseCalendar').mockRejectedValueOnce(new Error('课表离线'))
+    const loadView = renderWorkspace(loadApi)
+    expect(await screen.findByText('课表离线')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: '重新加载' }))
+    expect((await screen.findAllByRole('button', { name: /少儿声乐小课/ })).length).toBeGreaterThan(0)
+    loadView.unmount()
+
+    const detailApi = createMockOpsApi()
+    vi.spyOn(detailApi, 'getCourseResource').mockRejectedValueOnce('offline')
+    const detailView = renderWorkspace(detailApi, '/calendar?view=list&date=2026-08-03')
+    await userEvent.setup().click((await screen.findAllByText('少儿声乐小课'))[0])
+    expect(await screen.findByText('课堂详情暂时无法加载，仍可查看日历摘要。')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: '关闭弹窗' }))
+    detailView.unmount()
+
+    const conflictApi = createMockOpsApi()
+    vi.spyOn(conflictApi, 'rescheduleLesson').mockRejectedValueOnce(new Error('VERSION 冲突'))
+    renderWorkspace(conflictApi, '/calendar?view=list&date=2026-08-03')
+    await userEvent.setup().click((await screen.findAllByText('少儿声乐小课'))[0])
+    await userEvent.setup().click(within(await screen.findByRole('dialog', { name: '少儿声乐小课' })).getByRole('button', { name: '调整时间' }))
+    const dialog = screen.getByRole('dialog', { name: '调整课堂时间' })
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: '确认调整' }))
+    expect(await screen.findByText('课堂数据已变化，课表已刷新，请重新确认后操作。')).toBeInTheDocument()
+  })
+
+  it('keeps a failed non-conflict command open and resets an empty filtered state', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    vi.spyOn(api, 'cancelLesson').mockRejectedValueOnce(new Error('取消失败'))
+    const failed = renderWorkspace(api, '/calendar?view=list&date=2026-08-03')
+    await user.click((await screen.findAllByText('少儿声乐小课'))[0])
+    await user.click(within(await screen.findByRole('dialog', { name: '少儿声乐小课' })).getByRole('button', { name: '取消课堂' }))
+    await user.click(within(screen.getByRole('dialog', { name: '取消课堂' })).getByRole('button', { name: '确认取消' }))
+    expect(await screen.findByText('取消失败')).toBeInTheDocument()
+    failed.unmount()
+
+    renderWorkspace(createMockOpsApi(), '/calendar?date=2026-08-03&teacherId=missing')
+    expect(await screen.findByText('没有匹配的课程安排')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '重置筛选' }))
+    expect((await screen.findAllByRole('button', { name: /少儿声乐小课/ })).length).toBeGreaterThan(0)
+  })
+
+  it('creates and publishes from an academic time slot', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    const create = vi.spyOn(api, 'createCourseResource')
+    const publish = vi.spyOn(api, 'publishLesson')
+    renderWorkspace(api, '/calendar?date=2026-08-03&mode=schedule')
+    expect(await screen.findByRole('heading', { name: '排课日历' })).toBeInTheDocument()
+    const slot = await screen.findByRole('button', { name: '在周老师 2026-08-03 11:00新增排课' })
+    await user.click(slot)
+    const drawer = await screen.findByRole('dialog', { name: '新增排课' })
+    await user.selectOptions(within(drawer).getByLabelText('班级'), 'class_1')
+    await user.click(within(drawer).getByRole('button', { name: '发布课堂' }))
+    expect(create).toHaveBeenCalledWith('token', 'lessons', expect.objectContaining({ title: '周六综合声乐班', status: 'draft', code: expect.stringMatching(/^SCH-202608031100-cher_1-/) }))
+    expect(create.mock.calls[0][2]).not.toHaveProperty('settlementRuleSnapshot')
+    expect(publish).toHaveBeenCalledWith('token', expect.any(String), ['class_1'], [{ teacherId: 'teacher_1', role: 'lead' }])
+    expect(await screen.findByText('已发布 1 节课堂')).toBeInTheDocument()
+  })
+
+  it('cancels a lesson whose publication fails and reports the weeks already published', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    vi.spyOn(api, 'publishLesson').mockResolvedValueOnce({} as never).mockRejectedValueOnce(new Error('学员时间冲突'))
+    const cancel = vi.spyOn(api, 'setCourseResourceStatus')
+    renderWorkspace(api, '/calendar?date=2026-08-03&mode=schedule')
+    await user.click(await screen.findByRole('button', { name: '在周老师 2026-08-03 11:00新增排课' }))
+    const drawer = await screen.findByRole('dialog', { name: '新增排课' })
+    await user.selectOptions(within(drawer).getByLabelText('班级'), 'class_1')
+    await user.selectOptions(within(drawer).getByLabelText('重复'), '4')
+    await user.click(within(drawer).getByRole('button', { name: '发布课堂' }))
+    expect(await screen.findByText('已发布 8/3；第 2 节未发布：学员时间冲突。其余日期未创建。')).toBeInTheDocument()
+    expect(cancel).toHaveBeenCalledWith('token', 'lessons', expect.any(String), 'cancelled', '排课发布失败，自动撤销')
+  })
+
+  it('defaults a teacher-only account to a personal week without academic actions', async () => {
+    const user = userEvent.setup()
+    const teacher = { ...mockProfiles.teacher, id: 'teacher_1', isAdmin: false, role: 'teacher' as const, courseCreditCapabilities: ['course_credit.teacher' as const] }
+    renderWorkspace(createMockOpsApi(), '/calendar?date=2026-08-03', teacher)
+    expect(await screen.findByRole('heading', { name: '我的周排程' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '切换到周' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('button', { name: '新增排课' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('教师')).not.toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: /少儿声乐小课/ }))[0])
+    const drawer = await screen.findByRole('dialog', { name: '少儿声乐小课' })
+    expect(within(drawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole('button', { name: '取消课堂' })).not.toBeInTheDocument()
+  })
+})
+
+function renderWorkspace(api = createMockOpsApi(), entry = '/calendar?date=2026-08-03', profile = mockProfiles.admin) {
+  return render(<MemoryRouter initialEntries={[entry]}><CourseCalendarWorkspace api={api} profile={profile} token="token" /><Location /></MemoryRouter>)
+}
+
+function Location() {
+  const location = useLocation()
+  return <output data-testid="location">{location.pathname}{location.search}</output>
+}

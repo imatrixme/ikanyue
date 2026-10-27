@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import "./styles/brand.generated.css";
+
+:root {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--ky-font-sans);
+  font-synthesis: none;
+  letter-spacing: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.ky-paragraph {
+  max-width: var(--ky-prose-measure);
+  color: var(--muted-foreground);
+  font-size: var(--ky-paragraph-size);
+  line-height: var(--ky-paragraph-line-height);
+}
+
+.ky-paragraph + .ky-paragraph {
+  margin-top: var(--ky-paragraph-spacing);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--brand-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

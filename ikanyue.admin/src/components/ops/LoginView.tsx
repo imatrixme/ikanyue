@@ -1,0 +1,100 @@
+import { BookOpen, LogIn, UserPlus } from 'lucide-react'
+import { useState } from 'react'
+
+import type { OpsApi } from '../../app/api'
+import type { LoginResult } from '../../app/types'
+import { Button } from '../ui/Button'
+import { SegmentedControl } from '../ui/Controls'
+import { Alert } from '../ui/Feedback'
+import { Field, Input } from '../ui/Input'
+
+interface LoginViewProps {
+  api: OpsApi
+  loading: boolean
+  errorMessage?: string
+  onSuccess: (result: LoginResult) => void
+  onError: (message: string) => void
+  // Mirrors the server's OPS_REGISTRATION_ENABLED; registration stays hidden unless both are on.
+  allowRegistration?: boolean
+}
+
+export function LoginView({ api, loading, errorMessage, onSuccess, onError, allowRegistration = import.meta.env.VITE_OPS_REGISTRATION_ENABLED === 'true' }: LoginViewProps) {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [account, setAccount] = useState('')
+  const [password, setPassword] = useState('')
+  const [realName, setRealName] = useState('')
+  const [nickName, setNickName] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSuccessMessage('')
+    try {
+      if (mode === 'register') {
+        const result = await api.register({ cellphone: account, password, realName, nickName })
+        setSuccessMessage(result.message || '注册成功，请等待管理员激活')
+        return
+      }
+      onSuccess(await api.login(account, password))
+    } catch (error) {
+      onError(error instanceof Error ? error.message : mode === 'register' ? '注册失败' : '登录失败')
+    }
+  }
+
+  function switchMode(nextMode: 'login' | 'register') {
+    setMode(nextMode)
+    setSuccessMessage('')
+  }
+
+  return (
+    <main className="grid min-h-screen grid-cols-1 text-[var(--foreground)] lg:grid-cols-[420px_1fr]">
+      <aside className="flex flex-col justify-between border-r border-[var(--border)] bg-[var(--primary)] p-8 text-[var(--primary-foreground)]">
+        <div>
+          <div className="mb-10 inline-flex h-10 w-10 items-center justify-center rounded-md bg-[var(--on-primary-overlay)]">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <h1 className="text-3xl font-semibold leading-tight">看乐教学运营中心</h1>
+          <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--on-primary-muted)]">
+            学员、排课、课时与收款
+          </p>
+        </div>
+      </aside>
+      <section className="flex items-center justify-center px-5 py-10">
+        <form className="w-full max-w-[400px] rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm" onSubmit={submit}>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold">{mode === 'register' ? '注册后台账号' : '登录'}</h2>
+          </div>
+          {allowRegistration ? <div className="mb-4"><SegmentedControl label="账号操作" onChange={switchMode} options={[{ value: 'login', label: '登录' }, { value: 'register', label: '注册' }]} value={mode} /></div> : null}
+          {errorMessage ? <Alert className="mb-4" tone="error">{errorMessage}</Alert> : null}
+          {successMessage ? <Alert className="mb-4" tone="success">{successMessage}</Alert> : null}
+          <div className="grid gap-4">
+            <Field label={mode === 'register' ? '手机号' : '账号或手机号'} htmlFor="ops-account">
+              <Input
+                id="ops-account"
+                placeholder={mode === 'register' ? '请输入手机号' : 'admin / 手机号'}
+                value={account}
+                onChange={(event) => setAccount(event.target.value)}
+              />
+            </Field>
+            {mode === 'register' ? (
+              <>
+                <Field label="姓名" htmlFor="realName">
+                  <Input id="realName" value={realName} onChange={(event) => setRealName(event.target.value)} />
+                </Field>
+                <Field label="昵称" htmlFor="nickName">
+                  <Input id="nickName" value={nickName} onChange={(event) => setNickName(event.target.value)} />
+                </Field>
+              </>
+            ) : null}
+            <Field label="密码" htmlFor="password">
+              <Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+            </Field>
+            <Button className="w-full" disabled={loading} icon={mode === 'register' ? <UserPlus className="h-4 w-4" aria-hidden="true" /> : <LogIn className="h-4 w-4" aria-hidden="true" />}>
+              {loading ? (mode === 'register' ? '注册中' : '登录中') : (mode === 'register' ? '提交注册' : '登录')}
+            </Button>
+          </div>
+        </form>
+      </section>
+    </main>
+  )
+}

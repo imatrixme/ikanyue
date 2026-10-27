@@ -1,0 +1,223 @@
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+
+import App from '../../App'
+import { createMockOpsApi } from '../../app/api'
+import { mockProfiles } from '../../app/mockData'
+
+describe('admin course operations', () => {
+  it('routes through catalog, automatic enrollment, and class workflows', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    const createEnrollment = vi.spyOn(api, 'createEnrollment')
+    render(<App api={api} />)
+    await login(user)
+
+    await open(user, ['设置', '课程'], '课程规格')
+    expect(screen.getByRole('table')).toHaveTextContent('综合声乐班')
+    await user.click(screen.getByRole('button', { name: '新增课程规格' }))
+    const courseDialog = screen.getByRole('dialog', { name: '新增课程规格' })
+    await user.type(within(courseDialog).getByLabelText('课程名称'), '精品一对一声乐')
+    await user.type(within(courseDialog).getByLabelText('课程编码'), 'VOCAL-ONE')
+    await user.selectOptions(within(courseDialog).getByLabelText('授课形式'), 'one_to_one')
+    await user.selectOptions(within(courseDialog).getByLabelText('教师要求'), 'senior')
+    await chooseReference(user, courseDialog, '默认扣减课时', '综合声乐')
+    await user.click(within(courseDialog).getByRole('button', { name: '保存' }))
+    expect((await screen.findAllByText('精品一对一声乐')).length).toBeGreaterThan(0)
+
+    await open(user, ['课包与价格'], '课包管理')
+    await user.click(screen.getByRole('tab', { name: '价格与生效时间' }))
+    expect(await screen.findByRole('heading', { name: '价格版本' })).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: '包含课时' }))
+    expect(await screen.findByRole('heading', { name: '课时发放规则' })).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: '课时兑换' }))
+    expect(await screen.findByRole('heading', { name: '兑换规则' })).toBeInTheDocument()
+    expect(screen.getByRole('table')).toHaveTextContent('100 课时可兑换 1 课时')
+    await user.click(screen.getByRole('button', { name: '新增兑换规则' }))
+    const conversionDialog = screen.getByRole('dialog', { name: '新增兑换规则' })
+    await chooseReference(user, conversionDialog, '用哪种课时兑换', '通用')
+    await chooseReference(user, conversionDialog, '兑换成哪种课时', '综合声乐')
+    await user.click(within(conversionDialog).getByRole('button', { name: '保存' }))
+    expect((await screen.findAllByText('综合声乐课时')).length).toBeGreaterThan(0)
+
+    await open(user, ['收款', '报课'], '报课管理')
+    await user.click(screen.getByRole('button', { name: '新建报课' }))
+    const enrollmentDialog = screen.getByRole('dialog', { name: '管理员报课' })
+    await chooseReference(user, enrollmentDialog, '学员', '张同学')
+    await chooseReference(user, enrollmentDialog, '所报课包', '综合声乐')
+    await chooseReference(user, enrollmentDialog, '本次售价', '2,800')
+    await chooseReference(user, enrollmentDialog, '进入班级（可选）', '周六')
+    await user.click(within(enrollmentDialog).getByRole('button', { name: '确认报课' }))
+    await waitFor(() => expect(createEnrollment).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ classId: 'class_1', packageId: 'package_1', priceVersionId: 'price_1', studentId: 'student_1' })))
+
+    await user.click(screen.getAllByRole('button', { name: '同步名单' })[0])
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: '确认同步' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '确认同步课堂名单' })).not.toBeInTheDocument())
+
+    await open(user, ['更多', '教学', '班级'], '班级管理')
+    await user.click(screen.getAllByRole('button', { name: '班级详情' })[0])
+    const classDrawer = await screen.findByRole('dialog', { name: '周六综合声乐班' })
+    expect(classDrawer).toHaveTextContent('班级成员')
+    await chooseReference(user, classDrawer, '选择授课教师', '周老师')
+    await user.click(within(classDrawer).getByRole('button', { name: '分配' }))
+    await waitFor(() => expect(classDrawer).toHaveTextContent('周老师'))
+    await user.click(within(classDrawer).getByRole('button', { name: '为班级报课' }))
+    expect(await screen.findByRole('dialog', { name: '管理员报课' })).toBeInTheDocument()
+  }, 10_000)
+
+  it('handles lesson attendance, settlement, student detail, and read-only control views', { timeout: 10_000 }, async () => {
+    const user = userEvent.setup()
+    render(<App api={createMockOpsApi()} />)
+    await login(user)
+
+    await open(user, ['更多', '教学', '课堂'], '课堂管理')
+    await user.click(screen.getByRole('button', { name: /^切换到全部/ }))
+    await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
+    let lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
+    expect(within(lessonDrawer).getByRole('list', { name: '课堂进度' }).querySelector('[aria-current=step]')).toHaveTextContent('点名')
+    await user.click(within(lessonDrawer).getByRole('button', { name: '全部到课' }))
+    await waitFor(() => expect(within(lessonDrawer).getByLabelText('张同学出勤状态')).toHaveValue('present'))
+    expect(within(lessonDrawer).getByRole('list', { name: '课堂进度' }).querySelector('[aria-current=step]')).toHaveTextContent('结束课堂')
+    await user.selectOptions(within(lessonDrawer).getByLabelText('林老师实际授课状态'), 'confirmed')
+    await user.click(within(lessonDrawer).getByRole('button', { name: '结束课堂' }))
+    expect(screen.getByRole('dialog', { name: '确认结束课堂' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '确认结束' }))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('已完成'))
+
+    await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
+    lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
+    await user.click(within(lessonDrawer).getByRole('button', { name: '核销预览' }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: '进入确认' }))
+    expect(screen.getByRole('dialog', { name: '确认课堂核销' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '确认核销' }))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('已核销'))
+
+    await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
+    lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
+    await user.click(within(lessonDrawer).getByRole('button', { name: '核销更正' }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: '确认更正' }))
+    await waitFor(() => expect(screen.getByRole('table')).toHaveTextContent('待更正'))
+
+    await open(user, ['账务', '课时账户'], '课时账户')
+    await user.click(screen.getAllByRole('button', { name: '查看张同学课时账户' })[0])
+    expect(await screen.findByRole('dialog', { name: '课时账户明细' })).toHaveTextContent('课时来源')
+    await user.click(screen.getByRole('button', { name: '关闭弹窗' }))
+    await open(user, ['教学', '教师工作量'], '教师工作量')
+    expect(screen.getByRole('table')).toHaveTextContent('林老师')
+    await open(user, ['账务', '异常'], '核销异常')
+    await user.click(screen.getByRole('tab', { name: '对账异常' }))
+    expect(await screen.findByRole('heading', { name: '对账异常' })).toBeInTheDocument()
+    await open(user, ['操作记录'], '操作审计')
+    expect(screen.getByRole('table')).toHaveTextContent('course_operations.enrollment.create')
+
+    await open(user, ['学员'], '学员管理')
+    await user.click(screen.getAllByRole('button', { name: '查看张同学学员详情' })[0])
+    expect(await screen.findByRole('heading', { name: '张同学' })).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/students/student_1')
+    expect(screen.getByText('可用课时')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '报课记录' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '报课/续课' }))
+    const renewal = await screen.findByRole('dialog', { name: '管理员报课' })
+    expect(within(renewal).getByLabelText('学员')).toHaveValue('张同学')
+  })
+
+  it('denies an unauthorized routed view while retaining teacher course navigation', async () => {
+    window.history.replaceState({}, '', '/points')
+    localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: 'teacher-token', profile: mockProfiles.teacher }))
+    render(<App api={createMockOpsApi()} />)
+    expect(await screen.findByRole('heading', { name: '当前账号无权访问' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '约课' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '积分' })).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/points/students')
+  })
+
+  it('keeps teacher-only work inside assigned students and lessons', async () => {
+    const user = userEvent.setup()
+    const teacherOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher' as const] }
+    window.history.replaceState({}, '', '/students')
+    localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: 'teacher-token', profile: teacherOnly }))
+    render(<App api={createMockOpsApi()} />)
+
+    expect(await screen.findByRole('heading', { name: '我的学员' })).toBeInTheDocument()
+    expect(screen.getByRole('table')).toHaveTextContent('张同学')
+    expect(screen.getByRole('table')).not.toHaveTextContent('李同学')
+    expect(screen.queryByRole('button', { name: '新增学员' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '编辑张同学' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '查看张同学学员详情' }))
+    const studentDrawer = await screen.findByRole('dialog', { name: '张同学 · 授课关系' })
+    expect(studentDrawer).toHaveTextContent('关联班级')
+    expect(studentDrawer).not.toHaveTextContent('积分')
+    expect(within(studentDrawer).queryByRole('button', { name: '为此学员报课' })).not.toBeInTheDocument()
+    await user.click(within(studentDrawer).getByRole('button', { name: '关闭弹窗' }))
+
+    expect(screen.queryByRole('button', { name: '更多' })).not.toBeInTheDocument()
+    await open(user, ['教学', '课堂'], '我的课堂')
+    await user.click(screen.getByRole('button', { name: /^切换到全部/ }))
+    expect(screen.queryByRole('button', { name: '新增课堂' })).not.toBeInTheDocument()
+    await user.click(screen.getAllByRole('button', { name: '课堂详情' })[0])
+    const lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
+    expect(within(lessonDrawer).getByRole('button', { name: '全部到课' })).toBeInTheDocument()
+    expect(within(lessonDrawer).queryByRole('button', { name: '核销预览' })).not.toBeInTheDocument()
+    expect(within(lessonDrawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
+    await user.selectOptions(within(lessonDrawer).getByLabelText('林老师实际授课状态'), 'confirmed')
+    await waitFor(() => expect(within(lessonDrawer).getByLabelText('林老师实际授课状态')).toHaveValue('confirmed'))
+    expect(screen.queryByRole('button', { name: '账务' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '班级' })).not.toBeInTheDocument()
+  })
+
+  it('keeps settlement-only work read-only until a completed lesson is ready to settle', async () => {
+    const user = userEvent.setup()
+    const api = createMockOpsApi()
+    await api.setCourseResourceStatus('token', 'lessons', 'lesson_1', 'completed')
+    const settlementOnly = { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.settlement' as const] }
+    window.history.replaceState({}, '', '/lessons')
+    localStorage.setItem('kanyue.points-lite.session', JSON.stringify({ token: 'settlement-token', profile: settlementOnly }))
+    render(<App api={api} />)
+
+    expect(await screen.findByRole('heading', { name: '课堂核销' })).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/schedule/lessons')
+    await user.click(screen.getByRole('button', { name: /^切换到待处理/ }))
+    expect(screen.queryByRole('button', { name: '新增课堂' })).not.toBeInTheDocument()
+    await user.click((await screen.findAllByRole('button', { name: '课堂详情' }))[0])
+    const lessonDrawer = await screen.findByRole('dialog', { name: '合唱排练' })
+    expect(within(lessonDrawer).queryByRole('button', { name: '全部到课' })).not.toBeInTheDocument()
+    expect(within(lessonDrawer).queryByRole('button', { name: '调整时间' })).not.toBeInTheDocument()
+    expect(within(lessonDrawer).queryByRole('button', { name: '取消课堂' })).not.toBeInTheDocument()
+    expect(within(lessonDrawer).getByRole('button', { name: '核销预览' })).toBeInTheDocument()
+    expect(within(lessonDrawer).getByLabelText('张同学出勤状态')).toBeDisabled()
+    expect(within(lessonDrawer).getByLabelText('林老师实际授课状态')).toBeDisabled()
+  })
+})
+
+async function login(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText('账号或手机号'), 'admin')
+  await user.type(screen.getByLabelText('密码'), 'secret')
+  await user.click(screen.getByRole('button', { name: /^登录$/ }))
+  await screen.findByRole('heading', { name: /^今天/ })
+}
+
+// Clicks a navigation section and/or a section tab, in order, then waits for the page heading.
+async function open(user: ReturnType<typeof userEvent.setup>, path: string[], heading: string) {
+  for (const label of path) {
+    if (label === '更多') await expandMore(user)
+    else await user.click(screen.getByRole('button', { name: label }))
+  }
+  await screen.findByRole('heading', { name: heading })
+}
+
+async function chooseReference(user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, label: string, query: string) {
+  const input = within(scope).getByLabelText(label)
+  await user.click(input)
+  await user.type(input, query)
+  await user.keyboard('{Enter}')
+}
+
+// 更多 remembers its state, so only expand it when it is collapsed.
+async function expandMore(user: ReturnType<typeof userEvent.setup>) {
+  const toggle = screen.getAllByRole('button', { name: '更多' })[0]
+  if (toggle.getAttribute('aria-expanded') !== 'true') await user.click(toggle)
+}
