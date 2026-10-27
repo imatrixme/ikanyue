@@ -87,6 +87,9 @@ test('FEFO filter uses default batch size and validates session date', async () 
     const pb = { collection() { return { async getFullList(value) { options = value; return []; } }; } };
     await findFefoCandidateBatches(pb, { studentId: 's', creditTypeId: 'c', sessionStart: '2026-01-01' });
     assert.equal(options.batch, 200);
+    assert.match(options.filter, /validFrom<="2026-01-01 00:00:00\.000Z"/);
+    assert.match(options.filter, /effectiveExpiresAt>"2026-01-01 00:00:00\.000Z"/);
+    assert.match(options.filter, /activationDeadline>"2026-01-01 00:00:00\.000Z"/);
     assert.throws(() => buildFefoFilter({ studentId: 's', creditTypeId: 'c', sessionStart: null }), /sessionStart must be a valid date/);
 });
 

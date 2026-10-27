@@ -130,6 +130,7 @@ test('workers expire pending requests and fulfill appointments linked to complet
     const expired = await workerService(expiredRepo).expirePending(command({ cutoffAt: NOW }));
     assert.equal(expired.processedCount, 1);
     assert.equal(updateFor(expiredRepo.plan, 'appointment_requests').status, 'expired');
+    assert.match(expiredRepo.listOptions[0].filter, /responseDeadline<="2026-08-01 00:00:00\.000Z"/);
 
     const fulfilledRepo = lifecycleRepository({
         workerAppointments: [appointment({ status: 'confirmed', sessionId: 'session' })],
@@ -220,7 +221,9 @@ function lifecycleRepository(options = {}) {
             if (collection === 'credit_batches') return sourceBatch;
             throw new Error(`Unexpected get ${collection}`);
         },
-        async list(collection) {
+        listOptions: [],
+        async list(collection, listOptions) {
+            this.listOptions.push(listOptions);
             if (collection === 'appointment_requests') return options.workerAppointments || [];
             if (collection === 'session_students') return [sessionStudent()];
             if (collection === 'session_credit_allocations') return [allocation()];

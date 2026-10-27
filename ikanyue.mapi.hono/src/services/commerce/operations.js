@@ -1,7 +1,7 @@
 const { invariant } = require('../courseCredits/domain');
 const { id, escape } = require('./planning');
 const { create } = require('../courseCredits/reservationRequests');
-const { filterTime } = require('../courseCredits/booking/time');
+const { filterTime } = require('../courseCredits/repositories/operationRepository');
 
 class CommerceOperations {
     constructor(checkout, refunds) { this.checkout = checkout; this.refunds = refunds; this.repo = checkout.repo; }

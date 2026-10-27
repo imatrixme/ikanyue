@@ -6,6 +6,7 @@ const {
     buildSettlementExceptions,
     filterSettlementExceptions,
 } = require('./settlementExceptionProjection');
+const { filterTime } = require('./repositories/operationRepository');
 
 const STUDENT_FIELDS = [
     'id', 'realname', 'nickname', 'cellphone', 'avatar', 'blocked', 'lastLoginAt',
@@ -155,7 +156,7 @@ class CourseCreditOpsQueryService {
         const [batches, upcoming, followUps] = await Promise.all([
             this.repository.list('credit_batches', { filter: anyFilter('studentId', studentIds), sort: 'studentId,created' }),
             this.repository.list('sessions', {
-                filter: `startAt>="${escapeFilter(now)}" && status!="draft" && status!="cancelled" && status!="settled"`,
+                filter: `startAt>="${escapeFilter(filterTime(now))}" && status!="draft" && status!="cancelled" && status!="settled"`,
                 sort: 'startAt',
             }),
             this.listFollowUps(studentIds),

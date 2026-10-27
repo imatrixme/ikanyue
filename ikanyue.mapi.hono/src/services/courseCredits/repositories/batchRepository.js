@@ -1,6 +1,6 @@
 const { compareFefo } = require('../domain/eligibility');
 const { asDate } = require('../domain/time');
-const { escapeFilter } = require('./operationRepository');
+const { escapeFilter, filterTime } = require('./operationRepository');
 
 const FEFO_SORT = 'effectiveExpiresAt,priority,created,id';
 
@@ -17,7 +17,7 @@ async function findFefoCandidateBatches(pb, query) {
 function buildFefoFilter(query) {
     const studentId = escapeFilter(query.studentId);
     const creditTypeId = escapeFilter(query.creditTypeId);
-    const sessionStart = asDate(query.sessionStart, 'sessionStart').toISOString();
+    const sessionStart = filterTime(asDate(query.sessionStart, 'sessionStart').toISOString());
     return [
         `studentId="${studentId}"`,
         `creditTypeId="${creditTypeId}"`,

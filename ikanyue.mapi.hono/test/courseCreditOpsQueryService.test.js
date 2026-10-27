@@ -301,7 +301,7 @@ test('student overview joins balance, the next upcoming lesson and the latest fo
         snoozeUntil: '2026-11-01T00:00:00.000Z', actorId: 'admin', created: '2026-10-18',
     });
     const sessionQuery = repository.calls.find((call) => call.collection === 'sessions');
-    assert.match(sessionQuery.options.filter, /^startAt>="2026-10-18T00:00:00.000Z" && status!="draft"/);
+    assert.match(sessionQuery.options.filter, /^startAt>="2026-10-18 00:00:00\.000Z" && status!="draft"/);
     const followUpQuery = repository.calls.find((call) => call.collection === 'ops_audit_logs');
     assert.equal(followUpQuery.options.filter,
         `action="${FOLLOW_UP_ACTION}" && (resourceId="one" || resourceId="two")`);

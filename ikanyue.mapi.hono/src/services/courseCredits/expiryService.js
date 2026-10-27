@@ -18,6 +18,7 @@ const {
     update,
     versionClaim,
 } = require('./teachingCommand');
+const { filterTime } = require('./repositories/operationRepository');
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 200;
@@ -107,7 +108,7 @@ class CourseCreditExpiryService {
 }
 
 function dueBatchFilter(at) {
-    const value = escapeFilter(at);
+    const value = escapeFilter(filterTime(at));
     return '(status="active" || status="unactivated") && (availableQuantity>0 || frozenQuantity>0)'
         + ` && ((effectiveExpiresAt!="" && effectiveExpiresAt<="${value}")`
         + ` || (activatedAt="" && activationDeadline!="" && activationDeadline<="${value}"))`;

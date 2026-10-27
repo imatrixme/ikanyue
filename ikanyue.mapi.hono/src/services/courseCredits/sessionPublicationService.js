@@ -22,6 +22,7 @@ const {
 const { sessionClaimPlan } = require('./booking/claimPlanning');
 const { isScheduleConflict } = require('./booking/decisionService');
 const { SCHEDULE_CLAIM_GRANULARITY_MINUTES } = require('./booking/policy');
+const { filterTime } = require('./repositories/operationRepository');
 
 class CourseCreditSessionPublicationService {
     constructor(repository, options = {}) {
@@ -157,7 +158,7 @@ function validateClasses(classes, requiredCreditTypeId) {
 }
 
 function activeAtFilter(field, id, at, status) {
-    const safeAt = escapeFilter(new Date(at).toISOString());
+    const safeAt = escapeFilter(filterTime(at));
     return `${field}="${escapeFilter(id)}" && status="${escapeFilter(status)}"`
         + ` && effectiveFrom<="${safeAt}" && (effectiveTo="" || effectiveTo>"${safeAt}")`;
 }

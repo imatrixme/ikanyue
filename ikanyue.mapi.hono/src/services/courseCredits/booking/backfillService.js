@@ -13,7 +13,7 @@ const {
 const { claimKey } = require('./claims');
 const { sessionClaimPlan } = require('./claimPlanning');
 const { SCHEDULE_CLAIM_GRANULARITY_MINUTES } = require('./policy');
-const { filterTime } = require('./time');
+const { filterTime } = require('../repositories/operationRepository');
 
 const BACKFILL_BATCH_LIMIT = 400;
 

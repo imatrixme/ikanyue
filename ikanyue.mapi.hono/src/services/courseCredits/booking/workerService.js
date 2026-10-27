@@ -7,6 +7,7 @@ const {
     teachingOperation,
 } = require('../teachingCommand');
 const { appointmentUpdatePlan } = require('./decisionService');
+const { filterTime } = require('../repositories/operationRepository');
 
 class AppointmentWorkerService {
     constructor(repository, options = {}) {
@@ -22,7 +23,7 @@ class AppointmentWorkerService {
         if (command.replay) return command.replay;
         const cutoffAt = input.cutoffAt ? new Date(input.cutoffAt).toISOString() : command.at;
         const appointments = await this.repository.list('appointment_requests', {
-            filter: `status="pending" && responseDeadline<="${escapeFilter(cutoffAt)}"`,
+            filter: `status="pending" && responseDeadline<="${escapeFilter(filterTime(cutoffAt))}"`,
             sort: 'responseDeadline,id',
         });
         return this.commitTransitions(command, input, appointments, 'expired', 'expire_appointment', cutoffAt);

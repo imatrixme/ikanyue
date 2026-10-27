@@ -1,5 +1,6 @@
 const { createRecordId, invariant, reconstructBatch } = require('./domain');
 const { create, escapeFilter } = require('./teachingCommand');
+const { filterTime } = require('./repositories/operationRepository');
 
 class CourseCreditReconciliationService {
     constructor(repository, options = {}) {
@@ -71,11 +72,11 @@ class CourseCreditReconciliationService {
         }
         const [batches, events] = await Promise.all([
             this.repository.list('credit_batches', {
-                filter: `updated>="${escapeFilter(since)}"`,
+                filter: `updated>="${escapeFilter(filterTime(since))}"`,
                 sort: 'id',
             }),
             this.repository.list('credit_events', {
-                filter: `created>="${escapeFilter(since)}"`,
+                filter: `created>="${escapeFilter(filterTime(since))}"`,
                 sort: 'batchId,id',
             }),
         ]);

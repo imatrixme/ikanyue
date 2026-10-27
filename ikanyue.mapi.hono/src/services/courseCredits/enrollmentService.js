@@ -8,7 +8,7 @@ const {
 } = require('./domain');
 const { buildGrantBatch } = require('./grantService');
 const { operationAudit } = require('./operationAudit');
-const { fingerprintRequest, normalizeOperation } = require('./repositories/operationRepository');
+const { filterTime, fingerprintRequest, normalizeOperation } = require('./repositories/operationRepository');
 const { create, escapeFilter } = require('./teachingCommand');
 
 class AutomaticEnrollmentService {
@@ -93,7 +93,7 @@ class AutomaticEnrollmentService {
 
     futurePublishedLessons(classId, at) {
         return this.repository.list('session_classes', {
-            filter: `classId="${escapeFilter(classId)}" && sessionId.startAt>="${at}"`
+            filter: `classId="${escapeFilter(classId)}" && sessionId.startAt>="${escapeFilter(filterTime(at))}"`
                 + ' && sessionId.status!="draft" && sessionId.status!="cancelled"',
             sort: 'sessionId.startAt',
             expand: 'sessionId',

@@ -21,6 +21,7 @@ const { materializeAppointment } = require('./materialization');
 const { event } = require('./requestService');
 const { transitionAppointment } = require('./state');
 const { sameRange } = require('./time');
+const { filterTime } = require('../repositories/operationRepository');
 
 class AppointmentDecisionService {
     constructor(repository, queryService, options = {}) {
@@ -191,7 +192,7 @@ function appointmentUpdatePlan(service, appointment, input, command, nextStatus,
 }
 
 async function findTeacherRule(repository, courseSpecId, at) {
-    const safeAt = escapeFilter(new Date(at).toISOString());
+    const safeAt = escapeFilter(filterTime(at));
     const rules = await repository.list('teacher_credit_rules', {
         filter: `courseSpecId="${escapeFilter(courseSpecId)}" && role="lead" && status="active"`
             + ` && validFrom<="${safeAt}" && (validTo="" || validTo>"${safeAt}")`,
@@ -204,8 +205,8 @@ async function findTeacherRule(repository, courseSpecId, at) {
 async function overlappingPending(repository, appointment) {
     const records = await repository.list('appointment_requests', {
         filter: `teacherId="${escapeFilter(relationId(appointment.teacherId))}" && status="pending"`
-            + ` && requestedStartAt<"${escapeFilter(appointment.requestedEndAt)}"`
-            + ` && requestedEndAt>"${escapeFilter(appointment.requestedStartAt)}"`,
+            + ` && requestedStartAt<"${escapeFilter(filterTime(appointment.requestedEndAt))}"`
+            + ` && requestedEndAt>"${escapeFilter(filterTime(appointment.requestedStartAt))}"`,
         sort: 'requestedAt,id',
     });
     return records.filter((record) => record.id !== appointment.id);

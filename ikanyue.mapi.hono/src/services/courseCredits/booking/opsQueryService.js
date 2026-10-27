@@ -2,7 +2,7 @@ const { invariant } = require('../domain');
 const { escapeFilter } = require('../repositories/operationRepository');
 const { mapPage, pagination } = require('../queryService');
 const { teacherAppointment } = require('./projection');
-const { filterTime } = require('./time');
+const { filterTime } = require('../repositories/operationRepository');
 
 const OPS_EXPAND = 'studentId,teacherId,offeringId,courseSpecId,creditTypeId,policyId,sessionId';
 

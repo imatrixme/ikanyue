@@ -38,8 +38,16 @@ function escapeFilter(value) {
     return String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
+// PocketBase stores dates as "YYYY-MM-DD HH:MM:SS.sssZ" and compares filter literals as text,
+// so an ISO "T" literal mis-orders against stored values on the same UTC day.
+function filterTime(value) {
+    const parsed = value === null || value === undefined || value === '' ? NaN : new Date(value).getTime();
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString().replace('T', ' ') : String(value ?? '');
+}
+
 module.exports = {
     escapeFilter,
+    filterTime,
     findIdempotentOperation,
     fingerprintRequest,
     normalizeOperation,

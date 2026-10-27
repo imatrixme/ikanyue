@@ -6,7 +6,7 @@ const { mapPage, pagination, relation, relationId } = require('../queryService')
 const { generateAvailableSlots } = require('./availability');
 const { normalizeBookingPolicy } = require('./policy');
 const { bookingOption, studentAppointment, teacherAppointment } = require('./projection');
-const { filterTime } = require('./time');
+const { filterTime } = require('../repositories/operationRepository');
 
 const APPOINTMENT_EXPAND = 'studentId,teacherId,offeringId,courseSpecId,sessionId';
 

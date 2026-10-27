@@ -1,6 +1,7 @@
 const { effectiveWindows, mergeWindows, overrideWindowsForDate } = require('../booking/availability');
 const { normalizeBookingPolicy } = require('../booking/policy');
-const { addLocalDays, filterTime, localDateMinuteToIso, localParts } = require('../booking/time');
+const { addLocalDays, localDateMinuteToIso, localParts } = require('../booking/time');
+const { filterTime } = require('../repositories/operationRepository');
 const { escapeFilter, relation, relationId } = require('../queryService');
 
 async function loadTeacherAvailabilityWindows(repository, teacherId, range) {

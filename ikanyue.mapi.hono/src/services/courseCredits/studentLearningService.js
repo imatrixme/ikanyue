@@ -11,6 +11,7 @@ const {
     assertStudentLearningProjection,
     sanitizeStudentText,
 } = require('./studentLearningContract');
+const { filterTime } = require('./repositories/operationRepository');
 
 const LESSON_SCOPES = new Set(['all', 'upcoming', 'completed']);
 const UPCOMING_LESSON_LIMIT = 3;
@@ -226,7 +227,7 @@ function lessonQueryOptions(studentId, filters = {}) {
         parts.push(`sessionId.requiredCreditTypeId.courseSpecId="${escapeFilter(filters.courseId)}"`);
     }
     if (filters.scope === 'upcoming') {
-        parts.push(`sessionId.startAt>="${new Date(filters.now).toISOString()}"`);
+        parts.push(`sessionId.startAt>="${filterTime(filters.now)}"`);
         parts.push('sessionId.status!="cancelled"');
     } else if (filters.scope === 'completed') {
         parts.push('(sessionId.status="completed" || sessionId.status="settled")');

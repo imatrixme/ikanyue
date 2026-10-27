@@ -1,7 +1,7 @@
 const { invariant } = require('../domain');
 const { escapeFilter, relationId } = require('../queryService');
 const { loadTeacherAvailabilityWindows } = require('./availabilityWindows');
-const { filterTime } = require('../booking/time');
+const { filterTime } = require('../repositories/operationRepository');
 const {
     CALENDAR_TIMEZONE,
     UPCOMING_SESSION_STATUSES,
@@ -97,7 +97,7 @@ class ScheduleQueryService {
         const statusFilter = [...UPCOMING_SESSION_STATUSES]
             .map((status) => `sessionId.status="${status}"`).join(' || ');
         const page = await this.repository.page(collection, 1, 20, {
-            filter: `${field}="${escapeFilter(user.id)}" && ${extra} && sessionId.endAt>"${escapeFilter(now)}"`
+            filter: `${field}="${escapeFilter(user.id)}" && ${extra} && sessionId.endAt>"${escapeFilter(filterTime(now))}"`
                 + ` && (${statusFilter})`,
             sort: 'sessionId.startAt',
         });

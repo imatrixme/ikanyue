@@ -1,5 +1,6 @@
 const { invariant } = require('./domain');
 const { update } = require('./teachingCommand');
+const { filterTime } = require('./repositories/operationRepository');
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -106,8 +107,8 @@ class CourseCreditOutboxService {
 }
 
 function dueFilter(now, staleBefore) {
-    return `((status="pending" || status="failed") && (nextAttemptAt="" || nextAttemptAt<="${now}"))`
-        + ` || (status="processing" && processingStartedAt<="${staleBefore}")`;
+    return `((status="pending" || status="failed") && (nextAttemptAt="" || nextAttemptAt<="${filterTime(now)}"))`
+        + ` || (status="processing" && processingStartedAt<="${filterTime(staleBefore)}")`;
 }
 
 function validateOutboxEvent(event) {

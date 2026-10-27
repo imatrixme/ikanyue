@@ -77,7 +77,7 @@ test('worker retries stale processing events and respects batch limits', async (
     const result = await service.deliverDue({ limit: 1 });
 
     assert.equal(result.attempted, 1);
-    assert.match(repository.queries[0].options.filter, /2026-08-21T09:58:00.000Z/);
+    assert.match(repository.queries[0].options.filter, /processingStartedAt<="2026-08-21 09:58:00\.000Z"/);
     assert.equal(repository.plans.length, 2);
 });
 
@@ -118,7 +118,8 @@ test('outbox validation and helper contracts reject unsafe inputs', async () => 
     assert.equal(safeErrorCode({ code: 'http_429' }), 'HTTP_429');
     assert.equal(safeErrorCode({ code: 'private message!' }), 'DELIVERY_FAILED');
     assert.equal(safeErrorCode(), 'DELIVERY_FAILED');
-    assert.match(dueFilter(NOW, '2026-08-21T09:55:00.000Z'), /nextAttemptAt/);
+    assert.match(dueFilter(NOW, '2026-08-21T09:55:00.000Z'), /nextAttemptAt<="2026-08-21 10:00:00\.000Z"/);
+    assert.match(dueFilter(NOW, '2026-08-21T09:55:00.000Z'), /processingStartedAt<="2026-08-21 09:55:00\.000Z"/);
     assert.deepEqual(deliverySummary([]), {
         attempted: 0, deadLetter: 0, failed: 0, results: [], sent: 0,
     });

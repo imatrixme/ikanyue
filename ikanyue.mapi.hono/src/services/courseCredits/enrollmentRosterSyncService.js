@@ -1,5 +1,5 @@
 const { createRecordId, invariant } = require('./domain');
-const { fingerprintRequest } = require('./repositories/operationRepository');
+const { filterTime, fingerprintRequest } = require('./repositories/operationRepository');
 const {
     commitTeachingPlan,
     create,
@@ -25,7 +25,7 @@ class EnrollmentRosterSyncService {
         const classId = order.productSnapshot?.classId || '';
         if (!classId) return emptyPreview(order);
         const links = await this.repository.list('session_classes', {
-            filter: `classId="${escapeFilter(classId)}" && sessionId.startAt>="${new Date(this.clock()).toISOString()}"`
+            filter: `classId="${escapeFilter(classId)}" && sessionId.startAt>="${filterTime(this.clock())}"`
                 + ' && sessionId.status!="draft" && sessionId.status!="cancelled"',
             sort: 'sessionId.startAt',
             expand: 'sessionId',
