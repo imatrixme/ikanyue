@@ -81,3 +81,7 @@ dump.rdb
 
 # Playwright MCP session logs
 .playwright-mcp/
+
+# Legacy repos kept outside the monorepo
+/ikanyue.flutter/
+/ikanyue.m.nuxt/
