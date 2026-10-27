@@ -17,6 +17,7 @@ var list core.MigrationsList
 
 func init() {
 	list.Register(ensureVenues, nil, "kanyue_0001_venues")
+	list.Register(freezeCreatedTimestamps, nil, "kanyue_0002_freeze_created")
 }
 
 // Up applies pending migrations in one transaction and returns their names.

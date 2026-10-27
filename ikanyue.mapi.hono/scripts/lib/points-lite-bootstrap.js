@@ -25,7 +25,7 @@ const LOCAL_CORE_COLLECTIONS = [
             textField('wechatId'),
             textField('wechatUnionId'),
             jsonField('wechatUserInfo'),
-            autoDateField('created', true),
+            autoDateField('created', false),
             autoDateField('updated', true),
         ],
         indexes: [
@@ -53,7 +53,7 @@ const LOCAL_CORE_COLLECTIONS = [
             dateField('lastLoginAt'),
             textField('lastLoginIp'),
             textField('lastLoginMethod'),
-            autoDateField('created', true),
+            autoDateField('created', false),
             autoDateField('updated', true),
         ],
         indexes: [
@@ -82,7 +82,7 @@ const LOCAL_CORE_COLLECTIONS = [
             textField('status'),
             textField('type'),
             textField('creator'),
-            autoDateField('created', true),
+            autoDateField('created', false),
             autoDateField('updated', true),
         ],
         indexes: [

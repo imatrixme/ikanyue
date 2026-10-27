@@ -146,4 +146,4 @@ Go 接管场馆、公开课程目录、身份（小程序密码/微信登录、�
 - 教师账号只能用 email 作身份字段做密码校验（`teachers.passwordAuth.identityFields = ["email"]`），没有 email 的教师无法用密码登录。
 - 匿名或无角色的审计（登录失败、注册关闭）写入会因 `actorRole` 只允许 teacher/admin 而失败，只打日志。
 - 后台注册不传 email，而 `teachers.email` 必填，开启注册后创建会失败（默认关闭）。Go 版顺带把姓名写进 `realName`（Hono 写的是不存在的 `realname`）。
-- `students`、`teachers` 的 `created` 字段开着 onUpdate，每次登录都会覆盖注册时间；修正需要一次表结构迁移，等确认后再做。
+- 已修正：`students`、`teachers`、`activities` 的 `created` 字段开着 onUpdate（来自 Hono 本地建表脚本），每次登录都会覆盖注册时间。迁移 `kanyue_0002_freeze_created` 关掉它，建表脚本同步改正；已被覆盖的时间无法恢复。
