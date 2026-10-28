@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, openSync, closeSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
-import { createServer } from 'node:net';
+import { connect, createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +11,15 @@ const root = resolve(dirname(script), '..');
 const state = join(root, '.local/native');
 const configPath = join(state, 'environment.json');
 // gateway (kanyue.gateway) starts first so server and pay register on their first heartbeat.
-const names = ['gateway', 'server', 'pay', 'miniapp'];
+const names = ['gateway', 'server', 'pay', 'stages', 'miniapp'];
+// Server and pay register themselves for RELEASE. The TEST and PRE pools reuse the same
+// processes: instances are unique per address, so each stage gets a loopback relay port.
+const stageRelays = [
+  { stage: 'TEST', service: 'kanyue.server', port: 14371, target: 'PORT' },
+  { stage: 'PRE', service: 'kanyue.server', port: 14372, target: 'PORT' },
+  { stage: 'TEST', service: 'kanyue.pay', port: 14401, target: 'PAY_PORT' },
+  { stage: 'PRE', service: 'kanyue.pay', port: 14402, target: 'PAY_PORT' },
+];
 const server = join(root, 'kanyue.server');
 const pay = join(root, 'kanyue.pay');
 const gateway = join(root, 'kanyue.gateway');
@@ -64,6 +72,9 @@ function definition(name, config) {
     pay: { cwd: pay, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
       env: { GATEWAY_INSTANCE_ADDRESS: `127.0.0.1:${config.PAY_PORT}` },
       port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
+    // Ready once the first relay forwards to the server; relays listen only after the first heartbeat.
+    stages: { cwd: root, command: [process.execPath, script, 'relay'],
+      ports: stageRelays.map((entry) => entry.port), url: `http://127.0.0.1:${stageRelays[0].port}/api/health` },
     miniapp: { cwd: join(root, 'ikanyue.taro3'), command: [process.execPath, 'node_modules/@tarojs/cli/bin/taro', 'build', '--type', 'weapp', '--watch'] },
   };
   if (!definitions[name]) fail(`Unknown service: ${name}`);
@@ -106,7 +117,8 @@ async function waitReady(name, config) {
 }
 async function start(name, config) {
   if (owned(name)) { await waitReady(name, config); return; }
-  await freePort(definition(name, config).port);
+  const target = definition(name, config);
+  for (const port of target.ports || [target.port]) await freePort(port);
   mkdirSync(join(state, 'run'), { recursive: true }); mkdirSync(join(state, 'logs'), { recursive: true });
   const token = randomBytes(16).toString('hex');
   const log = openSync(logFile(name), 'a', 0o600);
@@ -134,6 +146,40 @@ async function supervise(name, token) {
   child.on('error', () => process.exit(1));
   child.on('exit', (code) => process.exit(code || 0));
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { child.kill(signal); });
+}
+// Heartbeats every relay as its stage's instance and forwards each relay port to the real
+// listener. An empty manifest hash leaves manifest refreshes to the RELEASE instances.
+async function relay() {
+  const config = settings();
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${config.GATEWAY_REGISTRATION_TOKEN}` };
+  const send = (path, { stage, service, port }) => fetch(`http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}/gateway/v1/${path}`, {
+    method: 'POST', headers, signal: AbortSignal.timeout(3000),
+    body: JSON.stringify({ service, address: `127.0.0.1:${port}`, stage, version: 'dev', manifestHash: '' }),
+  }).then((response) => { if (!response.ok) console.error(`${path} ${service}@${stage}: HTTP ${response.status}`); })
+    .catch((error) => console.error(`${path} ${service}@${stage}: ${error.message}`));
+  const beat = () => Promise.all(stageRelays.map((entry) => send('heartbeat', entry)));
+  await beat();
+  for (const entry of stageRelays) {
+    createServer((client) => {
+      const upstream = connect(Number(config[entry.target]), '127.0.0.1');
+      client.pipe(upstream).pipe(client);
+      client.on('error', () => upstream.destroy());
+      upstream.on('error', () => client.destroy());
+    }).listen(entry.port, '127.0.0.1');
+  }
+  // Same interval as the services; the gateway takes an instance offline after three misses.
+  const timer = setInterval(beat, 10_000);
+  // down signals the whole group and the supervisor forwards it too: deregister once, ignore the repeat.
+  let stopping = false;
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, async () => {
+      if (stopping) return;
+      stopping = true;
+      clearInterval(timer);
+      await Promise.all(stageRelays.map((entry) => send('deregister', entry)));
+      process.exit(0);
+    });
+  }
 }
 async function command(executable, args, cwd, config, label) {
   const log = openSync(logFile('bootstrap'), 'a', 0o600);
@@ -188,6 +234,7 @@ async function main() {
     return;
   }
   if (action === 'supervise') return supervise(selected, token);
+  if (action === 'relay') return relay();
   if (action === 'init' || action === 'bootstrap') return initialize();
   if (action === 'status') {
     for (const name of names) console.log(`${name}: ${owned(name) ? 'running' : 'stopped'}`);
@@ -221,4 +268,4 @@ async function main() {
 if (process.argv[1] && resolve(process.argv[1]) === script) {
   main().catch((error) => { console.error(error.message); process.exitCode = 1; });
 }
-export { definition, environment, freePort, matchesIdentity, validIdentity };
+export { definition, environment, freePort, matchesIdentity, stageRelays, validIdentity };

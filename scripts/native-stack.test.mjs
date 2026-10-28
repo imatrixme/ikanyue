@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
-import { definition, environment, freePort, matchesIdentity, validIdentity } from './native-stack.mjs';
+import { definition, environment, freePort, matchesIdentity, stageRelays, validIdentity } from './native-stack.mjs';
 
 test('port conflict preserves the unrelated listener', async () => {
   const listener = createServer();
@@ -24,7 +24,7 @@ test('PID reuse and malformed process identities never establish ownership', () 
 });
 test('native definitions do not run Docker or initialization during startup', () => {
   const config = { PORT: '1437', PAY_PORT: '1440', PAY_GATEWAY_URL: 'http://127.0.0.1:1440', GATEWAY_PORT: '1460', GATEWAY_ADMIN_PORT: '1461' };
-  for (const name of ['gateway', 'server', 'pay', 'miniapp']) {
+  for (const name of ['gateway', 'server', 'pay', 'stages', 'miniapp']) {
     const service = definition(name, config);
     assert.doesNotMatch(service.command.join(' '), /docker|migrate|seed|superuser|upsert/);
   }
@@ -40,6 +40,12 @@ test('native definitions do not run Docker or initialization during startup', ()
   // Each registered service announces its own address.
   assert.equal(definition('server', config).env.GATEWAY_INSTANCE_ADDRESS, '127.0.0.1:1437');
   assert.equal(definition('pay', config).env.GATEWAY_INSTANCE_ADDRESS, '127.0.0.1:1440');
+  // TEST and PRE get a relay port per service, each forwarding to the one running listener.
+  const pools = stageRelays.map(({ stage, service, target }) => `${service}@${stage}->${config[target]}`);
+  assert.deepEqual(pools.sort(), ['kanyue.pay@PRE->1440', 'kanyue.pay@TEST->1440', 'kanyue.server@PRE->1437', 'kanyue.server@TEST->1437']);
+  assert.equal(new Set(stageRelays.map((entry) => entry.port)).size, stageRelays.length);
+  assert.deepEqual(definition('stages', config).ports, stageRelays.map((entry) => entry.port));
+  assert.match(definition('stages', config).url, /^http:\/\/127\.0\.0\.1:\d+\/api\/health$/);
   const env = environment(config);
   assert.equal(env.GATEWAY_URL, 'http://127.0.0.1:1461');
   assert.equal(env.PB_URL, 'http://127.0.0.1:1437');

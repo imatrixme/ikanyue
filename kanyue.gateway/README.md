@@ -76,7 +76,9 @@
 1. `node scripts/native-stack.mjs init`：
    - 创建 `.local/native/gateway-data`、执行迁移、建控制台超管；
    - 注册令牌和加密密钥随机生成，只存在被忽略的 `.local/native/environment.json`。
-2. `node scripts/native-stack.mjs up`：按网关 → server → pay → 小程序的顺序启动，server 与 pay 自动注册。
+2. `node scripts/native-stack.mjs up`：按网关 → server → pay → stages → 小程序的顺序启动。
+   - server 与 pay 自己注册为 RELEASE 实例。
+   - `stages` 用回环中继端口（server `14371`/`14372`，pay `14401`/`14402`）把同一组进程注册为 TEST/PRE 实例，三个环境都能本地联调；它不另起 PocketBase，不会重复跑定时任务。
 
 控制台登录需要密码加验证器动态码。先在本目录绑定验证器：
 

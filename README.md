@@ -53,7 +53,7 @@ node scripts/native-stack.mjs init
 # 运营后台嵌入 server 二进制：首次和改动后端前先构建
 (cd ikanyue.admin && npm run build:server)
 
-# 日常启动：kanyue.server、kanyue.pay、小程序 watcher
+# 日常启动：API 网关、kanyue.server、kanyue.pay、TEST/PRE 中继（stages）、小程序 watcher
 node scripts/native-stack.mjs up
 
 # 查看状态、日志、健康检查与关闭
