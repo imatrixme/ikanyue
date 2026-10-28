@@ -42,10 +42,14 @@ func TestPrometheusCountsEveryRequest(t *testing.T) {
 		`kanyue_gateway_request_duration_seconds_count{` + student + `} 3`,
 		`kanyue_gateway_sent_bytes_total{` + student + `} 300`,
 		"kanyue_gateway_log_dropped_total 0",
+		"# TYPE kanyue_gateway_telemetry_bytes gauge",
 	} {
 		if !strings.Contains(text, line+"\n") {
 			t.Errorf("missing %s in\n%s", line, text)
 		}
+	}
+	if !strings.Contains(text, "kanyue_gateway_telemetry_bytes ") || strings.Contains(text, "kanyue_gateway_telemetry_bytes 0\n") {
+		t.Errorf("telemetry size missing in\n%s", text)
 	}
 	if strings.Count(text, "# TYPE kanyue_gateway_requests_total") != 1 {
 		t.Error("a family is declared twice")

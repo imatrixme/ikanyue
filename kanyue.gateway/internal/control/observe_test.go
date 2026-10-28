@@ -284,6 +284,50 @@ func TestBackupRestoresReleasedConfiguration(t *testing.T) {
 	}
 }
 
+// The restore drill command picks the newest backup from the backup storage,
+// restores it into a scratch dir and reports what it proved, without serving.
+func TestVerifyBackupRestoresTheNewest(t *testing.T) {
+	c, app := newControl(t)
+	if _, err := c.VerifyBackup("", 0); err == nil || !strings.Contains(err.Error(), "no backups in local storage") {
+		t.Fatalf("no backups = %v", err)
+	}
+	service := registered(t, c, app, newFakeService(t, manifestV1))
+	// Sealed secrets are released with the configuration, so only the right key restores it.
+	create(t, app, schema.Consumers, map[string]any{"name": "partner", "appKey": "partner-app-key", "appSecret": strings.Repeat("s", 32), "enabled": true})
+	group, drafted := draftGroup(t, app, "mapi", []string{"*"}, service.Id)
+	release(t, c, "RELEASE", targetsOf(group, all(drafted)...))
+	if err := app.CreateBackup(context.Background(), "old.zip"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Offline("ops", Request{Stage: "RELEASE", Targets: targetsOf(nil, drafted["POST /v1/student/appointments"])}); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(10 * time.Millisecond) // modification times order the backups
+	if err := app.CreateBackup(context.Background(), "new.zip"); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := c.VerifyBackup("", time.Hour)
+	if err != nil || check.Backup != "new.zip" || check.Storage != "local" || check.Integrity != "ok" || check.Size == 0 ||
+		check.Versions["RELEASE"] != 2 || len(check.Versions) != 1 {
+		t.Fatalf("newest = %+v %v", check, err)
+	}
+	if check, err := c.VerifyBackup("old.zip", 0); err != nil || check.Versions["RELEASE"] != 1 {
+		t.Fatalf("named = %+v %v", check, err)
+	}
+	if _, err := c.VerifyBackup("missing.zip", 0); err == nil || !strings.Contains(err.Error(), "no local backup named missing.zip") {
+		t.Fatalf("missing = %v", err)
+	}
+	if _, err := c.VerifyBackup("", time.Nanosecond); err == nil || !strings.Contains(err.Error(), "not being taken on schedule") {
+		t.Fatalf("stale = %v", err)
+	}
+	// A key that cannot open the backup's settings fails the drill.
+	t.Setenv(testKeyEnv, strings.Repeat("x", 32))
+	if _, err := c.VerifyBackup("", 0); err == nil {
+		t.Fatal("restored with the wrong key")
+	}
+}
+
 // Prometheus scrapes with a viewer token; an OTLP exporter sends spans, not lines.
 func TestPrometheusScrapeAndTraceExporter(t *testing.T) {
 	c, app := newControl(t)
@@ -300,8 +344,12 @@ func TestPrometheusScrapeAndTraceExporter(t *testing.T) {
 	text := res.Body.String()
 	if res.Code != 200 || !strings.HasPrefix(res.Header().Get("Content-Type"), "text/plain; version=0.0.4") ||
 		!strings.Contains(text, `kanyue_gateway_requests_total{stage="RELEASE",group="mapi",api="server",service="kanyue.server",code="2xx"} 1`+"\n") ||
-		!strings.Contains(text, `kanyue_gateway_stage_version{stage="PRE"} 0`+"\n") {
+		!strings.Contains(text, `kanyue_gateway_stage_version{stage="PRE"} 0`+"\n") ||
+		!strings.Contains(text, "# TYPE go_memstats_heap_inuse_bytes gauge\n") || !strings.Contains(text, "# TYPE go_goroutines gauge\n") {
 		t.Fatalf("scrape = %d\n%s", res.Code, text)
+	}
+	if _, linux := residentBytes(); linux != strings.Contains(text, "\nprocess_resident_memory_bytes ") {
+		t.Fatalf("resident memory reported = %v on a platform where it is readable = %v", !linux, linux)
 	}
 	if audited(t, app, "token:prometheus", "refused") != 0 {
 		t.Fatal("a scrape was refused")

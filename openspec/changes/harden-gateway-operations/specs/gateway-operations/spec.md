@@ -84,6 +84,25 @@ The gateway SHALL expose request counters, a latency histogram and its runtime s
 - **WHEN** Prometheus scrapes the admin plane with a viewer token after requests were served
 - **THEN** it receives the request counts per environment, group, API, service and status class, and each environment's served version
 
+#### Scenario: A soak watches for leaks
+- **WHEN** a long-running test scrapes the gateway every minute
+- **THEN** each scrape carries the Go heap, the goroutine count, the telemetry database size and, on Linux, the resident memory
+
+### Requirement: Backups are proven restorable without touching live data
+The gateway SHALL offer a restore drill that takes the newest backup, or a named one, from the configured backup storage, restores it into a scratch directory and checks that the database is intact, migrates to the running version and that every environment's latest released version loads with the current key, without serving and without writing to the live data directory. The drill SHALL fail, with a non-zero exit status, when no backup exists, when any check fails, or when the newest backup is older than the allowed age.
+
+#### Scenario: Newest S3 backup restores
+- **WHEN** the drill runs against a gateway whose backups go to S3
+- **THEN** it reports the backup's name, age, integrity and each environment's restored version, and removes the scratch directory
+
+#### Scenario: Backups stopped
+- **WHEN** the newest backup is older than the allowed age
+- **THEN** the drill reports what it verified and exits with a failure naming the age
+
+#### Scenario: Wrong key
+- **WHEN** the encryption key cannot open the backup's sealed configuration
+- **THEN** the drill fails
+
 #### Scenario: A traced request
 - **WHEN** a request carrying a traceparent is served while an OTLP trace export is enabled
 - **THEN** a server span in the caller's trace, with the caller's span as parent, is sent, and the upstream receives the gateway's span as its parent

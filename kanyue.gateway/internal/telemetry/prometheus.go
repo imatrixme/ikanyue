@@ -121,6 +121,8 @@ func (t *Telemetry) WritePrometheus(x *Exposition) {
 
 	x.Family("kanyue_gateway_log_dropped_total", "counter", "Request log entries dropped because the log queue was full.")
 	x.Sample("kanyue_gateway_log_dropped_total", float64(t.Dropped()))
+	x.Family("kanyue_gateway_telemetry_bytes", "gauge", "Size of the telemetry database on disk, write-ahead log included.")
+	x.Sample("kanyue_gateway_telemetry_bytes", float64(t.Bytes()))
 	x.Family("kanyue_gateway_export_dropped_total", "counter", "Records an export dropped.")
 	x.Family("kanyue_gateway_export_failing", "gauge", "1 while an export's target keeps failing.")
 	x.Family("kanyue_gateway_export_queued", "gauge", "Records waiting to be exported.")

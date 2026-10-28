@@ -12,6 +12,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -39,7 +40,7 @@ func main() {
 	gateway := control.New(app, cfg, handler)
 	gateway.Register()
 	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway), rotateKeyCommand(app, gateway),
-		configCommand(app, gateway))
+		configCommand(app, gateway), backupCommand(gateway))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
@@ -145,6 +146,38 @@ func rotateKeyCommand(app *pocketbase.PocketBase, gateway *control.Control) *cob
 		},
 	}
 	command.Flags().StringVar(&newKeyEnv, "newKeyEnv", "", "environment variable holding the new key")
+	return command
+}
+
+// backupCommand is the restore drill: it restores a backup from the backup
+// storage (S3 when configured) into a scratch directory and reports what it
+// proved, next to a running gateway; it never serves or touches the live data.
+func backupCommand(gateway *control.Control) *cobra.Command {
+	command := &cobra.Command{Use: "backup", Short: "Restore drills"}
+	var maxAge time.Duration
+	verify := &cobra.Command{
+		Use:          "verify [name]",
+		Short:        "Restore the newest backup, or the named one, into a scratch directory and check that every environment loads",
+		Args:         cobra.MaximumNArgs(1),
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, args []string) error {
+			name := ""
+			if len(args) == 1 {
+				name = args[0]
+			}
+			check, err := gateway.VerifyBackup(name, maxAge)
+			out, _ := json.MarshalIndent(check, "", "  ")
+			fmt.Println(string(out))
+			if err != nil {
+				// PocketBase discards command errors; a scheduled drill needs the exit status.
+				fmt.Fprintln(os.Stderr, "Error:", err)
+				os.Exit(1)
+			}
+			return nil
+		},
+	}
+	verify.Flags().DurationVar(&maxAge, "max-age", 26*time.Hour, "fail when the backup is older; 0 skips the check")
+	command.AddCommand(verify)
 	return command
 }
 

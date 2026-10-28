@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -223,6 +224,17 @@ func (t *Telemetry) Record(e proxy.Entry) {
 
 // Dropped counts log entries lost to a full queue since start.
 func (t *Telemetry) Dropped() int64 { return t.dropped.Load() }
+
+// Bytes is the database's size on disk, write-ahead log included; retention keeps it bounded.
+func (t *Telemetry) Bytes() int64 {
+	var total int64
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		if info, err := os.Stat(t.opts.Path + suffix); err == nil {
+			total += info.Size()
+		}
+	}
+	return total
+}
 
 // Run writes queued entries every second, persists finished minutes and
 // applies retention hourly, until ctx ends; then it flushes what it holds.

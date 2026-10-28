@@ -16,6 +16,12 @@
 - [x] 3.4 README: rotation steps and keeping the old key for old backups
 
 ## 4. P0 Target machine (external)
+- [x] 4.0 Drill tooling, so each external task is one command on the VPS (steps in `kanyue.gateway/README.md` “目标机器验证”):
+  - [x] 4.0.1 Prometheus process metrics: resident memory (Linux), heap, goroutines, telemetry database size
+  - [x] 4.0.2 `kanyue-gateway backup verify [name] --max-age`: newest backup from S3 or local storage restored into a scratch dir; integrity, migrations, every environment's latest release compiles with the current key; non-zero exit on failure
+  - [x] 4.0.3 `kanyue-pay maintenance backup payment|business --latest`: verify the newest scheduled backup instead of creating one, `BACKUP_STALE` after 26 h; maintenance failures now exit non-zero
+  - [x] 4.0.4 `scripts/gateway-drill.mjs` `load` (D9 profiles with a direct baseline), `soak` (rate-paced, per-minute samples, leak and telemetry verdict), `rollout` (counts every failed request around `gateway-rollout.mjs`); unit and end-to-end tests in CI
+  - [x] 4.0.5 Local proof on the native stack (2026-10-28): load 26k req/s, gateway P99 2.5 ms vs direct 1.52 ms, 0 failed; 1-minute soak at 100 req/s, 0 failed; rollout drill around a plain restart (no standby) reported 16 ECONNREFUSED and failed as it should; `backup verify` and `--latest` restored the local backups
 - [ ] 4.1 Load test on the target profile and a 24 h soak (memory, telemetry growth)
 - [ ] 4.2 Restore drill from the real S3 bucket
 - [ ] 4.3 Compare the Aliyun API Gateway capabilities in use and close gaps

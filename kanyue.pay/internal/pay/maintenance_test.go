@@ -65,6 +65,23 @@ func TestLiveCredentials(t *testing.T) {
 	wantCode(t, err, "WECHAT_ORIGIN_FORBIDDEN")
 }
 
+// The restore drill verifies the newest real archive; empty or foreign entries never win.
+func TestNewestBackup(t *testing.T) {
+	newest, at, found := newestBackup([]backupFile{
+		{Key: "nightly-1.zip", Size: 10, Modified: "2026-10-27 18:00:00.000Z"},
+		{Key: "nightly-2.zip", Size: 10, Modified: "2026-10-28 18:00:00.000Z"},
+		{Key: "partial.zip", Size: 0, Modified: "2026-10-29 18:00:00.000Z"},
+		{Key: "notes.txt", Size: 10, Modified: "2026-10-30 18:00:00.000Z"},
+		{Key: "odd.zip", Size: 10, Modified: "yesterday"},
+	})
+	if !found || newest.Key != "nightly-2.zip" || at.Format(time.RFC3339) != "2026-10-28T18:00:00Z" {
+		t.Fatalf("newest = %+v %v %v", newest, at, found)
+	}
+	if _, _, found := newestBackup([]backupFile{{Key: "partial.zip", Modified: "2026-10-29 18:00:00.000Z"}}); found {
+		t.Fatal("an empty archive counted as a backup")
+	}
+}
+
 // A backup archive is verified offline: safe paths, SQLite integrity and money table counts.
 func TestVerifyBackup(t *testing.T) {
 	app := openApp(t, t.TempDir())

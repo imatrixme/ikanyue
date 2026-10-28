@@ -206,6 +206,7 @@ func (c *Control) prometheusRoute(e *core.RequestEvent) error {
 	}
 	x.Family("kanyue_gateway_mirror_dropped_total", "counter", "Mirrored copies dropped because too many were in flight.")
 	x.Sample("kanyue_gateway_mirror_dropped_total", float64(c.handler.MirrorDropped()))
+	writeProcessMetrics(x)
 	return e.Blob(http.StatusOK, "text/plain; version=0.0.4; charset=utf-8", body.Bytes())
 }
 

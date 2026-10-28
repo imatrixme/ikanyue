@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pocketbase/pocketbase/tools/types"
 	"github.com/spf13/cobra"
 )
 
@@ -25,25 +26,34 @@ import (
 // It never restores, switches traffic or charges money.
 func MaintenanceCommand() *cobra.Command {
 	command := &cobra.Command{Use: "maintenance", Short: "Verified backups and live release preflight"}
-	report := func(cmd *cobra.Command, value any, err error) error {
+	// A stale backup still prints what was verified before the failure code.
+	report := func(cmd *cobra.Command, value map[string]any, err error) error {
+		if value != nil {
+			cmd.Println(string(jsonIndent(value)))
+		}
 		if err != nil {
 			cmd.PrintErrln(codeOr(err, "MAINTENANCE_FAILED"))
-			return err
+			cmd.PrintErrln("Error:", err)
+			// PocketBase discards command errors; release scripts and drills need the exit status.
+			os.Exit(1)
 		}
-		cmd.Println(string(jsonIndent(value)))
 		return nil
 	}
-	command.AddCommand(&cobra.Command{
+	var latest bool
+	backup := &cobra.Command{
 		Use:          "backup payment|business",
 		Short:        "Create a PocketBase backup through its API and verify the archive offline",
 		Args:         cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		ValidArgs:    []string{"payment", "business"},
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			result, err := Backup(args[0], Environ())
+			result, err := Backup(args[0], Environ(), latest)
 			return report(cmd, result, err)
 		},
-	}, &cobra.Command{
+	}
+	backup.Flags().BoolVar(&latest, "latest", false,
+		"verify the newest existing backup (the restore drill for scheduled S3 backups) instead of creating one")
+	command.AddCommand(backup, &cobra.Command{
 		Use:          "preflight",
 		Short:        "Check live configuration, backups and external acceptance attestations",
 		Args:         cobra.NoArgs,
@@ -101,9 +111,37 @@ func pbRequest(method, target, token string, body any, value any) error {
 	return json.NewDecoder(response.Body).Decode(value)
 }
 
+// backupFile is one entry of PocketBase's backup list, from local or S3 storage.
+type backupFile struct {
+	Key      string `json:"key"`
+	Size     int64  `json:"size"`
+	Modified string `json:"modified"`
+}
+
+// staleBackup is how old the newest scheduled backup may be: daily backups plus slack.
+const staleBackup = 26 * time.Hour
+
+// newestBackup picks the most recently modified non-empty archive.
+func newestBackup(files []backupFile) (backupFile, time.Time, bool) {
+	var newest backupFile
+	var newestAt time.Time
+	for _, file := range files {
+		at, err := types.ParseDateTime(file.Modified)
+		if err != nil || file.Size == 0 || !strings.HasSuffix(file.Key, ".zip") {
+			continue
+		}
+		if newest.Key == "" || at.Time().After(newestAt) {
+			newest, newestAt = file, at.Time()
+		}
+	}
+	return newest, newestAt, newest.Key != ""
+}
+
 // Backup asks a PocketBase (the embedded pay store or kanyue.server) for a backup,
-// downloads it into a private temporary directory and verifies it.
-func Backup(scope string, env map[string]string) (map[string]any, error) {
+// downloads it into a private temporary directory and verifies it. With latest it
+// creates nothing and verifies the newest existing backup instead, failing when
+// that backup is stale: the restore drill for scheduled S3 backups.
+func Backup(scope string, env map[string]string, latest bool) (map[string]any, error) {
 	prefix := backupPrefix(scope)
 	source := strings.TrimRight(env[prefix+"_URL"], "/")
 	if !localOrTLS(source) {
@@ -115,27 +153,19 @@ func Backup(scope string, env map[string]string) (map[string]any, error) {
 		return nil, err
 	}
 	filename := fmt.Sprintf("kanyue-%s-%d.zip", scope, time.Now().UnixMilli())
-	if err := pbRequest(http.MethodPost, source+"/api/backups", auth.Token, map[string]any{"name": filename}, nil); err != nil {
-		return nil, err
-	}
-	ready := false
-	for attempt := 0; attempt < 40 && !ready; attempt++ {
-		var files []struct {
-			Key  string
-			Size int64
-		}
+	var modified time.Time
+	if latest {
+		var files []backupFile
 		if err := pbRequest(http.MethodGet, source+"/api/backups", auth.Token, nil, &files); err != nil {
 			return nil, err
 		}
-		for _, file := range files {
-			ready = ready || (file.Key == filename && file.Size > 0)
+		newest, at, ok := newestBackup(files)
+		if !ok {
+			return nil, fail("BACKUP_NOT_FOUND", 404)
 		}
-		if !ready {
-			time.Sleep(500 * time.Millisecond)
-		}
-	}
-	if !ready {
-		return nil, fail("BACKUP_NOT_READY", 503)
+		filename, modified = newest.Key, at
+	} else if err := createBackup(source, auth.Token, filename); err != nil {
+		return nil, err
 	}
 	var fileToken struct{ Token string }
 	if err := pbRequest(http.MethodPost, source+"/api/files/token", auth.Token, nil, &fileToken); err != nil {
@@ -169,7 +199,35 @@ func Backup(scope string, env map[string]string) (map[string]any, error) {
 	if err := file.Close(); err != nil {
 		return nil, err
 	}
-	return VerifyBackup(archive, scope, source)
+	report, err := VerifyBackup(archive, scope, source)
+	if err != nil || !latest {
+		return report, err
+	}
+	report["backup"], report["backupModified"] = filename, iso(modified)
+	if time.Since(modified) > staleBackup {
+		return report, fail("BACKUP_STALE", 503)
+	}
+	return report, nil
+}
+
+// createBackup asks PocketBase for a new backup and waits until it is listed with content.
+func createBackup(source, token, filename string) error {
+	if err := pbRequest(http.MethodPost, source+"/api/backups", token, map[string]any{"name": filename}, nil); err != nil {
+		return err
+	}
+	for attempt := 0; attempt < 40; attempt++ {
+		var files []backupFile
+		if err := pbRequest(http.MethodGet, source+"/api/backups", token, nil, &files); err != nil {
+			return err
+		}
+		for _, file := range files {
+			if file.Key == filename && file.Size > 0 {
+				return nil
+			}
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return fail("BACKUP_NOT_READY", 503)
 }
 
 func backupTables(scope string) []string {

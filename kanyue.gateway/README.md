@@ -319,6 +319,7 @@ node scripts/gateway-rollout.mjs        # 已构建好镜像时加 --no-build
       static_configs: [{ targets: ["127.0.0.1:1461"] }]   # 升级期间另加 127.0.0.1:1471
   ```
   - 指标：`kanyue_gateway_requests_total`（按环境、分组、API、服务、状态类别）、`kanyue_gateway_request_duration_seconds` 直方图、收发字节、日志与导出丢弃、导出是否在失败、各环境生效版本、实例健康与在途请求、插件信号（如熔断打开）、镜像丢弃；
+  - 进程指标供长稳判断泄漏：`process_resident_memory_bytes`（仅 Linux）、`go_memstats_heap_inuse_bytes`、`go_memstats_sys_bytes`、`go_goroutines`、遥测库大小 `kanyue_gateway_telemetry_bytes`；
   - 计数从进程启动算起，每个进程各自计数；主备轮换时各抓各的端口，由 Prometheus 处理重置。
 - **OpenTelemetry trace**：控制台“日志导出”选择格式“OTLP/HTTP JSON（trace）”，地址如 `http://127.0.0.1:4318/v1/traces`（OpenTelemetry Collector、Tempo、Jaeger 均可接收）：
   - 每个请求一个 server span：trace 沿用调用方的 `traceparent`，父 span 是调用方的 span；网关把自己的 span 传给上游，服务的 span 挂在它下面；
@@ -357,4 +358,75 @@ GOMAXPROCS=1 go test -tags load -run TestLoad -v ./internal/control/   # 需要 
 2. 解压到新目录；
 3. 按每个环境最新的 `stage_versions` 加载并继续服务。
 
-真实 S3 的恢复演练需在 VPS 上进行。
+## 目标机器验证
+
+在 VPS 上执行（`harden-gateway-operations` 第 4 节）。工具只读或只发请求，不改线上配置：
+
+- 压测、长稳、带压升级都用 `scripts/gateway-drill.mjs`（Node 22，无依赖）；
+- 密钥只走环境变量：`DRILL_AUTHORIZATION` 是请求的 `Authorization`，`DRILL_METRICS_TOKEN` 是 `viewer` 机器令牌；脚本不打印它们。
+- 结果都是一段 JSON，判定不通过时退出码为 1。
+
+**1. 压测（4.1、add-kanyue-gateway 5.1）**：对照 D9 的发布门禁。压测机最好是同机房的另一台机器；同机压测会抢 CPU，结果偏保守。
+
+```sh
+DRILL_METRICS_TOKEN=... node scripts/gateway-drill.mjs load --profile 1c1g \
+  --url http://127.0.0.1:1460/v1/public/venues --header "Host: mapi.ikanyue.com" \
+  --direct http://127.0.0.1:1337/v1/public/venues \
+  --metrics http://127.0.0.1:1461/gateway/v1/prometheus --duration 60s --connections 32
+```
+
+- `--direct` 直连上游测基线，网关附加延迟 = 网关 P99 − 直连 P99；
+- 常驻内存取自 Prometheus 的 `process_resident_memory_bytes`；
+- `--profile 2c4g` 用 2 核 4G 的门槛；
+- 带鉴权的接口另设 `DRILL_AUTHORIZATION`。
+
+**2. 24 小时长稳（4.1）**：按真实容量（约 200–300 QPS）定速请求，每分钟记一行到 `--out`。
+
+```sh
+DRILL_METRICS_TOKEN=... nohup node scripts/gateway-drill.mjs soak --rate 200 --duration 24h --interval 60s \
+  --url http://127.0.0.1:1460/v1/public/venues --header "Host: mapi.ikanyue.com" \
+  --metrics http://127.0.0.1:1461/gateway/v1/prometheus --out soak.jsonl > soak-result.json &
+```
+
+判定：
+
+- 错误率 ≤ 0.1%；
+- 常驻内存和协程数：最后一成时间的中位数不超过第二成时间的 1.25 倍（第一成算预热）；
+- 遥测库按实测增速推算到保留期（`--retention-days`，默认 7）不超过 `--disk-budget-mb`（默认 1024）。
+
+**3. 真实 S3 恢复演练（4.2、add-kanyue-gateway 4.5）**：从备份存储（配置了 S3 就是 S3）取最新备份，解压到临时目录校验，不启动服务、不碰线上数据，结束后删除临时目录。
+
+```sh
+# 网关：完整性检查、迁移到当前版本、各环境最新上线版本用当前密钥能编译
+docker compose --profile gateway exec gateway \
+  kanyue-gateway backup verify --dir=/pb_data --encryptionEnv=GATEWAY_ENCRYPTION_KEY
+# kanyue.server 与 kanyue.pay：完整性检查与资金表计数；PB_EMAIL、PB_PASSWORD 等先 export
+docker run --rm --network host -e PB_URL=http://127.0.0.1:8090 -e PB_EMAIL -e PB_PASSWORD "$PAY_IMAGE" \
+  kanyue-pay maintenance backup business --latest
+docker run --rm --network host -e PAY_PB_URL=http://127.0.0.1:1340 -e PAY_PB_EMAIL -e PAY_PB_PASSWORD "$PAY_IMAGE" \
+  kanyue-pay maintenance backup payment --latest
+```
+
+- 网关 `backup verify` 不加参数时取最新的一份，最新备份超过 `--max-age`（默认 26h）也算失败；也可以指定备份名。
+- `maintenance backup --latest` 不新建备份，最新备份超过 26 小时报 `BACKUP_STALE`；不加 `--latest` 时仍是先新建再校验。
+
+**4. 带压滚动升级（4.4）**：在真实 OpenResty 后面边压边升级，统计升级期间每一个失败请求；不通过时会列出状态码和连接错误。
+
+```sh
+node scripts/gateway-drill.mjs rollout --rate 200 --url https://mapi.ikanyue.com/v1/public/venues \
+  --command "node scripts/gateway-rollout.mjs --no-build"
+```
+
+**5. 阿里云能力对照（4.3、add-kanyue-gateway 0.1）**：用阿里云 CLI（`aliyun configure` 配只读 RAM 用户）导出在用配置，再逐行补全 `openspec/changes/add-kanyue-gateway/design.md` 里“待确认”的能力：
+
+```sh
+aliyun cloudapi DescribeApiGroups --RegionId <分组所在地域，如 cn-hangzhou> > aliyun-groups.json
+aliyun cloudapi DescribeApis --GroupId <分组> --PageSize 100 > aliyun-apis.json
+aliyun cloudapi DescribeApi --GroupId <分组> --ApiId <API>        # 每个 API：参数映射、后端、鉴权
+aliyun cloudapi DescribeTrafficControls --GroupId <分组> > aliyun-traffic.json
+aliyun cloudapi DescribeIpControls --GroupId <分组> > aliyun-ip.json
+aliyun cloudapi DescribePluginsByGroup --GroupId <分组> > aliyun-plugins.json
+aliyun cloudapi DescribeDomain --GroupId <分组> --DomainName mapi.ikanyue.com
+```
+
+导出文件可能含 AppKey、后端地址等内部信息，只放在 VPS 或本机，不要提交。
