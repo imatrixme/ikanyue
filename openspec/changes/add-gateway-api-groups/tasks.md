@@ -21,7 +21,7 @@
 - [x] 3.2 API detail: definition, effective policies with source and locks per stage, versions, diffs, history, rollback
 - [x] 3.3 Policy sets: items, locks, references, impact preview; hints for unused and single-use sets
 - [x] 3.4 Release dialog (stage, diff, precheck, reason), release log, audit with diffs, applications and grants
-- [ ] 3.5 Browser smoke of create → release TEST → PRE → RELEASE → rollback (open: needs a TOTP login; covered meanwhile by console unit tests and the Go release flow tests)
+- [x] 3.5 Browser smoke of create → release TEST → PRE → RELEASE → rollback (Playwright on a scratch copy of the native data with a throwaway TOTP superuser: register a mapi API draft, release each stage with the data plane checked per stage, offline and rollback in RELEASE, effective policies, history and audit)
 
 ## 4. Rollout
 - [x] 4.1 Update `kanyue.gateway/README.md`, deploy skill and runbook, `GEB.MD` §8 (no deploy skill or runbook exists; README carries the deploy steps)

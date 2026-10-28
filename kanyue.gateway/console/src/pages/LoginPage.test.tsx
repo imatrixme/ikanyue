@@ -53,4 +53,13 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to authenticate.')
     expect(screen.queryByLabelText('动态码')).toBeNull()
   })
+
+  it('explains the attempt limit in Chinese', async () => {
+    mockFetch({ [`POST ${base}/auth-with-password`]: { status: 429, body: { message: 'Too many attempts, please try again later with a new OTP.' } } })
+    render(<LoginPage />)
+    await userEvent.type(screen.getByLabelText('邮箱'), 'ops@example.com')
+    await userEvent.type(screen.getByLabelText('密码'), 'wrong')
+    await userEvent.click(screen.getByRole('button', { name: '登录' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('尝试次数过多')
+  })
 })

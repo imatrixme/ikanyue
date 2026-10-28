@@ -1,6 +1,6 @@
 ## 0. Prerequisites
 - [ ] 0.1 (API list and domain settled: Aliyun exposes only the mini program calls on `mapi.ikanyue.com`; capability rows still open) Obtain the Aliyun API Gateway export (APIs, stages, throttling, IP control, plugins, custom domains) and resolve every "待确认" row in `design.md`
-- [ ] 0.2 Confirm VPS provider/region and ICP access filing for `mapi.ikanyue.com`
+- [ ] 0.2 Confirm VPS provider/region (not tied to Aliyun; ICP filing is out of scope by decision)
 - [ ] 0.3 Pick the alert channel(s); local ports default to `1460` (data plane) and `1461` (admin plane)
 
 ## 1. G0 Foundation

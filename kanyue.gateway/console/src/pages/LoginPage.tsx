@@ -43,9 +43,11 @@ export function LoginPage() {
         setPending({ mfaId, otpId: String(otp.otpId) })
       }
     } catch (failure) {
-      setError(pending && failure instanceof ApiError && failure.status === 400
-        ? '动态码不正确或已使用，请等下一个动态码再试。'
-        : errorText(failure))
+      setError(failure instanceof ApiError && failure.status === 429
+        ? '尝试次数过多，请约 3 分钟后用新的动态码再试。'
+        : pending && failure instanceof ApiError && failure.status === 400
+          ? '动态码不正确或已使用，请等下一个动态码再试。'
+          : errorText(failure))
     } finally {
       setBusy(false)
     }
