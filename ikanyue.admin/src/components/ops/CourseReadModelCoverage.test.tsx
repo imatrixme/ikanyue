@@ -52,11 +52,11 @@ describe('course read model coverage', () => {
     expect(lessons).toHaveTextContent('07:30')
     expect(lessons).not.toHaveTextContent('未来课堂')
     expect(screen.getByRole('region', { name: '待核销课堂' })).toHaveTextContent('待核销')
-    const renewal = screen.getByRole('region', { name: '需要续课（剩余 ≤ 2 课时）' })
+    const renewal = screen.getByRole('region', { name: '待续费' })
     expect(renewal).toHaveTextContent('张同学')
-    expect(renewal).toHaveTextContent('已过期 2 课时')
-    expect(renewal).not.toHaveTextContent('student_2')
-    expect(renewal).not.toHaveTextContent('student_never')
+    expect(renewal).toHaveTextContent('综合声乐班')
+    expect(renewal).toHaveTextContent('李同学')
+    expect(renewal).toHaveTextContent('1/31到期')
     expect(screen.getByRole('region', { name: '报课后待同步名单' })).toHaveTextContent('待同步')
     expect(screen.getByRole('region', { name: '异常' })).toHaveTextContent('7 条核销或对账异常')
     expect(screen.getByRole('region', { name: '待确认工作量' })).toHaveTextContent('1 条授课工作量待确认')
@@ -74,11 +74,12 @@ describe('course read model coverage', () => {
 
     const teacherApi = createMockOpsApi()
     const list = vi.spyOn(teacherApi, 'listCourseResource')
+    const renewals = vi.spyOn(teacherApi, 'listRenewals')
     const teacherView = renderDashboard(teacherApi, { ...mockProfiles.teacher, courseCreditCapabilities: ['course_credit.teacher'] })
     await screen.findByRole('heading', { name: /^今天/ })
     await waitFor(() => expect(list).toHaveBeenCalled())
     expect(list.mock.calls.map((call) => call[1])).toEqual(expect.arrayContaining(['assignedLessons', 'teacherEvents']))
-    expect(list.mock.calls.map((call) => call[1])).not.toEqual(expect.arrayContaining(['accounts']))
+    expect(renewals).not.toHaveBeenCalled()
     teacherView.unmount()
 
     for (const capability of ['course_credit.finance', 'course_credit.academic', 'course_credit.settlement', 'course_credit.audit'] as const) {
@@ -100,16 +101,17 @@ describe('course read model coverage', () => {
     expect(mark).toHaveBeenCalledWith('token', 'today_open')
     expect(await within(lessons).findByRole('button', { name: '午间练声已全部到课' })).toBeDisabled()
 
-    await user.click(within(screen.getByRole('region', { name: /需要续课/ })).getByRole('button', { name: '张同学记录跟进' }))
+    await user.click(within(screen.getByRole('region', { name: '待续费' })).getByRole('button', { name: '张同学记录跟进' }))
     const dialog = screen.getByRole('dialog', { name: '记录续课跟进' })
     await user.type(within(dialog).getByRole('textbox', { name: '备注' }), '下周回复')
     await user.click(within(dialog).getByRole('button', { name: '保存跟进' }))
     expect(record).toHaveBeenCalledWith('token', 'student_1', expect.objectContaining({ status: 'contacted', note: '下周回复' }))
-    await waitFor(() => expect(screen.queryByRole('region', { name: /需要续课/ })).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByRole('button', { name: '张同学记录跟进' })).not.toBeInTheDocument())
+    expect(screen.getByRole('region', { name: '待续费' })).toHaveTextContent('李同学')
 
     await user.click(screen.getByRole('button', { name: '刷新今日待办' }))
     await screen.findByRole('region', { name: '今日课堂' })
-    expect(screen.queryByRole('region', { name: /需要续课/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '张同学记录跟进' })).not.toBeInTheDocument()
   })
 
   it('covers today Error and non-Error fallbacks', async () => {
@@ -299,11 +301,6 @@ function populatedDashboardApi() {
       { id: 'sync', resultSnapshot: { status: 'synchronizing_future_lessons' } },
       { id: 'done', resultSnapshot: { status: 'completed' } },
     ],
-    accounts: [
-      { id: 'empty', studentId: 'student_1', availableQuantity: 0, frozenQuantity: 0, expiredQuantity: 2 },
-      { id: 'valid', studentId: 'student_2', availableQuantity: 3, frozenQuantity: 0, expiredQuantity: 0 },
-      { id: 'never_bought', studentId: 'student_never', availableQuantity: 0, frozenQuantity: 0, consumedQuantity: 0, expiredQuantity: 0 },
-    ],
     teacherEvents: [{ id: 'pending', status: 'pending' }, { id: 'confirmed', status: 'confirmed' }],
     settlementExceptions: [{ id: 'settlement_exception' }, { id: 'settlement_exception_2' }, { id: 'settlement_exception_3' }],
     reconciliationExceptions: [{ id: 'reconciliation_exception' }, { id: 'reconciliation_exception_2' }, { id: 'reconciliation_exception_3' }, { id: 'reconciliation_exception_4' }],
@@ -312,15 +309,24 @@ function populatedDashboardApi() {
     const items = records[resource]?.filter((item) => matchesDashboardQuery(item, query))
     return items ? { items: structuredClone(items) as T[], page: 1, perPage: 100, totalItems: items.length, totalPages: 1 } : original<T>(token, resource, query)
   }
+  const renewals = api.listRenewals.bind(api)
+  api.listRenewals = async (token) => {
+    const result = await renewals(token)
+    return {
+      ...result,
+      items: [
+        { ...result.items[0], studentId: 'student_1', studentName: '张同学', reason: 'low_balance', remainingLessons: 0 },
+        { ...result.items[0], studentId: 'student_3', studentName: '李同学', reason: 'expiring', remainingLessons: 5, validUntil: '2027-01-30T16:00:00.000Z' },
+      ],
+    }
+  }
   return api
 }
 
 function matchesDashboardQuery(item: CourseRecord, query: CourseQuery) {
-  const quantity = (key: string) => Number(item[key] || 0)
   if (query.status && item.status !== query.status) return false
   if (query.from && Date.parse(String(item.startAt)) < Date.parse(query.from)) return false
   if (query.to && Date.parse(String(item.startAt)) >= Date.parse(query.to)) return false
-  if (query.renewalThreshold !== undefined && !(quantity('availableQuantity') <= query.renewalThreshold && quantity('frozenQuantity') === 0 && quantity('consumedQuantity') + quantity('expiredQuantity') > 0)) return false
   return true
 }
 

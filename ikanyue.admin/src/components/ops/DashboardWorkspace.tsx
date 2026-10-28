@@ -7,7 +7,7 @@ import type { BookingDashboard } from '../../app/bookingTypes'
 import { addDateDays, shanghaiDayStartIso, todayKey } from '../../app/calendarLogic'
 import { listAllCourseResource, type AllPages } from '../../app/courseApi'
 import { formatDateTime, lessonActions, lessonNextStep, personName, recordName } from '../../app/coursePresentation'
-import type { CourseAccount, CourseCapability, CourseRecord, EnrollmentOperation, Lesson, StudentFollowUpInput } from '../../app/courseTypes'
+import type { CourseCapability, CourseRecord, EnrollmentOperation, Lesson, RenewalCandidate, StudentFollowUpInput } from '../../app/courseTypes'
 import { viewPaths } from '../../app/navigation'
 import { listAllStudents } from '../../app/studentDirectory'
 import type { OpsProfile, StudentRecord } from '../../app/types'
@@ -19,14 +19,12 @@ import { AsyncState, TruncationNotice } from '../ui/DataDisplay'
 import { useNotify } from '../ui/notifyContext'
 import { FollowUpDialog } from './FollowUpDialog'
 
-// Students who have used or lost hours, now hold at most this many and have nothing booked, need a renewal conversation.
-const RENEWAL_THRESHOLD = 2
-
 interface TodayData {
   todayLessons: AllPages<Lesson>
   unsettledLessons: AllPages<Lesson>
   enrollments: AllPages<EnrollmentOperation>
-  renewals: AllPages<CourseAccount>
+  // Same rule as the 待续费 list and the automatic reminders, one row per student.
+  renewals: RenewalCandidate[]
   snoozed: Set<string>
   students: StudentRecord[]
   pendingWorkload: number
@@ -67,16 +65,15 @@ export function DashboardWorkspace({ api, profile, token }: { api: OpsApi; profi
         canSettle ? listAllCourseResource<Lesson>(api, token, 'lessons', { status: 'completed' }) : emptyPages<Lesson>(),
         canSettle ? listAllCourseResource<Lesson>(api, token, 'lessons', { status: 'correction_pending' }) : emptyPages<Lesson>(),
         canFinance ? listAllCourseResource<EnrollmentOperation>(api, token, 'enrollments') : emptyPages<EnrollmentOperation>(),
-        canFinance ? listAllCourseResource<CourseAccount>(api, token, 'accounts', { renewalThreshold: RENEWAL_THRESHOLD }) : emptyPages<CourseAccount>(),
+        canFinance ? api.listRenewals(token).then((result) => result.items) : Promise.resolve<RenewalCandidate[]>([]),
         canTeach ? listAllCourseResource(api, token, 'teacherEvents', { status: 'pending' }) : emptyPages<CourseRecord>(),
         canSettle ? listAllCourseResource(api, token, 'settlementExceptions') : emptyPages<CourseRecord>(),
         canAudit ? listAllCourseResource(api, token, 'reconciliationExceptions') : emptyPages<CourseRecord>(),
         canAcademic ? api.getBookingDashboard(token) : emptyBookingDashboard(),
       ])
-      const needsNames = renewals.items.length > 0 || enrollments.items.some(pendingSync)
       const [students, overview] = await Promise.all([
-        needsNames ? listAllStudents(api, token) : emptyPages<StudentRecord>(),
-        renewals.items.length ? loadOverview(api, token, renewals.items.map((account) => account.studentId)) : Promise.resolve([]),
+        enrollments.items.some(pendingSync) ? listAllStudents(api, token) : emptyPages<StudentRecord>(),
+        renewals.length ? loadOverview(api, token, renewals.map((item) => item.studentId)) : Promise.resolve([]),
       ])
       const current = Date.now()
       setData({
@@ -144,22 +141,17 @@ export function DashboardWorkspace({ api, profile, token }: { api: OpsApi; profi
         .map((lesson) => lessonRow(lesson, true)),
     },
     {
-      title: `需要续课（剩余 ≤ ${RENEWAL_THRESHOLD} 课时）`,
-      page: data.renewals,
-      rows: data.renewals.items
-        .filter((account) => !data.snoozed.has(account.studentId))
-        .sort((a, b) => Number(a.availableQuantity || 0) - Number(b.availableQuantity || 0))
-        .map((account) => {
-          const name = studentName(account.studentId)
-          return {
-            key: account.studentId,
-            main: name,
-            meta: Number(account.expiredQuantity || 0) > 0 ? `已过期 ${account.expiredQuantity} 课时` : undefined,
-            status: `剩 ${account.availableQuantity || 0} 课时`,
-            to: `${viewPaths.students}/${encodeURIComponent(account.studentId)}`,
-            action: { label: '记录跟进', run: () => setFollowUpTarget({ studentId: account.studentId, name }) },
-          }
-        }),
+      title: '待续费',
+      rows: data.renewals
+        .filter((item) => !data.snoozed.has(item.studentId))
+        .map((item) => ({
+          key: item.studentId,
+          main: item.studentName,
+          meta: item.courseName,
+          status: item.reason === 'expiring' ? `${shortDate(item.validUntil)}到期` : `剩 ${item.remainingLessons} 课时`,
+          to: `${viewPaths.students}/${encodeURIComponent(item.studentId)}`,
+          action: { label: '记录跟进', run: () => setFollowUpTarget({ studentId: item.studentId, name: item.studentName }) },
+        })),
     },
     {
       title: '报课后待同步名单',
@@ -192,7 +184,7 @@ export function DashboardWorkspace({ api, profile, token }: { api: OpsApi; profi
                 {group.rows.map((row) => (
                   <li className="flex items-center gap-2 pr-4 hover:bg-[var(--muted)] sm:pr-5" key={row.key}>
                     <button className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 text-left text-sm sm:pl-5" onClick={() => navigate(row.to)} type="button">
-                      {row.meta ? <span className="w-28 shrink-0 tabular-nums text-[var(--muted-foreground)]">{row.meta}</span> : null}
+                      {row.meta ? <span className="w-28 shrink-0 truncate tabular-nums text-[var(--muted-foreground)]">{row.meta}</span> : null}
                       <span className="min-w-0 flex-1 truncate">{row.main}</span>
                       {row.status ? <Badge tone={statusTone(row.status)}>{row.status}</Badge> : null}
                       <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" />
@@ -234,6 +226,11 @@ function statusTone(status: string) {
 function timeOf(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '时间待定' : date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' })
+}
+
+function shortDate(value: string | null) {
+  const date = value ? new Date(value) : null
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', timeZone: 'Asia/Shanghai' }) : '近期'
 }
 
 function emptyPages<T>(): Promise<AllPages<T>> { return Promise.resolve({ items: [], totalItems: 0, truncated: false }) }
