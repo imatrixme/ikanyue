@@ -1,0 +1,4 @@
+.git
+Dockerfile
+console/node_modules
+internal/console/site

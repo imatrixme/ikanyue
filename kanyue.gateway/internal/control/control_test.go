@@ -24,13 +24,18 @@ import (
 	"kanyue.gateway/internal/config"
 	"kanyue.gateway/internal/proxy"
 	"kanyue.gateway/internal/schema"
+	"kanyue.gateway/internal/snapshot"
 )
 
 const token = "registration-token-registration-token"
 
+// testKeyEnv holds the test master key; tests never share it with anything else.
+const testKeyEnv = "KANYUE_GATEWAY_TEST_KEY"
+
 func newControl(t *testing.T) (*Control, *tests.TestApp) {
 	t.Helper()
-	app, err := tests.NewTestApp()
+	t.Setenv(testKeyEnv, strings.Repeat("k", 32))
+	app, err := tests.NewTestAppWithConfig(core.BaseAppConfig{EncryptionEnv: testKeyEnv})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,6 +113,20 @@ func statuses(t *testing.T, app core.App) map[string]string {
 	return got
 }
 
+// selectable lists the operations of a service an operator could select now.
+func selectable(t *testing.T, app core.App, service string) []string {
+	t.Helper()
+	records, err := app.FindAllRecords(schema.Operations, dbx.HashExp{"service": service}, dbx.Not(dbx.HashExp{"status": "removed"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var ids []string
+	for _, record := range records {
+		ids = append(ids, record.Id)
+	}
+	return ids
+}
+
 func through(c *Control, method, target, stage string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(method, target, nil)
 	request.RemoteAddr = "203.0.113.9:5000"
@@ -142,8 +161,9 @@ func TestDiscoveryPublishAndServe(t *testing.T) {
 	}
 
 	site := create(t, app, schema.Sites, map[string]any{"name": "mapi", "hosts": []string{"mapi.ikanyue.com"}})
-	create(t, app, schema.Routes, map[string]any{"name": "server", "site": site.Id, "service": service.Id, "enabled": true})
-	version, err := c.Publish("ops@example.com", "first")
+	route := create(t, app, schema.Routes, map[string]any{"name": "server", "site": site.Id, "service": service.Id,
+		"operations": selectable(t, app, service.Id), "enabled": true})
+	version, err := c.Publish("ops@example.com", Release{Note: "first"})
 	if err != nil || version != 1 {
 		t.Fatalf("publish = %d %v", version, err)
 	}
@@ -175,9 +195,28 @@ func TestDiscoveryPublishAndServe(t *testing.T) {
 	if res := through(c, http.MethodPost, "http://mapi.ikanyue.com/v1/student/appointments", ""); res.Code != 200 {
 		t.Fatalf("published routes changed by discovery: %d", res.Code)
 	}
-	// An all-operations route follows the manifest on the next publish.
-	if version, err := c.Publish("ops@example.com", "follow manifest"); err != nil || version != 2 {
+	// Discovery never exposes anything: the route keeps its selection, so it
+	// cannot publish while it selects removed operations, and the new catch-all
+	// stays private until an operator selects it.
+	if _, err := c.Publish("ops@example.com", Release{Note: "stale"}); err == nil || !strings.Contains(err.Error(), "removed from the service manifest") {
+		t.Fatalf("published a route selecting removed operations: %v", err)
+	}
+	if res := through(c, http.MethodGet, "http://mapi.ikanyue.com/anything/else", ""); res.Code != 404 {
+		t.Fatalf("a newly discovered operation was exposed: %d", res.Code)
+	}
+	route.Set("operations", selectable(t, app, service.Id))
+	if err := app.Save(route); err != nil {
+		t.Fatal(err)
+	}
+	if version, err := c.Publish("ops@example.com", Release{Note: "select the new operations"}); err != nil || version != 2 {
 		t.Fatalf("second publish = %d %v", version, err)
+	}
+	route.Set("operations", []string{})
+	if err := app.Save(route); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Publish("ops@example.com", Release{}); err == nil || !strings.Contains(err.Error(), "selects no operations") {
+		t.Fatalf("a route without a selection published: %v", err)
 	}
 	if res := through(c, http.MethodGet, "http://mapi.ikanyue.com/anything/else", ""); res.Code != 200 {
 		t.Fatalf("catch-all = %d", res.Code)
@@ -205,8 +244,9 @@ func TestPublishRejectsConflictsAndRollsBack(t *testing.T) {
 		t.Fatal(err)
 	}
 	site := create(t, app, schema.Sites, map[string]any{"name": "mapi", "hosts": []string{"*"}})
-	all := create(t, app, schema.Routes, map[string]any{"name": "all", "site": site.Id, "service": service.Id, "enabled": true})
-	if _, err := c.Publish("a", "v1"); err != nil {
+	all := create(t, app, schema.Routes, map[string]any{"name": "all", "site": site.Id, "service": service.Id,
+		"operations": selectable(t, app, service.Id), "enabled": true})
+	if _, err := c.Publish("a", Release{Note: "v1"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -216,7 +256,7 @@ func TestPublishRejectsConflictsAndRollsBack(t *testing.T) {
 	}
 	duplicate := create(t, app, schema.Routes, map[string]any{"name": "catalog", "site": site.Id, "service": service.Id,
 		"operations": []string{catalog.Id}, "enabled": true})
-	if _, err := c.Publish("a", "conflict"); err == nil || !strings.Contains(err.Error(), `route "`) {
+	if _, err := c.Publish("a", Release{Note: "conflict"}); err == nil || !strings.Contains(err.Error(), `route "`) {
 		t.Fatalf("conflict published: %v", err)
 	}
 	if latest, _ := c.latestVersion(); latest != 1 || c.handler.Version() != 1 {
@@ -232,20 +272,20 @@ func TestPublishRejectsConflictsAndRollsBack(t *testing.T) {
 	if err := c.SyncManifest(context.Background(), service.Id, upstream.address()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := c.Publish("a", "stale"); err == nil || !strings.Contains(err.Error(), "removed from the service manifest") {
+	if _, err := c.Publish("a", Release{Note: "stale"}); err == nil || !strings.Contains(err.Error(), "removed from the service manifest") {
 		t.Fatalf("stale selection published: %v", err)
 	}
 	if err := app.Delete(duplicate); err != nil {
 		t.Fatal(err)
 	}
-	if version, err := c.Publish("a", "nothing routed"); err != nil || version != 2 {
+	if version, err := c.Publish("a", Release{Note: "nothing routed"}); err != nil || version != 2 {
 		t.Fatalf("empty publish = %d %v", version, err)
 	}
 	if res := through(c, http.MethodGet, "http://any.host/v1/student/appointments", ""); res.Code != 404 {
 		t.Fatalf("empty version serves = %d", res.Code)
 	}
 
-	version, err := c.Rollback("b", 1, "undo")
+	version, err := c.Rollback("b", 1, Release{Note: "undo"})
 	if err != nil || version != 3 || c.handler.Version() != 3 {
 		t.Fatalf("rollback = %d %v", version, err)
 	}
@@ -256,7 +296,7 @@ func TestPublishRejectsConflictsAndRollsBack(t *testing.T) {
 	if record.GetInt("rollbackOf") != 1 || record.GetString("publishedBy") != "b" {
 		t.Fatalf("rollback record = %v", record)
 	}
-	if _, err := c.Rollback("b", 9, ""); err == nil {
+	if _, err := c.Rollback("b", 9, Release{Note: ""}); err == nil {
 		t.Fatal("rolled back to a missing version")
 	}
 	var actions []string
@@ -351,7 +391,7 @@ func TestInstanceLifecycle(t *testing.T) {
 	if err := c.rebuildEndpoints(); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := c.handler.Endpoints().Pick(static.Id, "RELEASE"); ok {
+	if _, ok := c.handler.Endpoints().Pick(&snapshot.Service{ID: static.Id}, "RELEASE", "", nil, time.Now()); ok {
 		t.Fatal("unconfirmed static instance routed")
 	}
 	entry.Set("confirmed", true)
@@ -361,10 +401,10 @@ func TestInstanceLifecycle(t *testing.T) {
 	if err := c.rebuildEndpoints(); err != nil {
 		t.Fatal(err)
 	}
-	if target, ok := c.handler.Endpoints().Pick(static.Id, "RELEASE"); !ok || target.Host != "10.0.0.7:80" {
+	if target, ok := c.handler.Endpoints().Pick(&snapshot.Service{ID: static.Id}, "RELEASE", "", nil, time.Now()); !ok || target.Address != "10.0.0.7:80" {
 		t.Fatal("confirmed static instance not routed")
 	}
-	if _, ok := c.handler.Endpoints().Pick(dns.Id, "RELEASE"); !ok {
+	if _, ok := c.handler.Endpoints().Pick(&snapshot.Service{ID: dns.Id}, "RELEASE", "", nil, time.Now()); !ok {
 		t.Fatal("dns instance not routed")
 	}
 }

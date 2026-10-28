@@ -14,11 +14,11 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.gateway/internal/config"
@@ -40,6 +40,9 @@ type Control struct {
 	publishMu sync.Mutex
 	rebuild   chan struct{}
 	syncing   sync.Map // service id → manifest sync in flight
+
+	obs    observer
+	alerts alertBook
 }
 
 func New(app core.App, cfg config.Config, handler *proxy.Handler) *Control {
@@ -58,14 +61,24 @@ func (c *Control) Register() {
 		if err := c.rebuildEndpoints(); err != nil {
 			return err
 		}
+		if err := c.configureBackups(os.Getenv); err != nil {
+			return err
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		if err := c.openTelemetry(ctx); err != nil {
+			cancel()
+			return err
+		}
 		server, err := proxy.Serve(c.cfg.Listen, c.handler, func(err error) {
 			c.app.Logger().Error("Data plane stopped", "error", err.Error())
 		})
 		if err != nil {
+			cancel()
 			return fmt.Errorf("data plane: %w", err)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
 		go c.loop(ctx)
+		go c.checkHealth(ctx)
+		go c.alertLoop(ctx)
 		c.app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
 			cancel()
 			if err := server.Shutdown(10 * time.Second); err != nil {
@@ -99,6 +112,9 @@ func (c *Control) checkAdminAddress(addr string) error {
 }
 
 func (c *Control) bindHooks() {
+	c.bindSealing()
+	c.bindTOTP()
+	c.bindObservability()
 	schedule := func(e *core.RecordEvent) error {
 		c.scheduleRebuild()
 		return e.Next()
@@ -119,15 +135,6 @@ func (c *Control) bindHooks() {
 	c.app.OnRecordCreateRequest(schema.Audited...).BindFunc(audit("create"))
 	c.app.OnRecordUpdateRequest(schema.Audited...).BindFunc(audit("update"))
 	c.app.OnRecordDeleteRequest(schema.Audited...).BindFunc(audit("delete"))
-}
-
-func (c *Control) routes(se *core.ServeEvent) {
-	admin := se.Router.Group("/gateway/v1")
-	admin.POST("/publish", c.publishRoute).Bind(apis.RequireSuperuserAuth())
-	admin.POST("/rollback", c.rollbackRoute).Bind(apis.RequireSuperuserAuth())
-	admin.GET("/status", c.statusRoute).Bind(apis.RequireSuperuserAuth())
-	admin.POST("/heartbeat", c.heartbeatRoute)
-	admin.POST("/deregister", c.deregisterRoute)
 }
 
 func actorOf(auth *core.Record) string {
@@ -153,24 +160,39 @@ func (c *Control) audit(actor, action, resource, resourceID string, detail any) 
 	}
 }
 
+// Release describes one publish. Force skips the healthy-instance check and
+// must say why; the reason is kept with the version and in the audit log.
+type Release struct {
+	Note   string `json:"note"`
+	Force  bool   `json:"force"`
+	Reason string `json:"reason"`
+}
+
+func (r Release) note() string {
+	if r.Force {
+		return strings.TrimSpace(r.Note + " [forced: " + r.Reason + "]")
+	}
+	return r.Note
+}
+
 // Publish compiles the current collections into the next version and serves it.
-func (c *Control) Publish(actor, note string) (int, error) {
+func (c *Control) Publish(actor string, release Release) (int, error) {
 	c.publishMu.Lock()
 	defer c.publishMu.Unlock()
 	cfg, err := c.collect()
 	if err != nil {
 		return 0, err
 	}
-	version, err := c.commit(cfg, actor, note, 0)
+	version, err := c.commit(cfg, actor, release, 0)
 	if err != nil {
 		return 0, err
 	}
-	c.audit(actor, "publish", schema.ConfigVersions, fmt.Sprint(version), map[string]any{"note": note})
+	c.audit(actor, "publish", schema.ConfigVersions, fmt.Sprint(version), map[string]any{"note": release.note()})
 	return version, nil
 }
 
 // Rollback republishes an earlier version as the next version.
-func (c *Control) Rollback(actor string, target int, note string) (int, error) {
+func (c *Control) Rollback(actor string, target int, release Release) (int, error) {
 	c.publishMu.Lock()
 	defer c.publishMu.Unlock()
 	record, err := c.app.FindFirstRecordByFilter(schema.ConfigVersions, "version = {:v}", dbx.Params{"v": target})
@@ -181,24 +203,56 @@ func (c *Control) Rollback(actor string, target int, note string) (int, error) {
 	if err := record.UnmarshalJSONField("config", &cfg); err != nil {
 		return 0, err
 	}
-	version, err := c.commit(cfg, actor, note, target)
+	version, err := c.commit(cfg, actor, release, target)
 	if err != nil {
 		return 0, err
 	}
-	c.audit(actor, "rollback", schema.ConfigVersions, fmt.Sprint(version), map[string]any{"note": note, "rollbackOf": target})
+	c.audit(actor, "rollback", schema.ConfigVersions, fmt.Sprint(version), map[string]any{"note": release.note(), "rollbackOf": target})
 	return version, nil
+}
+
+// compile builds cfg for the data plane with its shared plugin environment and the master key.
+func (c *Control) compile(cfg snapshot.Config) (*snapshot.Routes, error) {
+	return snapshot.Compile(cfg, c.handler.Env(), c.open)
+}
+
+// precheck refuses to publish routes to a service without a healthy instance,
+// unless forced with a reason.
+func (c *Control) precheck(cfg snapshot.Config, release Release) error {
+	if release.Force {
+		if strings.TrimSpace(release.Reason) == "" {
+			return errors.New("a forced publish needs a reason")
+		}
+		return nil
+	}
+	names := map[string]string{}
+	for _, service := range cfg.Services {
+		names[service.ID] = service.Name
+	}
+	var errs []error
+	now := time.Now()
+	for _, id := range cfg.RoutedServices() {
+		if healthy, _ := c.handler.Endpoints().Healthy(id, now); healthy == 0 {
+			errs = append(errs, fmt.Errorf("service %q has no healthy instance; publish with force and a reason to proceed", names[id]))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // commit compiles cfg as the next version, stores it, activates the operations it
 // serves, writes the last-known-good file and only then swaps the data plane.
-func (c *Control) commit(cfg snapshot.Config, actor, note string, rollbackOf int) (int, error) {
+func (c *Control) commit(cfg snapshot.Config, actor string, release Release, rollbackOf int) (int, error) {
+	note := release.note()
 	latest, err := c.latestVersion()
 	if err != nil {
 		return 0, err
 	}
 	cfg.Version = latest + 1
-	routes, err := snapshot.Compile(cfg)
+	routes, err := c.compile(cfg)
 	if err != nil {
+		return 0, err
+	}
+	if err := c.precheck(cfg, release); err != nil {
 		return 0, err
 	}
 	err = c.app.RunInTransaction(func(txApp core.App) error {
@@ -266,9 +320,14 @@ func (c *Control) collect() (snapshot.Config, error) {
 	if err != nil {
 		return cfg, err
 	}
-	for _, service := range services {
-		cfg.Services = append(cfg.Services, snapshot.Service{ID: service.Id, Name: service.GetString("name"),
-			HeaderTimeoutMs: service.GetInt("headerTimeoutMs")})
+	for _, record := range services {
+		service := snapshot.Service{ID: record.Id, Name: record.GetString("name"), Timeouts: timeoutsOf(record),
+			Balancer: record.GetString("balancer"), HashBy: record.GetString("hashBy"), PassiveFailures: record.GetInt("passiveFailures")}
+		if path := record.GetString("healthPath"); path != "" {
+			service.Health = &snapshot.HealthCheck{Path: path, IntervalSeconds: max(record.GetInt("healthIntervalSeconds"), 1),
+				Threshold: max(record.GetInt("healthThreshold"), 1)}
+		}
+		cfg.Services = append(cfg.Services, service)
 	}
 	routes, err := c.app.FindAllRecords(schema.Routes, dbx.HashExp{"enabled": true})
 	if err != nil {
@@ -282,24 +341,73 @@ func (c *Control) collect() (snapshot.Config, error) {
 			continue
 		}
 		cfg.Routes = append(cfg.Routes, snapshot.Route{ID: route.Id, Name: route.GetString("name"),
-			Site: route.GetString("site"), Service: route.GetString("service"), Operations: ops})
+			Site: route.GetString("site"), Service: route.GetString("service"), Operations: ops, Timeouts: timeoutsOf(route)})
+	}
+	if err := c.collectPolicies(&cfg); err != nil {
+		errs = append(errs, err)
 	}
 	return cfg, errors.Join(errs...)
 }
 
+func timeoutsOf(record *core.Record) snapshot.Timeouts {
+	return snapshot.Timeouts{HeaderTimeoutMs: record.GetInt("headerTimeoutMs"), TimeoutMs: record.GetInt("timeoutMs"),
+		IdleTimeoutMs: record.GetInt("idleTimeoutMs")}
+}
+
+// collectPolicies adds plugin bindings, enabled consumers and sealed secrets.
+func (c *Control) collectPolicies(cfg *snapshot.Config) error {
+	consumers, err := c.app.FindAllRecords(schema.Consumers, dbx.HashExp{"enabled": true})
+	if err != nil {
+		return err
+	}
+	for _, consumer := range consumers {
+		cfg.Consumers = append(cfg.Consumers, snapshot.Consumer{ID: consumer.Id, Name: consumer.GetString("name"),
+			AppKey: consumer.GetString("appKey"), Secret: consumer.GetString("appSecret")})
+	}
+	secrets, err := c.app.FindAllRecords(schema.Secrets)
+	if err != nil {
+		return err
+	}
+	for _, secret := range secrets {
+		if cfg.Secrets == nil {
+			cfg.Secrets = map[string]string{}
+		}
+		cfg.Secrets[secret.GetString("name")] = secret.GetString("value")
+	}
+	bindings, err := c.app.FindRecordsByFilter(schema.PluginBindings, "", "created", 0, 0)
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, record := range bindings {
+		binding := snapshot.Binding{Scope: record.GetString("scope")}
+		binding.Plugin, binding.Priority, binding.Disabled = record.GetString("plugin"), record.GetInt("priority"), !record.GetBool("enabled")
+		if raw := record.GetString("config"); raw != "" && raw != "null" {
+			binding.Config = []byte(raw)
+		}
+		if binding.Scope != "global" {
+			binding.Target = record.GetString(binding.Scope)
+			if binding.Target == "" {
+				errs = append(errs, fmt.Errorf("binding of %s at %s level names no %s", binding.Plugin, binding.Scope, binding.Scope))
+				continue
+			}
+		}
+		cfg.Bindings = append(cfg.Bindings, binding)
+	}
+	return errors.Join(errs...)
+}
+
 func (c *Control) routeOperations(route *core.Record) ([]snapshot.Operation, error) {
 	service := route.GetString("service")
+	// Discovery only offers operations; a route exposes exactly the ones an
+	// operator selected, so an operation a service adds is never public by default.
 	selected := route.GetStringSlice("operations")
-	var records []*core.Record
-	var err error
 	if len(selected) == 0 {
-		records, err = c.app.FindRecordsByFilter(schema.Operations, "service = {:s} && status != 'removed'", "path,method", 0, 0,
-			dbx.Params{"s": service})
-	} else {
-		records, err = c.app.FindRecordsByIds(schema.Operations, selected)
-		if err == nil && len(records) != len(selected) {
-			err = errors.New("selects operations that no longer exist")
-		}
+		return nil, errors.New("selects no operations; pick the discovered operations it exposes")
+	}
+	records, err := c.app.FindRecordsByIds(schema.Operations, selected)
+	if err == nil && len(records) != len(selected) {
+		err = errors.New("selects operations that no longer exist")
 	}
 	if err != nil {
 		return nil, err
@@ -336,7 +444,7 @@ func (c *Control) loadRoutes() {
 		fileErr = json.Unmarshal(raw, &cfg)
 	}
 	if fileErr == nil {
-		routes, fileErr = snapshot.Compile(cfg)
+		routes, fileErr = c.compile(cfg)
 	}
 	if fileErr != nil {
 		c.app.Logger().Warn("No routes to serve until the first publish", "reason", fileErr.Error())
@@ -361,7 +469,7 @@ func (c *Control) loadLatest() (*snapshot.Routes, error) {
 	if err := record.UnmarshalJSONField("config", &cfg); err != nil {
 		return nil, err
 	}
-	return snapshot.Compile(cfg)
+	return c.compile(cfg)
 }
 
 var errNoVersion = errors.New("no published version")
@@ -377,42 +485,4 @@ func (c *Control) writeLastKnownGood(cfg snapshot.Config) error {
 		return err
 	}
 	return os.Rename(tmp, path)
-}
-
-func (c *Control) publishRoute(e *core.RequestEvent) error {
-	var body struct {
-		Note string `json:"note"`
-	}
-	if err := e.BindBody(&body); err != nil {
-		return e.BadRequestError("Invalid body.", err)
-	}
-	version, err := c.Publish(actorOf(e.Auth), body.Note)
-	if err != nil {
-		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
-	}
-	return e.JSON(http.StatusOK, map[string]any{"version": version})
-}
-
-func (c *Control) rollbackRoute(e *core.RequestEvent) error {
-	var body struct {
-		Version int    `json:"version"`
-		Note    string `json:"note"`
-	}
-	if err := e.BindBody(&body); err != nil || body.Version < 1 {
-		return e.BadRequestError("A version to roll back to is required.", err)
-	}
-	version, err := c.Rollback(actorOf(e.Auth), body.Version, body.Note)
-	if err != nil {
-		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
-	}
-	return e.JSON(http.StatusOK, map[string]any{"version": version, "rollbackOf": body.Version})
-}
-
-func (c *Control) statusRoute(e *core.RequestEvent) error {
-	var online int
-	err := c.app.DB().Select("count(*)").From(schema.Instances).Where(dbx.HashExp{"status": "online"}).Row(&online)
-	if err != nil {
-		return err
-	}
-	return e.JSON(http.StatusOK, map[string]any{"version": c.handler.Version(), "onlineInstances": online})
 }

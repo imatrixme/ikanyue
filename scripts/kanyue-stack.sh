@@ -12,7 +12,7 @@ Usage:
   ./scripts/kanyue-stack.sh prod [up|restart|down|status|logs|smoke|cleanup] [options]
 
 Defaults:
-  test up     Native processes (server, gateway, miniapp); run test init explicitly once beforehand.
+  test up     Native processes (gateway, server, pay, miniapp); run test init explicitly once beforehand.
   prod up     .env.deploy, project kanyue_prod, starts the existing server image.
 
 Options:

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"kanyue.pay/internal/gatewaylink"
 )
 
 // DurableWork leases retryable channel work in rows, so backoff and exhaustion survive restarts.
@@ -114,6 +116,15 @@ var noRedirects = &http.Client{Timeout: 10 * time.Second,
 
 // DefaultTransport sends with a 10s timeout and refuses redirects.
 func DefaultTransport(request *http.Request) (*http.Response, error) { return noRedirects.Do(request) }
+
+// Tracked is DefaultTransport with its calls reported to kanyue.gateway as outbound calls to target.
+func Tracked(target string) Transport {
+	client := &http.Client{Timeout: noRedirects.Timeout, CheckRedirect: noRedirects.CheckRedirect, Transport: gatewaylink.Track(target, nil)}
+	return client.Do
+}
+
+// paymentCallbacks deliver payment events to kanyue.server; wechatPay reaches the WeChat Pay API.
+var paymentCallbacks, wechatPay = Tracked("payment-callback"), Tracked("wechat-pay")
 
 // DeliverEvents pushes unacknowledged events; only HTTP 204 acknowledges one.
 func DeliverEvents(g *Gateway, work *DurableWork, target *EventTarget, transport Transport) error {

@@ -28,7 +28,7 @@ kanyue.gateway
 │   ├── registry    服务实例注册与心跳、DNS 解析、OpenAPI 拉取
 │   ├── publisher   校验 → 编译快照 → 生成版本 → 推给数据面
 │   └── alerting    每分钟评估规则，webhook 推送
-└── console      管理面板（静态单页，go:embed）
+└── console      管理面板（React + Vite 单页，构建产物 go:embed，挂在管理面 /console/）
 ```
 
 - 单机：两者同进程，发布即原子替换快照。
@@ -46,8 +46,9 @@ kanyue.gateway
 | 消费者（Consumer） | 运维创建 | AppKey/Secret、JWT 声明映射、限流配额 |
 
 - 面板里不出现“自由填写上游地址/路径”的输入框；静态登记是唯一例外，且需要二次确认与审计。
-- 路由默认按接口一一生成，也可以选择一个服务的“全部接口”生成前缀路由（用于第一期整体迁移）。
-- 接口文档变化时：新增接口进入“待接入”列表；已删除接口对应的路由标红并告警，不自动删除。
+- 服务发现是全量的：注册、心跳、DNS 发现的服务与实例都登记在案。接口发现只“登记可选项”：清单里的接口进入“待接入”列表，不会自动挂到任何路由上。
+- 路由只暴露运维逐个勾选的接口；没有勾选任何接口的路由不能发布，也没有“全部接口”的快捷方式。部分接口本来就不对外，不能因为服务注册了就经网关暴露。面板可以按模块、鉴权范围批量勾选，但结果仍是显式的接口列表，写进发布快照。
+- 接口文档变化时：新增接口进入“待接入”列表，等运维选择；已删除接口对应的路由标红并告警，不自动删除，选中了它的路由在修正前不能发布。
 
 ### D3. 接口清单：由路由表本身生成
 
@@ -82,7 +83,8 @@ type Instance interface {
 
 - 执行顺序由插件优先级决定，可在路由上覆盖；挂载层级：全局 → 站点 → 路由 → 消费者。
 - 环境选择不是插件：实例带环境标签，数据面按 `X-Ca-Stage`（缺省 `RELEASE`）挑选同环境的实例。
-- 第一期内置插件：`aliyun-signature`、`replay-guard`、`jwt-auth`、`ip-restriction`、`cors`、`rate-limit`、`request-rewrite`、`body-limit`、`circuit-breaker`、`fallback`、`traffic-split`、`mirror`、`mock`、`maintenance`、`request-id`。
+- 第一期内置插件：`aliyun-signature`、`replay-guard`、`jwt-auth`、`ip-restriction`、`cors`、`rate-limit`、`request-rewrite`、`body-limit`、`circuit-breaker`、`fallback`、`traffic-split`、`mirror`、`mock`、`maintenance`。
+- `X-Request-Id` 与 `traceparent` 由数据面固定生成或透传（见 D6），不是可关闭的插件。
 - 第二期：WASM 插件运行时与外部鉴权，实现同一个 `Plugin` 接口。
 
 ### D5. 流量治理
@@ -111,7 +113,7 @@ type Instance interface {
 
 ### D8. 管理面与安全
 
-- 管理端口只绑内网；PocketBase 超级用户登录，开启 TOTP 二次验证。
+- 管理端口只绑内网；PocketBase 超级用户登录，开启 TOTP 二次验证：沿用 PocketBase 的 MFA 流程（密码 → `mfaId` → OTP），OTP 一步由钩子改为校验验证器动态码，邮件 OTP 关闭，同一个码不能重复使用；验证器用 `kanyue-gateway totp enroll` 在服务器上绑定，密钥加密保存。
 - 所有配置写入经控制面接口，带审计（谁、何时、改了什么、发布哪个版本）。
 - AppSecret、Webhook 密钥、日志导出令牌加密保存（AES-GCM，主密钥来自 PocketBase `--encryptionEnv` 指定的环境变量，不进库、不进仓库）；保存后只显示掩码与指纹，不出现在日志与审计明细里。
 - 发布前校验：路由冲突、插件配置 Schema、引用的服务/接口存在、至少一个健康实例（可强制跳过并记录原因）。

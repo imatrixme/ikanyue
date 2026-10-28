@@ -17,36 +17,36 @@
 - [x] 1.11 Graceful shutdown (deregister, drain) and `SO_REUSEPORT` restart
 
 ## 2. G1 Aliyun replacement
-- [ ] 2.1 Plugin interface (`Request`/`Response`/`Log`, JSON Schema, compile-time `Build`) and global → site → route → consumer binding order
-- [ ] 2.2 Built-in plugins: `request-id`, `request-rewrite`, `body-limit`, `mock`, `maintenance`
-- [ ] 2.3 Auth plugins: `jwt-auth` (same secret/rules as `kanyue.server`), `aliyun-signature`, `replay-guard`, `ip-restriction`, `cors`
-- [ ] 2.4 `rate-limit` per API/consumer/user per second/minute/day behind a replaceable limiter interface
-- [ ] 2.5 Load balancing (weighted round robin, least in-flight, consistent hash), active/passive health checks, idempotent-only retry
-- [ ] 2.6 `circuit-breaker`, `fallback`, `traffic-split`, `mirror`
-- [ ] 2.7 Aliyun-compatible response headers (`X-Ca-Request-Id`, `X-Ca-Error-Message`)
-- [ ] 2.8 Publish with pre-checks, version history, one-click rollback, audit
-- [ ] 2.9 Admin console: services/instances, operations picker, routes, plugin forms from schema, consumers, versions, audit; internal-only bind; superuser TOTP; encrypted secrets
-- [ ] 2.10 Parity test suite: one case per in-use Aliyun capability; `kanyue.server` contract tests pass through the gateway
+- [x] 2.1 Plugin interface (`Request`/`Response`/`Log`, JSON Schema, compile-time `Build`) and global → site → route → consumer binding order
+- [x] 2.2 Built-in plugins: `request-rewrite`, `body-limit`, `mock`, `maintenance` (`request-id` is always on in the data plane, not a plugin; see D4)
+- [x] 2.3 Auth plugins: `jwt-auth` (same secret/rules as `kanyue.server`), `aliyun-signature`, `replay-guard`, `ip-restriction`, `cors`
+- [x] 2.4 `rate-limit` per API/consumer/user per second/minute/day behind a replaceable limiter interface
+- [x] 2.5 Load balancing (weighted round robin, least in-flight, consistent hash), active/passive health checks, idempotent-only retry
+- [x] 2.6 `circuit-breaker`, `fallback`, `traffic-split`, `mirror`
+- [x] 2.7 Aliyun-compatible response headers (`X-Ca-Request-Id`, `X-Ca-Error-Message`)
+- [x] 2.8 Publish with pre-checks, version history, one-click rollback, audit
+- [x] 2.9 Admin console: services/instances, operations picker, routes, plugin forms from schema, consumers, versions, audit; internal-only bind; superuser TOTP; encrypted secrets (React + Vite + TS + Tailwind in `console/`, embedded at `/console/`)
+- [ ] 2.10 Parity test suite: one case per in-use Aliyun capability; `kanyue.server` contract tests pass through the gateway (contract tests pass through the gateway locally with `COMPARE_URL`, student cases skipped without local student credentials; per-capability cases blocked on 0.1)
 
 ## 3. G2 Observability
-- [ ] 3.1 Async batched request log with error/slow full retention, success sampling, bounded queue and drop counter
-- [ ] 3.2 Per-minute route metrics (count, status classes, P50/P95/P99, bytes) aggregated in memory
-- [ ] 3.3 Outbound-call reporting from `kanyue.server` and `kanyue.pay` (pay, WeChat, object storage, outbox webhooks)
-- [ ] 3.4 Dependency graph and traffic views in the console
-- [ ] 3.5 Alert rules, built-in templates (5xx ratio, P95, no healthy instance, breaker open, payment callback failures, outbox dead letters, dropped logs, certificate expiry), webhook channels, recovery notices
-- [ ] 3.6 Retention jobs (logs 7 days, metrics 90 days by default)
+- [x] 3.1 Async batched request log with error/slow full retention, success sampling, bounded queue and drop counter
+- [x] 3.2 Per-minute route metrics (count, status classes, P50/P95/P99, bytes) aggregated in memory
+- [x] 3.3 Outbound-call reporting from `kanyue.server` and `kanyue.pay` (pay, WeChat, object storage, outbox webhooks)
+- [x] 3.4 Dependency graph and traffic views in the console
+- [x] 3.5 Alert rules, built-in templates (5xx ratio, P95, no healthy instance, breaker open, payment callback failures, outbox dead letters, dropped logs, certificate expiry), webhook channels, recovery notices
+- [x] 3.6 Retention jobs (logs 7 days, metrics 90 days by default)
 
 ## 4. G2 Integrations (minimal)
-- [ ] 4.1 `LogStore` interface for console log queries with the local SQLite implementation only
-- [ ] 4.2 `Exporter` interface and the JSON lines over HTTP exporter (VictoriaLogs `/insert/jsonline` field mapping, optional Basic/Bearer auth, sampling, filters, batching, backoff, drop counter, `Probe`, "export failing" alert)
-- [ ] 4.3 Default redaction (`token`, `Authorization`, cookies, bodies, personal data) and optional IP truncation for local logs and exports
-- [ ] 4.4 Enable PocketBase `--encryptionEnv` and scheduled S3 backups in `kanyue.gateway`, `kanyue.server` and `kanyue.pay`; report the last backup result in heartbeats; gateway shows status and alerts on missed backups
-- [ ] 4.5 Restore drill: restore one S3 backup of each service into a scratch data dir and run its checks
-- [ ] 4.6 Deploy note for same-host VictoriaLogs: loopback bind, `-retentionPeriod`, memory limit, access to its UI via SSH tunnel or authenticated 1Panel proxy
+- [x] 4.1 `LogStore` interface for console log queries with the local SQLite implementation only
+- [x] 4.2 `Exporter` interface and the JSON lines over HTTP exporter (VictoriaLogs `/insert/jsonline` field mapping, optional Basic/Bearer auth, sampling, filters, batching, backoff, drop counter, `Probe`, "export failing" alert)
+- [x] 4.3 Default redaction (`token`, `Authorization`, cookies, bodies, personal data) and optional IP truncation for local logs and exports
+- [x] 4.4 Enable PocketBase `--encryptionEnv` and scheduled S3 backups in `kanyue.gateway`, `kanyue.server` and `kanyue.pay`; report the last backup result in heartbeats; gateway shows status and alerts on missed backups
+- [ ] 4.5 Restore drill: restore one S3 backup of each service into a scratch data dir and run its checks (procedure in `kanyue.gateway/README.md`; needs the real S3 bucket)
+- [x] 4.6 Deploy note for same-host VictoriaLogs: loopback bind, `-retentionPeriod`, memory limit, access to its UI via SSH tunnel or authenticated 1Panel proxy
 
 ## 5. G3 Cutover
-- [ ] 5.1 Load test against the `design.md` targets on 1C1G and 2C4G profiles
-- [ ] 5.2 Add `gateway` to `compose.yaml` and `scripts/native-stack.mjs` (+ tests); 1Panel OpenResty site config
-- [ ] 5.3 Update `README.md`, `AGENTS.md`, `GEB.MD` §8 and the deploy skill
+- [ ] 5.1 Load test against the `design.md` targets on 1C1G and 2C4G profiles (local `-tags load` harness done: 34k req/s, p99 3 ms, heap 13 MB with jwt-auth + rate-limit; VPS profiles pending)
+- [x] 5.2 Add `gateway` to `compose.yaml` and `scripts/native-stack.mjs` (+ tests); 1Panel OpenResty site config
+- [x] 5.3 Update `README.md`, `AGENTS.md`, `GEB.MD` §8 and the deploy skill
 - [ ] 5.4 Shadow-run on the VPS, real-device mini program run-through, payment callback via the gateway
 - [ ] 5.5 Switch DNS, keep Aliyun gateway as rollback until the observation window closes

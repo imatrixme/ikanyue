@@ -27,6 +27,9 @@ func main() {
 		if registrationErr != nil {
 			return registrationErr
 		}
+		if err := gatewaylink.ConfigureBackups(se.App, os.Getenv); err != nil {
+			return err
+		}
 		return se.Next()
 	})
 	app.OnServe().BindFunc(pay.RequireApplied)

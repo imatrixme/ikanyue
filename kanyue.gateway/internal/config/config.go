@@ -4,7 +4,9 @@ package config
 import (
 	"fmt"
 	"net/netip"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -16,6 +18,14 @@ type Config struct {
 	RegistrationToken string
 	// AdminPublic allows binding the admin plane to a public address (GATEWAY_ADMIN_PUBLIC=1), e.g. inside a container.
 	AdminPublic bool
+	// Request logs: GATEWAY_LOG_SAMPLE (share of fast successes kept, default 0.1), GATEWAY_LOG_SLOW_MS
+	// (always kept above, default 1000), GATEWAY_LOG_TRUNCATE_IP=1, GATEWAY_LOG_RETENTION_DAYS (7)
+	// and GATEWAY_METRIC_RETENTION_DAYS (90).
+	LogSample       float64
+	LogSlow         time.Duration
+	LogTruncateIP   bool
+	LogRetention    time.Duration
+	MetricRetention time.Duration
 }
 
 const minTokenLength = 32
@@ -26,6 +36,25 @@ func Load(getenv func(string) string) (Config, error) {
 		RegistrationToken: getenv("GATEWAY_REGISTRATION_TOKEN"),
 		AdminPublic:       getenv("GATEWAY_ADMIN_PUBLIC") == "1",
 	}
+	var err error
+	if cfg.LogSample, err = number(getenv, "GATEWAY_LOG_SAMPLE", 0.1, 0, 1); err != nil {
+		return cfg, err
+	}
+	slow, err := number(getenv, "GATEWAY_LOG_SLOW_MS", 1000, 1, 600000)
+	if err != nil {
+		return cfg, err
+	}
+	logDays, err := number(getenv, "GATEWAY_LOG_RETENTION_DAYS", 7, 1, 365)
+	if err != nil {
+		return cfg, err
+	}
+	metricDays, err := number(getenv, "GATEWAY_METRIC_RETENTION_DAYS", 90, 1, 3650)
+	if err != nil {
+		return cfg, err
+	}
+	day := 24 * time.Hour
+	cfg.LogSlow, cfg.LogRetention, cfg.MetricRetention = time.Duration(slow)*time.Millisecond, time.Duration(logDays)*day, time.Duration(metricDays)*day
+	cfg.LogTruncateIP = getenv("GATEWAY_LOG_TRUNCATE_IP") == "1"
 	if cfg.RegistrationToken != "" && len(cfg.RegistrationToken) < minTokenLength {
 		return cfg, fmt.Errorf("GATEWAY_REGISTRATION_TOKEN must be at least %d characters", minTokenLength)
 	}
@@ -45,6 +74,19 @@ func Load(getenv func(string) string) (Config, error) {
 		cfg.Trusted = append(cfg.Trusted, prefix.Masked())
 	}
 	return cfg, nil
+}
+
+// number reads an optional numeric variable within [low, high].
+func number(getenv func(string) string, name string, fallback, low, high float64) (float64, error) {
+	raw := strings.TrimSpace(getenv(name))
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.ParseFloat(raw, 64)
+	if err != nil || value < low || value > high {
+		return 0, fmt.Errorf("%s must be a number from %g to %g", name, low, high)
+	}
+	return value, nil
 }
 
 func fallback(value, other string) string {

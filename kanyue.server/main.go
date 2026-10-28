@@ -45,6 +45,12 @@ func main() {
 		if registrationErr != nil {
 			return registrationErr
 		}
+		if registration != nil {
+			registration.Gauges = map[string]func() (float64, error){"outboxDeadLetters": coursecredit.DeadLetters(se.App)}
+		}
+		if err := gatewaylink.ConfigureBackups(se.App, os.Getenv); err != nil {
+			return err
+		}
 		return se.Next()
 	})
 	app.OnServe().BindFunc(migrations.RequireApplied)

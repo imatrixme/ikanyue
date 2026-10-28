@@ -21,17 +21,25 @@ var loopback = []netip.Prefix{netip.MustParsePrefix("127.0.0.1/32"), netip.MustP
 // gateway routes every path of one site to service "svc" and serves it over real TCP.
 func gateway(t *testing.T, headerTimeoutMs int, instances ...snapshot.Instance) (*Handler, *httptest.Server) {
 	t.Helper()
+	return gatewayWith(t, func(cfg *snapshot.Config) { cfg.Services[0].HeaderTimeoutMs = headerTimeoutMs }, instances...)
+}
+
+// gatewayWith lets a test adjust the configuration before it is compiled.
+func gatewayWith(t *testing.T, adjust func(*snapshot.Config), instances ...snapshot.Instance) (*Handler, *httptest.Server) {
+	t.Helper()
 	h := New(loopback, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	routes, err := snapshot.Compile(snapshot.Config{Version: 1,
+	cfg := snapshot.Config{Version: 1,
 		Sites:    []snapshot.Site{{ID: "site", Name: "site", Hosts: []string{"*"}}},
-		Services: []snapshot.Service{{ID: "svc", Name: "svc", HeaderTimeoutMs: headerTimeoutMs}},
+		Services: []snapshot.Service{{ID: "svc", Name: "svc"}},
 		Routes: []snapshot.Route{{ID: "all", Name: "all", Site: "site", Service: "svc",
 			Operations: []snapshot.Operation{{ID: "any", Path: "/{path...}"}, {ID: "missing", Method: "GET", Path: "/v1/gone"}}}},
-	})
+	}
+	adjust(&cfg)
+	routes, err := snapshot.Compile(cfg, h.Env(), func(s string) (string, error) { return s, nil })
 	if err != nil {
 		t.Fatal(err)
 	}
-	endpoints, err := snapshot.NewEndpoints(instances)
+	endpoints, err := snapshot.NewEndpoints(instances, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -15,8 +15,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
+	"kanyue.server/internal/gatewaylink"
 	"kanyue.server/internal/jsx"
 )
 
@@ -160,6 +162,14 @@ func (o *outboxService) listDeadLetters(query map[string]string) (map[string]any
 		"items": items, "page": pageNumber, "perPage": perPage, "totalItems": len(events),
 		"totalPages": int(math.Ceil(float64(len(events)) / float64(perPage))),
 	}, nil
+}
+
+// DeadLetters reads the dead-letter backlog that kanyue.gateway alerts on.
+func DeadLetters(app core.App) func() (float64, error) {
+	return func() (float64, error) {
+		total, err := app.CountRecords("outbox_events", dbx.HashExp{"status": "dead_letter"})
+		return float64(total), err
+	}
 }
 
 func queryValue(query map[string]string, name string) any {
@@ -321,7 +331,7 @@ func NewWebhookDispatcher(rawURL, secret string, timeoutMs any, nodeEnv string) 
 		return nil, Fail("OUTBOX_WEBHOOK_SECRET_INVALID", "通知签名密钥至少需要 16 个字符", nil)
 	}
 	return &WebhookDispatcher{url: target, secret: secret, timeout: time.Duration(timeout) * time.Millisecond,
-		client: &http.Client{}, clock: clock}, nil
+		client: &http.Client{Transport: gatewaylink.Track("outbox-webhook", nil)}, clock: clock}, nil
 }
 
 func (d *WebhookDispatcher) Deliver(message OutboxMessage) error {

@@ -125,6 +125,8 @@ Purpose → Map → Code → Evidence → Reflection → Updated Map
 
 - 业务后端是单体 `kanyue.server`（Go，内嵌 PocketBase 与运营后台 SPA）；客户端（小程序、Admin、官网）只通过它的 API 访问业务数据，不直连 PocketBase REST，不持有服务端令牌。PocketBase 面板 `/_/` 只供运维经私网/SSH 隧道查看。
 - 业务库与支付库分离：只有 `kanyue.pay`（Go 单体，独立内嵌 PocketBase）持有支付凭据与支付库；业务侧通过网关客户端交互，金额以服务端确认结果为准。
+- 公网 API 流量经 `kanyue.gateway`（自研 API 网关，独立内嵌 PocketBase）进入业务服务：服务发现全量登记，接口发现只登记候选，只有路由里显式勾选的接口才对外，新接口与内部接口默认不暴露；管理面与控制台只在私网/回环，超管登录必须密码 + TOTP，插件与消费者密钥加密保存；请求日志不记录请求头、Cookie、查询串与请求体，路径中的个人信息脱敏。
+- 所有 HTML 前端（含内嵌控制台）用框架组件化实现（对齐 `ikanyue.admin` 的 React + Vite + Tailwind 与品牌 token），不裸写 html/css/js。
 - 返回给客户端的用户数据必须脱敏（密码、令牌、微信标识等）；存储过滤条件中的用户输入必须转义。
 - PocketBase schema 变更走二进制内的版本化迁移（`migrate up` 显式执行，`serve` 遇到未执行迁移拒绝启动），不依赖运行时自动迁移。
 - 用户可见行为变化要考虑可访问性、中文排版、时区（Asia/Shanghai）与回归风险。

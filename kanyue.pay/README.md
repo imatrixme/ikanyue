@@ -4,7 +4,7 @@ Standalone Go gateway: one binary with an embedded PocketBase v0.32.0 (`pay_enti
 
 ## Local Development
 
-From the parent, `node scripts/native-stack.mjs init` then `up` starts kanyue.server, this gateway and the miniapp watcher; ordinary startup never migrates or seeds.
+From the parent, `node scripts/native-stack.mjs init` then `up` starts the API gateway (kanyue.gateway), kanyue.server, this payment gateway (service name `pay`) and the miniapp watcher; ordinary startup never migrates or seeds.
 
 Standalone (Go module, independent of the server module):
 

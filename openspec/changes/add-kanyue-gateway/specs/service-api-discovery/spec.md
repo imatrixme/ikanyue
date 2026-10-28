@@ -23,11 +23,15 @@ The gateway SHALL learn service instances from self-registration with heartbeats
 - **THEN** it is removed from load balancing and marked offline
 
 ### Requirement: Operators select discovered operations instead of typing them
-The gateway SHALL build routes from discovered services and operations, and SHALL NOT offer free-text upstream addresses or paths except for audited static entries.
+The gateway SHALL build routes from discovered services and operations, and SHALL NOT offer free-text upstream addresses or paths except for audited static entries. Service discovery SHALL register every service and instance, but operation discovery SHALL only offer operations for selection: a route SHALL expose exactly the operations an operator selected, and SHALL NOT expose an operation because its service registered it.
 
 #### Scenario: New operation appears
 - **WHEN** a manifest adds an operation
-- **THEN** the operation is listed as pending and can be attached to a route by selection
+- **THEN** the operation is listed as pending, is not reachable through the gateway, and can be attached to a route only by selection
+
+#### Scenario: Route without a selection
+- **WHEN** an operator publishes a route that selects no operations
+- **THEN** the publish is rejected and the running version is unchanged
 
 #### Scenario: Operation disappears
 - **WHEN** a manifest no longer contains an operation used by a route

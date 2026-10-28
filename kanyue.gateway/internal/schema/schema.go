@@ -15,13 +15,24 @@ const (
 	Routes         = "routes"
 	ConfigVersions = "config_versions"
 	AuditLogs      = "audit_logs"
+	PluginBindings = "plugin_bindings"
+	Consumers      = "consumers"
+	Secrets        = "secrets"
+	SuperuserTOTP  = "superuser_totp"
+	Exporters      = "exporters"
+	AlertChannels  = "alert_channels"
+	AlertRules     = "alert_rules"
 )
 
 // Audited are the collections whose admin edits land in the audit log.
-var Audited = []string{Sites, Services, Instances, Operations, Routes}
+var Audited = []string{Sites, Services, Instances, Operations, Routes, PluginBindings, Consumers, Secrets, Exporters,
+	AlertChannels, AlertRules}
 
 func init() {
 	core.AppMigrations.Register(initial, nil, "gateway_0001_initial")
+	core.AppMigrations.Register(policies, nil, "gateway_0002_policies")
+	core.AppMigrations.Register(console, nil, "gateway_0003_console")
+	core.AppMigrations.Register(observability, nil, "gateway_0004_observability")
 }
 
 func initial(txApp core.App) error {
@@ -90,7 +101,7 @@ func initial(txApp core.App) error {
 		&core.TextField{Name: "name", Required: true, Max: 60},
 		&core.RelationField{Name: "site", Required: true, CollectionId: sites.Id, MaxSelect: 1},
 		&core.RelationField{Name: "service", Required: true, CollectionId: services.Id, MaxSelect: 1},
-		// Empty means every discovered operation of the service.
+		// Exactly the operations the route exposes; discovery never adds to it.
 		&core.RelationField{Name: "operations", CollectionId: operations.Id, MaxSelect: 1000},
 		&core.BoolField{Name: "enabled"},
 	)
@@ -119,6 +130,176 @@ func initial(txApp core.App) error {
 	audit.AddIndex("idx_audit_logs_created", false, "created", "")
 	withDates(audit)
 	return saveAll(txApp, routes, versions, audit)
+}
+
+// policies adds plugins, consumers, secrets, load balancing, health checks and timeouts.
+func policies(txApp core.App) error {
+	services, err := txApp.FindCollectionByNameOrId(Services)
+	if err != nil {
+		return err
+	}
+	services.Fields.Add(
+		&core.SelectField{Name: "balancer", MaxSelect: 1, Values: []string{"round-robin", "least-inflight", "hash"}},
+		// user, ip, header:<name> or cookie:<name>
+		&core.TextField{Name: "hashBy", Max: 120, Pattern: `^(user|ip|header:.+|cookie:.+)?$`},
+		&core.NumberField{Name: "timeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.NumberField{Name: "idleTimeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.TextField{Name: "healthPath", Max: 200, Pattern: `^(/.*)?$`},
+		&core.NumberField{Name: "healthIntervalSeconds", OnlyInt: true, Min: ptr(0.0), Max: ptr(3600.0)},
+		&core.NumberField{Name: "healthThreshold", OnlyInt: true, Min: ptr(0.0), Max: ptr(20.0)},
+		&core.NumberField{Name: "passiveFailures", OnlyInt: true, Min: ptr(0.0), Max: ptr(100.0)},
+	)
+	routes, err := txApp.FindCollectionByNameOrId(Routes)
+	if err != nil {
+		return err
+	}
+	routes.Fields.Add(
+		&core.NumberField{Name: "headerTimeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.NumberField{Name: "timeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.NumberField{Name: "idleTimeoutMs", OnlyInt: true, Min: ptr(0.0)},
+	)
+	if err := saveAll(txApp, services, routes); err != nil {
+		return err
+	}
+
+	// Secret values are sealed with the --encryptionEnv key before they are stored,
+	// and hidden from every API response; only the fingerprint is shown.
+	consumers := core.NewBaseCollection(Consumers)
+	consumers.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60, Pattern: `^[A-Za-z0-9][A-Za-z0-9._-]*$`},
+		&core.TextField{Name: "appKey", Required: true, Min: 8, Max: 64, Pattern: `^[A-Za-z0-9_-]+$`},
+		&core.TextField{Name: "appSecret", Required: true, Hidden: true, Max: 2000},
+		&core.TextField{Name: "fingerprint", Max: 16},
+		&core.TextField{Name: "note", Max: 500},
+		&core.BoolField{Name: "enabled"},
+	)
+	consumers.AddIndex("idx_consumers_name", true, "name", "")
+	consumers.AddIndex("idx_consumers_app_key", true, "appKey", "")
+	withDates(consumers)
+
+	secrets := core.NewBaseCollection(Secrets)
+	secrets.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60, Pattern: `^[a-z0-9][a-z0-9._-]*$`},
+		&core.TextField{Name: "value", Required: true, Hidden: true, Max: 4000},
+		&core.TextField{Name: "fingerprint", Max: 16},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	secrets.AddIndex("idx_secrets_name", true, "name", "")
+	withDates(secrets)
+	if err := saveAll(txApp, consumers, secrets); err != nil {
+		return err
+	}
+
+	sites, err := txApp.FindCollectionByNameOrId(Sites)
+	if err != nil {
+		return err
+	}
+	bindings := core.NewBaseCollection(PluginBindings)
+	bindings.Fields.Add(
+		&core.TextField{Name: "plugin", Required: true, Max: 60},
+		&core.SelectField{Name: "scope", Required: true, MaxSelect: 1, Values: []string{"global", "site", "route", "consumer"}},
+		&core.RelationField{Name: "site", CollectionId: sites.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.RelationField{Name: "route", CollectionId: routes.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.RelationField{Name: "consumer", CollectionId: consumers.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.JSONField{Name: "config", MaxSize: 1 << 20},
+		// 0 keeps the plugin's own priority.
+		&core.NumberField{Name: "priority", OnlyInt: true},
+		// A disabled binding switches an inherited plugin off at its level.
+		&core.BoolField{Name: "enabled"},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	withDates(bindings)
+	return saveAll(txApp, bindings)
+}
+
+// console makes superuser sign-in two-step: password, then a one-time code whose
+// value the gateway checks against the superuser's enrolled TOTP secret (the
+// emailed code is never sent).
+func console(txApp core.App) error {
+	superusers, err := txApp.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+	if err != nil {
+		return err
+	}
+	superusers.MFA.Enabled = true
+	superusers.MFA.Duration = 600
+	superusers.OTP.Enabled = true
+	superusers.OTP.Duration = 300
+	superusers.OTP.Length = 8
+
+	totp := core.NewBaseCollection(SuperuserTOTP)
+	totp.Fields.Add(
+		&core.RelationField{Name: "superuser", Required: true, CollectionId: superusers.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.TextField{Name: "secret", Required: true, Hidden: true, Max: 500},
+		&core.TextField{Name: "fingerprint", Max: 16},
+		// lastStep refuses a code twice within its 30 second window.
+		&core.NumberField{Name: "lastStep", OnlyInt: true},
+	)
+	totp.AddIndex("idx_superuser_totp_superuser", true, "superuser", "")
+	withDates(totp)
+	return saveAll(txApp, superusers, totp)
+}
+
+// AlertTemplates are the conditions an alert rule can watch.
+var AlertTemplates = []string{
+	"5xx-ratio", "p95-latency", "no-healthy-instance", "breaker-open", "outbound-failures", "outbox-dead-letters",
+	"dropped-logs", "export-failing", "backup-overdue", "certificate-expiry", "operation-removed",
+}
+
+// observability adds log exporters, alert channels and alert rules. Their
+// secrets (export password or token, webhook signing key) are sealed like
+// consumer secrets.
+func observability(txApp core.App) error {
+	exporters := core.NewBaseCollection(Exporters)
+	exporters.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60},
+		// JSON lines over HTTP, e.g. http://127.0.0.1:9428/insert/jsonline for VictoriaLogs.
+		&core.URLField{Name: "url", Required: true},
+		&core.SelectField{Name: "auth", MaxSelect: 1, Values: []string{"none", "basic", "bearer"}},
+		&core.TextField{Name: "username", Max: 200},
+		&core.TextField{Name: "secret", Hidden: true, Max: 2000},
+		&core.TextField{Name: "fingerprint", Max: 16},
+		&core.TextField{Name: "streamFields", Max: 200, Pattern: `^[A-Za-z0-9_,]*$`},
+		&core.NumberField{Name: "sample", Min: ptr(0.0), Max: ptr(1.0)},
+		&core.BoolField{Name: "onlyErrors"},
+		// Enabling runs a connection test; a failing target cannot be enabled.
+		&core.BoolField{Name: "enabled"},
+		&core.DateField{Name: "probedAt"},
+		&core.TextField{Name: "probeError", Max: 500},
+	)
+	exporters.AddIndex("idx_exporters_name", true, "name", "")
+	withDates(exporters)
+
+	channels := core.NewBaseCollection(AlertChannels)
+	channels.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60},
+		// webhook posts signed JSON; wecom, feishu and dingtalk post their bot message formats.
+		&core.SelectField{Name: "kind", Required: true, MaxSelect: 1, Values: []string{"webhook", "wecom", "feishu", "dingtalk"}},
+		&core.URLField{Name: "url", Required: true},
+		&core.TextField{Name: "secret", Hidden: true, Max: 500},
+		&core.TextField{Name: "fingerprint", Max: 16},
+		&core.BoolField{Name: "enabled"},
+	)
+	channels.AddIndex("idx_alert_channels_name", true, "name", "")
+	withDates(channels)
+	if err := saveAll(txApp, exporters, channels); err != nil {
+		return err
+	}
+
+	rules := core.NewBaseCollection(AlertRules)
+	rules.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60},
+		&core.SelectField{Name: "template", Required: true, MaxSelect: 1, Values: AlertTemplates},
+		// What the template watches: a route, service or dependency name, or certificate file paths; empty is all.
+		&core.TextField{Name: "target", Max: 500},
+		&core.NumberField{Name: "threshold"},
+		// The condition must hold this long before the rule fires.
+		&core.NumberField{Name: "forMinutes", OnlyInt: true, Min: ptr(0.0), Max: ptr(1440.0)},
+		&core.RelationField{Name: "channels", CollectionId: channels.Id, MaxSelect: 10},
+		&core.BoolField{Name: "enabled"},
+	)
+	rules.AddIndex("idx_alert_rules_name", true, "name", "")
+	withDates(rules)
+	return saveAll(txApp, rules)
 }
 
 func withDates(collection *core.Collection) {

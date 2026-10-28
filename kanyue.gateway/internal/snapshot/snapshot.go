@@ -1,6 +1,7 @@
 // Package snapshot is what the data plane serves from: a published configuration
-// compiled into per-site route tables, and the routable instances per service
-// and stage. Both are immutable once built; the control plane swaps whole values.
+// compiled into per-site route tables with their plugin chains, and the routable
+// instances per service and stage. Both are immutable once built (instance health
+// aside); the control plane swaps whole values.
 package snapshot
 
 import (
@@ -8,18 +9,23 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
-	"sync"
+	"time"
+
+	"kanyue.gateway/internal/plugin"
 )
 
 // Config is one published configuration version.
 type Config struct {
-	Version  int       `json:"version"`
-	Sites    []Site    `json:"sites"`
-	Services []Service `json:"services"`
-	Routes   []Route   `json:"routes"`
+	Version   int        `json:"version"`
+	Sites     []Site     `json:"sites"`
+	Services  []Service  `json:"services"`
+	Routes    []Route    `json:"routes"`
+	Bindings  []Binding  `json:"bindings,omitempty"`
+	Consumers []Consumer `json:"consumers,omitempty"`
+	// Secrets are named secrets, encrypted; they are decrypted only while compiling.
+	Secrets map[string]string `json:"secrets,omitempty"`
 }
 
 type Site struct {
@@ -32,8 +38,48 @@ type Site struct {
 type Service struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	Timeouts
+	// Balancer is round-robin (default), least-inflight or hash.
+	Balancer string `json:"balancer,omitempty"`
+	// HashBy keys the hash balancer: user, ip, header:<name> or cookie:<name>.
+	HashBy string       `json:"hashBy,omitempty"`
+	Health *HealthCheck `json:"health,omitempty"`
+	// PassiveFailures in a row take an instance out for a growing pause; 0 means 3.
+	PassiveFailures int `json:"passiveFailures,omitempty"`
+}
+
+// Timeouts bound one exchange; zero inherits (route → service → default).
+type Timeouts struct {
 	// HeaderTimeoutMs bounds the wait for upstream response headers; streams are not cut once they start.
 	HeaderTimeoutMs int `json:"headerTimeoutMs,omitempty"`
+	// TimeoutMs bounds the whole exchange, streams included.
+	TimeoutMs int `json:"timeoutMs,omitempty"`
+	// IdleTimeoutMs bounds the silence between response body reads.
+	IdleTimeoutMs int `json:"idleTimeoutMs,omitempty"`
+}
+
+func (t Timeouts) Header() time.Duration { return time.Duration(t.HeaderTimeoutMs) * time.Millisecond }
+func (t Timeouts) Total() time.Duration  { return time.Duration(t.TimeoutMs) * time.Millisecond }
+func (t Timeouts) Idle() time.Duration   { return time.Duration(t.IdleTimeoutMs) * time.Millisecond }
+
+func (t Timeouts) over(base Timeouts) Timeouts {
+	if t.HeaderTimeoutMs == 0 {
+		t.HeaderTimeoutMs = base.HeaderTimeoutMs
+	}
+	if t.TimeoutMs == 0 {
+		t.TimeoutMs = base.TimeoutMs
+	}
+	if t.IdleTimeoutMs == 0 {
+		t.IdleTimeoutMs = base.IdleTimeoutMs
+	}
+	return t
+}
+
+// HealthCheck is an active probe: Threshold results in a row flip an instance.
+type HealthCheck struct {
+	Path            string `json:"path"`
+	IntervalSeconds int    `json:"intervalSeconds"`
+	Threshold       int    `json:"threshold"`
 }
 
 type Route struct {
@@ -42,6 +88,7 @@ type Route struct {
 	Site       string      `json:"site"`
 	Service    string      `json:"service"`
 	Operations []Operation `json:"operations"`
+	Timeouts
 }
 
 // Operation is one discovered upstream route.
@@ -64,11 +111,30 @@ func (o Operation) Pattern() string {
 	return o.Method + " " + o.Path
 }
 
+// Binding attaches a plugin globally or to one site, route or consumer.
+type Binding struct {
+	plugin.Binding
+	// Scope is global, site, route or consumer; Target is the site, route or consumer id.
+	Scope  string `json:"scope"`
+	Target string `json:"target,omitempty"`
+}
+
+// Consumer is a caller with an AppKey; Secret is encrypted.
+type Consumer struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	AppKey string `json:"appKey"`
+	Secret string `json:"secret"`
+}
+
 // Target is what a matched request is proxied to.
 type Target struct {
 	Route     string
+	RouteName string
 	Service   *Service
 	Operation Operation
+	Chain     *plugin.Chain
+	Timeouts  Timeouts
 }
 
 // ServeHTTP is never called: the muxes are used for lookup only.
@@ -76,19 +142,66 @@ func (*Target) ServeHTTP(http.ResponseWriter, *http.Request) {}
 
 // Routes is a compiled configuration.
 type Routes struct {
-	Version int
-	sites   map[string]*http.ServeMux
+	Version  int
+	sites    map[string]*http.ServeMux
+	services []*Service
 }
 
-// Compile validates cfg and builds its route tables; conflicting patterns are errors, never panics.
-func Compile(cfg Config) (*Routes, error) {
-	services := map[string]*Service{}
-	for i := range cfg.Services {
-		services[cfg.Services[i].ID] = &cfg.Services[i]
+// Services lists the configured services, for health checks.
+func (r *Routes) Services() []*Service {
+	if r == nil {
+		return nil
 	}
-	muxes := map[string]*http.ServeMux{}
-	compiled := &Routes{Version: cfg.Version, sites: map[string]*http.ServeMux{}}
+	return r.services
+}
+
+// Decrypt turns a stored secret back into plaintext.
+type Decrypt func(ciphertext string) (string, error)
+
+// Compile validates cfg and builds its route tables and plugin chains; conflicting
+// patterns and invalid plugin configurations are errors, never panics.
+func Compile(cfg Config, env *plugin.Env, decrypt Decrypt) (*Routes, error) {
 	var errs []error
+	scopeEnv, err := snapshotEnv(cfg, env, decrypt)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	services := map[string]*Service{}
+	compiled := &Routes{Version: cfg.Version, sites: map[string]*http.ServeMux{}}
+	for i := range cfg.Services {
+		service := &cfg.Services[i]
+		services[service.ID] = service
+		compiled.services = append(compiled.services, service)
+		switch service.Balancer {
+		case "", "round-robin", "least-inflight", "hash":
+		default:
+			errs = append(errs, fmt.Errorf("service %q: unknown balancer %q", service.Name, service.Balancer))
+		}
+		if health := service.Health; health != nil && (!strings.HasPrefix(health.Path, "/") || health.IntervalSeconds < 1) {
+			errs = append(errs, fmt.Errorf("service %q: health check needs a path and an interval", service.Name))
+		}
+	}
+	bindings := map[string]map[string][]plugin.Binding{} // scope → target → bindings
+	for _, binding := range cfg.Bindings {
+		switch binding.Scope {
+		case "global", "site", "route", "consumer":
+		default:
+			errs = append(errs, fmt.Errorf("binding of %s: unknown scope %q", binding.Plugin, binding.Scope))
+			continue
+		}
+		if bindings[binding.Scope] == nil {
+			bindings[binding.Scope] = map[string][]plugin.Binding{}
+		}
+		bindings[binding.Scope][binding.Target] = append(bindings[binding.Scope][binding.Target], binding.Binding)
+	}
+	consumerBindings := map[string][]plugin.Binding{}
+	for _, consumer := range cfg.Consumers {
+		if list := bindings["consumer"][consumer.ID]; len(list) > 0 {
+			consumerBindings[consumer.Name] = list
+		}
+	}
+
+	muxes := map[string]*http.ServeMux{}
 	for _, site := range cfg.Sites {
 		if len(site.Hosts) == 0 {
 			errs = append(errs, fmt.Errorf("site %q has no hosts", site.Name))
@@ -117,8 +230,17 @@ func Compile(cfg Config) (*Routes, error) {
 			errs = append(errs, fmt.Errorf("route %q has no operations", route.Name))
 			continue
 		}
+		merged := plugin.Merge(bindings["global"][""], bindings["site"][route.Site], bindings["route"][route.ID])
+		chain, err := plugin.NewChain(merged, consumerBindings,
+			plugin.Scope{Env: scopeEnv, Route: route.ID, RouteName: route.Name, Service: service.ID})
+		if err != nil {
+			errs = append(errs, fmt.Errorf("route %q: %w", route.Name, err))
+			continue
+		}
+		timeouts := route.Timeouts.over(service.Timeouts)
 		for _, op := range route.Operations {
-			if err := handle(mux, op.Pattern(), &Target{Route: route.ID, Service: service, Operation: op}); err != nil {
+			target := &Target{Route: route.ID, RouteName: route.Name, Service: service, Operation: op, Chain: chain, Timeouts: timeouts}
+			if err := handle(mux, op.Pattern(), target); err != nil {
 				errs = append(errs, fmt.Errorf("route %q: %w", route.Name, err))
 			}
 		}
@@ -127,6 +249,55 @@ func Compile(cfg Config) (*Routes, error) {
 		return nil, err
 	}
 	return compiled, nil
+}
+
+// snapshotEnv is env with this version's consumers, services and secrets.
+func snapshotEnv(cfg Config, env *plugin.Env, decrypt Decrypt) (*plugin.Env, error) {
+	scoped := &plugin.Env{}
+	if env != nil {
+		*scoped = *env
+	}
+	scoped.Services = map[string]string{}
+	for _, service := range cfg.Services {
+		scoped.Services[service.Name] = service.ID
+	}
+	open := func(ciphertext string) (string, error) {
+		if decrypt == nil {
+			return "", errors.New("no encryption key; start with --encryptionEnv")
+		}
+		return decrypt(ciphertext)
+	}
+	scoped.Secret = func(name string) (string, error) {
+		ciphertext, ok := cfg.Secrets[name]
+		if !ok {
+			return "", fmt.Errorf("unknown secret %q", name)
+		}
+		plain, err := open(ciphertext)
+		if err != nil {
+			return "", fmt.Errorf("secret %q: %w", name, err)
+		}
+		return plain, nil
+	}
+	scoped.Consumers = map[string]plugin.Consumer{}
+	var errs []error
+	names := map[string]bool{}
+	for _, consumer := range cfg.Consumers {
+		if names[consumer.Name] {
+			errs = append(errs, fmt.Errorf("consumer %q appears twice", consumer.Name))
+		}
+		names[consumer.Name] = true
+		if _, taken := scoped.Consumers[consumer.AppKey]; taken {
+			errs = append(errs, fmt.Errorf("consumer %q: AppKey already in use", consumer.Name))
+			continue
+		}
+		secret, err := open(consumer.Secret)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("consumer %q: %w", consumer.Name, err))
+			continue
+		}
+		scoped.Consumers[consumer.AppKey] = plugin.Consumer{ID: consumer.ID, Name: consumer.Name, AppKey: consumer.AppKey, Secret: secret}
+	}
+	return scoped, errors.Join(errs...)
 }
 
 // handle turns ServeMux's registration panics (conflicts, bad patterns) into errors.
@@ -164,73 +335,16 @@ func hostname(host string) string {
 	return strings.ToLower(strings.TrimSuffix(host, "."))
 }
 
-// Instance is one routable upstream address.
-type Instance struct {
-	Service string `json:"service"`
-	Stage   string `json:"stage"`
-	Address string `json:"address"`
-	// Weight below 1 counts as 1; take an instance out of rotation by draining it instead.
-	Weight int `json:"weight"`
-}
-
-// Endpoints are the routable instances grouped by service and stage.
-type Endpoints struct {
-	pools map[string]*pool
-}
-
-func NewEndpoints(instances []Instance) (*Endpoints, error) {
-	sorted := append([]Instance(nil), instances...)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Address < sorted[j].Address })
-	e := &Endpoints{pools: map[string]*pool{}}
-	for _, instance := range sorted {
-		target, err := url.Parse("http://" + instance.Address)
-		if err != nil || target.Host != instance.Address {
-			return nil, fmt.Errorf("instance %q: invalid address", instance.Address)
-		}
-		key := instance.Service + "\x00" + instance.Stage
-		p := e.pools[key]
-		if p == nil {
-			p = &pool{}
-			e.pools[key] = p
-		}
-		p.peers = append(p.peers, peer{target: target, weight: max(instance.Weight, 1)})
-	}
-	return e, nil
-}
-
-// Pick chooses an instance by smooth weighted round robin.
-func (e *Endpoints) Pick(service, stage string) (*url.URL, bool) {
-	if e == nil {
-		return nil, false
-	}
-	p := e.pools[service+"\x00"+stage]
-	if p == nil {
-		return nil, false
-	}
-	return p.next(), true
-}
-
-type pool struct {
-	mu    sync.Mutex
-	peers []peer
-}
-
-type peer struct {
-	target          *url.URL
-	weight, current int
-}
-
-func (p *pool) next() *url.URL {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	total, best := 0, 0
-	for i := range p.peers {
-		p.peers[i].current += p.peers[i].weight
-		total += p.peers[i].weight
-		if p.peers[i].current > p.peers[best].current {
-			best = i
+// RoutedServices lists the ids of services that enabled routes point at.
+func (cfg Config) RoutedServices() []string {
+	seen := map[string]bool{}
+	var ids []string
+	for _, route := range cfg.Routes {
+		if !seen[route.Service] {
+			seen[route.Service] = true
+			ids = append(ids, route.Service)
 		}
 	}
-	p.peers[best].current -= total
-	return p.peers[best].target
+	sort.Strings(ids)
+	return ids
 }

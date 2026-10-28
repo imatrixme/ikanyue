@@ -1,6 +1,6 @@
 ---
 name: kanyue-deploy
-description: Safe deployment and rollback workflow for the Kanyue Docker stack. Use when preparing, validating, deploying, migrating PocketBase schema, backing up production data, switching OpenResty traffic, performing旁路验证, or rolling back kanyue.server (API + embedded PocketBase + admin SPA) or kanyue.pay releases.
+description: Safe deployment and rollback workflow for the Kanyue Docker stack. Use when preparing, validating, deploying, migrating PocketBase schema, backing up production data, switching OpenResty traffic, performing旁路验证, or rolling back kanyue.server (API + embedded PocketBase + admin SPA), kanyue.pay or kanyue.gateway (API gateway) releases.
 ---
 
 # Kanyue Deploy
@@ -57,6 +57,23 @@ Use this skill for Kanyue production or bypass deployments involving `kanyue.ser
 ## Payment Gateway
 
 `compose.pay.release.yaml` runs `kanyue-pay` alone with its data directory and read-only credentials. Live activation also needs `kanyue-pay maintenance preflight` (live credentials, immutable `PAY_IMAGE` digest, clean worktree, recent verified backup reports, explicit acceptance attestations). See `kanyue.pay/README.md`.
+
+## API Gateway
+
+`kanyue.gateway` replaces the Aliyun API gateway. In `compose.yaml` it is the `gateway` service under the `gateway` profile.
+
+Ports:
+- Data plane `GATEWAY_PORT`: OpenResty proxies the API domains here at cutover.
+- Admin plane and console `127.0.0.1:1461`: SSH tunnel only, never an OpenResty site.
+
+Bring-up order:
+1. Back up `gateway_data` like any PocketBase data.
+2. Start the gateway with `GATEWAY_REGISTRATION_TOKEN` and a 32-character `GATEWAY_ENCRYPTION_KEY`.
+3. Enroll the console superuser's authenticator: `kanyue-gateway totp enroll <email> --dir=/pb_data --encryptionEnv=GATEWAY_ENCRYPTION_KEY` (inside the gateway container, which already has the key).
+4. Set `GATEWAY_URL=http://gateway:1461` plus the token on `server` (and pay) so they register.
+5. In the console, create the site and routes, tick exactly the operations to expose, and publish.
+
+Shadow-run on a bypass domain first. Then switch the API domains in OpenResty; the Aliyun gateway stays as the rollback target until the observation window closes. Rolling back a bad config is a console rollback (it creates a new version), not a data restore. See `kanyue.gateway/README.md` (OpenResty sample, VictoriaLogs, backups).
 
 ## References
 

@@ -23,7 +23,7 @@ func testConfig() Config {
 
 // Matching follows ServeMux precedence per site; unknown hosts fall to the "*" site.
 func TestCompileMatchesBySiteMethodAndPattern(t *testing.T) {
-	routes, err := Compile(testConfig())
+	routes, err := Compile(testConfig(), nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestCompileRejectsInvalidConfigurations(t *testing.T) {
 		Route{ID: "r6", Name: "hollow", Site: "api", Service: "server"},
 		Route{ID: "r7", Name: "broken", Site: "api", Service: "server", Operations: []Operation{{Method: "GET", Path: "no-slash"}}},
 	)
-	_, err := Compile(cfg)
+	_, err := Compile(cfg, nil, nil)
 	if err == nil {
 		t.Fatal("compiled")
 	}
@@ -73,37 +73,5 @@ func TestCompileRejectsInvalidConfigurations(t *testing.T) {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error lacks %q:\n%v", want, err)
 		}
-	}
-}
-
-// Smooth weighted round robin spreads picks by weight without bursts, per service and stage.
-func TestEndpointsPickByWeightPerStage(t *testing.T) {
-	endpoints, err := NewEndpoints([]Instance{
-		{Service: "s", Stage: "RELEASE", Address: "10.0.0.1:80", Weight: 3},
-		{Service: "s", Stage: "RELEASE", Address: "10.0.0.2:80"},
-		{Service: "s", Stage: "TEST", Address: "10.0.0.9:80"},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var sequence []string
-	for range 8 {
-		target, ok := endpoints.Pick("s", "RELEASE")
-		if !ok {
-			t.Fatal("no release instance")
-		}
-		sequence = append(sequence, target.Host[len("10.0.0."):len("10.0.0.")+1])
-	}
-	if got := strings.Join(sequence, ""); got != "11211121" {
-		t.Fatalf("sequence = %s", got)
-	}
-	if target, _ := endpoints.Pick("s", "TEST"); target.Host != "10.0.0.9:80" {
-		t.Fatalf("test stage = %v", target)
-	}
-	if _, ok := endpoints.Pick("s", "PRE"); ok {
-		t.Fatal("picked for a stage without instances")
-	}
-	if _, err := NewEndpoints([]Instance{{Service: "s", Stage: "RELEASE", Address: "10.0.0.1:80/evil"}}); err == nil {
-		t.Fatal("accepted an address with a path")
 	}
 }

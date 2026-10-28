@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"kanyue.server/internal/gatewaylink"
 )
 
 // wechatSession is the jscode2session payload.
@@ -48,7 +50,7 @@ func (w wechatClient) exchange(code string) (wechatSession, error) {
 
 	client := w.http
 	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
+		client = &http.Client{Timeout: 10 * time.Second, Transport: gatewaylink.Track("wechat", nil)}
 	}
 	response, err := client.Get(target.String())
 	if err != nil {

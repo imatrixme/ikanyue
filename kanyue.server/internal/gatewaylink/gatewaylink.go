@@ -12,13 +12,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/netip"
 	"reflect"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -148,6 +151,8 @@ type Registration struct {
 	// Address is where the gateway reaches this instance, e.g. 127.0.0.1:1437.
 	Address string
 	Stage   string
+	// Gauges are read on every heartbeat, e.g. the outbox dead-letter backlog.
+	Gauges map[string]func() (float64, error)
 }
 
 // RegistrationFromEnv reads GATEWAY_URL, GATEWAY_REGISTRATION_TOKEN,
@@ -175,9 +180,10 @@ const Interval = 10 * time.Second
 // gateway stops routing here before the listener closes.
 func Start(app core.App, reg Registration, manifest []byte) {
 	client := &http.Client{Timeout: 3 * time.Second}
-	body, _ := json.Marshal(map[string]any{"service": reg.Service, "address": reg.Address, "stage": reg.Stage,
-		"version": Version(), "manifestHash": Hash(manifest)})
-	send := func(ctx context.Context, path string) error {
+	identity := map[string]any{"service": reg.Service, "address": reg.Address, "stage": reg.Stage,
+		"version": Version(), "manifestHash": Hash(manifest)}
+	send := func(ctx context.Context, path string, fields map[string]any) error {
+		body, _ := json.Marshal(fields)
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, reg.URL+path, bytes.NewReader(body))
 		if err != nil {
 			return err
@@ -204,7 +210,7 @@ func Start(app core.App, reg Registration, manifest []byte) {
 		defer ticker.Stop()
 		var failing bool
 		for {
-			err := send(ctx, "/gateway/v1/heartbeat")
+			err := send(ctx, "/gateway/v1/heartbeat", reg.report(app, identity))
 			switch {
 			case err != nil && !failing && ctx.Err() == nil:
 				app.Logger().Warn("Gateway heartbeat failing", "gateway", reg.URL, "error", err.Error())
@@ -224,9 +230,194 @@ func Start(app core.App, reg Registration, manifest []byte) {
 		done.Wait()
 		deregister, stop := context.WithTimeout(context.Background(), 2*time.Second)
 		defer stop()
-		if err := send(deregister, "/gateway/v1/deregister"); err != nil {
+		if err := send(deregister, "/gateway/v1/deregister", identity); err != nil {
 			app.Logger().Warn("Gateway deregistration failed", "error", err.Error())
 		}
 		return e.Next()
 	})
+}
+
+// report is a heartbeat body: the identity plus outbound calls since the last
+// beat, the gauges and the last backup. Calls drained into a beat the gateway
+// never receives are lost; they are telemetry, not data.
+func (reg Registration) report(app core.App, identity map[string]any) map[string]any {
+	body := map[string]any{}
+	maps.Copy(body, identity)
+	body["outbound"] = calls.drain()
+	gauges := map[string]float64{}
+	for name, read := range reg.Gauges {
+		value, err := read()
+		if err != nil {
+			app.Logger().Warn("Gateway gauge unreadable", "gauge", name, "error", err.Error())
+			continue
+		}
+		gauges[name] = value
+	}
+	body["gauges"] = gauges
+	if backup := lastBackup.Load(); backup != nil {
+		body["backup"] = backup
+	}
+	return body
+}
+
+// LatencyBounds are the upper bounds in milliseconds of the latency buckets; the gateway uses the same.
+var LatencyBounds = []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000}
+
+// Outbound summarizes the calls to one target between two heartbeats.
+type Outbound struct {
+	Target   string  `json:"target"`
+	Count    int     `json:"count"`
+	Failures int     `json:"failures"`
+	P95Ms    float64 `json:"p95Ms"`
+}
+
+type window struct {
+	count, failures int
+	buckets         []int
+	max             float64
+}
+
+type tracker struct {
+	mu      sync.Mutex
+	targets map[string]*window
+}
+
+var calls = &tracker{targets: map[string]*window{}}
+
+func (t *tracker) add(target string, took time.Duration, failed bool) {
+	ms := float64(took) / float64(time.Millisecond)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	w := t.targets[target]
+	if w == nil {
+		w = &window{buckets: make([]int, len(LatencyBounds)+1)}
+		t.targets[target] = w
+	}
+	w.count++
+	if failed {
+		w.failures++
+	}
+	w.buckets[sort.SearchFloat64s(LatencyBounds, ms)]++
+	w.max = max(w.max, ms)
+}
+
+func (t *tracker) drain() []Outbound {
+	t.mu.Lock()
+	targets := t.targets
+	t.targets = map[string]*window{}
+	t.mu.Unlock()
+	out := []Outbound{}
+	for target, w := range targets {
+		p95, seen := w.max, 0
+		for i, n := range w.buckets {
+			if seen += n; seen*100 >= w.count*95 {
+				if i < len(LatencyBounds) {
+					p95 = min(LatencyBounds[i], w.max)
+				}
+				break
+			}
+		}
+		out = append(out, Outbound{Target: target, Count: w.count, Failures: w.failures, P95Ms: p95})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Target < out[j].Target })
+	return out
+}
+
+// Track wraps base (nil is http.DefaultTransport) so its calls are reported to
+// the gateway as outbound calls to target; an error, a 5xx answer or a refused
+// credential (401, 403) is a failure, other 4xx answers are the caller's business.
+func Track(target string, base http.RoundTripper) http.RoundTripper {
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	return tracked{target: target, base: base}
+}
+
+type tracked struct {
+	target string
+	base   http.RoundTripper
+}
+
+func (t tracked) RoundTrip(r *http.Request) (*http.Response, error) {
+	begin := time.Now()
+	res, err := t.base.RoundTrip(r)
+	failed := err != nil || res.StatusCode >= http.StatusInternalServerError ||
+		res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden
+	calls.add(t.target, time.Since(begin), failed)
+	return res, err
+}
+
+// Backup is the result of the last backup, as reported in heartbeats.
+type Backup struct {
+	At    time.Time `json:"at"`
+	OK    bool      `json:"ok"`
+	Name  string    `json:"name,omitempty"`
+	Error string    `json:"error,omitempty"`
+	Cron  string    `json:"cron,omitempty"`
+}
+
+var lastBackup atomic.Pointer[Backup]
+
+// ConfigureBackups applies BACKUP_CRON, BACKUP_KEEP and BACKUP_S3_* (ENDPOINT,
+// BUCKET, REGION, ACCESS_KEY, SECRET, FORCE_PATH_STYLE) to the PocketBase
+// backup settings, then records every backup's result for the heartbeat.
+// Without BACKUP_CRON the settings are left as edited in the dashboard. An S3
+// secret is only stored in settings encrypted with --encryptionEnv.
+func ConfigureBackups(app core.App, getenv func(string) string) error {
+	if cron := getenv("BACKUP_CRON"); cron != "" {
+		settings, err := app.Settings().Clone()
+		if err != nil {
+			return err
+		}
+		settings.Backups.Cron = cron
+		settings.Backups.CronMaxKeep = 7
+		if keep := getenv("BACKUP_KEEP"); keep != "" {
+			if _, err := fmt.Sscan(keep, &settings.Backups.CronMaxKeep); err != nil || settings.Backups.CronMaxKeep < 1 {
+				return errors.New("BACKUP_KEEP must be a positive number")
+			}
+		}
+		if endpoint := getenv("BACKUP_S3_ENDPOINT"); endpoint != "" {
+			if app.EncryptionEnv() == "" || getenv(app.EncryptionEnv()) == "" {
+				return errors.New("S3 backups need --encryptionEnv naming a set key, so the S3 secret is stored encrypted")
+			}
+			settings.Backups.S3 = core.S3Config{Enabled: true, Endpoint: endpoint, Bucket: getenv("BACKUP_S3_BUCKET"),
+				Region: getenv("BACKUP_S3_REGION"), AccessKey: getenv("BACKUP_S3_ACCESS_KEY"), Secret: getenv("BACKUP_S3_SECRET"),
+				ForcePathStyle: getenv("BACKUP_S3_FORCE_PATH_STYLE") == "1"}
+		}
+		if err := app.Save(settings); err != nil {
+			return fmt.Errorf("backup settings: %w", err)
+		}
+	}
+	app.OnBackupCreate().BindFunc(func(e *core.BackupEvent) error {
+		err := e.Next()
+		backup := &Backup{At: time.Now().UTC(), OK: err == nil, Name: e.Name, Cron: e.App.Settings().Backups.Cron}
+		if err != nil {
+			backup.Error = err.Error()
+			e.App.Logger().Error("Backup failed", "name", e.Name, "error", err.Error())
+		}
+		lastBackup.Store(backup)
+		return err
+	})
+	// Until the next backup, the newest stored one stands for the last result.
+	go func() {
+		fsys, err := app.NewBackupsFilesystem()
+		if err != nil {
+			return
+		}
+		defer fsys.Close()
+		objects, err := fsys.List("")
+		if err != nil {
+			return
+		}
+		var newest *Backup
+		for _, object := range objects {
+			if newest == nil || object.ModTime.After(newest.At) {
+				newest = &Backup{At: object.ModTime.UTC(), OK: true, Name: object.Key, Cron: app.Settings().Backups.Cron}
+			}
+		}
+		if newest != nil {
+			lastBackup.CompareAndSwap(nil, newest)
+		}
+	}()
+	return nil
 }

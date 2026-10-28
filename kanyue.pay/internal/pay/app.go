@@ -333,7 +333,7 @@ func StartWorker(app core.App, svc Service, work *DurableWork, cfg Config) {
 		defer running.Unlock()
 		result, err := svc.Poll()
 		if err == nil {
-			err = DeliverEvents(svc.Core(), work, cfg.Events, DefaultTransport)
+			err = DeliverEvents(svc.Core(), work, cfg.Events, paymentCallbacks)
 		}
 		if err != nil {
 			app.Logger().Error("Payment worker temporarily unavailable; durable work retained.", "error", err.Error())

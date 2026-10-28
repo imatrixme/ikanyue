@@ -14,6 +14,7 @@ const scanRoots = [
     'ikanyue.taro3/src/pages',
     'ikanyue.taro3/src/styles',
     'ikanyue.admin/src/components',
+    'kanyue.gateway/console/src',
     'ikanyue.website/app/components',
     'ikanyue.website/app/pages',
     'ikanyue.website/app/assets/css',

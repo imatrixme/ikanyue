@@ -146,6 +146,6 @@ func LiveTransport(enabled bool) (Transport, error) {
 		if !sameOrigin(request.URL) {
 			return nil, fail("WECHAT_ORIGIN_FORBIDDEN", 400)
 		}
-		return DefaultTransport(request)
+		return wechatPay(request)
 	}, nil
 }

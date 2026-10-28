@@ -41,6 +41,11 @@ services:
       WECHAT_APPID: "${WECHAT_APPID:-}"
       WECHAT_SECRET: "${WECHAT_SECRET:-}"
       WECHAT_JSCODE2SESSION: "${WECHAT_JSCODE2SESSION:-https://api.weixin.qq.com/sns/jscode2session}"
+      # Registration with the API gateway (profile "gateway"): set GATEWAY_URL=http://gateway:1461.
+      GATEWAY_URL: "${GATEWAY_URL:-}"
+      GATEWAY_REGISTRATION_TOKEN: "${GATEWAY_REGISTRATION_TOKEN:-}"
+      GATEWAY_INSTANCE_ADDRESS: "server:8090"
+      GATEWAY_STAGE: "${GATEWAY_STAGE:-release}"
     entrypoint:
       - /bin/sh
       - -c
@@ -51,6 +56,37 @@ services:
       - "${PB_DATA_SOURCE:-pocketbase_data}:/pb_data"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # The API gateway that replaces the Aliyun API gateway at cutover; off unless started
+  # with `--profile gateway`. OpenResty sends API traffic to the data plane (GATEWAY_PORT);
+  # the admin plane and console stay on host loopback, reached over an SSH tunnel.
+  gateway:
+    profiles: ["gateway"]
+    build:
+      context: ./kanyue.gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${GATEWAY_PORT:-1460}:1460"
+      - "127.0.0.1:${GATEWAY_ADMIN_PORT:-1461}:1461"
+    environment:
+      GATEWAY_LISTEN: "0.0.0.0:1460"
+      # Inside the container the admin plane binds every interface; the host publishes it on loopback only.
+      GATEWAY_ADMIN_PUBLIC: "1"
+      GATEWAY_REGISTRATION_TOKEN: "${GATEWAY_REGISTRATION_TOKEN:-}"
+      # 32 characters; seals plugin secrets, consumer secrets and the PocketBase settings.
+      GATEWAY_ENCRYPTION_KEY: "${GATEWAY_ENCRYPTION_KEY:-}"
+      # Host OpenResty reaches the container through the Docker bridge.
+      GATEWAY_TRUSTED_PROXIES: "${GATEWAY_TRUSTED_PROXIES:-127.0.0.1,::1,172.16.0.0/12}"
+      GATEWAY_LOG_SAMPLE: "${GATEWAY_LOG_SAMPLE:-0.1}"
+    command: ["kanyue-gateway", "serve", "--http=0.0.0.0:1461", "--dir=/pb_data", "--encryptionEnv=GATEWAY_ENCRYPTION_KEY"]
+    volumes:
+      - "${GATEWAY_DATA_SOURCE:-gateway_data}:/pb_data"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:1461/api/health >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -80,5 +116,6 @@ services:
 
 volumes:
   pocketbase_data:
+  gateway_data:
   miniapp_node_modules:
   miniapp_pnpm_store:

@@ -19,6 +19,7 @@ import (
 	"kanyue.gateway/internal/proxy"
 	"kanyue.gateway/internal/schema"
 	"kanyue.gateway/internal/snapshot"
+	"kanyue.gateway/internal/telemetry"
 )
 
 const (
@@ -41,6 +42,11 @@ type Beat struct {
 	Stage        string `json:"stage"`
 	Version      string `json:"version"`
 	ManifestHash string `json:"manifestHash"`
+	// What happened since the last beat: outbound calls, gauges such as the
+	// outbox dead-letter backlog, and the last backup result.
+	Outbound []telemetry.Outbound `json:"outbound,omitempty"`
+	Gauges   map[string]float64   `json:"gauges,omitempty"`
+	Backup   *Backup              `json:"backup,omitempty"`
 }
 
 func (b *Beat) normalize() error {
@@ -56,7 +62,7 @@ func (b *Beat) normalize() error {
 		return errors.New("address must be host:port")
 	case !stageName.MatchString(b.Stage):
 		return errors.New("stage must be an upper-case name")
-	case len(b.Version) > 100 || len(b.ManifestHash) > 64:
+	case len(b.Version) > 100 || len(b.ManifestHash) > 64 || len(b.Outbound) > 100 || len(b.Gauges) > 50:
 		return errors.New("version or manifest hash too long")
 	}
 	return nil
@@ -156,6 +162,7 @@ func (c *Control) Heartbeat(beat Beat) error {
 	if beat.ManifestHash != "" && beat.ManifestHash != service.GetString("manifestHash") {
 		c.syncInBackground(service.Id, beat.Address)
 	}
+	c.report(beat, time.Now())
 	return nil
 }
 
@@ -276,7 +283,7 @@ func (c *Control) rebuildEndpoints() error {
 		instances = append(instances, snapshot.Instance{Service: record.GetString("service"), Stage: record.GetString("stage"),
 			Address: record.GetString("address"), Weight: record.GetInt("weight")})
 	}
-	endpoints, err := snapshot.NewEndpoints(instances)
+	endpoints, err := snapshot.NewEndpoints(instances, c.handler.Endpoints())
 	if err != nil {
 		return err
 	}

@@ -119,6 +119,29 @@ openresty -s reload
 
 If managed by 1Panel, use the 1Panel-managed reload path but still run syntax validation first when available.
 
+## API Gateway Cutover
+
+1. Run the gateway in a bypass setup and check it:
+   ```bash
+   docker compose --profile gateway up -d gateway
+   curl -fsS http://127.0.0.1:1461/api/health
+   ssh -L 1461:127.0.0.1:1461 <host>   # console at http://127.0.0.1:1461/console/
+   ```
+2. In the console, confirm registration:
+   - `kanyue.server` and `kanyue.pay` instances show online;
+   - their operations show as pending.
+3. Publish only the selected operations.
+4. Verify on the data plane:
+   ```bash
+   curl -fsS -H 'Host: mapi.ikanyue.com' 'http://127.0.0.1:1460/v1/public/course-catalog'
+   ```
+5. Point a bypass domain at `127.0.0.1:1460` and run the mini program and a payment callback through it.
+6. Switch the API domains last.
+
+Rollback:
+- Point OpenResty back at the Aliyun gateway (or straight at `API_PORT`) and reload.
+- Configuration mistakes roll back in the console: 发布 → 回滚.
+
 ## Rollback Order
 
 Prefer the least destructive rollback:

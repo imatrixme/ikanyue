@@ -296,6 +296,7 @@ const outputs = [
     [path.join(ROOT, 'ikanyue.taro3/src/styles/theme.mjs'), renderMiniappTheme(), true],
     [path.join(ROOT, 'ikanyue.admin/src/styles/brand.generated.css'), renderAdminCss(), true],
     [path.join(ROOT, 'ikanyue.admin/src/styles/brand.generated.ts'), renderTypeScript(), true],
+    [path.join(ROOT, 'kanyue.gateway/console/src/styles/brand.generated.css'), renderAdminCss(), true],
     [path.join(ROOT, 'ikanyue.website/app/assets/css/brand.generated.css'), renderWebsiteCss(), false],
     [path.join(ROOT, 'ikanyue.website/app/utils/brand.generated.ts'), renderTypeScript(), false],
 ];

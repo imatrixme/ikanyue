@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"kanyue.server/internal/gatewaylink"
 )
 
 // gateway is Hono's commerce GatewayClient: the payment gateway's service API.
@@ -33,7 +35,7 @@ var gatewayMessages = map[string]string{
 
 func newGateway(config CommerceConfig) *gateway {
 	g := &gateway{token: config.ServiceToken, mockToken: config.MockToken, mock: config.Mock,
-		client: &http.Client{Timeout: 10 * time.Second,
+		client: &http.Client{Timeout: 10 * time.Second, Transport: gatewaylink.Track("kanyue.pay", nil),
 			CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("redirect refused") }}}
 	base := config.GatewayURL
 	if base == "" {

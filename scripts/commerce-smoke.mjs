@@ -161,7 +161,7 @@ async function main() {
   assert.equal(pendingRefund.status, 'processing');
   for (const grant of batches) assert.equal((await record('credit_batches', grant.batchId)).availableQuantity, 0);
   const refund = await record('commerce_refunds', pendingRefund.id);
-  const restart = spawnSync(process.execPath, [new URL('./native-stack.mjs', import.meta.url).pathname, 'restart', 'gateway'], { stdio: 'pipe' });
+  const restart = spawnSync(process.execPath, [new URL('./native-stack.mjs', import.meta.url).pathname, 'restart', 'pay'], { stdio: 'pipe' });
   assert.equal(restart.status, 0, 'Gateway restart must preserve pending refund');
   assert.equal((await eventually(() => gateway(`/v1/refunds/${refund.data.gatewayId}`))).status, 'processing');
   await mockSuccess(refund.data.gatewayId);

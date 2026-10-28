@@ -10,9 +10,11 @@ const script = fileURLToPath(import.meta.url);
 const root = resolve(dirname(script), '..');
 const state = join(root, '.local/native');
 const configPath = join(state, 'environment.json');
-const names = ['server', 'gateway', 'miniapp'];
+// gateway (kanyue.gateway) starts first so server and pay register on their first heartbeat.
+const names = ['gateway', 'server', 'pay', 'miniapp'];
 const server = join(root, 'kanyue.server');
 const pay = join(root, 'kanyue.pay');
+const gateway = join(root, 'kanyue.gateway');
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 const fail = (message) => { throw new Error(message); };
 const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
@@ -20,13 +22,23 @@ const pidFile = (name) => join(state, 'run', `${name}.json`);
 const logFile = (name) => join(state, 'logs', `${name}.log`);
 const businessData = () => `--dir=${join(state, 'business-data')}`;
 const paymentData = () => `--dir=${join(state, 'payment-data')}`;
+const gatewayData = () => `--dir=${join(state, 'gateway-data')}`;
+// Generated once per machine and persisted; older configs predate the gateway.
+const gatewayDefaults = () => ({
+  GATEWAY_PORT: '1460', GATEWAY_ADMIN_PORT: '1461',
+  GATEWAY_REGISTRATION_TOKEN: randomBytes(32).toString('hex'),
+  GATEWAY_ENCRYPTION_KEY: randomBytes(16).toString('hex'),
+  GATEWAY_PB_PASSWORD: randomBytes(24).toString('hex'),
+});
 
 function settings() {
   if (!existsSync(configPath)) fail('Run test init first; normal startup never initializes data.');
   const config = read(configPath);
   // Older local configs predate JWT_SECRET; persist one so sessions survive restarts.
-  if (!config.JWT_SECRET) {
-    config.JWT_SECRET = randomBytes(32).toString('hex');
+  const missing = Object.entries({ JWT_SECRET: randomBytes(32).toString('hex'), ...gatewayDefaults() })
+    .filter(([key]) => !config[key]);
+  if (missing.length) {
+    Object.assign(config, Object.fromEntries(missing));
     writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
   return config;
@@ -35,14 +47,22 @@ const goBin = (config) => config.GO_BIN || 'go';
 function environment(config) {
   // Both binaries embed PocketBase: PB_URL and PAY_PB_URL are their own addresses (maintenance backups use them).
   // Go builds stay single-package so a restart never saturates the machine.
+  // Server and pay register with the local API gateway; each sets its own GATEWAY_INSTANCE_ADDRESS.
   return { ...process.env, ...config, NODE_ENV: 'development', GOFLAGS: '-p=1',
-    PB_URL: `http://127.0.0.1:${config.PORT}`, PAY_PB_URL: config.PAY_GATEWAY_URL };
+    PB_URL: `http://127.0.0.1:${config.PORT}`, PAY_PB_URL: config.PAY_GATEWAY_URL,
+    GATEWAY_URL: `http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}` };
 }
 function definition(name, config) {
   const definitions = {
+    gateway: { cwd: gateway,
+      command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.GATEWAY_ADMIN_PORT}`, gatewayData(), '--encryptionEnv=GATEWAY_ENCRYPTION_KEY'],
+      env: { GATEWAY_LISTEN: `127.0.0.1:${config.GATEWAY_PORT}` },
+      port: Number(config.GATEWAY_ADMIN_PORT), url: `http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}/api/health` },
     server: { cwd: server, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PORT}`, businessData()],
+      env: { GATEWAY_INSTANCE_ADDRESS: `127.0.0.1:${config.PORT}` },
       port: Number(config.PORT), url: `http://127.0.0.1:${config.PORT}/api/health` },
-    gateway: { cwd: pay, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
+    pay: { cwd: pay, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
+      env: { GATEWAY_INSTANCE_ADDRESS: `127.0.0.1:${config.PAY_PORT}` },
       port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
     miniapp: { cwd: join(root, 'ikanyue.taro3'), command: [process.execPath, 'node_modules/@tarojs/cli/bin/taro', 'build', '--type', 'weapp', '--watch'] },
   };
@@ -149,9 +169,16 @@ async function initialize() {
   await command(goBin(config), ['run', '.', 'migrate', 'up', businessData()], server, config, 'Server migrations');
   await command(goBin(config), ['run', '.', 'seed', 'local', businessData()], server, config, 'Local fixtures');
   if (!existsSync(join(state, 'payment-data', 'data.db'))) {
-    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Gateway dashboard account');
+    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Pay dashboard account');
   }
-  await command(goBin(config), ['run', '.', 'migrate', 'up', paymentData()], pay, config, 'Gateway migrations');
+  await command(goBin(config), ['run', '.', 'migrate', 'up', paymentData()], pay, config, 'Pay migrations');
+  await command(goBin(config), ['run', '.', 'migrate', 'up', gatewayData()], gateway, config, 'Gateway migrations');
+  if (!config.GATEWAY_PB_EMAIL) {
+    // The console needs password + authenticator: enroll with `GATEWAY_ENCRYPTION_KEY=... go run . totp enroll <email> --dir=... --encryptionEnv=GATEWAY_ENCRYPTION_KEY` in kanyue.gateway.
+    config.GATEWAY_PB_EMAIL = config.PB_EMAIL;
+    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.GATEWAY_PB_EMAIL, config.GATEWAY_PB_PASSWORD, gatewayData()], gateway, config, 'Gateway console account');
+    writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+  }
   console.log('Native data initialized. Docker volumes untouched. Use test up to start applications.');
 }
 async function main() {
@@ -176,10 +203,11 @@ async function main() {
   if (action === 'down' || action === 'restart') for (const name of [...targets].reverse()) await stop(name);
   if (action === 'up' || action === 'restart') {
     const config = settings();
-    if (!existsSync(join(state, 'payment-data/data.db'))) fail('Run test init before startup');
+    if (!existsSync(join(state, 'payment-data/data.db')) || !existsSync(join(state, 'gateway-data/data.db'))) fail('Run test init before startup');
     for (const name of targets) await start(name, config);
-    // The admin SPA is embedded at build time: run npm run build:server in ikanyue.admin, then restart server.
-    console.log(`Admin and API: http://127.0.0.1:${config.PORT}/; gateway: ${config.PAY_GATEWAY_URL}; dashboards: /_/ on both`);
+    // Consoles are embedded at build time: npm run build:server in ikanyue.admin, npm run build in kanyue.gateway/console.
+    console.log(`Admin and API: http://127.0.0.1:${config.PORT}/; pay: ${config.PAY_GATEWAY_URL}; `
+      + `API gateway: http://127.0.0.1:${config.GATEWAY_PORT} (console http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}/console/)`);
     return;
   }
   if (action === 'smoke') {

@@ -65,10 +65,10 @@ node scripts/native-stack.mjs down
 
 `init` 显式创建 `.local/native/environment.json`（权限 0600），对业务库和支付库执行 `migrate up`，并写入本地测试数据；普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷，两个服务都会在有未执行迁移时拒绝启动。业务库 PocketBase 面板 `admin@local.com / admin870329`；后台 `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库面板密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
 
-默认端口：业务服务 `1437`（后台页面、API、PocketBase 面板 `/_/`）、支付网关 `1440`（API、PocketBase 面板 `/_/`）。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。后台改界面时可在 `ikanyue.admin` 运行 `npm run dev`（代理 `/ops` 到 `1437`）。
+默认端口：业务服务 `1437`（后台页面、API、PocketBase 面板 `/_/`）、支付网关 `1440`（服务名 `pay`；API、PocketBase 面板 `/_/`）、API 网关 `1460`（数据面）与 `1461`（管理面，控制台 `/console/`）。本地业务服务和支付网关会向 API 网关心跳注册；控制台登录需要密码加验证器动态码，先在 `kanyue.gateway` 以 `.local/native/environment.json` 里的 `GATEWAY_ENCRYPTION_KEY` 为环境变量运行 `go run . totp enroll <邮箱> --dir=../.local/native/gateway-data --encryptionEnv=GATEWAY_ENCRYPTION_KEY` 绑定。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。后台改界面时可在 `ikanyue.admin` 运行 `npm run dev`（代理 `/ops` 到 `1437`）。
 
 ```bash
-node scripts/native-stack.mjs restart gateway
+node scripts/native-stack.mjs restart pay
 node scripts/commerce-smoke.mjs --tiered
 ```
 
