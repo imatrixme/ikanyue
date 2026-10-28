@@ -26,7 +26,7 @@
 - [x] 2.7 Aliyun-compatible response headers (`X-Ca-Request-Id`, `X-Ca-Error-Message`)
 - [x] 2.8 Publish with pre-checks, version history, one-click rollback, audit
 - [x] 2.9 Admin console: services/instances, operations picker, routes, plugin forms from schema, consumers, versions, audit; internal-only bind; superuser TOTP; encrypted secrets (React + Vite + TS + Tailwind in `console/`, embedded at `/console/`)
-- [ ] 2.10 Parity test suite: one case per in-use Aliyun capability; `kanyue.server` contract tests pass through the gateway (contract tests pass through the gateway locally with `COMPARE_URL`, student cases skipped without local student credentials; per-capability cases blocked on 0.1)
+- [ ] 2.10 Parity test suite: one case per in-use Aliyun capability; `kanyue.server` contract tests pass through the gateway (2026-10-28: with local student and ops credentials, all 35 contract tests pass with `COMPARE_URL` through the local gateway in TEST, PRE and RELEASE via the native-stack `stages` relays; per-capability cases blocked on 0.1)
 
 ## 3. G2 Observability
 - [x] 3.1 Async batched request log with error/slow full retention, success sampling, bounded queue and drop counter
