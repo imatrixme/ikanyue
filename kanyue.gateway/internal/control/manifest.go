@@ -14,6 +14,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
+	"kanyue.gateway/internal/plugin"
 	"kanyue.gateway/internal/schema"
 )
 
@@ -27,11 +28,59 @@ var openAPIMethods = map[string]string{"get": "GET", "put": "PUT", "post": "POST
 	"options": "OPTIONS", "head": "HEAD", "patch": "PATCH", "trace": "TRACE", anyMethod: ""}
 
 type manifestOperation struct {
-	Method     string
-	Path       string
-	Module     string `json:"x-kanyue-module"`
-	Auth       string `json:"x-kanyue-auth"`
-	Idempotent bool   `json:"x-kanyue-idempotent"`
+	Method      string
+	Path        string
+	Module      string              `json:"x-kanyue-module"`
+	Auth        string              `json:"x-kanyue-auth"`
+	Idempotent  bool                `json:"x-kanyue-idempotent"`
+	Parameters  []manifestParameter `json:"parameters"`
+	RequestBody *struct {
+		Required bool `json:"required"`
+		Content  map[string]struct {
+			Schema map[string]any `json:"schema"`
+		} `json:"content"`
+	} `json:"requestBody"`
+	// Request is what request-validation checks, built from the parameters and the JSON body.
+	Request *plugin.RequestSchema `json:"-"`
+}
+
+type manifestParameter struct {
+	Name     string         `json:"name"`
+	In       string         `json:"in"`
+	Required bool           `json:"required"`
+	Schema   map[string]any `json:"schema"`
+}
+
+// requestOf keeps the query and header parameters, the operation's overriding
+// the path item's, and the application/json body schema.
+func requestOf(shared []manifestParameter, op manifestOperation) *plugin.RequestSchema {
+	request := &plugin.RequestSchema{}
+	seen := map[string]bool{}
+	for _, p := range append(op.Parameters, shared...) {
+		key := p.In + "\x00" + p.Name
+		if seen[key] || p.Name == "" {
+			continue
+		}
+		seen[key] = true
+		parameter := plugin.Parameter{Name: p.Name, Required: p.Required, Schema: p.Schema}
+		switch p.In {
+		case "query":
+			request.Query = append(request.Query, parameter)
+		case "header":
+			request.Header = append(request.Header, parameter)
+		}
+	}
+	if op.RequestBody != nil {
+		for media, content := range op.RequestBody.Content {
+			if strings.HasPrefix(media, "application/json") && content.Schema != nil {
+				request.Body = &plugin.BodySchema{Required: op.RequestBody.Required, Schema: content.Schema}
+			}
+		}
+	}
+	if request.Empty() {
+		return nil
+	}
+	return request
 }
 
 // ParseManifest reads the operations of an OpenAPI 3.1 document produced by a service.
@@ -51,6 +100,12 @@ func ParseManifest(raw []byte) ([]manifestOperation, error) {
 		if !strings.HasPrefix(path, "/") {
 			return nil, fmt.Errorf("manifest path %q must start with /", path)
 		}
+		var shared []manifestParameter
+		if raw, ok := item["parameters"]; ok {
+			if err := json.Unmarshal(raw, &shared); err != nil {
+				return nil, fmt.Errorf("manifest parameters of %s: %w", path, err)
+			}
+		}
 		for key, value := range item {
 			method, ok := openAPIMethods[key]
 			if !ok {
@@ -60,6 +115,7 @@ func ParseManifest(raw []byte) ([]manifestOperation, error) {
 			if err := json.Unmarshal(value, &op); err != nil {
 				return nil, fmt.Errorf("manifest operation %s %s: %w", key, path, err)
 			}
+			op.Request = requestOf(shared, op)
 			ops = append(ops, op)
 		}
 	}
@@ -126,7 +182,7 @@ func (c *Control) SyncManifest(ctx context.Context, serviceID, address string) e
 			} else if record.GetString("status") == "removed" {
 				record.Set("status", "pending")
 			}
-			record.Load(map[string]any{"module": op.Module, "auth": op.Auth, "idempotent": op.Idempotent})
+			record.Load(map[string]any{"module": op.Module, "auth": op.Auth, "idempotent": op.Idempotent, "request": op.Request})
 			if err := txApp.Save(record); err != nil {
 				return err
 			}

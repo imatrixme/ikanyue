@@ -415,4 +415,10 @@ func TestAccessPlugins(t *testing.T) {
 	if ctx.ResponseHeader.Get("X-Served-By") != "rid" {
 		t.Errorf("response header: %v", ctx.ResponseHeader)
 	}
+	if err := Check("request-rewrite", json.RawMessage(`{"responseRemoveHeaders":["transfer-encoding"]}`)); err != nil {
+		t.Fatal(err) // the schema accepts it; building refuses it
+	}
+	if _, err := NewChain([]Binding{bind("request-rewrite", `{"responseSetHeaders":{"Content-Length":"0"}}`)}, nil, Scope{Env: env}); err == nil {
+		t.Error("a framing header was rewritten")
+	}
 }

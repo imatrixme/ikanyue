@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
+	validation "github.com/pocketbase/ozzo-validation/v4"
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.gateway/internal/plugin"
@@ -212,7 +212,8 @@ func (d *drafts) api(api *core.Record, stage string) (snapshot.API, error) {
 	}
 	def.Service = op.GetString("service")
 	def.Operation = snapshot.Operation{ID: op.Id, Method: op.GetString("method"), Path: op.GetString("path"),
-		Module: op.GetString("module"), Auth: op.GetString("auth"), Idempotent: op.GetBool("idempotent")}
+		Module: op.GetString("module"), Auth: op.GetString("auth"), Idempotent: op.GetBool("idempotent"),
+		Request: requestSchemaOf(op)}
 	var err error
 	def.Policies, def.Consumers, err = d.policies(api, stage)
 	return def, err
@@ -236,6 +237,15 @@ func (d *drafts) group(group *core.Record) (snapshot.Group, error) {
 
 func patternOf(op *core.Record) string {
 	return strings.TrimSpace(op.GetString("method") + " " + op.GetString("path"))
+}
+
+// requestSchemaOf is the request schema the operation's manifest declared, or nil.
+func requestSchemaOf(op *core.Record) *plugin.RequestSchema {
+	var request *plugin.RequestSchema
+	if err := op.UnmarshalJSONField("request", &request); err != nil || request.Empty() {
+		return nil
+	}
+	return request
 }
 
 // affected lists the APIs whose effective policies depend on record.

@@ -60,8 +60,11 @@ type Record struct {
 	ClientIP   string    `json:"clientIp,omitempty" db:"clientIp"`
 	Consumer   string    `json:"consumer,omitempty" db:"consumer"`
 	TraceID    string    `json:"traceId,omitempty" db:"traceId"`
-	RequestID  string    `json:"requestId,omitempty" db:"requestId"`
-	Error      string    `json:"error,omitempty" db:"error"`
+	// SpanID and ParentSpanID are exported, not stored.
+	SpanID       string `json:"spanId,omitempty" db:"-"`
+	ParentSpanID string `json:"parentSpanId,omitempty" db:"-"`
+	RequestID    string `json:"requestId,omitempty" db:"requestId"`
+	Error        string `json:"error,omitempty" db:"error"`
 }
 
 type metricKey struct {
@@ -74,6 +77,7 @@ type series struct {
 	BytesIn, BytesOut                     int64
 	Buckets                               []int
 	Max                                   float64
+	SumMs                                 float64 `json:"sumMs,omitempty"`
 }
 
 func newSeries() *series { return &series{Buckets: make([]int, len(Bounds)+1)} }
@@ -97,6 +101,7 @@ func (s *series) add(r Record) {
 	s.BytesOut += r.BytesOut
 	s.Buckets[sort.SearchFloat64s(Bounds, r.DurationMs)]++
 	s.Max = max(s.Max, r.DurationMs)
+	s.SumMs += r.DurationMs
 }
 
 func (s *series) merge(o *series) {
@@ -108,6 +113,7 @@ func (s *series) merge(o *series) {
 		s.Buckets[i] += o.Buckets[i]
 	}
 	s.Max = max(s.Max, o.Max)
+	s.SumMs += o.SumMs
 }
 
 // Percentile is the upper bound of the bucket holding the q-th request, capped by the slowest one.
@@ -134,6 +140,8 @@ type Telemetry struct {
 
 	mu      sync.Mutex
 	minutes map[metricKey]*series
+	// totals count since start, for the Prometheus endpoint; the key's minute is 0.
+	totals map[metricKey]*series
 
 	exports atomic.Pointer[[]*Export]
 }
@@ -176,7 +184,7 @@ func Open(opts Options) (*Telemetry, error) {
 		opts.Queue = 10000
 	}
 	t := &Telemetry{opts: opts, db: db, queue: make(chan Record, opts.Queue), random: rand.Float64,
-		minutes: map[metricKey]*series{}}
+		minutes: map[metricKey]*series{}, totals: map[metricKey]*series{}}
 	t.exports.Store(&[]*Export{})
 	return t, nil
 }
@@ -192,6 +200,11 @@ func (t *Telemetry) Record(e proxy.Entry) {
 		t.minutes[key] = s
 	}
 	s.add(r)
+	key.minute = 0
+	if t.totals[key] == nil {
+		t.totals[key] = newSeries()
+	}
+	t.totals[key].add(r)
 	t.mu.Unlock()
 
 	for _, export := range *t.exports.Load() {

@@ -104,6 +104,8 @@ type Scope struct {
 	Stage     string
 	// Service is the id of the API's service.
 	Service string
+	// Request is the operation's request schema from its manifest, if it declares one.
+	Request *RequestSchema
 	// Key is the binding's slot, so stacked plugins of one kind keep separate state.
 	Key string
 }

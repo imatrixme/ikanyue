@@ -283,3 +283,40 @@ func TestBackupRestoresReleasedConfiguration(t *testing.T) {
 		t.Fatalf("release after restore = %+v %v", result, err)
 	}
 }
+
+// Prometheus scrapes with a viewer token; an OTLP exporter sends spans, not lines.
+func TestPrometheusScrapeAndTraceExporter(t *testing.T) {
+	c, app := newControl(t)
+	tel := withTelemetry(t, c)
+	call, session := adminAPI(t, c, app)
+	viewer := mint(t, call, session, `{"name":"prometheus","role":"viewer"}`)
+	tel.Record(proxy.Entry{Time: time.Now(), Stage: "RELEASE", Group: "mapi", Route: "server", Service: "kanyue.server",
+		Method: "GET", Path: "/v1/x", Status: 200, Duration: time.Millisecond})
+
+	if res := call("GET", "/gateway/v1/prometheus", "", ""); res.Code != 401 {
+		t.Fatalf("anonymous scrape = %d", res.Code)
+	}
+	res := call("GET", "/gateway/v1/prometheus", viewer, "")
+	text := res.Body.String()
+	if res.Code != 200 || !strings.HasPrefix(res.Header().Get("Content-Type"), "text/plain; version=0.0.4") ||
+		!strings.Contains(text, `kanyue_gateway_requests_total{stage="RELEASE",group="mapi",api="server",service="kanyue.server",code="2xx"} 1`+"\n") ||
+		!strings.Contains(text, `kanyue_gateway_stage_version{stage="PRE"} 0`+"\n") {
+		t.Fatalf("scrape = %d\n%s", res.Code, text)
+	}
+	if audited(t, app, "token:prometheus", "refused") != 0 {
+		t.Fatal("a scrape was refused")
+	}
+
+	collection, _ := app.FindCollectionByNameOrId(schema.Exporters)
+	record := core.NewRecord(collection)
+	record.Load(map[string]any{"name": "tempo", "url": "http://127.0.0.1:4318/v1/traces", "format": "otlp-traces", "auth": "bearer",
+		"secret": strings.Repeat("o", 20)})
+	if err := app.Save(record); err != nil {
+		t.Fatal(err)
+	}
+	exporter, err := c.exporterOf(record)
+	traces, ok := exporter.(*telemetry.OTLPTraces)
+	if err != nil || !ok || traces.Token != strings.Repeat("o", 20) || traces.URL != "http://127.0.0.1:4318/v1/traces" {
+		t.Fatalf("exporter = %#v %v", exporter, err)
+	}
+}

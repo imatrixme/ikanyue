@@ -72,6 +72,8 @@ func TestForwardingHeadersAreAlwaysSet(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 	h, front := gateway(t, 0, instance)
+	log := &entries{}
+	h.SetRecorder(log)
 
 	send := func(headers map[string]string) http.Header {
 		request, _ := http.NewRequest(http.MethodGet, front.URL+"/api/collections/students/records", nil)
@@ -95,6 +97,20 @@ func TestForwardingHeadersAreAlwaysSet(t *testing.T) {
 	}
 	if trace := got.Get("traceparent"); !strings.HasPrefix(trace, "00-4bf92f3577b34da6a3ce929d0e0e4736-") || strings.Contains(trace, "00f067aa0ba902b7") {
 		t.Fatalf("traceparent = %s", trace)
+	}
+	// The log entry carries the gateway's span, the one the upstream continues, under the caller's.
+	var entry Entry
+	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(5 * time.Millisecond) {
+		if log.mu.Lock(); len(log.list) > 0 {
+			entry = log.list[0]
+		}
+		log.mu.Unlock()
+		if entry.TraceID != "" {
+			break
+		}
+	}
+	if entry.ParentSpanID != "00f067aa0ba902b7" || !strings.Contains(got.Get("traceparent"), "-"+entry.SpanID+"-") || len(entry.SpanID) != 16 {
+		t.Fatalf("span ids = %+v, upstream traceparent %s", entry, got.Get("traceparent"))
 	}
 
 	// No forwarding headers from the client: the gateway still adds them.

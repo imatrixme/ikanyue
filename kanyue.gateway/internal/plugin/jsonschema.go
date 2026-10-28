@@ -87,8 +87,11 @@ func validate(schema map[string]any, value any, path string, errs *[]string) {
 		if limit, ok := number(schema["maxLength"]); ok && length > limit {
 			fail("must be at most %v characters", limit)
 		}
-		if pattern, ok := schema["pattern"].(string); ok && !regexp.MustCompile(pattern).MatchString(text) {
-			fail("must match %s", pattern)
+		// Request schemas come from services, so a broken pattern fails the value instead of panicking.
+		if pattern, ok := schema["pattern"].(string); ok {
+			if re, err := regexp.Compile(pattern); err != nil || !re.MatchString(text) {
+				fail("must match %s", pattern)
+			}
 		}
 	case "integer", "number":
 		n, ok := value.(float64)

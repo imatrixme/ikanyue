@@ -372,6 +372,7 @@ export function AlertChannelsPage() {
 interface Exporter extends BaseRecord {
   name: string
   url: string
+  format: string
   auth: string
   sample: number
   enabled: boolean
@@ -405,12 +406,13 @@ function ProbeButton({ id, onDone }: { id: string; onDone: () => void }) {
 const exporters: ResourceSpec<Exporter> = {
   collection: 'exporters',
   title: '日志导出',
-  intro: 'JSON lines over HTTP，例如同机 VictoriaLogs：http://127.0.0.1:9428/insert/jsonline。启用前会自动测试连接，失败则不能启用。',
-  query: 'sort=name&fields=id,name,url,auth,username,fingerprint,streamFields,sample,onlyErrors,enabled,probedAt,probeError',
-  defaults: { auth: 'none', sample: 1 },
+  intro: 'JSON lines 例如同机 VictoriaLogs：http://127.0.0.1:9428/insert/jsonline；OTLP trace 例如 OpenTelemetry Collector：http://127.0.0.1:4318/v1/traces，每个请求一个 span，审计与告警事件不发送。启用前会自动测试连接，失败则不能启用。',
+  query: 'sort=name&fields=id,name,url,format,auth,username,fingerprint,streamFields,sample,onlyErrors,enabled,probedAt,probeError',
+  defaults: { format: 'jsonl', auth: 'none', sample: 1 },
   columns: [
     { label: '名称', render: (row) => row.name },
     { label: '地址', render: (row) => <Code>{row.url}</Code> },
+    { label: '格式', render: (row) => row.format === 'otlp-traces' ? 'OTLP trace' : 'JSON lines' },
     { label: '认证', render: (row) => row.auth || 'none' },
     { label: '采样', render: (row) => row.sample || 1, numeric: true },
     { label: '启用', render: (row) => <YesNo value={row.enabled} /> },
@@ -423,12 +425,16 @@ const exporters: ResourceSpec<Exporter> = {
     { name: 'name', label: '名称', kind: 'text' },
     { name: 'url', label: '地址', kind: 'text' },
     {
+      name: 'format', label: '格式', kind: 'select',
+      options: [{ value: 'jsonl', label: 'JSON lines（日志）' }, { value: 'otlp-traces', label: 'OTLP/HTTP JSON（trace）' }],
+    },
+    {
       name: 'auth', label: '认证', kind: 'select',
       options: [{ value: 'none', label: '无' }, { value: 'basic', label: 'Basic' }, { value: 'bearer', label: 'Bearer 令牌' }],
     },
     { name: 'username', label: '用户名', kind: 'text', visible: (v) => v.auth === 'basic' },
     { name: 'secret', label: '密码或令牌', kind: 'secret', visible: (v) => v.auth === 'basic' || v.auth === 'bearer' },
-    { name: 'streamFields', label: 'Stream 字段', kind: 'text', hint: '逗号分隔，如 stage,group,service' },
+    { name: 'streamFields', label: 'Stream 字段', kind: 'text', hint: '逗号分隔，如 stage,group,service', visible: (v) => v.format !== 'otlp-traces' },
     { name: 'sample', label: '成功请求采样', kind: 'number', hint: '0–1，0 视为 1；错误与事件总是导出' },
     { name: 'onlyErrors', label: '只导出错误', kind: 'bool' },
     { name: 'enabled', label: '启用', kind: 'bool' },

@@ -61,8 +61,11 @@ type Entry struct {
 	ClientIP  string
 	Consumer  string
 	TraceID   string
-	RequestID string
-	Error     string
+	// SpanID is the gateway's span; ParentSpanID is the caller's, when it sent a traceparent.
+	SpanID       string
+	ParentSpanID string
+	RequestID    string
+	Error        string
 }
 
 // Recorder receives finished exchanges; it must not block.
@@ -150,6 +153,7 @@ type exchange struct {
 	endpoints   *snapshot.Endpoints
 	peer        *snapshot.Peer
 	traceparent string
+	parentSpan  string
 	start       time.Time
 	writer      *recorder
 	body        *countingBody
@@ -167,6 +171,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	client, proto := h.client(r)
 	ex := &exchange{start: time.Now(), writer: &recorder{ResponseWriter: w}, traceparent: traceparent(r.Header.Get("traceparent"))}
+	if incoming := strings.Split(r.Header.Get("traceparent"), "-"); len(incoming) == 4 && strings.Contains(ex.traceparent, "-"+incoming[1]+"-") {
+		ex.parentSpan = incoming[2] // the trace was continued
+	}
 	ex.ctx = &plugin.Context{Request: r, ClientIP: client, RequestID: requestID(r.Header.Get("X-Request-Id")),
 		Proto: proto, Host: r.Host, Header: http.Header{}}
 	if r.Body != nil && r.Body != http.NoBody {
@@ -335,7 +342,7 @@ func (h *Handler) finish(ex *exchange) {
 		Method: ctx.Request.Method, Path: ctx.Request.URL.Path, Status: ctx.Status, Duration: ctx.Duration,
 		BytesOut: ex.writer.bytes, ClientIP: ctx.ClientIP.String(), Consumer: ctx.Consumer, RequestID: ctx.RequestID}
 	if parts := strings.Split(ex.traceparent, "-"); len(parts) == 4 {
-		entry.TraceID = parts[1]
+		entry.TraceID, entry.SpanID, entry.ParentSpanID = parts[1], parts[2], ex.parentSpan
 	}
 	if ex.body != nil {
 		entry.BytesIn = ex.body.n

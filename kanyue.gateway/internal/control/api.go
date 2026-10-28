@@ -19,8 +19,12 @@ import (
 // routes is the admin API (superusers) and the registration API (service token).
 func (c *Control) routes(se *core.ServeEvent) {
 	se.Router.BindFunc(func(e *core.RequestEvent) error {
-		if e.Request.Pattern == "POST /api/collections/{collection}/auth-with-otp" {
+		switch e.Request.Pattern {
+		case "POST /api/collections/{collection}/auth-with-otp":
 			return c.checkTOTP(e)
+		case "POST /api/sql":
+			// PocketBase's SQL console would let a superuser rewrite the append-only audit and releases.
+			return e.ForbiddenError("The SQL console is disabled on the gateway.", nil)
 		}
 		return e.Next()
 	})
@@ -42,6 +46,8 @@ func (c *Control) routes(se *core.ServeEvent) {
 	admin.GET("/plugins", c.pluginsRoute).BindFunc(viewer)
 	admin.GET("/logs", c.logsRoute).BindFunc(viewer)
 	admin.GET("/metrics", c.metricsRoute).BindFunc(viewer)
+	// Prometheus scrapes with a viewer token as its bearer token.
+	admin.GET("/prometheus", c.prometheusRoute).BindFunc(viewer)
 	admin.GET("/graph", c.graphRoute).BindFunc(viewer)
 	admin.GET("/events", c.eventsRoute).BindFunc(viewer)
 	admin.GET("/reports", c.reportsRoute).BindFunc(viewer)

@@ -2,9 +2,11 @@ package plugin
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"net/netip"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -252,6 +254,14 @@ var requestRewrite = define("request-rewrite", 200, `{"type":"object","additiona
 		ResponseSetHeaders    map[string]string `json:"responseSetHeaders"`
 		ResponseRemoveHeaders []string          `json:"responseRemoveHeaders"`
 	}, _ Scope) (Instance, error) {
+		for _, headers := range [][]string{slices.Collect(maps.Keys(c.SetHeaders)), c.RemoveHeaders,
+			slices.Collect(maps.Keys(c.ResponseSetHeaders)), c.ResponseRemoveHeaders} {
+			for _, key := range headers {
+				if framing[http.CanonicalHeaderKey(key)] {
+					return nil, fmt.Errorf("header %s frames the message and cannot be rewritten", key)
+				}
+			}
+		}
 		r := &rewriter{setHeaders: c.SetHeaders, removeHeaders: c.RemoveHeaders, setQuery: c.SetQuery,
 			removeQuery: c.RemoveQuery, responseSet: c.ResponseSetHeaders, responseRemove: c.ResponseRemoveHeaders}
 		if c.Path != nil {
@@ -263,6 +273,10 @@ var requestRewrite = define("request-rewrite", 200, `{"type":"object","additiona
 		}
 		return r, nil
 	})
+
+// framing headers are owned by the HTTP stack; rewriting them would corrupt the exchange.
+var framing = map[string]bool{"Content-Length": true, "Transfer-Encoding": true, "Connection": true,
+	"Keep-Alive": true, "Upgrade": true, "Te": true, "Trailer": true, "Host": true}
 
 type rewriter struct {
 	setHeaders, setQuery, responseSet map[string]string

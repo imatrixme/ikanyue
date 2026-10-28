@@ -68,12 +68,14 @@ func TestChainAnswersBeforeTheUpstreamAndAssertsIdentity(t *testing.T) {
 		calls.Add(1)
 		seen <- r.Header.Clone()
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("X-Powered-By", "kanyue.server")
 	})
 	log := &entries{}
 	h, front := gatewayWith(t, func(cfg *snapshot.Config) {
 		bindAll(cfg,
 			routeBinding("rate-limit", `{"limit":1,"window":"minute","by":"ip"}`),
-			routeBinding("request-rewrite", `{"setHeaders":{"X-Kanyue-User":"forged"}}`),
+			routeBinding("request-rewrite", `{"setHeaders":{"X-Kanyue-User":"forged"},
+				"responseRemoveHeaders":["X-Powered-By"],"responseSetHeaders":{"Cache-Control":"no-store"}}`),
 			routeBinding("cors", `{"allowOrigins":["https://www.ikanyue.com"]}`),
 		)
 	}, instance)
@@ -86,6 +88,9 @@ func TestChainAnswersBeforeTheUpstreamAndAssertsIdentity(t *testing.T) {
 	}
 	if res.Header.Get("Access-Control-Allow-Origin") != "https://www.ikanyue.com" || len(res.Header.Get("X-Ca-Request-Id")) != 32 {
 		t.Fatalf("response headers = %v", res.Header)
+	}
+	if res.Header.Get("X-Powered-By") != "" || res.Header.Get("Cache-Control") != "no-store" {
+		t.Fatalf("response headers not rewritten: %v", res.Header)
 	}
 	res, body := do(t, "GET", front.URL+"/v1/x", nil, nil)
 	if res.StatusCode != 429 || !strings.Contains(body, "请求过于频繁") || calls.Load() != 1 {

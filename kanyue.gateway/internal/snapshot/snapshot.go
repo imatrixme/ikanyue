@@ -126,6 +126,8 @@ type Operation struct {
 	Module     string `json:"module,omitempty"`
 	Auth       string `json:"auth,omitempty"`
 	Idempotent bool   `json:"idempotent,omitempty"`
+	// Request is the request schema the manifest declares; request-validation checks against it.
+	Request *plugin.RequestSchema `json:"request,omitempty"`
 }
 
 // Pattern is the ServeMux pattern of the operation.
@@ -255,7 +257,7 @@ func Compile(cfg Config, env *plugin.Env, decrypt Decrypt) (*Routes, error) {
 			continue
 		}
 		chain, err := plugin.NewChain(policy.Bindings(api.Policies), api.Consumers,
-			plugin.Scope{Env: scopeEnv, Route: api.ID, RouteName: api.Name, Stage: cfg.Stage, Service: service.ID})
+			plugin.Scope{Env: scopeEnv, Route: api.ID, RouteName: api.Name, Stage: cfg.Stage, Service: service.ID, Request: api.Operation.Request})
 		if err != nil {
 			errs = append(errs, fmt.Errorf("API %q: %w", api.Name, err))
 			continue

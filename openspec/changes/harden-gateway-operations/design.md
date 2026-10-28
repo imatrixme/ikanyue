@@ -59,6 +59,15 @@
 - 应用（含 AppSecret）不进文件；授权引用的应用不存在则整体失败。
 - `--dry-run` 在同一事务里执行全部校验后回滚，差异与真实应用一致。
 
+### D7. 外部监控、请求校验、响应头与 PocketBase（之后按需）
+
+- Prometheus：管理面 `/gateway/v1/prometheus`，用 P1 的 `viewer` 令牌鉴权，不另开端口、不另设密钥。计数是进程内累计（与按分钟落库的指标同一次记录），重启归零，由 Prometheus 处理；主备各抓各的端口。标签只有环境、分组、API、服务、状态类别，基数随 API 数量增长。
+- OpenTelemetry：不引入 OTel SDK（新增生产依赖），在现有导出框架里加一种格式 `otlp-traces`，按 OTLP/HTTP JSON 手写编码。每个请求一个 server span，复用日志导出的采样、退避与丢弃计数。网关早已生成自己的 span 并经 `traceparent` 传给上游，这里只是把它记下来并上报。
+- 请求校验：服务清单是 OpenAPI，但现在只带路径和方法。网关在清单声明了 `parameters` / `requestBody` 时把它们存到接口上（新 JSON 字段，迁移 `gateway_0007`），随 API 定义一起上线冻结；插件 `request-validation` 复用插件配置用的 JSON Schema 子集。没有 schema 或含 `$ref` 时上线失败，避免“绑了插件却什么都没校验”。服务侧补 schema 是各服务自己的变更。
+- 服务提供的 `pattern` 不可信：`Validate` 改为编译失败即判不通过，不再 `MustCompile` panic。
+- 响应头改写在 `request-rewrite` 里早已存在（评估时误判为缺失）；只补分帧头的拒绝和端到端测试。
+- PocketBase 升到 v0.39.11 而不是 v0.40.x：v0.40 要求 Go 1.27 并改用 `encoding/json/v2`，行为不完全兼容，网关 JSON 处理多，单独评估。v0.39 自带的 SQL 控制台（`POST /api/sql`）会绕过审计与上线记录的只追加保护，网关返回 403。升级会跑系统迁移（重存带索引的集合），按停机升级处理并先备份。
+
 ## Risks / Trade-offs
 
 - 主备共用 SQLite：WAL 下多进程安全，但带破坏性 schema 变更的升级在重叠期间可能让旧进程出错；这类升级在说明里标注，按停机升级处理。

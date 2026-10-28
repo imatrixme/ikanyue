@@ -62,6 +62,7 @@ func init() {
 	core.AppMigrations.Register(observability, nil, "gateway_0004_observability")
 	core.AppMigrations.Register(groups, nil, "gateway_0005_groups")
 	core.AppMigrations.Register(operations, nil, "gateway_0006_operations")
+	core.AppMigrations.Register(tracesAndValidation, nil, "gateway_0007_traces_and_validation")
 }
 
 func initial(txApp core.App) error {
@@ -512,6 +513,27 @@ func operations(txApp core.App) error {
 	withDates(approvals)
 	return saveAll(txApp, tokens, approvals)
 }
+
+// tracesAndValidation lets an exporter send request spans over OTLP instead of
+// JSON lines, and keeps the request schema an operation's manifest declares.
+func tracesAndValidation(txApp core.App) error {
+	exporters, err := txApp.FindCollectionByNameOrId(Exporters)
+	if err != nil {
+		return err
+	}
+	// Empty is jsonl, so existing exporters keep their format.
+	exporters.Fields.Add(&core.SelectField{Name: "format", MaxSelect: 1, Values: ExportFormats})
+	operations, err := txApp.FindCollectionByNameOrId(Operations)
+	if err != nil {
+		return err
+	}
+	// Filled from the manifest on its next sync; empty until a service declares parameters or a body.
+	operations.Fields.Add(&core.JSONField{Name: "request", MaxSize: 1 << 20})
+	return saveAll(txApp, exporters, operations)
+}
+
+// ExportFormats are what an exporter sends: JSON lines of logs and events, or OTLP/HTTP JSON request spans.
+var ExportFormats = []string{"jsonl", "otlp-traces"}
 
 func withDates(collection *core.Collection) {
 	collection.Fields.Add(

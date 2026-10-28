@@ -109,11 +109,7 @@ func (c *Control) Reports() []Report {
 }
 
 // exporterOf builds the exporter a record describes, opening its sealed secret.
-func (c *Control) exporterOf(record *core.Record) (*telemetry.JSONLines, error) {
-	exporter := &telemetry.JSONLines{URL: record.GetString("url")}
-	if fields := strings.TrimSpace(record.GetString("streamFields")); fields != "" {
-		exporter.StreamFields = strings.Split(fields, ",")
-	}
+func (c *Control) exporterOf(record *core.Record) (telemetry.Exporter, error) {
 	secret := ""
 	if sealed := record.GetString("secret"); sealed != "" {
 		plain, err := c.open(sealed)
@@ -122,11 +118,19 @@ func (c *Control) exporterOf(record *core.Record) (*telemetry.JSONLines, error) 
 		}
 		secret = plain
 	}
+	var username, password, token string
 	switch record.GetString("auth") {
 	case "basic":
-		exporter.Username, exporter.Password = record.GetString("username"), secret
+		username, password = record.GetString("username"), secret
 	case "bearer":
-		exporter.Token = secret
+		token = secret
+	}
+	if record.GetString("format") == "otlp-traces" {
+		return &telemetry.OTLPTraces{URL: record.GetString("url"), Username: username, Password: password, Token: token}, nil
+	}
+	exporter := &telemetry.JSONLines{URL: record.GetString("url"), Username: username, Password: password, Token: token}
+	if fields := strings.TrimSpace(record.GetString("streamFields")); fields != "" {
+		exporter.StreamFields = strings.Split(fields, ",")
 	}
 	return exporter, nil
 }

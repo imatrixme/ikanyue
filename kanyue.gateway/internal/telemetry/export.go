@@ -69,18 +69,22 @@ func (j *JSONLines) Export(ctx context.Context, batch []Record) error {
 	if err != nil {
 		return err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, target, &body)
+	return post(ctx, j.Client, target, "application/stream+json", &body, j.Username, j.Password, j.Token)
+}
+
+// post sends one batch; Username with Password is Basic auth, Token alone a Bearer token.
+func post(ctx context.Context, client *http.Client, target, contentType string, body io.Reader, username, password, token string) error {
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, target, body)
 	if err != nil {
 		return err
 	}
-	request.Header.Set("Content-Type", "application/stream+json")
+	request.Header.Set("Content-Type", contentType)
 	switch {
-	case j.Username != "":
-		request.SetBasicAuth(j.Username, j.Password)
-	case j.Token != "":
-		request.Header.Set("Authorization", "Bearer "+j.Token)
+	case username != "":
+		request.SetBasicAuth(username, password)
+	case token != "":
+		request.Header.Set("Authorization", "Bearer "+token)
 	}
-	client := j.Client
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}

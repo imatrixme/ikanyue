@@ -76,3 +76,32 @@ The gateway SHALL export groups, domains, APIs, policy sets and grants to a file
 #### Scenario: Compare two environments
 - **WHEN** an operator compares PRE with RELEASE
 - **THEN** every group and API they serve differently is listed with its versions and differences
+
+### Requirement: External monitoring can scrape metrics and receive traces
+The gateway SHALL expose request counters, a latency histogram and its runtime state in the Prometheus text format to viewer tokens, and SHALL be able to send each request as an OpenTelemetry server span that continues the caller's trace.
+
+#### Scenario: Prometheus scrapes with a viewer token
+- **WHEN** Prometheus scrapes the admin plane with a viewer token after requests were served
+- **THEN** it receives the request counts per environment, group, API, service and status class, and each environment's served version
+
+#### Scenario: A traced request
+- **WHEN** a request carrying a traceparent is served while an OTLP trace export is enabled
+- **THEN** a server span in the caller's trace, with the caller's span as parent, is sent, and the upstream receives the gateway's span as its parent
+
+### Requirement: Requests can be validated against the operation's OpenAPI schema
+When an API binds request validation, the gateway SHALL reject requests whose query parameters, header parameters or JSON body do not match the schema its service's manifest declares, before calling the service, and SHALL refuse to release the binding for an operation that declares no schema.
+
+#### Scenario: Invalid body
+- **WHEN** a request's JSON body violates the declared schema
+- **THEN** the gateway answers 400 naming the violation and the service is not called
+
+#### Scenario: No schema declared
+- **WHEN** request validation is bound to an API whose operation declares no parameters or body
+- **THEN** releasing it fails with the reason
+
+### Requirement: Response headers can be rewritten
+The gateway SHALL let an API set and remove headers of the upstream's response, and SHALL refuse to rewrite headers that frame the message.
+
+#### Scenario: Remove a header the service leaks
+- **WHEN** an API removes X-Powered-By and sets Cache-Control on responses
+- **THEN** clients receive the response without X-Powered-By and with the Cache-Control value

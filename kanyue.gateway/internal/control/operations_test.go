@@ -98,6 +98,9 @@ func TestMachineTokensAreScoped(t *testing.T) {
 	if res := call("POST", "/api/collections/"+schema.AdminTokens+"/records", session, `{"name":"x","role":"admin","hash":"x"}`); res.Code != 403 {
 		t.Fatalf("token created through the collections API = %d", res.Code)
 	}
+	if res := call("POST", "/api/sql", session, `{"query":"DELETE FROM audit_logs"}`); res.Code != 403 {
+		t.Fatalf("SQL console = %d %s", res.Code, res.Body.String())
+	}
 
 	if res := call("GET", "/gateway/v1/states", viewer, ""); res.Code != 200 {
 		t.Fatalf("viewer reads states = %d", res.Code)

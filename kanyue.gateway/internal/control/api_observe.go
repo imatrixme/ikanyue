@@ -1,6 +1,7 @@
 package control
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"net/http"
@@ -168,6 +169,44 @@ func (c *Control) telemetryStatus() map[string]any {
 		return nil
 	}
 	return map[string]any{"dropped": tel.Dropped(), "exports": tel.Exports()}
+}
+
+// prometheusRoute is the scrape endpoint: this process's request counters and
+// latency since start, plus the state the status page shows. Each process of a
+// rollout is scraped on its own admin port.
+func (c *Control) prometheusRoute(e *core.RequestEvent) error {
+	var body bytes.Buffer
+	x := telemetry.NewExposition(&body)
+	if tel := c.Telemetry(); tel != nil {
+		tel.WritePrometheus(x)
+	}
+	x.Family("kanyue_gateway_stage_version", "gauge", "The configuration version each environment serves.")
+	versions := c.handler.Versions()
+	for _, stage := range schema.Stages {
+		x.Sample("kanyue_gateway_stage_version", float64(versions[stage]), "stage", stage)
+	}
+	x.Family("kanyue_gateway_instance_healthy", "gauge", "1 when an instance is routable, 0 while it is taken out.")
+	x.Family("kanyue_gateway_instance_inflight", "gauge", "Requests in flight to an instance.")
+	names := map[string]string{} // service id → name, as the request metrics label it
+	for _, service := range c.handler.Table().Services() {
+		names[service.ID] = service.Name
+	}
+	for _, status := range c.handler.Endpoints().Status(time.Now()) {
+		healthy := 0.0
+		if status.Healthy {
+			healthy = 1
+		}
+		labels := []string{"service", cmp.Or(names[status.Service], status.Service), "stage", status.Stage, "address", status.Address}
+		x.Sample("kanyue_gateway_instance_healthy", healthy, labels...)
+		x.Sample("kanyue_gateway_instance_inflight", float64(status.Inflight), labels...)
+	}
+	x.Family("kanyue_gateway_signal_active", "gauge", "Conditions plugins raised, such as an open circuit breaker.")
+	for _, signal := range c.handler.Signals() {
+		x.Sample("kanyue_gateway_signal_active", 1, "kind", signal.Kind, "key", signal.Key)
+	}
+	x.Family("kanyue_gateway_mirror_dropped_total", "counter", "Mirrored copies dropped because too many were in flight.")
+	x.Sample("kanyue_gateway_mirror_dropped_total", float64(c.handler.MirrorDropped()))
+	return e.Blob(http.StatusOK, "text/plain; version=0.0.4; charset=utf-8", body.Bytes())
 }
 
 // alertLoop evaluates the alert rules a few seconds after each minute, once its metrics are stored.

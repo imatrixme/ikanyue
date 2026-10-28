@@ -31,7 +31,7 @@
 - [x] 6.2 Console comparison of two environments
 
 ## 7. Later, when needed
-- [ ] 7.1 Prometheus scrape endpoint and OpenTelemetry export
-- [ ] 7.2 Request validation against the operation's OpenAPI schema
-- [ ] 7.3 Response header rewrite plugin
-- [ ] 7.4 Upgrade PocketBase to v0.39.7 or later (system migrations on the data dir; closes GO-2026-5548 and GO-2026-6489, then drop them from `govulncheck-accepted.txt`)
+- [x] 7.1 Prometheus scrape endpoint (`/gateway/v1/prometheus`, viewer token) and OpenTelemetry export (OTLP/HTTP JSON request spans as an exporter format)
+- [x] 7.2 Request validation against the operation's OpenAPI schema (`request-validation`; query, header and JSON body from the manifest; services still have to declare their schemas)
+- [x] 7.3 Response header rewrite (already in `request-rewrite`; framing headers now refused, covered end to end)
+- [x] 7.4 Upgrade PocketBase to v0.39.11 (system migrations verified on a copy of the local data; GO-2026-5548 and GO-2026-6489 closed and dropped from `govulncheck-accepted.txt`; SQL console disabled)

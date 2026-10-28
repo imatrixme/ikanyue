@@ -1,10 +1,10 @@
 # kanyue.gateway
 
-自研 API 网关，一期替代阿里云 API 网关。一个 Go 二进制，内嵌独立的 PocketBase v0.32.0：
+自研 API 网关，一期替代阿里云 API 网关。一个 Go 二进制，内嵌独立的 PocketBase v0.39.11：
 
 - **数据面**：`GATEWAY_LISTEN`（默认 `127.0.0.1:1460`），接 OpenResty 转来的公网 API 流量。
 - **管理面**：PocketBase `--http`（默认只允许回环/私网地址，如 `127.0.0.1:1461`），包括：
-  - 配置集合与 `/gateway/v1/*`（上线、下线、回滚、预览、状态、生效策略、影响预览、日志、指标、依赖图、告警事件、心跳注册）；
+  - 配置集合与 `/gateway/v1/*`（上线、下线、回滚、预览、状态、生效策略、影响预览、日志、指标、Prometheus 抓取、依赖图、告警事件、心跳注册）；
   - 控制台 `/console/`。
 
 设计与验收见 `openspec/changes/add-kanyue-gateway`；API 分组、三环境与策略组见 `openspec/changes/add-gateway-api-groups`。
@@ -254,6 +254,8 @@ node scripts/gateway-rollout.mjs        # 已构建好镜像时加 --no-build
 - 分钟指标按主键合并，两边写同一分钟会累加，不丢数；
 - 告警可能被两个进程各评估一次，几十秒的窗口内可能重复通知；
 - 新版本启动时会执行迁移，旧进程要能读迁移后的库。发布说明标了“不兼容的 schema 变更”的版本，改用停机升级：`docker compose --profile gateway up -d --build gateway`。
+- 升级内嵌的 PocketBase 时同样按停机升级处理，并先备份数据目录：新版本会在库上执行系统迁移（v0.32 → v0.39.11 会重存带索引的集合）；要回退旧镜像，先用升级前的备份恢复数据目录。
+- PocketBase v0.39 起自带 SQL 控制台（`POST /api/sql`）；网关将其关闭（403），因为直接执行 SQL 会绕过审计与上线记录的只追加保护。
 
 ### 轮换加密密钥
 
@@ -303,6 +305,30 @@ node scripts/gateway-rollout.mjs        # 已构建好镜像时加 --no-build
   - SSH 隧道（`ssh -L 9428:127.0.0.1:9428 <host>`）；
   - 或 1Panel 带 Basic Auth 的反代。
 - **1C1G 机器上的资源**：用 `-memory.allowedBytes` 和保留期控制内存，与网关、业务服务一起纳入整机内存观察。
+
+## 外部监控、请求校验与响应头
+
+- **Prometheus 抓取**：`GET /gateway/v1/prometheus`（管理面，文本格式 0.0.4）。用 `viewer` 机器令牌作 bearer token：
+  ```yaml
+  scrape_configs:
+    - job_name: kanyue-gateway
+      authorization: { credentials_file: /etc/prometheus/kanyue-gateway.token }
+      metrics_path: /gateway/v1/prometheus
+      static_configs: [{ targets: ["127.0.0.1:1461"] }]   # 升级期间另加 127.0.0.1:1471
+  ```
+  - 指标：`kanyue_gateway_requests_total`（按环境、分组、API、服务、状态类别）、`kanyue_gateway_request_duration_seconds` 直方图、收发字节、日志与导出丢弃、导出是否在失败、各环境生效版本、实例健康与在途请求、插件信号（如熔断打开）、镜像丢弃；
+  - 计数从进程启动算起，每个进程各自计数；主备轮换时各抓各的端口，由 Prometheus 处理重置。
+- **OpenTelemetry trace**：控制台“日志导出”选择格式“OTLP/HTTP JSON（trace）”，地址如 `http://127.0.0.1:4318/v1/traces`（OpenTelemetry Collector、Tempo、Jaeger 均可接收）：
+  - 每个请求一个 server span：trace 沿用调用方的 `traceparent`，父 span 是调用方的 span；网关把自己的 span 传给上游，服务的 span 挂在它下面；
+  - 采样、只导出错误、失败退避与日志导出相同；审计与告警事件不发送；
+  - 5xx 与网关未能应答的请求标为错误，4xx 不算错误。
+- **按 OpenAPI 校验请求**：插件 `request-validation`（优先级 650，鉴权之后、限流之前），配置 `maxBodyBytes`（默认 1 MiB）：
+  - 校验依据是服务清单里该接口的 `parameters`（`query`、`header`；路径级参数被接口级同名参数覆盖）和 `requestBody` 的 `application/json` schema，清单同步时存到接口上，上线时冻结；
+  - 绑定到清单没有声明参数或请求体的接口会上线失败；schema 使用 `$ref` 也会上线失败（服务需内联）；
+  - 只校验与插件配置相同的 JSON Schema 子集（type、properties、required、additionalProperties、items、enum、最值、长度、pattern），其他关键字不检查；路径参数不校验；
+  - 不通过返回 400，`X-Ca-Error-Message: Invalid Parameter: <原因>`；请求体超过上限返回 413。
+  - 目前 `kanyue.server`、`kanyue.pay` 的清单还没有声明参数与请求体，服务补上之前这个插件无处可绑。
+- **响应头改写**：`request-rewrite` 的 `responseSetHeaders` / `responseRemoveHeaders`（如去掉 `X-Powered-By`、加 `Cache-Control`），值可用 `{requestId}` 等变量；`Content-Length`、`Transfer-Encoding`、`Connection` 等分帧头不能改写。只作用于上游的响应，网关自己的错误应答不经过它。
 
 ## 验证
 
