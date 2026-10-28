@@ -307,36 +307,27 @@ func TestOpsProjectionHelpers(t *testing.T) {
 	}
 }
 
-// Hono: courseCreditOpsQueryService › account list narrows by student ids and renewal threshold without counting never-purchased accounts
-func TestOpsAccountRenewalThreshold(t *testing.T) {
+// Hono: courseCreditOpsQueryService › account list narrows by student ids
+// (renewal candidates moved to /ops/course-credits/renewals).
+func TestOpsAccountStudentIDs(t *testing.T) {
 	f := opsQuerySetup(t)
 	students := map[string]string{}
 	for name, changes := range map[string]map[string]any{
-		"renew":   {"availableQuantity": 1, "consumedQuantity": 9},
-		"booked":  {"availableQuantity": 1, "frozenQuantity": 1, "consumedQuantity": 8},
-		"fresh":   {"availableQuantity": 0},
-		"plenty":  {"availableQuantity": 8, "consumedQuantity": 2},
-		"expired": {"availableQuantity": 0, "expiredQuantity": 3},
+		"renew":  {"availableQuantity": 1, "consumedQuantity": 9},
+		"fresh":  {"availableQuantity": 0},
+		"plenty": {"availableQuantity": 8, "consumedQuantity": 2},
 	} {
 		students[name] = f.learner(t, name)
 		f.batch(t, students[name], changes)
 	}
-	renewal, err := listAccounts(f.app, map[string]string{"renewalThreshold": "2", "perPage": "100"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := itemValues(pageItems(t, renewal), "studentId")
-	want := []any{students["expired"], students["renew"]}
-	slices.SortFunc(want, func(a, b any) int { return map[bool]int{true: -1, false: 1}[a.(string) < b.(string)] })
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("renewal = %v, want %v", got, want)
+	all, err := listAccounts(f.app, map[string]string{"perPage": "100"})
+	if err != nil || len(pageItems(t, all)) != 3 {
+		t.Fatalf("all = %v, %v", all, err)
 	}
 	narrowed, _ := listAccounts(f.app, map[string]string{"studentIds": students["renew"] + ", " + students["plenty"] + "," + students["renew"]})
 	if len(pageItems(t, narrowed)) != 2 {
 		t.Fatalf("narrowed = %v", narrowed)
 	}
-	_, err = listAccounts(f.app, map[string]string{"renewalThreshold": "-1"})
-	failsWith(t, err, "RENEWAL_THRESHOLD_INVALID")
 	if !reflect.DeepEqual(idList("a, b ,,a"), []string{"a", "b"}) {
 		t.Fatalf("idList = %v", idList("a, b ,,a"))
 	}

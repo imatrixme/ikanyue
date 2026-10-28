@@ -71,8 +71,6 @@ test('ledger reads', { skip: !admin && 'CONTRACT_OPS_* not set' }, async (t) => 
   assert.deepEqual(Object.keys(exceptions.data).sort(), PAGE_KEYS);
 
   const query = (path) => call(path, { token, headers: TRACE });
-  assert.deepEqual((await query('/ops/course-credits/accounts?renewalThreshold=-1')).body,
-    failure(400, 'Renewal threshold is invalid', 'RENEWAL_THRESHOLD_INVALID'));
   assert.deepEqual((await query('/ops/course-credits/student-overview')).body,
     failure(400, '请提供 1 到 100 个学员编号', 'STUDENT_IDS_INVALID'));
   assert.deepEqual((await query('/ops/course-credits/orders?status=gone')).body,
@@ -144,7 +142,7 @@ test('stage 3 read parity', { skip: (!COMPARE_URL || !admin) && 'COMPARE_URL or 
   const studentIds = accounts.slice(0, 20).map((item) => item.studentId);
   const paths = [
     ...Object.keys(RESOURCES).map((path) => `${path}?perPage=100`),
-    '/ops/course-credits/accounts?perPage=100', '/ops/course-credits/accounts?renewalThreshold=2',
+    '/ops/course-credits/accounts?perPage=100',
     '/ops/course-credits/settlement-exceptions?perPage=100',
     ...(studentIds.length ? [`/ops/course-credits/student-overview?studentIds=${studentIds.join(',')}`] : []),
     ...studentIds.map((id) => `/ops/course-credits/accounts/${id}`),

@@ -69,7 +69,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		}))
 	}
 	router.GET("/ops/course-credits/accounts", query(Finance, func(e *core.RequestEvent) (any, error) {
-		return listAccounts(e.App, queryParams(e, "page", "perPage", "studentIds", "renewalThreshold"))
+		return listAccounts(e.App, queryParams(e, "page", "perPage", "studentIds"))
 	}))
 	router.GET("/ops/course-credits/accounts/{studentId}", query(Finance, func(e *core.RequestEvent) (any, error) {
 		return getAccount(e.App, e.Request.PathValue("studentId"))

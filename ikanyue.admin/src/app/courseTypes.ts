@@ -147,8 +147,6 @@ export interface CourseQuery {
   to?: string
   /** Comma-separated student ids (accounts only). */
   studentIds?: string
-  /** Only accounts that need renewal at this many hours or fewer (accounts only). */
-  renewalThreshold?: number
 }
 
 export type FollowUpStatus = 'contacted' | 'declined'

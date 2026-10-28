@@ -144,11 +144,6 @@ func TestEnrollmentGrantsPackageAndReplays(t *testing.T) {
 	if account := items(accounts)[0]; accounts["totalItems"] != float64(1) || account["availableQuantity"] != float64(10) || account["batchCount"] != float64(1) {
 		t.Fatalf("accounts = %v", accounts)
 	}
-	renewal := ok(t, f.call(t, http.MethodGet, "/ops/course-credits/accounts?renewalThreshold=20", nil, ""), "renewal")
-	if renewal["totalItems"] != float64(0) {
-		t.Fatalf("an unused account never needs renewal: %v", renewal)
-	}
-	failed(t, f.call(t, http.MethodGet, "/ops/course-credits/accounts?renewalThreshold=-1", nil, ""), 400, "RENEWAL_THRESHOLD_INVALID", "threshold")
 	detail := ok(t, f.call(t, http.MethodGet, "/ops/course-credits/accounts/"+f.studentID, nil, ""), "account")
 	events, _ := detail["events"].([]any)
 	event, _ := events[0].(map[string]any)

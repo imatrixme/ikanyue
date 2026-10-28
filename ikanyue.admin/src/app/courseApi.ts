@@ -356,10 +356,6 @@ function matchesQuery(record: CourseRecord, query: CourseQuery) {
     if (key === 'from') return Date.parse(String(record.startAt)) >= Date.parse(String(value))
     if (key === 'to') return Date.parse(String(record.startAt)) < Date.parse(String(value))
     if (key === 'studentIds') return String(value).split(',').includes(String(record.studentId))
-    if (key === 'renewalThreshold') {
-      const account = record as CourseAccount
-      return account.consumedQuantity + account.expiredQuantity > 0 && account.availableQuantity <= Number(value) && account.frozenQuantity === 0
-    }
     return String(record[key] ?? '') === String(value)
   })
 }

@@ -97,7 +97,7 @@ func TestOpsRoutesFinanceFollowUps(t *testing.T) {
 	financeID := f.operatorID(t)
 	finance := opsHeaders(t, signer, financeID, false, Finance)
 	ok(t, get("student-overview?studentIds="+f.studentID+","+other, finance), "overview")
-	ok(t, get("accounts?renewalThreshold=2&studentIds="+f.studentID, finance), "accounts")
+	ok(t, get("accounts?studentIds="+f.studentID, finance), "accounts")
 	ok(t, get("students/"+f.studentID+"/follow-ups", finance), "follow-ups")
 	ok(t, testkit.Call(t, handler, http.MethodPost, "/ops/course-credits/students/"+f.studentID+"/follow-ups", map[string]any{
 		"status": "contacted", "note": "已联系", "snoozeUntil": "2099-10-25T00:00:00Z", "actorId": "spoofed", "studentId": other}, finance), "record")

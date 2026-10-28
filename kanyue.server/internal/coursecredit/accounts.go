@@ -140,24 +140,11 @@ func listAccounts(app core.App, query map[string]string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	threshold, hasThreshold := 0.0, false
-	if value, ok := query["renewalThreshold"]; ok && value != "" {
-		threshold = jsx.Number(value)
-		if !jsx.IsFinite(value) || threshold < 0 {
-			return nil, Fail("RENEWAL_THRESHOLD_INVALID", "Renewal threshold is invalid", nil)
-		}
-		hasThreshold = true
-	}
 	order, accounts := groupAccounts(batches)
 	items := []any{}
 	slices.SortStableFunc(order, strings.Compare)
 	for _, studentID := range order {
-		item := accounts[studentID]
-		if hasThreshold && !(item.ConsumedQuantity+item.ExpiredQuantity > 0 &&
-			item.AvailableQuantity <= threshold && item.FrozenQuantity == 0) {
-			continue
-		}
-		items = append(items, item.asMap())
+		items = append(items, accounts[studentID].asMap())
 	}
 	return arrayPage(items, pageNumber, perPage), nil
 }
