@@ -136,19 +136,22 @@ func TestManifestClassifiesEveryRoute(t *testing.T) {
 			t.Fatal(err)
 		}
 		var plan struct {
-			Routes []struct {
+			APIs []struct {
 				Service    string   `json:"service"`
 				Operations []string `json:"operations"`
-			} `json:"routes"`
+			} `json:"apis"`
 		}
 		if err := json.Unmarshal(raw, &plan); err != nil {
 			t.Fatal(err)
 		}
-		for _, route := range plan.Routes {
-			if route.Service != "kanyue.server" {
+		if len(plan.APIs) == 0 {
+			t.Errorf("%s lists no APIs", filepath.Base(file))
+		}
+		for _, batch := range plan.APIs {
+			if batch.Service != "kanyue.server" {
 				continue
 			}
-			for _, pattern := range route.Operations {
+			for _, pattern := range batch.Operations {
 				op, ok := listed[pattern]
 				if !ok {
 					t.Errorf("%s exposes %s, which is not served", filepath.Base(file), pattern)

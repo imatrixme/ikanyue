@@ -16,7 +16,7 @@ export interface Operation extends BaseRecord {
 }
 
 export function OperationStatus({ status }: { status: Operation['status'] }) {
-  if (status === 'active') return <Badge tone="green">已发布</Badge>
+  if (status === 'active') return <Badge tone="green">已上线过</Badge>
   if (status === 'removed') return <Badge tone="red">已移除</Badge>
   return <Badge tone="amber">待接入</Badge>
 }
@@ -27,9 +27,9 @@ interface OperationPickerProps {
   onChange: (value: string[]) => void
 }
 
-// OperationPicker lists a service's discovered operations for a route to
-// expose. Nothing is preselected and new operations are never added for the
-// operator: a route exposes exactly the ticked ones, so internal endpoints stay
+// OperationPicker lists a service's discovered operations to register as
+// APIs. Nothing is preselected and new operations are never added for the
+// operator: exactly the ticked ones are registered, so internal endpoints stay
 // private unless someone deliberately selects them.
 export function OperationPicker({ service, value, onChange }: OperationPickerProps) {
   const ops = useResource(`operations:${service}`, () => service
@@ -62,7 +62,7 @@ export function OperationPicker({ service, value, onChange }: OperationPickerPro
       <Muted>已选 {chosen.size} / {list.length} 个接口。新发现的接口不会自动加入；内部接口不要勾选。</Muted>
       {foreign > 0 ? (
         <Alert tone="error">
-          有 {foreign} 个已选接口不属于当前服务，发布会失败。
+          有 {foreign} 个已选接口不属于当前服务，不会被登记。
           <Button className="ml-2" onClick={() => onChange([...chosen])}>移除这些接口</Button>
         </Alert>
       ) : null}

@@ -4,9 +4,11 @@ import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router-do
 import { Button } from './components/ui/Button'
 import { cn } from './components/ui/utils'
 import { session } from './lib/api'
-import { ConsumersPage, OperationsPage, PluginsPage, RoutesPage, SecretsPage, ServicesPage, SitesPage } from './pages/ConfigPages'
+import { ConsumersPage, OperationsPage, SecretsPage, ServicesPage } from './pages/ConfigPages'
+import { ApisPage, GrantsPage, GroupsPage, PolicySetsPage } from './pages/GroupPages'
 import { LoginPage } from './pages/LoginPage'
-import { AlertChannelsPage, AlertRulesPage, AuditPage, ExportersPage, LogsPage, OverviewPage, ReleasePage, TrafficPage } from './pages/OpsPages'
+import { AlertChannelsPage, AlertRulesPage, AuditPage, ExportersPage, LogsPage, OverviewPage, TrafficPage } from './pages/OpsPages'
+import { ReleasePage } from './pages/ReleasePage'
 
 interface Page {
   path: string
@@ -17,16 +19,22 @@ interface Page {
 const sections: { title: string; pages: Page[] }[] = [
   { title: '运行', pages: [{ path: 'overview', title: '概览', Component: OverviewPage }, { path: 'traffic', title: '流量', Component: TrafficPage }, { path: 'logs', title: '日志', Component: LogsPage }] },
   {
-    title: '配置',
+    title: 'API 管理',
+    pages: [
+      { path: 'groups', title: '分组与域名', Component: GroupsPage },
+      { path: 'apis', title: 'API', Component: ApisPage },
+      { path: 'policy-sets', title: '策略组', Component: PolicySetsPage },
+      { path: 'release', title: '发布', Component: ReleasePage },
+    ],
+  },
+  {
+    title: '服务与应用',
     pages: [
       { path: 'services', title: '服务与实例', Component: ServicesPage },
-      { path: 'operations', title: '接口', Component: OperationsPage },
-      { path: 'sites', title: '站点', Component: SitesPage },
-      { path: 'routes', title: '路由', Component: RoutesPage },
-      { path: 'plugins', title: '插件', Component: PluginsPage },
-      { path: 'consumers', title: '消费者', Component: ConsumersPage },
+      { path: 'operations', title: '服务接口', Component: OperationsPage },
+      { path: 'consumers', title: '应用', Component: ConsumersPage },
+      { path: 'grants', title: '授权', Component: GrantsPage },
       { path: 'secrets', title: '密钥', Component: SecretsPage },
-      { path: 'release', title: '发布', Component: ReleasePage },
     ],
   },
   {

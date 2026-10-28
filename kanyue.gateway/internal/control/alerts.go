@@ -24,6 +24,8 @@ import (
 
 	"kanyue.gateway/internal/proxy"
 	"kanyue.gateway/internal/schema"
+	"kanyue.gateway/internal/snapshot"
+	"kanyue.gateway/internal/telemetry"
 )
 
 // Alert rules are evaluated every minute. A rule's template turns the current
@@ -141,7 +143,7 @@ func (c *Control) EvaluateAlerts(ctx context.Context, now time.Time) error {
 
 // alertInputs gathers what the templates read, once per evaluation.
 type alertInputs struct {
-	window   map[string][2]float64 // route → count, 5xx, from the last finished minute
+	window   map[string][2]float64 // subject → count, 5xx, from the last finished minute
 	p95      map[string]float64
 	calls    map[string][2]int // target → count, failures over the last finished minute
 	dropped  int64             // since the previous evaluation
@@ -157,8 +159,9 @@ func (c *Control) alertInputs(ctx context.Context, now time.Time) alertInputs {
 	if tel := c.Telemetry(); tel != nil {
 		if summaries, err := tel.Window(ctx, minute.Add(-time.Minute), minute); err == nil {
 			for _, s := range summaries {
-				in.window[s.Route] = [2]float64{float64(s.Count), float64(s.S5xx)}
-				in.p95[s.Route] = s.P95
+				subject := subjectOf(s)
+				in.window[subject] = [2]float64{float64(s.Count), float64(s.S5xx)}
+				in.p95[subject] = s.P95
 			}
 		}
 		if calls, err := tel.Calls(ctx, minute.Add(-time.Minute), minute); err == nil {
@@ -181,6 +184,22 @@ func (c *Control) alertInputs(ctx context.Context, now time.Time) alertInputs {
 		}
 	}
 	return in
+}
+
+// subjectOf names an API's traffic in alerts as group/API, suffixed with the
+// environment unless RELEASE, as breaker signals are.
+func subjectOf(s telemetry.Summary) string {
+	subject := s.Route
+	if subject == "" {
+		subject = "(unrouted)"
+	}
+	if s.Group != "" {
+		subject = s.Group + "/" + subject
+	}
+	if s.Stage != "" && s.Stage != proxy.DefaultStage {
+		subject += "@" + s.Stage
+	}
+	return subject
 }
 
 // minRequests keeps a handful of requests from setting off ratio and latency rules.
@@ -206,42 +225,39 @@ func (c *Control) findings(rule *core.Record, in alertInputs, now time.Time) map
 		limit := or(0.05)
 		for route, w := range in.window {
 			if matches(target, route) && w[0] >= minRequests && w[1]/w[0] >= limit {
-				out[route] = finding{w[1] / w[0], fmt.Sprintf("路由 %s 上一分钟 5xx 比例 %.1f%%（%d/%d）", route, 100*w[1]/w[0], int(w[1]), int(w[0]))}
+				out[route] = finding{w[1] / w[0], fmt.Sprintf("接口 %s 上一分钟 5xx 比例 %.1f%%（%d/%d）", route, 100*w[1]/w[0], int(w[1]), int(w[0]))}
 			}
 		}
 	case "p95-latency":
 		limit := or(1000)
 		for route, p95 := range in.p95 {
 			if matches(target, route) && in.window[route][0] >= minRequests && p95 >= limit {
-				out[route] = finding{p95, fmt.Sprintf("路由 %s 上一分钟 P95 %.0f ms", route, p95)}
+				out[route] = finding{p95, fmt.Sprintf("接口 %s 上一分钟 P95 %.0f ms", route, p95)}
 			}
 		}
 	case "no-healthy-instance":
-		routes := c.handler.Routes()
+		// Only RELEASE: other environments may well run without instances.
 		affected := map[string][]string{}
-		if routes != nil {
-			for _, service := range routes.Services() {
-				affected[service.ID] = nil
-			}
-		}
-		if records, err := c.app.FindAllRecords(schema.Routes, dbx.HashExp{"enabled": true}); err == nil {
-			for _, route := range records {
-				if list, routed := affected[route.GetString("service")]; routed {
-					affected[route.GetString("service")] = append(list, route.GetString("name"))
+		if current, err := served(c.app, proxy.DefaultStage); err == nil {
+			for target, record := range current {
+				var api snapshot.API
+				if target.Kind != "api" || json.Unmarshal(definitionOf(record), &api) != nil || api.Service == "" {
+					continue
 				}
+				affected[api.Service] = append(affected[api.Service], api.Name)
 			}
 		}
 		for id, names := range affected {
 			name := in.services[id]
 			if healthy, _ := c.handler.Endpoints().Healthy(id, proxy.DefaultStage, now); healthy == 0 && matches(target, name) {
 				sort.Strings(names)
-				out[name] = finding{0, fmt.Sprintf("服务 %s 没有健康实例，受影响路由：%s", name, strings.Join(names, "、"))}
+				out[name] = finding{0, fmt.Sprintf("服务 %s 没有健康实例，受影响接口：%s", name, strings.Join(names, "、"))}
 			}
 		}
 	case "breaker-open":
 		for _, signal := range c.handler.Signals() {
 			if signal.Kind == "breaker" && matches(target, signal.Key) {
-				out[signal.Key] = finding{1, fmt.Sprintf("路由 %s 熔断已打开（自 %s）", signal.Key, signal.Since.In(chinaTime).Format("15:04:05"))}
+				out[signal.Key] = finding{1, fmt.Sprintf("接口 %s 熔断已打开（自 %s）", signal.Key, signal.Since.In(chinaTime).Format("15:04:05"))}
 			}
 		}
 	case "outbound-failures":
@@ -304,14 +320,12 @@ func (c *Control) findings(rule *core.Record, in alertInputs, now time.Time) map
 		if err != nil {
 			break
 		}
-		routes, _ := c.app.FindAllRecords(schema.Routes, dbx.HashExp{"enabled": true})
+		apis, _ := c.app.FindAllRecords(schema.APIs)
 		for _, op := range removed {
-			for _, route := range routes {
-				for _, id := range route.GetStringSlice("operations") {
-					if id == op.Id {
-						subject := op.GetString("method") + " " + op.GetString("path")
-						out[subject] = finding{0, fmt.Sprintf("路由 %s 选中的接口 %s 已从服务清单移除", route.GetString("name"), subject)}
-					}
+			for _, api := range apis {
+				if api.GetString("operation") == op.Id {
+					subject := op.GetString("method") + " " + op.GetString("path")
+					out[subject] = finding{0, fmt.Sprintf("接口 %s 绑定的服务接口 %s 已从服务清单移除", api.GetString("name"), subject)}
 				}
 			}
 		}

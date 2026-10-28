@@ -1,7 +1,7 @@
 // The gateway exposes on mapi.ikanyue.com exactly what the mini program calls:
 // kanyue.gateway/internal/exposure/mapi.json must match the iNet calls in
 // ikanyue.taro3/utils. kanyue.server's manifest test checks the same file
-// against the routes it serves.
+// against the operations it serves.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -31,8 +31,9 @@ function miniappCalls() {
 
 test('mapi exposure plan equals the mini program calls', () => {
   const plan = JSON.parse(readFileSync(join(root, 'kanyue.gateway/internal/exposure/mapi.json'), 'utf8'));
-  assert.deepEqual(plan.hosts, ['mapi.ikanyue.com']);
-  const exposed = new Set(plan.routes.flatMap((route) => route.operations).map(shape));
+  assert.equal(plan.group, 'mapi');
+  assert.deepEqual(plan.domains, ['mapi.ikanyue.com']);
+  const exposed = new Set(plan.apis.flatMap((batch) => batch.operations).map(shape));
   const calls = miniappCalls();
   assert.ok(calls.size > 40, `only ${calls.size} calls found; the scan is incomplete`);
   const missing = [...calls].filter((call) => !exposed.has(call) && !developmentOnly.has(call)).sort();

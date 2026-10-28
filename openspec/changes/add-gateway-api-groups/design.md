@@ -29,12 +29,13 @@
 | 对象 | 关键字段 | 说明 |
 |---|---|---|
 | API 分组 `api_groups` | name、defaultPolicySet、note | 组设置（域名 + 默认策略组）按环境上线 |
-| 域名 `group_domains` | group、host（唯一）、defaultStage、fixedStage | 一个域名只属于一个组；设置了 `fixedStage` 时忽略 `X-Ca-Stage` |
+| 域名 `group_domains` | group、host（唯一）、fixedStage | 一个域名只属于一个组；设置了 `fixedStage` 时忽略 `X-Ca-Stage`，否则按 `X-Ca-Stage`，缺省为 `RELEASE`（实现时去掉了域名默认环境，少一个概念） |
 | API `apis` | group、operation、visibility、auth、policySet、overrides、priority、timeouts | `operation` 只能从已发现的接口里选；(组, 方法, 路径) 唯一 |
 | 策略组 `policy_sets` | name、items[] | 每项：plugin、config、stages、locked、priority |
 | 平台基线 | 内置的策略组 `baseline` | 不能删除，可以编辑、可以锁定 |
 | 授权 `grants` | consumer、group 或 api、stages | 私有 API 只放行被授权的应用 |
-| 上线记录 `releases` | stage、kind（api / group）、target、version、definition、previous、actor、reason、forced | `definition` 保存解析后的完整定义 |
+| 上线记录 `releases` | stage、kind（api / group）、target、version、definition、previous、actor、reason、forced | `definition` 保存解析后的完整定义；`null` 表示下线 |
+| 环境版本 `stage_versions` | stage、version、config | 每次上线后该环境完整的数据面配置，只能追加；启动与恢复从各环境最新一条加载 |
 | 审计 `audit_logs` | 增加 before、after、diff | 只能追加 |
 
 - 同一个接口可以被多个组引用，例如小程序组和合作方组。
@@ -95,7 +96,7 @@
 ### D4. 数据面
 
 - 每个环境一份快照：`stage → host → 编译好的 ServeMux（API 与插件链）`，由 `atomic.Pointer` 保存。
-  - 请求处理：确定环境（固定环境 > `X-Ca-Stage` > 域名默认环境）→ 匹配 API → 执行插件链 → 从该环境的实例池挑选后端。
+  - 请求处理：确定环境（固定环境 > `X-Ca-Stage` > `RELEASE`）→ 匹配 API → 执行插件链 → 从该环境的实例池挑选后端。
   - 实例池、健康检查、重试、超时沿用一期。
 - 最后可用文件按环境分别保存，启动时逐个环境加载。
 - 请求日志和指标增加组、API、环境维度；告警规则可以按组或 API 设置。
@@ -112,7 +113,7 @@
 
 | 原对象 | 迁移为 |
 |---|---|
-| `sites` | `api_groups` + `group_domains`（`defaultStage=RELEASE`） |
+| `sites` | `api_groups` + `group_domains` |
 | `routes` 勾选的每个接口 | 该组下的一个 API；`auth=透传`，`visibility=公开`；路由上的超时迁到 API |
 | `plugin_bindings` 全局级 | 平台基线的策略项 |
 | `plugin_bindings` 站点级 | 新建策略组 `<site>-default`，挂为该组的默认策略组 |

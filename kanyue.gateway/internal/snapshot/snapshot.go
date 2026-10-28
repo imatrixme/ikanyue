@@ -1,38 +1,71 @@
-// Package snapshot is what the data plane serves from: a published configuration
-// compiled into per-site route tables with their plugin chains, and the routable
-// instances per service and stage. Both are immutable once built (instance health
-// aside); the control plane swaps whole values.
+// Package snapshot is what the data plane serves from: per environment, the
+// released API groups and APIs compiled into per-domain route tables with their
+// plugin chains, and the routable instances per service and stage. Everything is
+// immutable once built (instance health aside); the control plane swaps whole
+// environments.
 package snapshot
 
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
 	"kanyue.gateway/internal/plugin"
+	"kanyue.gateway/internal/policy"
 )
 
-// Config is one published configuration version.
+// Config is what one environment serves: the released definitions plus the
+// services, applications and secrets as they were when it was released.
 type Config struct {
+	Stage     string     `json:"stage"`
 	Version   int        `json:"version"`
-	Sites     []Site     `json:"sites"`
+	Groups    []Group    `json:"groups"`
+	APIs      []API      `json:"apis"`
 	Services  []Service  `json:"services"`
-	Routes    []Route    `json:"routes"`
-	Bindings  []Binding  `json:"bindings,omitempty"`
 	Consumers []Consumer `json:"consumers,omitempty"`
 	// Secrets are named secrets, encrypted; they are decrypted only while compiling.
 	Secrets map[string]string `json:"secrets,omitempty"`
 }
 
-type Site struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	// Hosts are matched without port, case-insensitively; "*" catches unmatched hosts.
-	Hosts []string `json:"hosts"`
+// Group is a released API group setting: the domains its APIs are served on.
+type Group struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	Domains []Domain `json:"domains"`
+	// DefaultPolicySet is shown for reference; it shapes APIs only when they are released.
+	DefaultPolicySet string `json:"defaultPolicySet,omitempty"`
+}
+
+// Domain is matched without port, case-insensitively; "*" catches hosts no group claims.
+type Domain struct {
+	Host string `json:"host"`
+	// FixedStage, when set, serves the domain from that environment only, whatever X-Ca-Stage says.
+	FixedStage string `json:"fixedStage,omitempty"`
+}
+
+// API is a released API: one operation of a service with its resolved policies.
+type API struct {
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Group      string    `json:"group"`
+	Service    string    `json:"service"`
+	Operation  Operation `json:"operation"`
+	Visibility string    `json:"visibility"`
+	Auth       string    `json:"auth"`
+	// Priority orders matching on a domain, highest first.
+	Priority int `json:"priority,omitempty"`
+	Timeouts
+	PolicySet string `json:"policySet,omitempty"`
+	// Policies are the effective policies, with the layer each comes from.
+	Policies []policy.Effective `json:"policies"`
+	// Consumers are per-application bindings: replacements, additions and switched-off slots.
+	Consumers map[string][]plugin.Binding `json:"consumers,omitempty"`
 }
 
 type Service struct {
@@ -48,7 +81,7 @@ type Service struct {
 	PassiveFailures int `json:"passiveFailures,omitempty"`
 }
 
-// Timeouts bound one exchange; zero inherits (route → service → default).
+// Timeouts bound one exchange; zero inherits (API → service → default).
 type Timeouts struct {
 	// HeaderTimeoutMs bounds the wait for upstream response headers; streams are not cut once they start.
 	HeaderTimeoutMs int `json:"headerTimeoutMs,omitempty"`
@@ -62,7 +95,8 @@ func (t Timeouts) Header() time.Duration { return time.Duration(t.HeaderTimeoutM
 func (t Timeouts) Total() time.Duration  { return time.Duration(t.TimeoutMs) * time.Millisecond }
 func (t Timeouts) Idle() time.Duration   { return time.Duration(t.IdleTimeoutMs) * time.Millisecond }
 
-func (t Timeouts) over(base Timeouts) Timeouts {
+// Over fills t's zero fields from base.
+func (t Timeouts) Over(base Timeouts) Timeouts {
 	if t.HeaderTimeoutMs == 0 {
 		t.HeaderTimeoutMs = base.HeaderTimeoutMs
 	}
@@ -80,15 +114,6 @@ type HealthCheck struct {
 	Path            string `json:"path"`
 	IntervalSeconds int    `json:"intervalSeconds"`
 	Threshold       int    `json:"threshold"`
-}
-
-type Route struct {
-	ID         string      `json:"id"`
-	Name       string      `json:"name"`
-	Site       string      `json:"site"`
-	Service    string      `json:"service"`
-	Operations []Operation `json:"operations"`
-	Timeouts
 }
 
 // Operation is one discovered upstream route.
@@ -111,14 +136,6 @@ func (o Operation) Pattern() string {
 	return o.Method + " " + o.Path
 }
 
-// Binding attaches a plugin globally or to one site, route or consumer.
-type Binding struct {
-	plugin.Binding
-	// Scope is global, site, route or consumer; Target is the site, route or consumer id.
-	Scope  string `json:"scope"`
-	Target string `json:"target,omitempty"`
-}
-
 // Consumer is a caller with an AppKey; Secret is encrypted.
 type Consumer struct {
 	ID     string `json:"id"`
@@ -129,8 +146,11 @@ type Consumer struct {
 
 // Target is what a matched request is proxied to.
 type Target struct {
+	// Route is the API id and RouteName its name.
 	Route     string
 	RouteName string
+	Group     string
+	Stage     string
 	Service   *Service
 	Operation Operation
 	Chain     *plugin.Chain
@@ -140,10 +160,19 @@ type Target struct {
 // ServeHTTP is never called: the muxes are used for lookup only.
 func (*Target) ServeHTTP(http.ResponseWriter, *http.Request) {}
 
-// Routes is a compiled configuration.
+// level is the APIs of one priority on a domain.
+type level struct {
+	priority int
+	mux      *http.ServeMux
+	patterns map[string]string // pattern → API name, to name both sides of a conflict
+}
+
+// Routes is one environment's compiled configuration.
 type Routes struct {
+	Stage    string
 	Version  int
-	sites    map[string]*http.ServeMux
+	hosts    map[string][]*level // host → levels, highest priority first
+	fixed    map[string]bool     // hosts fixed to this environment
 	services []*Service
 }
 
@@ -162,12 +191,15 @@ type Decrypt func(ciphertext string) (string, error)
 // patterns and invalid plugin configurations are errors, never panics.
 func Compile(cfg Config, env *plugin.Env, decrypt Decrypt) (*Routes, error) {
 	var errs []error
+	if !policy.ValidStage(cfg.Stage) {
+		return nil, fmt.Errorf("unknown environment %q", cfg.Stage)
+	}
 	scopeEnv, err := snapshotEnv(cfg, env, decrypt)
 	if err != nil {
 		errs = append(errs, err)
 	}
 	services := map[string]*Service{}
-	compiled := &Routes{Version: cfg.Version, sites: map[string]*http.ServeMux{}}
+	compiled := &Routes{Stage: cfg.Stage, Version: cfg.Version, hosts: map[string][]*level{}, fixed: map[string]bool{}}
 	for i := range cfg.Services {
 		service := &cfg.Services[i]
 		services[service.ID] = service
@@ -181,67 +213,70 @@ func Compile(cfg Config, env *plugin.Env, decrypt Decrypt) (*Routes, error) {
 			errs = append(errs, fmt.Errorf("service %q: health check needs a path and an interval", service.Name))
 		}
 	}
-	bindings := map[string]map[string][]plugin.Binding{} // scope → target → bindings
-	for _, binding := range cfg.Bindings {
-		switch binding.Scope {
-		case "global", "site", "route", "consumer":
-		default:
-			errs = append(errs, fmt.Errorf("binding of %s: unknown scope %q", binding.Plugin, binding.Scope))
-			continue
-		}
-		if bindings[binding.Scope] == nil {
-			bindings[binding.Scope] = map[string][]plugin.Binding{}
-		}
-		bindings[binding.Scope][binding.Target] = append(bindings[binding.Scope][binding.Target], binding.Binding)
-	}
-	consumerBindings := map[string][]plugin.Binding{}
-	for _, consumer := range cfg.Consumers {
-		if list := bindings["consumer"][consumer.ID]; len(list) > 0 {
-			consumerBindings[consumer.Name] = list
-		}
-	}
 
-	muxes := map[string]*http.ServeMux{}
-	for _, site := range cfg.Sites {
-		if len(site.Hosts) == 0 {
-			errs = append(errs, fmt.Errorf("site %q has no hosts", site.Name))
-		}
-		mux := http.NewServeMux()
-		muxes[site.ID] = mux
-		for _, host := range site.Hosts {
-			host = strings.ToLower(strings.TrimSpace(host))
-			if _, taken := compiled.sites[host]; taken {
-				errs = append(errs, fmt.Errorf("host %q belongs to more than one site", host))
+	// Each group's levels are shared by its hosts.
+	groupLevels := map[string]map[int]*level{}
+	groupNames := map[string]string{}
+	owner := map[string]string{}
+	for _, group := range cfg.Groups {
+		groupNames[group.ID] = group.Name
+		groupLevels[group.ID] = map[int]*level{}
+		for _, domain := range group.Domains {
+			host := strings.ToLower(strings.TrimSpace(domain.Host))
+			if domain.FixedStage != "" && !policy.ValidStage(domain.FixedStage) {
+				errs = append(errs, fmt.Errorf("group %q: domain %q is fixed to unknown environment %q", group.Name, host, domain.FixedStage))
 				continue
 			}
-			compiled.sites[host] = mux
+			if domain.FixedStage != "" && domain.FixedStage != cfg.Stage {
+				continue // served by its own environment only
+			}
+			if other, taken := owner[host]; taken {
+				errs = append(errs, fmt.Errorf("domain %q belongs to groups %q and %q", host, other, group.Name))
+				continue
+			}
+			owner[host] = group.Name
+			compiled.hosts[host] = nil
+			if domain.FixedStage != "" {
+				compiled.fixed[host] = true
+			}
+		}
+		if len(group.Domains) == 0 {
+			errs = append(errs, fmt.Errorf("group %q has no domains", group.Name))
 		}
 	}
-	for _, route := range cfg.Routes {
-		mux, service := muxes[route.Site], services[route.Service]
+	for _, api := range cfg.APIs {
+		levels, service := groupLevels[api.Group], services[api.Service]
 		switch {
-		case mux == nil:
-			errs = append(errs, fmt.Errorf("route %q: unknown site", route.Name))
+		case levels == nil:
+			errs = append(errs, fmt.Errorf("API %q: its group is not released in %s", api.Name, cfg.Stage))
 			continue
 		case service == nil:
-			errs = append(errs, fmt.Errorf("route %q: unknown service", route.Name))
-			continue
-		case len(route.Operations) == 0:
-			errs = append(errs, fmt.Errorf("route %q has no operations", route.Name))
+			errs = append(errs, fmt.Errorf("API %q: unknown service", api.Name))
 			continue
 		}
-		merged := plugin.Merge(bindings["global"][""], bindings["site"][route.Site], bindings["route"][route.ID])
-		chain, err := plugin.NewChain(merged, consumerBindings,
-			plugin.Scope{Env: scopeEnv, Route: route.ID, RouteName: route.Name, Service: service.ID})
+		chain, err := plugin.NewChain(policy.Bindings(api.Policies), api.Consumers,
+			plugin.Scope{Env: scopeEnv, Route: api.ID, RouteName: api.Name, Stage: cfg.Stage, Service: service.ID})
 		if err != nil {
-			errs = append(errs, fmt.Errorf("route %q: %w", route.Name, err))
+			errs = append(errs, fmt.Errorf("API %q: %w", api.Name, err))
 			continue
 		}
-		timeouts := route.Timeouts.over(service.Timeouts)
-		for _, op := range route.Operations {
-			target := &Target{Route: route.ID, RouteName: route.Name, Service: service, Operation: op, Chain: chain, Timeouts: timeouts}
-			if err := handle(mux, op.Pattern(), target); err != nil {
-				errs = append(errs, fmt.Errorf("route %q: %w", route.Name, err))
+		l := levels[api.Priority]
+		if l == nil {
+			l = &level{priority: api.Priority, mux: http.NewServeMux(), patterns: map[string]string{}}
+			levels[api.Priority] = l
+		}
+		target := &Target{Route: api.ID, RouteName: api.Name, Group: groupNames[api.Group], Stage: cfg.Stage, Service: service,
+			Operation: api.Operation, Chain: chain, Timeouts: api.Timeouts.Over(service.Timeouts)}
+		if err := l.handle(api.Operation.Pattern(), api.Name, target); err != nil {
+			errs = append(errs, fmt.Errorf("API %q: %w", api.Name, err))
+		}
+	}
+	for _, group := range cfg.Groups {
+		levels := slices.SortedFunc(maps.Values(groupLevels[group.ID]), func(a, b *level) int { return b.priority - a.priority })
+		for _, domain := range group.Domains {
+			host := strings.ToLower(strings.TrimSpace(domain.Host))
+			if _, ok := compiled.hosts[host]; ok && owner[host] == group.Name {
+				compiled.hosts[host] = levels
 			}
 		}
 	}
@@ -251,7 +286,7 @@ func Compile(cfg Config, env *plugin.Env, decrypt Decrypt) (*Routes, error) {
 	return compiled, nil
 }
 
-// snapshotEnv is env with this version's consumers, services and secrets.
+// snapshotEnv is env with this environment's consumers, services and secrets.
 func snapshotEnv(cfg Config, env *plugin.Env, decrypt Decrypt) (*plugin.Env, error) {
 	scoped := &plugin.Env{}
 	if env != nil {
@@ -300,32 +335,56 @@ func snapshotEnv(cfg Config, env *plugin.Env, decrypt Decrypt) (*plugin.Env, err
 	return scoped, errors.Join(errs...)
 }
 
-// handle turns ServeMux's registration panics (conflicts, bad patterns) into errors.
-func handle(mux *http.ServeMux, pattern string, target *Target) (err error) {
+// handle registers target, turning ServeMux's registration panics (conflicts,
+// bad patterns) into errors that name the other API.
+func (l *level) handle(pattern, name string, target *Target) (err error) {
 	defer func() {
-		if recovered := recover(); recovered != nil {
+		if recovered := recover(); recovered == nil {
+			l.patterns[pattern] = name
+		} else if other := l.conflict(pattern); other != "" {
+			err = fmt.Errorf("pattern %q conflicts with API %q at priority %d", pattern, other, l.priority)
+		} else {
 			err = fmt.Errorf("%v", recovered)
 		}
 	}()
-	mux.Handle(pattern, target)
+	l.mux.Handle(pattern, target)
 	return nil
 }
 
-// Match finds the target of r; ok is false when no route matches.
+// conflict finds the registered API whose pattern conflicts with pattern.
+func (l *level) conflict(pattern string) string {
+	for _, registered := range slices.Sorted(maps.Keys(l.patterns)) {
+		if conflicts(registered, pattern) {
+			return l.patterns[registered]
+		}
+	}
+	return ""
+}
+
+func conflicts(a, b string) (yes bool) {
+	defer func() { yes = recover() != nil }()
+	mux := http.NewServeMux()
+	mux.Handle(a, http.NotFoundHandler())
+	mux.Handle(b, http.NotFoundHandler())
+	return false
+}
+
+// Match finds the target of r; ok is false when no API matches.
 func (r *Routes) Match(req *http.Request) (*Target, bool) {
 	if r == nil {
 		return nil, false
 	}
-	mux := r.sites[hostname(req.Host)]
-	if mux == nil {
-		mux = r.sites["*"]
+	levels, ok := r.hosts[hostname(req.Host)]
+	if !ok {
+		levels = r.hosts["*"]
 	}
-	if mux == nil {
-		return nil, false
+	for _, l := range levels {
+		handler, _ := l.mux.Handler(req)
+		if target, ok := handler.(*Target); ok {
+			return target, true
+		}
 	}
-	handler, _ := mux.Handler(req)
-	target, ok := handler.(*Target)
-	return target, ok
+	return nil, false
 }
 
 func hostname(host string) string {
@@ -335,14 +394,114 @@ func hostname(host string) string {
 	return strings.ToLower(strings.TrimSuffix(host, "."))
 }
 
-// RoutedServices lists the ids of services that enabled routes point at.
+// Table is every environment's routes: what the data plane holds.
+type Table struct {
+	stages map[string]*Routes
+	fixed  map[string]string // host → the environment it is fixed to
+}
+
+// With is a copy of t serving routes for its environment; a domain fixed to
+// two environments is an error.
+func (t *Table) With(routes *Routes) (*Table, error) {
+	next := &Table{stages: map[string]*Routes{}, fixed: map[string]string{}}
+	if t != nil {
+		maps.Copy(next.stages, t.stages)
+	}
+	next.stages[routes.Stage] = routes
+	var errs []error
+	for _, stage := range policy.Stages {
+		for _, host := range slices.Sorted(maps.Keys(next.stages[stage].fixedHosts())) {
+			if other, taken := next.fixed[host]; taken {
+				errs = append(errs, fmt.Errorf("domain %q is fixed to both %s and %s", host, other, stage))
+				continue
+			}
+			next.fixed[host] = stage
+		}
+	}
+	return next, errors.Join(errs...)
+}
+
+func (r *Routes) fixedHosts() map[string]bool {
+	if r == nil {
+		return nil
+	}
+	return r.fixed
+}
+
+// Stage resolves a request's environment: the domain's fixed one, else
+// X-Ca-Stage, else RELEASE. ok is false for an unknown X-Ca-Stage.
+func (t *Table) Stage(host, header string) (string, bool) {
+	if t != nil {
+		name := hostname(host)
+		if stage, fixed := t.fixed[name]; fixed {
+			return stage, true
+		}
+		if stage, fixed := t.fixed["*"]; fixed && !t.claimed(name) {
+			return stage, true
+		}
+	}
+	stage := strings.ToUpper(strings.TrimSpace(header))
+	if stage == "" {
+		return policy.DefaultStage, true
+	}
+	return stage, policy.ValidStage(stage)
+}
+
+// claimed reports whether some environment serves host by name.
+func (t *Table) claimed(host string) bool {
+	for _, routes := range t.stages {
+		if _, ok := routes.hosts[host]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// Routes is one environment's routes; nil before its first release.
+func (t *Table) Routes(stage string) *Routes {
+	if t == nil {
+		return nil
+	}
+	return t.stages[stage]
+}
+
+// Versions is each environment's served version; 0 before its first release.
+func (t *Table) Versions() map[string]int {
+	out := map[string]int{}
+	for _, stage := range policy.Stages {
+		out[stage] = 0
+		if routes := t.Routes(stage); routes != nil {
+			out[stage] = routes.Version
+		}
+	}
+	return out
+}
+
+// Services lists every environment's services once, for health checks and
+// mirroring; RELEASE's settings win, then PRE's.
+func (t *Table) Services() []*Service {
+	seen := map[string]bool{}
+	var out []*Service
+	for _, stage := range []string{"RELEASE", "PRE", "TEST"} {
+		for _, service := range t.Routes(stage).Services() {
+			if !seen[service.ID] {
+				seen[service.ID] = true
+				out = append(out, service)
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
+}
+
+// RoutedServices lists the ids of services the APIs point at.
 func (cfg Config) RoutedServices() []string {
 	seen := map[string]bool{}
 	var ids []string
-	for _, route := range cfg.Routes {
-		if !seen[route.Service] {
-			seen[route.Service] = true
-			ids = append(ids, route.Service)
+	for _, api := range cfg.APIs {
+		if !seen[api.Service] {
+			seen[api.Service] = true
+			ids = append(ids, api.Service)
 		}
 	}
 	sort.Strings(ids)

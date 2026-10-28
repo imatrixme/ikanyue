@@ -10,8 +10,8 @@ import (
 	"kanyue.gateway/internal/schema"
 )
 
-// A plan selects exactly the listed operations the service serves, reports the
-// rest, replaces earlier selections on the next run, and never publishes.
+// A plan drafts exactly the listed operations the service serves as APIs of its
+// group, reports the rest, replaces earlier drafts on the next run, and never releases.
 func TestApplyExposure(t *testing.T) {
 	c, app := newControl(t)
 	upstream := newFakeService(t, manifestV1)
@@ -20,44 +20,48 @@ func TestApplyExposure(t *testing.T) {
 	}
 	waitFor(t, func() bool { return len(statuses(t, app)) == 3 })
 
-	plan := exposure.Plan{Site: "mapi", Hosts: []string{"mapi.ikanyue.com"}, Routes: []exposure.Route{{Name: "miniapp", Service: "kanyue.server",
+	plan := exposure.Plan{Group: "mapi", Domains: []string{"mapi.ikanyue.com"}, APIs: []exposure.APIs{{Service: "kanyue.server",
 		Operations: []string{"GET /v1/student/appointments", "POST /v1/student/appointments", "POST /v1/student/commerce/orders"}}}}
 	applied, err := c.ApplyExposure(plan, "cli")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(applied) != 1 || applied[0].Selected != 2 || len(applied[0].Added) != 2 ||
-		!slices.Equal(applied[0].NotServed, []string{"POST /v1/student/commerce/orders"}) {
+	if applied.Selected != 2 || len(applied.Added) != 2 || !slices.Equal(applied.NotServed, []string{"POST /v1/student/commerce/orders"}) {
 		t.Fatalf("applied = %+v", applied)
 	}
-	route, err := app.FindFirstRecordByData(schema.Routes, "name", "miniapp")
-	if err != nil || len(route.GetStringSlice("operations")) != 2 || !route.GetBool("enabled") {
-		t.Fatalf("route = %v %v", route, err)
+	group, err := app.FindFirstRecordByData(schema.APIGroups, "name", "mapi")
+	if err != nil || group.Id != applied.GroupID {
+		t.Fatalf("group = %v %v", group, err)
 	}
-	site, err := app.FindRecordById(schema.Sites, route.GetString("site"))
-	if err != nil || site.GetString("name") != "mapi" || site.GetString("hosts") != `["mapi.ikanyue.com"]` {
-		t.Fatalf("site = %v %v", site, err)
+	domains, _ := app.FindAllRecords(schema.GroupDomains, dbx.HashExp{"group": group.Id})
+	if len(domains) != 1 || domains[0].GetString("host") != "mapi.ikanyue.com" {
+		t.Fatalf("domains = %v", domains)
 	}
-	if c.handler.Version() != 0 {
-		t.Fatalf("applying published version %d", c.handler.Version())
+	apis, _ := app.FindAllRecords(schema.APIs, dbx.HashExp{"group": group.Id})
+	if len(apis) != 2 || apis[0].GetString("visibility") != "public" || apis[0].GetString("auth") != "passthrough" {
+		t.Fatalf("apis = %v", apis)
+	}
+	if versions := c.handler.Versions(); versions["RELEASE"] != 0 {
+		t.Fatalf("applying released version %d", versions["RELEASE"])
 	}
 
-	plan.Routes[0].Operations = []string{"GET /v1/student/appointments", "GET /v1/public/course-catalog"}
+	plan.APIs[0].Operations = []string{"GET /v1/student/appointments", "GET /v1/public/course-catalog"}
+	plan.APIs[0].Auth = "signature"
 	if applied, err = c.ApplyExposure(plan, "cli"); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(applied[0].Added, []string{"GET /v1/public/course-catalog"}) ||
-		!slices.Equal(applied[0].Removed, []string{"POST /v1/student/appointments"}) {
-		t.Fatalf("second apply = %+v", applied[0])
+	if !slices.Equal(applied.Added, []string{"GET /v1/public/course-catalog"}) || !slices.Equal(applied.Updated, []string{"GET /v1/student/appointments"}) ||
+		!slices.Equal(applied.Removed, []string{"post-v1-student-appointments"}) {
+		t.Fatalf("second apply = %+v", applied)
 	}
-	audits, err := app.FindAllRecords(schema.AuditLogs, dbx.HashExp{"action": "apply-exposure", "actor": "cli", "resourceId": route.Id})
+	audits, err := app.FindAllRecords(schema.AuditLogs, dbx.HashExp{"action": "apply-exposure", "actor": "cli", "resourceId": group.Id})
 	if err != nil || len(audits) != 2 {
 		t.Fatalf("audit = %d %v", len(audits), err)
 	}
 
 	// A service that never registered fails the whole plan.
-	plan.Routes = append(plan.Routes, exposure.Route{Name: "pay", Service: "kanyue.pay", Operations: []string{"GET /v1/x"}})
+	plan.APIs = append(plan.APIs, exposure.APIs{Service: "kanyue.pay", Operations: []string{"GET /v1/x"}})
 	if _, err := c.ApplyExposure(plan, "cli"); err == nil {
-		t.Fatal("applied a route of an unregistered service")
+		t.Fatal("applied APIs of an unregistered service")
 	}
 }

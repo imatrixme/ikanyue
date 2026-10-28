@@ -8,10 +8,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -226,13 +224,12 @@ func TestExporterIsProbedBeforeEnabling(t *testing.T) {
 }
 
 // Restore drill: a backup of the gateway's data dir restores into a fresh dir
-// whose published versions compile and serve again.
-func TestBackupRestoresPublishedConfiguration(t *testing.T) {
+// whose released versions compile and serve again.
+func TestBackupRestoresReleasedConfiguration(t *testing.T) {
 	c, app := newControl(t)
-	publishedServer(t, c, app)
-	if _, err := c.Publish("ops", Release{Note: "before backup"}); err != nil {
-		t.Fatal(err)
-	}
+	service := registered(t, c, app, newFakeService(t, manifestV1))
+	group, drafted := draftGroup(t, app, "mapi", []string{"*"}, service.Id)
+	release(t, c, "RELEASE", targetsOf(group, all(drafted)...))
 	if err := app.CreateBackup(context.Background(), "drill.zip"); err != nil {
 		t.Fatal(err)
 	}
@@ -273,17 +270,16 @@ func TestBackupRestoresPublishedConfiguration(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer copyApp.Cleanup()
-	handler := proxy.New([]netip.Prefix{netip.MustParsePrefix("127.0.0.1/32")}, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	copy := New(copyApp, config.Config{RegistrationToken: token}, handler)
+	copy := New(copyApp, config.Config{RegistrationToken: token}, newHandler())
 	copy.bindHooks()
 	copy.loadRoutes()
-	if copy.handler.Version() != 1 {
-		t.Fatalf("restored version = %d", copy.handler.Version())
+	if v := copy.handler.Versions()["RELEASE"]; v != 1 {
+		t.Fatalf("restored version = %d", v)
 	}
 	if err := copy.rebuildEndpoints(); err != nil {
 		t.Fatal(err)
 	}
-	if version, err := copy.Publish("ops", Release{Note: "after restore", Force: true, Reason: "drill"}); err != nil || version != 2 {
-		t.Fatalf("publish after restore = %d %v", version, err)
+	if result, err := copy.Offline("ops", Request{Stage: "RELEASE", Targets: targetsOf(nil, drafted["POST /v1/student/appointments"])}); err != nil || result.Version != 2 {
+		t.Fatalf("release after restore = %+v %v", result, err)
 	}
 }

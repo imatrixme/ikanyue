@@ -3,17 +3,18 @@ import { useState } from 'react'
 import { ResourcePage, type ResourceSpec } from '../components/ResourcePage'
 import { Badge, YesNo } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
-import { Checkbox, Input, Select } from '../components/ui/Controls'
+import { Input, Select } from '../components/ui/Controls'
 import { Code, DataTable } from '../components/ui/DataTable'
 import { Alert, ErrorText } from '../components/ui/Feedback'
 import { PageHeader, Panel, SectionTitle } from '../components/ui/Panel'
 import { errorText, listRecords, request, type BaseRecord } from '../lib/api'
 import { formatTime, kilobytes, percent } from '../lib/format'
+import { stageLabels, stages, type Stage } from '../lib/gateway'
 import { totals, type Minute } from '../lib/traffic'
 import { useResource } from '../lib/useResource'
 
 interface Status {
-  version: number
+  versions: Partial<Record<Stage, number>> | null
   onlineInstances: number
   mirrorDropped: number
   endpoints: { service: string; stage: string; address: string; healthy: boolean; inflight: number }[] | null
@@ -40,7 +41,7 @@ export function OverviewPage() {
       <ErrorText error={status.error || reports.error} />
       {data ? (
         <div className="grid gap-3 md:grid-cols-4">
-          <Stat label="运行版本" value={data.version || '未发布'} />
+          <Stat label="运行版本" value={stages.map((stage) => `${stageLabels[stage]} ${data.versions?.[stage] ? `v${data.versions[stage]}` : '—'}`).join(' · ')} />
           <Stat label="在线实例" value={data.onlineInstances} />
           <Stat label="日志丢弃" value={data.telemetry?.dropped ?? '—'} />
           <Stat label="镜像丢弃" value={data.mirrorDropped} />
@@ -105,72 +106,6 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-interface Version extends BaseRecord { version: number; note: string; publishedBy: string; rollbackOf: number }
-
-export function ReleasePage() {
-  const versions = useResource('versions', () => listRecords<Version>('config_versions', 'sort=-version&fields=id,version,note,publishedBy,rollbackOf,created'))
-  const [note, setNote] = useState('')
-  const [force, setForce] = useState(false)
-  const [reason, setReason] = useState('')
-  const [result, setResult] = useState<{ tone: 'error' | 'success'; text: string } | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  const run = async (path: string, body: Record<string, unknown>) => {
-    setBusy(true)
-    setResult(null)
-    try {
-      const out = await request<{ version: number }>('POST', path, { ...body, force, reason })
-      setResult({ tone: 'success', text: `已发布版本 ${out.version}` })
-      versions.reload()
-    } catch (failure) {
-      setResult({ tone: 'error', text: errorText(failure) })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <>
-      <PageHeader intro="发布前校验：路由冲突、插件配置、引用的服务与勾选的接口、每个服务至少一个健康实例。回滚会生成一个新版本。" title="发布" />
-      <Panel className="grid gap-3">
-        <Input aria-label="发布说明" onChange={(event) => setNote(event.target.value)} placeholder="本次发布说明" value={note} />
-        <div className="flex flex-wrap items-center gap-3">
-          <Checkbox checked={force} label="跳过健康实例检查（强制发布）" onChange={(event) => setForce(event.target.checked)} />
-          {force ? <Input aria-label="强制原因" className="max-w-sm" onChange={(event) => setReason(event.target.value)} placeholder="强制发布原因（必填）" value={reason} /> : null}
-          <Button disabled={busy} onClick={() => run('/gateway/v1/publish', { note })} variant="primary">发布当前配置</Button>
-        </div>
-        {result ? <Alert tone={result.tone}>{result.text}</Alert> : null}
-      </Panel>
-      <SectionTitle>版本</SectionTitle>
-      <ErrorText error={versions.error} />
-      <DataTable
-        columns={[
-          { label: '版本', render: (row) => row.version, numeric: true },
-          { label: '说明', render: (row) => row.note },
-          { label: '发布人', render: (row) => row.publishedBy },
-          { label: '回滚自', render: (row) => row.rollbackOf || '' },
-          { label: '时间', render: (row) => formatTime(row.created) },
-          {
-            label: '操作',
-            render: (row) => (
-              <Button
-                disabled={busy}
-                onClick={() => {
-                  if (window.confirm(`回滚到版本 ${row.version}？会生成一个新版本。`)) run('/gateway/v1/rollback', { version: row.version, note: `回滚到 ${row.version}` })
-                }}
-              >
-                回滚
-              </Button>
-            ),
-          },
-        ]}
-        rowKey={(row) => row.id}
-        rows={versions.data ?? []}
-      />
-    </>
-  )
-}
-
 const ranges = [
   { value: '1', label: '最近 1 小时' },
   { value: '6', label: '最近 6 小时' },
@@ -200,10 +135,12 @@ export function TrafficPage() {
         <Button onClick={traffic.reload}>刷新</Button>
       </PageHeader>
       <ErrorText error={traffic.error} />
-      <SectionTitle>路由</SectionTitle>
+      <SectionTitle>API</SectionTitle>
       <DataTable
         columns={[
-          { label: '路由', render: (row) => row.route },
+          { label: '环境', render: (row) => stageLabels[row.stage as Stage] ?? row.stage },
+          { label: '分组', render: (row) => row.group },
+          { label: 'API', render: (row) => row.route },
           { label: '请求', render: (row) => row.count, numeric: true },
           {
             label: '占比',
@@ -215,7 +152,7 @@ export function TrafficPage() {
           { label: '出流量', render: (row) => kilobytes(row.bytesOut), numeric: true },
         ]}
         empty={traffic.loading ? '加载中…' : '该时间段没有流量'}
-        rowKey={(row) => row.route}
+        rowKey={(row) => `${row.stage}/${row.group}/${row.route}`}
         rows={traffic.data?.routes ?? []}
       />
       <SectionTitle>依赖关系</SectionTitle>
@@ -242,6 +179,8 @@ interface LogRecord {
   path?: string
   status?: number
   durationMs?: number
+  stage?: string
+  group?: string
   route?: string
   instance?: string
   clientIp?: string
@@ -251,7 +190,9 @@ interface LogRecord {
 }
 
 const logFilters = [
-  { key: 'route', label: '路由' },
+  { key: 'stage', label: '环境 TEST/PRE/RELEASE' },
+  { key: 'group', label: '分组' },
+  { key: 'route', label: 'API' },
   { key: 'path', label: '路径前缀' },
   { key: 'requestId', label: '请求 ID' },
   { key: 'consumer', label: '消费者' },
@@ -261,7 +202,7 @@ const logFilters = [
 type LogFilter = Record<(typeof logFilters)[number]['key'], string>
 
 export function LogsPage() {
-  const [draft, setDraft] = useState<LogFilter>({ route: '', path: '', requestId: '', consumer: '', minStatus: '' })
+  const [draft, setDraft] = useState<LogFilter>({ stage: '', group: '', route: '', path: '', requestId: '', consumer: '', minStatus: '' })
   const [filter, setFilter] = useState(draft)
   const [older, setOlder] = useState<LogRecord[]>([])
   const [error, setError] = useState('')
@@ -308,7 +249,8 @@ export function LogsPage() {
           { label: '路径', render: (row) => <Code>{row.path}</Code> },
           { label: '状态', render: (row) => !row.status || row.status >= 500 ? <Badge tone="red">{row.status || '—'}</Badge> : row.status },
           { label: '耗时 ms', render: (row) => (row.durationMs ?? 0).toFixed(1), numeric: true },
-          { label: '路由', render: (row) => row.route },
+          { label: '环境', render: (row) => stageLabels[row.stage as Stage] ?? row.stage },
+          { label: 'API', render: (row) => row.group ? `${row.group}/${row.route ?? ''}` : row.route },
           { label: '实例', render: (row) => row.instance },
           { label: '客户端', render: (row) => row.clientIp },
           { label: '消费者', render: (row) => row.consumer },
@@ -335,7 +277,7 @@ const templates = [
   { value: 'export-failing', label: '日志导出失败' },
   { value: 'backup-overdue', label: '备份超时（小时，默认 26）' },
   { value: 'certificate-expiry', label: '证书即将过期（天，对象填证书文件路径）' },
-  { value: 'operation-removed', label: '路由勾选的接口已从清单移除' },
+  { value: 'operation-removed', label: 'API 登记的接口已从清单移除' },
 ]
 
 interface Rule extends BaseRecord { name: string; template: string; target: string; threshold: number; forMinutes: number; enabled: boolean }
@@ -357,7 +299,7 @@ const rules: ResourceSpec<Rule> = {
   fields: [
     { name: 'name', label: '名称', kind: 'text' },
     { name: 'template', label: '模板', kind: 'select', options: templates },
-    { name: 'target', label: '对象', kind: 'text', hint: '路由名、服务名、外部依赖名或证书文件路径（可用通配符）；留空表示全部' },
+    { name: 'target', label: '对象', kind: 'text', hint: 'API（分组/名称，非生产加 @环境）、服务名、外部依赖名或证书文件路径；留空表示全部' },
     { name: 'threshold', label: '阈值', kind: 'number', hint: '0 使用模板默认值' },
     { name: 'forMinutes', label: '持续分钟', kind: 'number' },
     { name: 'channels', label: '通知渠道', kind: 'relations', collection: 'alert_channels' },
@@ -486,7 +428,7 @@ const exporters: ResourceSpec<Exporter> = {
     },
     { name: 'username', label: '用户名', kind: 'text', visible: (v) => v.auth === 'basic' },
     { name: 'secret', label: '密码或令牌', kind: 'secret', visible: (v) => v.auth === 'basic' || v.auth === 'bearer' },
-    { name: 'streamFields', label: 'Stream 字段', kind: 'text', hint: '逗号分隔，如 service,route' },
+    { name: 'streamFields', label: 'Stream 字段', kind: 'text', hint: '逗号分隔，如 stage,group,service' },
     { name: 'sample', label: '成功请求采样', kind: 'number', hint: '0–1，0 视为 1；错误与事件总是导出' },
     { name: 'onlyErrors', label: '只导出错误', kind: 'bool' },
     { name: 'enabled', label: '启用', kind: 'bool' },
@@ -498,19 +440,38 @@ export function ExportersPage() {
   return <ResourcePage spec={exporters} />
 }
 
-interface AuditLog extends BaseRecord { actor: string; action: string; resource: string; resourceId: string; detail: unknown }
+interface AuditLog extends BaseRecord {
+  actor: string
+  action: string
+  resource: string
+  resourceId: string
+  detail: unknown
+  diff: Record<string, { before?: unknown; after?: unknown }> | null
+}
+
+function AuditDetail({ row }: { row: AuditLog }) {
+  const diff = Object.entries(row.diff ?? {})
+  if (diff.length === 0) return <Code>{JSON.stringify(row.detail ?? {}).slice(0, 300)}</Code>
+  return (
+    <ul className="grid gap-1">
+      {diff.map(([field, change]) => (
+        <li key={field}><Code>{field}</Code>：<Code>{JSON.stringify(change.before ?? null).slice(0, 200)}</Code> → <Code>{JSON.stringify(change.after ?? null).slice(0, 200)}</Code></li>
+      ))}
+    </ul>
+  )
+}
 
 const audit: ResourceSpec<AuditLog> = {
   collection: 'audit_logs',
   title: '审计',
-  intro: '配置改动、发布与回滚的记录。',
-  query: 'sort=-created',
+  intro: '草稿改动（含改前改后差异；密钥只记录指纹）、上线、下线、回滚与迁移的记录。只能追加，不能修改或删除。',
+  query: 'sort=-created&fields=id,created,actor,action,resource,resourceId,detail,diff',
   columns: [
     { label: '时间', render: (row) => formatTime(row.created) },
     { label: '操作人', render: (row) => row.actor || '系统' },
     { label: '动作', render: (row) => row.action },
     { label: '对象', render: (row) => `${row.resource} ${row.resourceId}` },
-    { label: '明细', render: (row) => <Code>{JSON.stringify(row.detail ?? {}).slice(0, 300)}</Code> },
+    { label: '明细', render: (row) => <AuditDetail row={row} /> },
   ],
 }
 

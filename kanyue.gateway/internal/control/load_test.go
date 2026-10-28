@@ -19,6 +19,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"kanyue.gateway/internal/policy"
 	"kanyue.gateway/internal/schema"
 	"kanyue.gateway/internal/telemetry"
 )
@@ -122,17 +123,25 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	site := create(t, app, schema.Sites, map[string]any{"name": "mapi", "hosts": []string{"*"}})
-	create(t, app, schema.Routes, map[string]any{"name": "server", "site": site.Id, "service": service.Id,
-		"operations": selectable(t, app, service.Id), "enabled": true})
 	secret := strings.Repeat("j", 40)
 	create(t, app, schema.Secrets, map[string]any{"name": "jwt", "value": secret})
-	create(t, app, schema.PluginBindings, map[string]any{"plugin": "jwt-auth", "scope": "global", "config": map[string]any{"secret": "jwt"}, "enabled": true})
-	create(t, app, schema.PluginBindings, map[string]any{"plugin": "rate-limit", "scope": "global",
-		"config": map[string]any{"limit": 100000000, "window": "second", "by": "api"}, "enabled": true})
-	if _, err := c.Publish("load", Release{Note: "load"}); err != nil {
+	baseline, err := app.FindFirstRecordByData(schema.PolicySets, "name", schema.Baseline)
+	if err != nil {
 		t.Fatal(err)
 	}
+	baseline.Set("items", []policy.Item{item("jwt-auth", `{"secret":"jwt"}`),
+		item("rate-limit", `{"limit":100000000,"window":"second","by":"api"}`)})
+	if err := app.Save(baseline); err != nil {
+		t.Fatal(err)
+	}
+	group, drafted := draftGroup(t, app, "mapi", []string{"*"}, service.Id)
+	for _, api := range drafted {
+		api.Set("auth", "jwt")
+		if err := app.Save(api); err != nil {
+			t.Fatal(err)
+		}
+	}
+	release(t, c, "RELEASE", targetsOf(group, all(drafted)...))
 	gateway := httptest.NewServer(c.handler)
 	defer gateway.Close()
 

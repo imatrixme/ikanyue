@@ -16,7 +16,7 @@ The gateway SHALL organise exposed operations as APIs that belong to exactly one
 - **THEN** no API is created until an operator selects the operation, and there is no option to add every operation at once
 
 ### Requirement: Each domain selects an environment
-The gateway SHALL resolve the environment of a request from the domain's fixed environment when set, otherwise from `X-Ca-Stage`, otherwise from the domain's default environment, and SHALL support the environments `TEST`, `PRE` and `RELEASE`.
+The gateway SHALL resolve the environment of a request from the domain's fixed environment when set, otherwise from `X-Ca-Stage`, otherwise `RELEASE`, and SHALL support the environments `TEST`, `PRE` and `RELEASE`.
 
 #### Scenario: Header selects the environment
 - **WHEN** a request to `mapi.ikanyue.com` carries `X-Ca-Stage: TEST`

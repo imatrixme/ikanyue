@@ -12,12 +12,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pocketbase/pocketbase/core"
+
 	"kanyue.gateway/internal/proxy"
 )
 
 func open(t *testing.T, opts Options) *Telemetry {
 	t.Helper()
-	opts.Path = filepath.Join(t.TempDir(), "telemetry.db")
+	if opts.Path == "" {
+		opts.Path = filepath.Join(t.TempDir(), "telemetry.db")
+	}
 	tel, err := Open(opts)
 	if err != nil {
 		t.Fatal(err)
@@ -36,7 +40,7 @@ var (
 )
 
 func entry(at time.Time, route string, status int, took time.Duration) proxy.Entry {
-	return proxy.Entry{Time: at, Host: "mapi.ikanyue.com", Route: route, Service: "kanyue.server", Method: "GET",
+	return proxy.Entry{Time: at, Host: "mapi.ikanyue.com", Stage: "RELEASE", Group: "mapi", Route: route, Service: "kanyue.server", Method: "GET",
 		Path: "/v1/students/" + testPhone + "/profile", Status: status, Duration: took, ClientIP: "203.0.113.77", BytesOut: 100}
 }
 
@@ -74,7 +78,7 @@ func TestRecordSamplesAndNeverBlocks(t *testing.T) {
 	}
 
 	// Metrics count every request, sampled or dropped.
-	minutes, err := tel.Metrics(context.Background(), minute, time.Now(), "student", "")
+	minutes, err := tel.Metrics(context.Background(), minute, time.Now(), MetricQuery{Route: "student"})
 	if err != nil || len(minutes) != 1 {
 		t.Fatalf("minutes = %+v %v", minutes, err)
 	}
@@ -103,7 +107,7 @@ func TestRecordSamplesAndNeverBlocks(t *testing.T) {
 		t.Fatal(err)
 	}
 	logged, _ = tel.Requests(context.Background(), LogQuery{Limit: 10})
-	minutes, _ = tel.Metrics(context.Background(), minute, time.Now(), "", "")
+	minutes, _ = tel.Metrics(context.Background(), minute, time.Now(), MetricQuery{})
 	if len(logged) != 0 || len(minutes) != 0 {
 		t.Fatalf("retention kept %d logs and %d minutes", len(logged), len(minutes))
 	}
@@ -208,4 +212,37 @@ func exporterProbeUnlocked(mu *sync.Mutex, exporter *JSONLines) error {
 	mu.Unlock()
 	defer mu.Lock()
 	return exporter.Probe(context.Background())
+}
+
+// A file written before API groups gains the group column and the environment
+// and group metric keys; its metrics count as RELEASE traffic.
+func TestOpenUpgradesTheOldLayout(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "telemetry.db")
+	db, err := core.DefaultDBConnect(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, statement := range []string{
+		`CREATE TABLE requests (id INTEGER PRIMARY KEY, time INTEGER NOT NULL, host TEXT, stage TEXT, route TEXT, operation TEXT,
+			service TEXT, instance TEXT, method TEXT, path TEXT, status INTEGER, durationMs REAL, bytesIn INTEGER, bytesOut INTEGER,
+			clientIp TEXT, consumer TEXT, traceId TEXT, requestId TEXT, error TEXT)`,
+		`CREATE TABLE metrics (minute INTEGER NOT NULL, route TEXT NOT NULL, service TEXT NOT NULL, count INTEGER, s2xx INTEGER,
+			s3xx INTEGER, s4xx INTEGER, s5xx INTEGER, errors INTEGER, bytesIn INTEGER, bytesOut INTEGER, p50 REAL, p95 REAL, p99 REAL,
+			series TEXT, PRIMARY KEY (minute, route, service))`,
+		`INSERT INTO metrics VALUES (1000, 'server', 'kanyue.server', 7, 7, 0, 0, 0, 0, 0, 0, 1, 2, 3, '{}')`,
+	} {
+		if _, err := db.NewQuery(statement).Execute(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	db.Close()
+	tel := open(t, Options{Path: path, LogRetention: time.Hour, MetricRetention: time.Hour})
+	minutes, err := tel.Metrics(context.Background(), time.Unix(1000*60, 0), time.Unix(1001*60, 0), MetricQuery{Stage: "RELEASE"})
+	if err != nil || len(minutes) != 1 || minutes[0].Count != 7 || minutes[0].Route != "server" {
+		t.Fatalf("upgraded metrics = %+v %v", minutes, err)
+	}
+	tel.Record(entry(time.Now(), "student", 200, time.Millisecond))
+	if err := tel.Flush(time.Now().Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
 }

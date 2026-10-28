@@ -12,6 +12,8 @@ import (
 // LogQuery filters request logs; zero fields do not filter.
 type LogQuery struct {
 	From, To  time.Time
+	Stage     string
+	Group     string
 	Route     string
 	Service   string
 	Consumer  string
@@ -47,7 +49,8 @@ func (t *Telemetry) Requests(ctx context.Context, q LogQuery) ([]Record, error) 
 	if !q.To.IsZero() {
 		where = append(where, dbx.NewExp("time < {:to}", dbx.Params{"to": q.To.UnixMilli()}))
 	}
-	for column, value := range map[string]string{"route": q.Route, "service": q.Service, "consumer": q.Consumer, "requestId": q.RequestID} {
+	for column, value := range map[string]string{"stage": q.Stage, "grp": q.Group, "route": q.Route, "service": q.Service,
+		"consumer": q.Consumer, "requestId": q.RequestID} {
 		if value != "" {
 			where = append(where, dbx.HashExp{column: value})
 		}
@@ -77,9 +80,11 @@ func (t *Telemetry) Requests(ctx context.Context, q LogQuery) ([]Record, error) 
 	return out, nil
 }
 
-// Minute is one route's traffic in one minute.
+// Minute is one API's traffic in one environment and minute.
 type Minute struct {
 	Minute   time.Time `json:"minute" db:"-"`
+	Stage    string    `json:"stage" db:"stage"`
+	Group    string    `json:"group" db:"grp"`
 	Route    string    `json:"route" db:"route"`
 	Service  string    `json:"service" db:"service"`
 	Count    int       `json:"count" db:"count"`
@@ -95,21 +100,25 @@ type Minute struct {
 	P99      float64   `json:"p99" db:"p99"`
 }
 
-// Metrics lists stored minutes in [from, to), optionally of one route or service.
-func (t *Telemetry) Metrics(ctx context.Context, from, to time.Time, route, service string) ([]Minute, error) {
+// MetricQuery narrows metrics; empty fields do not filter.
+type MetricQuery struct {
+	Stage, Group, Route, Service string
+}
+
+// Metrics lists stored minutes in [from, to) matching q.
+func (t *Telemetry) Metrics(ctx context.Context, from, to time.Time, q MetricQuery) ([]Minute, error) {
 	var rows []struct {
 		Minute
 		At int64 `db:"minute"`
 	}
 	where := dbx.And(dbx.NewExp("minute >= {:from} AND minute < {:to}", dbx.Params{"from": from.Unix() / 60, "to": to.Unix() / 60}))
-	if route != "" {
-		where = dbx.And(where, dbx.HashExp{"route": route})
+	for column, value := range map[string]string{"stage": q.Stage, "grp": q.Group, "route": q.Route, "service": q.Service} {
+		if value != "" {
+			where = dbx.And(where, dbx.HashExp{column: value})
+		}
 	}
-	if service != "" {
-		where = dbx.And(where, dbx.HashExp{"service": service})
-	}
-	err := t.db.Select("minute", "route", "service", "count", "s2xx", "s3xx", "s4xx", "s5xx", "errors", "bytesIn", "bytesOut",
-		"p50", "p95", "p99").From("metrics").WithContext(ctx).Where(where).OrderBy("minute", "route").All(&rows)
+	err := t.db.Select("minute", "stage", "grp", "route", "service", "count", "s2xx", "s3xx", "s4xx", "s5xx", "errors", "bytesIn", "bytesOut",
+		"p50", "p95", "p99").From("metrics").WithContext(ctx).Where(where).OrderBy("minute", "stage", "route").All(&rows)
 	out := make([]Minute, len(rows))
 	for i, row := range rows {
 		out[i] = row.Minute
@@ -120,6 +129,8 @@ func (t *Telemetry) Metrics(ctx context.Context, from, to time.Time, route, serv
 
 // Summary is traffic over a window, with percentiles from the merged buckets.
 type Summary struct {
+	Stage    string  `json:"stage"`
+	Group    string  `json:"group"`
 	Route    string  `json:"route"`
 	Service  string  `json:"service"`
 	Count    int     `json:"count"`
@@ -129,26 +140,28 @@ type Summary struct {
 	P95      float64 `json:"p95"`
 }
 
-// Window summarizes every route over the stored minutes in [from, to).
+// Window summarizes every API per environment over the stored minutes in [from, to).
 func (t *Telemetry) Window(ctx context.Context, from, to time.Time) ([]Summary, error) {
 	var rows []struct {
+		Stage   string `db:"stage"`
+		Group   string `db:"grp"`
 		Route   string `db:"route"`
 		Service string `db:"service"`
 		Series  string `db:"series"`
 	}
-	err := t.db.Select("route", "service", "series").From("metrics").WithContext(ctx).
+	err := t.db.Select("stage", "grp", "route", "service", "series").From("metrics").WithContext(ctx).
 		Where(dbx.NewExp("minute >= {:from} AND minute < {:to}", dbx.Params{"from": from.Unix() / 60, "to": to.Unix() / 60})).All(&rows)
 	if err != nil {
 		return nil, err
 	}
-	merged := map[[2]string]*series{}
-	var keys [][2]string
+	merged := map[[4]string]*series{}
+	var keys [][4]string
 	for _, row := range rows {
 		s := newSeries()
 		if json.Unmarshal([]byte(row.Series), s) != nil || len(s.Buckets) != len(Bounds)+1 {
 			continue
 		}
-		key := [2]string{row.Route, row.Service}
+		key := [4]string{row.Stage, row.Group, row.Route, row.Service}
 		if merged[key] == nil {
 			merged[key] = newSeries()
 			keys = append(keys, key)
@@ -158,7 +171,7 @@ func (t *Telemetry) Window(ctx context.Context, from, to time.Time) ([]Summary, 
 	out := make([]Summary, 0, len(keys))
 	for _, key := range keys {
 		s := merged[key]
-		out = append(out, Summary{Route: key[0], Service: key[1], Count: s.Count, S5xx: s.S5xx, Errors: s.Errors,
+		out = append(out, Summary{Stage: key[0], Group: key[1], Route: key[2], Service: key[3], Count: s.Count, S5xx: s.S5xx, Errors: s.Errors,
 			BytesOut: s.BytesOut, P95: s.Percentile(0.95)})
 	}
 	return out, nil

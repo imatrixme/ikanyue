@@ -1,5 +1,5 @@
 // Package telemetry keeps what the data plane observed: request logs, per-minute
-// route metrics and the outbound calls services report. It writes to its own
+// API metrics per environment and the outbound calls services report. It writes to its own
 // SQLite file, never to the configuration database, and the data plane only
 // ever hands it entries through a bounded queue: a slow disk drops and counts
 // log entries, it never slows a request.
@@ -46,6 +46,7 @@ type Record struct {
 	Message    string    `json:"message,omitempty" db:"-"`
 	Host       string    `json:"host,omitempty" db:"host"`
 	Stage      string    `json:"stage,omitempty" db:"stage"`
+	Group      string    `json:"group,omitempty" db:"grp"`
 	Route      string    `json:"route,omitempty" db:"route"`
 	Operation  string    `json:"operation,omitempty" db:"operation"`
 	Service    string    `json:"service,omitempty" db:"service"`
@@ -64,8 +65,8 @@ type Record struct {
 }
 
 type metricKey struct {
-	minute         int64
-	route, service string
+	minute                       int64
+	stage, group, route, service string
 }
 
 type series struct {
@@ -138,15 +139,15 @@ type Telemetry struct {
 }
 
 const schemaSQL = `
-CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY, time INTEGER NOT NULL, host TEXT, stage TEXT, route TEXT,
+CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY, time INTEGER NOT NULL, host TEXT, stage TEXT, grp TEXT, route TEXT,
 	operation TEXT, service TEXT, instance TEXT, method TEXT, path TEXT, status INTEGER, durationMs REAL, bytesIn INTEGER,
 	bytesOut INTEGER, clientIp TEXT, consumer TEXT, traceId TEXT, requestId TEXT, error TEXT);
 CREATE INDEX IF NOT EXISTS idx_requests_time ON requests (time);
 CREATE INDEX IF NOT EXISTS idx_requests_route_time ON requests (route, time);
 CREATE INDEX IF NOT EXISTS idx_requests_request_id ON requests (requestId);
-CREATE TABLE IF NOT EXISTS metrics (minute INTEGER NOT NULL, route TEXT NOT NULL, service TEXT NOT NULL, count INTEGER,
-	s2xx INTEGER, s3xx INTEGER, s4xx INTEGER, s5xx INTEGER, errors INTEGER, bytesIn INTEGER, bytesOut INTEGER,
-	p50 REAL, p95 REAL, p99 REAL, series TEXT, PRIMARY KEY (minute, route, service));
+CREATE TABLE IF NOT EXISTS metrics (minute INTEGER NOT NULL, stage TEXT NOT NULL, grp TEXT NOT NULL, route TEXT NOT NULL,
+	service TEXT NOT NULL, count INTEGER, s2xx INTEGER, s3xx INTEGER, s4xx INTEGER, s5xx INTEGER, errors INTEGER,
+	bytesIn INTEGER, bytesOut INTEGER, p50 REAL, p95 REAL, p99 REAL, series TEXT, PRIMARY KEY (minute, stage, grp, route, service));
 CREATE TABLE IF NOT EXISTS outbound (minute INTEGER NOT NULL, source TEXT NOT NULL, target TEXT NOT NULL, count INTEGER,
 	failures INTEGER, p95 REAL, PRIMARY KEY (minute, source, target));
 CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, time INTEGER NOT NULL, kind TEXT, message TEXT, detail TEXT);
@@ -159,7 +160,15 @@ func Open(opts Options) (*Telemetry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("telemetry: %w", err)
 	}
+	if err := upgrade(db); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("telemetry schema upgrade: %w", err)
+	}
 	if _, err := db.NewQuery(schemaSQL).Execute(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("telemetry schema: %w", err)
+	}
+	if _, err := db.NewQuery("PRAGMA user_version = 1").Execute(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("telemetry schema: %w", err)
 	}
@@ -176,7 +185,7 @@ func Open(opts Options) (*Telemetry, error) {
 func (t *Telemetry) Record(e proxy.Entry) {
 	r := redact(e, t.opts.TruncateIP)
 	t.mu.Lock()
-	key := metricKey{minute: r.Time.Unix() / 60, route: r.Route, service: r.Service}
+	key := metricKey{minute: r.Time.Unix() / 60, stage: r.Stage, group: r.Group, route: r.Route, service: r.Service}
 	s := t.minutes[key]
 	if s == nil {
 		s = newSeries()
@@ -269,7 +278,7 @@ func (t *Telemetry) Flush(now time.Time) error {
 }
 
 func dbParams(r Record) dbx.Params {
-	return dbx.Params{"host": r.Host, "stage": r.Stage, "route": r.Route, "operation": r.Operation, "service": r.Service,
+	return dbx.Params{"host": r.Host, "stage": r.Stage, "grp": r.Group, "route": r.Route, "operation": r.Operation, "service": r.Service,
 		"instance": r.Instance, "method": r.Method, "path": r.Path, "status": r.Status, "durationMs": r.DurationMs,
 		"bytesIn": r.BytesIn, "bytesOut": r.BytesOut, "clientIp": r.ClientIP, "consumer": r.Consumer,
 		"traceId": r.TraceID, "requestId": r.RequestID, "error": r.Error}
@@ -281,7 +290,7 @@ func upsertMinute(tx *dbx.Tx, key metricKey, s *series) error {
 		Series string `db:"series"`
 	}
 	err := tx.Select("series").From("metrics").
-		Where(dbx.HashExp{"minute": key.minute, "route": key.route, "service": key.service}).One(&stored)
+		Where(dbx.HashExp{"minute": key.minute, "stage": key.stage, "grp": key.group, "route": key.route, "service": key.service}).One(&stored)
 	if err == nil {
 		previous := newSeries()
 		if json.Unmarshal([]byte(stored.Series), previous) == nil && len(previous.Buckets) == len(s.Buckets) {
@@ -289,13 +298,52 @@ func upsertMinute(tx *dbx.Tx, key metricKey, s *series) error {
 		}
 	}
 	raw, _ := json.Marshal(s)
-	_, err = tx.NewQuery(`INSERT OR REPLACE INTO metrics (minute, route, service, count, s2xx, s3xx, s4xx, s5xx, errors,
-		bytesIn, bytesOut, p50, p95, p99, series) VALUES ({:minute}, {:route}, {:service}, {:count}, {:s2xx}, {:s3xx},
-		{:s4xx}, {:s5xx}, {:errors}, {:bytesIn}, {:bytesOut}, {:p50}, {:p95}, {:p99}, {:series})`).Bind(dbx.Params{
-		"minute": key.minute, "route": key.route, "service": key.service, "count": s.Count, "s2xx": s.S2xx,
+	_, err = tx.NewQuery(`INSERT OR REPLACE INTO metrics (minute, stage, grp, route, service, count, s2xx, s3xx, s4xx, s5xx,
+		errors, bytesIn, bytesOut, p50, p95, p99, series) VALUES ({:minute}, {:stage}, {:grp}, {:route}, {:service}, {:count},
+		{:s2xx}, {:s3xx}, {:s4xx}, {:s5xx}, {:errors}, {:bytesIn}, {:bytesOut}, {:p50}, {:p95}, {:p99}, {:series})`).Bind(dbx.Params{
+		"minute": key.minute, "stage": key.stage, "grp": key.group, "route": key.route, "service": key.service, "count": s.Count, "s2xx": s.S2xx,
 		"s3xx": s.S3xx, "s4xx": s.S4xx, "s5xx": s.S5xx, "errors": s.Errors, "bytesIn": s.BytesIn, "bytesOut": s.BytesOut,
 		"p50": s.Percentile(0.5), "p95": s.Percentile(0.95), "p99": s.Percentile(0.99), "series": string(raw)}).Execute()
 	return err
+}
+
+// upgrade brings a telemetry file written before API groups to the current
+// layout: requests gain the group column, and metrics gain the environment and
+// group in their key, old rows counting as RELEASE traffic.
+func upgrade(db *dbx.DB) error {
+	var version int
+	if err := db.NewQuery("PRAGMA user_version").Row(&version); err != nil || version >= 1 {
+		return err
+	}
+	var tables []string
+	if err := db.NewQuery("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('requests', 'metrics')").Column(&tables); err != nil {
+		return err
+	}
+	return db.Transactional(func(tx *dbx.Tx) error {
+		for _, table := range tables {
+			switch table {
+			case "requests":
+				if _, err := tx.NewQuery("ALTER TABLE requests ADD COLUMN grp TEXT").Execute(); err != nil {
+					return err
+				}
+			case "metrics":
+				for _, statement := range []string{
+					"ALTER TABLE metrics RENAME TO metrics_v0",
+					`CREATE TABLE metrics (minute INTEGER NOT NULL, stage TEXT NOT NULL, grp TEXT NOT NULL, route TEXT NOT NULL,
+						service TEXT NOT NULL, count INTEGER, s2xx INTEGER, s3xx INTEGER, s4xx INTEGER, s5xx INTEGER, errors INTEGER,
+						bytesIn INTEGER, bytesOut INTEGER, p50 REAL, p95 REAL, p99 REAL, series TEXT, PRIMARY KEY (minute, stage, grp, route, service))`,
+					`INSERT INTO metrics SELECT minute, 'RELEASE', '', route, service, count, s2xx, s3xx, s4xx, s5xx, errors,
+						bytesIn, bytesOut, p50, p95, p99, series FROM metrics_v0`,
+					"DROP TABLE metrics_v0",
+				} {
+					if _, err := tx.NewQuery(statement).Execute(); err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
+	})
 }
 
 // Purge deletes logs and events past the log retention and metrics past the metric retention.

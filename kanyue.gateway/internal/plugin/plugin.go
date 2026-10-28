@@ -1,7 +1,7 @@
 // Package plugin is the gateway's policy model: plugins declare a JSON Schema,
-// are built once at publish time, and run on the data plane as a precompiled
-// chain per route. Bindings merge global → site → route; consumer bindings
-// override a plugin for that consumer's requests.
+// are built once at release time, and run on the data plane as a precompiled
+// chain per API. Which bindings an API gets is decided by the policy layers
+// (package policy); consumer bindings replace a slot for that consumer's requests.
 package plugin
 
 import (
@@ -98,10 +98,14 @@ type Env struct {
 // Scope is what a plugin instance is built for.
 type Scope struct {
 	*Env
+	// Route is the API id and RouteName its name; Stage is the environment it serves.
 	Route     string
 	RouteName string
-	// Service is the id of the route's service.
+	Stage     string
+	// Service is the id of the API's service.
 	Service string
+	// Key is the binding's slot, so stacked plugins of one kind keep separate state.
+	Key string
 }
 
 var registry = map[string]Plugin{}
@@ -131,14 +135,28 @@ func All() []Plugin {
 
 // Binding is one plugin attached at some level.
 type Binding struct {
+	// Key names the chain slot; empty is the plugin name. Stacked plugins
+	// (several rate limits) need distinct keys.
+	Key      string          `json:"key,omitempty"`
 	Plugin   string          `json:"plugin"`
 	Config   json.RawMessage `json:"config,omitempty"`
 	Priority int             `json:"priority,omitempty"`
-	// Disabled at a lower level removes a plugin inherited from a higher one.
+	// Disabled removes an inherited plugin; among a consumer's bindings it
+	// switches the slot off for that consumer.
 	Disabled bool `json:"disabled,omitempty"`
 }
 
-// Merge applies bindings level by level, later levels overriding earlier ones by plugin name.
+// Slot is the binding's chain slot.
+func (b Binding) Slot() string {
+	if b.Key != "" {
+		return b.Key
+	}
+	return b.Plugin
+}
+
+// Merge applies bindings level by level, later levels overriding earlier ones by
+// plugin name. It is the merge of the site and route model the API groups replaced,
+// kept for migrating that model.
 func Merge(levels ...[]Binding) []Binding {
 	merged := map[string]Binding{}
 	var order []string
@@ -159,17 +177,18 @@ func Merge(levels ...[]Binding) []Binding {
 	return out
 }
 
-// Chain is a route's compiled plugins.
+// Chain is an API's compiled plugins.
 type Chain struct {
 	slots    []slot
 	fallback *fallback
 }
 
 type slot struct {
+	key       string
 	name      string
 	priority  int
 	base      Instance
-	consumers map[string]Instance
+	consumers map[string]Instance // a nil instance switches the slot off for that consumer
 }
 
 func (s *slot) instance(ctx *Context) Instance {
@@ -181,8 +200,9 @@ func (s *slot) instance(ctx *Context) Instance {
 	return s.base
 }
 
-// NewChain builds a route's chain from its merged bindings and the per-consumer
-// overrides (consumer name → bindings).
+// NewChain builds an API's chain from its effective bindings and the
+// per-consumer ones (consumer name → bindings), which replace a slot, add one,
+// or switch one off for that consumer's requests.
 func NewChain(bindings []Binding, consumers map[string][]Binding, scope Scope) (*Chain, error) {
 	chain := &Chain{}
 	slots := map[string]*slot{}
@@ -193,15 +213,25 @@ func NewChain(bindings []Binding, consumers map[string][]Binding, scope Scope) (
 			errs = append(errs, fmt.Errorf("unknown plugin %q", binding.Plugin))
 			return nil, nil, false
 		}
-		instance, err := p.Build(binding.Config, scope)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("plugin %s: %w", binding.Plugin, err))
+		key := binding.Slot()
+		s := slots[key]
+		if s != nil && s.name != binding.Plugin {
+			errs = append(errs, fmt.Errorf("slot %q holds %s and %s", key, s.name, binding.Plugin))
 			return nil, nil, false
 		}
-		s := slots[binding.Plugin]
+		var instance Instance
+		if !binding.Disabled {
+			built := scope
+			built.Key = key
+			var err error
+			if instance, err = p.Build(binding.Config, built); err != nil {
+				errs = append(errs, fmt.Errorf("plugin %s: %w", binding.Plugin, err))
+				return nil, nil, false
+			}
+		}
 		if s == nil {
-			s = &slot{name: binding.Plugin, priority: p.Priority(), consumers: map[string]Instance{}}
-			slots[binding.Plugin] = s
+			s = &slot{key: key, name: binding.Plugin, priority: p.Priority(), consumers: map[string]Instance{}}
+			slots[key] = s
 		}
 		if binding.Priority != 0 {
 			s.priority = binding.Priority
@@ -209,6 +239,9 @@ func NewChain(bindings []Binding, consumers map[string][]Binding, scope Scope) (
 		return s, instance, true
 	}
 	for _, binding := range bindings {
+		if binding.Disabled {
+			continue
+		}
 		if s, instance, ok := get(binding); ok {
 			s.base = instance
 			if f, isFallback := instance.(*fallback); isFallback {
@@ -223,8 +256,8 @@ func NewChain(bindings []Binding, consumers map[string][]Binding, scope Scope) (
 	sort.Strings(names)
 	for _, name := range names {
 		for _, binding := range consumers[name] {
-			if binding.Disabled {
-				continue
+			if binding.Disabled && slots[binding.Slot()] == nil {
+				continue // nothing to switch off
 			}
 			if s, instance, ok := get(binding); ok {
 				s.consumers[name] = instance
@@ -241,7 +274,7 @@ func NewChain(bindings []Binding, consumers map[string][]Binding, scope Scope) (
 		if chain.slots[i].priority != chain.slots[j].priority {
 			return chain.slots[i].priority > chain.slots[j].priority
 		}
-		return chain.slots[i].name < chain.slots[j].name
+		return chain.slots[i].key < chain.slots[j].key
 	})
 	return chain, nil
 }
@@ -380,19 +413,43 @@ func (d *defined[C]) Priority() int           { return d.priority }
 func (d *defined[C]) Schema() json.RawMessage { return d.schema }
 
 func (d *defined[C]) Build(raw json.RawMessage, scope Scope) (Instance, error) {
+	config, err := d.decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	return d.build(config, scope)
+}
+
+func (d *defined[C]) decode(raw json.RawMessage) (C, error) {
+	var config C
 	if len(raw) == 0 || string(raw) == "null" {
 		raw = json.RawMessage("{}")
 	}
 	var value any
 	if err := json.Unmarshal(raw, &value); err != nil {
-		return nil, fmt.Errorf("config is not JSON: %w", err)
+		return config, fmt.Errorf("config is not JSON: %w", err)
 	}
 	if err := Validate(d.parsed, value); err != nil {
-		return nil, err
+		return config, err
 	}
-	var config C
-	if err := strictDecode(raw, &config); err != nil {
-		return nil, err
+	err := strictDecode(raw, &config)
+	return config, err
+}
+
+func (d *defined[C]) check(raw json.RawMessage) error {
+	_, err := d.decode(raw)
+	return err
+}
+
+// Check validates a configuration against the plugin's schema without building
+// it, so edits are refused when saved rather than when released.
+func Check(name string, raw json.RawMessage) error {
+	p, ok := Lookup(name)
+	if !ok {
+		return fmt.Errorf("unknown plugin %q", name)
 	}
-	return d.build(config, scope)
+	if checker, ok := p.(interface{ check(json.RawMessage) error }); ok {
+		return checker.check(raw)
+	}
+	return nil
 }

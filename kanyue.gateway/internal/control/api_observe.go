@@ -55,7 +55,7 @@ func (c *Control) withTelemetry(e *core.RequestEvent, read func(*telemetry.Telem
 func (c *Control) logsRoute(e *core.RequestEvent) error {
 	from, to := rangeOf(e)
 	query := e.Request.URL.Query()
-	q := telemetry.LogQuery{From: from, To: to, Route: query.Get("route"), Service: query.Get("service"),
+	q := telemetry.LogQuery{From: from, To: to, Stage: query.Get("stage"), Group: query.Get("group"), Route: query.Get("route"), Service: query.Get("service"),
 		Consumer: query.Get("consumer"), RequestID: query.Get("requestId"), PathPrefix: query.Get("path"),
 		MinStatus: intParam(e, "minStatus"), MaxStatus: intParam(e, "maxStatus"), BeforeID: int64(intParam(e, "before")),
 		Limit: cmp.Or(intParam(e, "limit"), 100)}
@@ -69,7 +69,8 @@ func (c *Control) metricsRoute(e *core.RequestEvent) error {
 	from, to := rangeOf(e)
 	query := e.Request.URL.Query()
 	return c.withTelemetry(e, func(tel *telemetry.Telemetry) (any, error) {
-		return tel.Metrics(e.Request.Context(), from, to, query.Get("route"), query.Get("service"))
+		return tel.Metrics(e.Request.Context(), from, to, telemetry.MetricQuery{Stage: query.Get("stage"), Group: query.Get("group"),
+			Route: query.Get("route"), Service: query.Get("service")})
 	})
 }
 
@@ -115,10 +116,7 @@ func (c *Control) Graph(ctx context.Context, tel *telemetry.Telemetry, from, to 
 	}
 	var out []GraphEdge
 	for _, s := range summaries {
-		route := s.Route
-		if route == "" {
-			route = "(unrouted)"
-		}
+		route := subjectOf(s)
 		out = append(out, edge("gateway", "route:"+route, "route", s.Count, s.S5xx+s.Errors, s.P95))
 		if s.Service != "" {
 			service := names[s.Service]

@@ -1,11 +1,10 @@
 {
-  "site": "mapi",
-  "hosts": [
+  "group": "mapi",
+  "domains": [
     "mapi.ikanyue.com"
   ],
-  "routes": [
+  "apis": [
     {
-      "name": "miniapp",
       "service": "kanyue.server",
       "operations": [
         "GET /v1/activity/find",

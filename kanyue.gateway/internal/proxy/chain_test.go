@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"kanyue.gateway/internal/plugin"
+	"kanyue.gateway/internal/policy"
 	"kanyue.gateway/internal/snapshot"
 )
 
@@ -32,8 +33,15 @@ func (e *entries) last() Entry {
 	return e.list[len(e.list)-1]
 }
 
-func routeBinding(name, config string) snapshot.Binding {
-	return snapshot.Binding{Binding: plugin.Binding{Plugin: name, Config: json.RawMessage(config)}, Scope: "route", Target: "all"}
+func routeBinding(name, config string) policy.Effective {
+	return policy.Effective{Binding: plugin.Binding{Plugin: name, Config: json.RawMessage(config)}, Layer: policy.Overrides}
+}
+
+// bindAll gives every API of the test configuration the policies.
+func bindAll(cfg *snapshot.Config, policies ...policy.Effective) {
+	for i := range cfg.APIs {
+		cfg.APIs[i].Policies = policies
+	}
 }
 
 func do(t *testing.T, method, url string, header map[string]string, body io.Reader) (*http.Response, string) {
@@ -63,11 +71,11 @@ func TestChainAnswersBeforeTheUpstreamAndAssertsIdentity(t *testing.T) {
 	})
 	log := &entries{}
 	h, front := gatewayWith(t, func(cfg *snapshot.Config) {
-		cfg.Bindings = []snapshot.Binding{
+		bindAll(cfg,
 			routeBinding("rate-limit", `{"limit":1,"window":"minute","by":"ip"}`),
 			routeBinding("request-rewrite", `{"setHeaders":{"X-Kanyue-User":"forged"}}`),
 			routeBinding("cors", `{"allowOrigins":["https://www.ikanyue.com"]}`),
-		}
+		)
 	}, instance)
 	h.SetRecorder(log)
 
@@ -122,7 +130,7 @@ func TestRetryOnlyIdempotentAndFallback(t *testing.T) {
 
 	_, broken := upstream(t, func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusInternalServerError) })
 	_, degraded := gatewayWith(t, func(cfg *snapshot.Config) {
-		cfg.Bindings = []snapshot.Binding{routeBinding("fallback", `{"status":200,"body":"{\"code\":10000,\"data\":null}"}`)}
+		bindAll(cfg, routeBinding("fallback", `{"status":200,"body":"{\"code\":10000,\"data\":null}"}`))
 	}, broken)
 	if res, body := do(t, "POST", degraded.URL+"/v1/x", nil, nil); res.StatusCode != 200 || body != `{"code":10000,"data":null}` ||
 		res.Header.Get("X-Ca-Error-Message") != "Fallback" {
@@ -164,7 +172,7 @@ func TestTotalAndIdleTimeouts(t *testing.T) {
 	}
 
 	_, ticking := upstream(t, stream(20*time.Millisecond))
-	_, total := gatewayWith(t, func(cfg *snapshot.Config) { cfg.Routes[0].TimeoutMs = 120 }, ticking)
+	_, total := gatewayWith(t, func(cfg *snapshot.Config) { cfg.APIs[0].TimeoutMs = 120 }, ticking)
 	if lines, took := read(total.URL + "/events"); lines == 0 || lines >= 20 || took > 2*time.Second {
 		t.Fatalf("total timeout: %d events in %s", lines, took)
 	}
@@ -194,7 +202,7 @@ func TestMirrorCopiesWithoutAffectingTheClient(t *testing.T) {
 	})
 	shadow.Stage = "SHADOW"
 	_, front := gatewayWith(t, func(cfg *snapshot.Config) {
-		cfg.Bindings = []snapshot.Binding{routeBinding("mirror", `{"stage":"SHADOW"}`)}
+		bindAll(cfg, routeBinding("mirror", `{"stage":"SHADOW"}`))
 	}, primary, shadow)
 
 	begin := time.Now()

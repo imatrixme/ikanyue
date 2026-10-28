@@ -30,7 +30,7 @@ type JSONLines struct {
 	URL string
 	// Username with Password is Basic auth; Token alone is a Bearer token.
 	Username, Password, Token string
-	// StreamFields are VictoriaLogs stream fields, e.g. service and route.
+	// StreamFields are VictoriaLogs stream fields, e.g. stage, group and service.
 	StreamFields []string
 	Client       *http.Client
 }

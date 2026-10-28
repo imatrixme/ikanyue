@@ -112,22 +112,27 @@ func bearerToken(header http.Header) string {
 }
 
 // aliyun-signature verifies Aliyun API Gateway's AppKey signature (X-Ca-Key,
-// X-Ca-Signature, HmacSHA256 or HmacSHA1) against registered consumers.
+// X-Ca-Signature, HmacSHA256 or HmacSHA1) against registered consumers. An empty
+// consumers list lets every registered consumer in, unless private is set: a
+// private API admits only the listed (granted) consumers, so no grant means nobody.
 var aliyunSignature = define("aliyun-signature", 800, `{"type":"object","additionalProperties":false,"properties":{
-	"consumers":{"type":"array","maxItems":500,"items":{"type":"string","maxLength":60}}}}`,
+	"consumers":{"type":"array","maxItems":500,"items":{"type":"string","maxLength":60}},
+	"private":{"type":"boolean"}}}`,
 	func(c struct {
 		Consumers []string `json:"consumers"`
+		Private   bool     `json:"private"`
 	}, scope Scope) (Instance, error) {
 		now := time.Now
 		if scope.Now != nil {
 			now = scope.Now
 		}
-		return &signatureCheck{env: scope.Env, allowed: c.Consumers, now: now}, nil
+		return &signatureCheck{env: scope.Env, allowed: c.Consumers, private: c.Private, now: now}, nil
 	})
 
 type signatureCheck struct {
 	env     *Env
 	allowed []string
+	private bool
 	now     func() time.Time
 }
 
@@ -143,7 +148,7 @@ func (s *signatureCheck) Request(ctx *Context) *Reply {
 	if key == "" || !ok {
 		return Fail(http.StatusBadRequest, "签名校验失败", "Invalid AppKey")
 	}
-	if len(s.allowed) > 0 && !slices.Contains(s.allowed, consumer.Name) {
+	if (s.private || len(s.allowed) > 0) && !slices.Contains(s.allowed, consumer.Name) {
 		return Fail(http.StatusForbidden, "无权访问", "Unauthorized")
 	}
 	if stamp := r.Header.Get("X-Ca-Timestamp"); stamp != "" && !withinWindow(stamp, s.now(), signatureWindow) {

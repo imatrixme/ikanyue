@@ -11,13 +11,16 @@ func TestMapiPlan(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if plan.Site != "mapi" || len(plan.Hosts) != 1 || plan.Hosts[0] != "mapi.ikanyue.com" {
-		t.Fatalf("site = %s %v", plan.Site, plan.Hosts)
+	if plan.Group != "mapi" || len(plan.Domains) != 1 || plan.Domains[0] != "mapi.ikanyue.com" {
+		t.Fatalf("group = %s %v", plan.Group, plan.Domains)
 	}
-	for _, route := range plan.Routes {
-		for _, pattern := range route.Operations {
+	for _, batch := range plan.APIs {
+		if batch.Visibility != "" || batch.Auth != "" {
+			t.Errorf("the mini program's APIs stay public with passthrough authentication: %+v", batch)
+		}
+		for _, pattern := range batch.Operations {
 			if !strings.Contains(pattern, " /v1/") {
-				t.Errorf("%s exposes %s", route.Name, pattern)
+				t.Errorf("%s exposes %s", batch.Service, pattern)
 			}
 		}
 	}
@@ -25,10 +28,11 @@ func TestMapiPlan(t *testing.T) {
 
 func TestParseRejectsBadPlans(t *testing.T) {
 	for _, raw := range []string{
-		`{"site":"s","hosts":["h"],"routes":[]}`,
-		`{"site":"s","hosts":["h"],"routes":[{"name":"r","service":"x","operations":["GET /a","GET /a"]}]}`,
-		`{"site":"s","hosts":["h"],"routes":[{"name":"r","service":"x","operations":["GET a"]}]}`,
-		`{"site":"s","hosts":["h"],"extra":1,"routes":[{"name":"r","service":"x","operations":["GET /a"]}]}`,
+		`{"group":"g","domains":["h"],"apis":[]}`,
+		`{"group":"g","domains":["h"],"apis":[{"service":"x","operations":["GET /a","GET /a"]}]}`,
+		`{"group":"g","domains":["h"],"apis":[{"service":"x","operations":["GET a"]}]}`,
+		`{"group":"g","domains":["h"],"apis":[{"service":"x","operations":["GET /a"],"auth":"magic"}]}`,
+		`{"group":"g","domains":["h"],"extra":1,"apis":[{"service":"x","operations":["GET /a"]}]}`,
 	} {
 		if _, err := Parse([]byte(raw)); err == nil {
 			t.Errorf("accepted %s", raw)

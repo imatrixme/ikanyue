@@ -5,6 +5,8 @@ package schema
 
 import (
 	"github.com/pocketbase/pocketbase/core"
+
+	"kanyue.gateway/internal/policy"
 )
 
 const (
@@ -22,17 +24,38 @@ const (
 	Exporters      = "exporters"
 	AlertChannels  = "alert_channels"
 	AlertRules     = "alert_rules"
+	APIGroups      = "api_groups"
+	GroupDomains   = "group_domains"
+	APIs           = "apis"
+	PolicySets     = "policy_sets"
+	Grants         = "grants"
+	Releases       = "releases"
+	StageVersions  = "stage_versions"
 )
 
+// Baseline is the built-in policy set every API inherits first.
+const Baseline = "baseline"
+
+// Stages are the environments APIs are released to.
+var Stages = policy.Stages
+
 // Audited are the collections whose admin edits land in the audit log.
-var Audited = []string{Sites, Services, Instances, Operations, Routes, PluginBindings, Consumers, Secrets, Exporters,
-	AlertChannels, AlertRules}
+var Audited = []string{Services, Instances, Operations, Consumers, Secrets, Exporters, AlertChannels, AlertRules,
+	APIGroups, GroupDomains, APIs, PolicySets, Grants}
+
+// Legacy are the collections of the site and route model; they stay readable
+// after the migration to API groups, and the admin API refuses writes to them.
+var Legacy = []string{Sites, Routes, PluginBindings, ConfigVersions}
+
+// AppendOnly are written only by the control plane and never changed afterwards.
+var AppendOnly = []string{AuditLogs, Releases, StageVersions}
 
 func init() {
 	core.AppMigrations.Register(initial, nil, "gateway_0001_initial")
 	core.AppMigrations.Register(policies, nil, "gateway_0002_policies")
 	core.AppMigrations.Register(console, nil, "gateway_0003_console")
 	core.AppMigrations.Register(observability, nil, "gateway_0004_observability")
+	core.AppMigrations.Register(groups, nil, "gateway_0005_groups")
 }
 
 func initial(txApp core.App) error {
@@ -300,6 +323,148 @@ func observability(txApp core.App) error {
 	rules.AddIndex("idx_alert_rules_name", true, "name", "")
 	withDates(rules)
 	return saveAll(txApp, rules)
+}
+
+// groups adds API groups bound to domains, APIs built from selected operations,
+// policy sets with the built-in baseline, application grants, and per-environment
+// releases; audit entries gain before, after and diff.
+func groups(txApp core.App) error {
+	sets := core.NewBaseCollection(PolicySets)
+	sets.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60, Pattern: `^[a-z0-9][a-z0-9._-]*$`},
+		// Items: plugin, config, priority, stages, locked, disabled.
+		&core.JSONField{Name: "items", MaxSize: 1 << 20},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	sets.AddIndex("idx_policy_sets_name", true, "name", "")
+	withDates(sets)
+	if err := saveAll(txApp, sets); err != nil {
+		return err
+	}
+	groups := core.NewBaseCollection(APIGroups)
+	groups.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60, Pattern: `^[a-z0-9][a-z0-9._-]*$`},
+		&core.RelationField{Name: "defaultPolicySet", CollectionId: sets.Id, MaxSelect: 1},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	groups.AddIndex("idx_api_groups_name", true, "name", "")
+	withDates(groups)
+	if err := saveAll(txApp, groups); err != nil {
+		return err
+	}
+
+	domains := core.NewBaseCollection(GroupDomains)
+	domains.Fields.Add(
+		&core.RelationField{Name: "group", Required: true, CollectionId: groups.Id, MaxSelect: 1, CascadeDelete: true},
+		// Lower-case host without port, or "*" for every host no group claims.
+		&core.TextField{Name: "host", Required: true, Max: 253, Pattern: `^(\*|[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*)$`},
+		// A fixed environment ignores X-Ca-Stage; such a domain is served only by that environment.
+		&core.SelectField{Name: "fixedStage", MaxSelect: 1, Values: Stages},
+	)
+	domains.AddIndex("idx_group_domains_host", true, "host", "")
+	withDates(domains)
+
+	operations, err := txApp.FindCollectionByNameOrId(Operations)
+	if err != nil {
+		return err
+	}
+	apis := core.NewBaseCollection(APIs)
+	apis.Fields.Add(
+		&core.RelationField{Name: "group", Required: true, CollectionId: groups.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.TextField{Name: "name", Required: true, Max: 100, Pattern: `^[a-z0-9][a-z0-9._-]*$`},
+		// Exactly one discovered operation; discovery never creates APIs.
+		&core.RelationField{Name: "operation", Required: true, CollectionId: operations.Id, MaxSelect: 1},
+		&core.SelectField{Name: "visibility", Required: true, MaxSelect: 1, Values: []string{"public", "private"}},
+		// passthrough leaves authentication to the upstream; signature and jwt bring their plugin.
+		&core.SelectField{Name: "auth", Required: true, MaxSelect: 1, Values: []string{"passthrough", "none", "signature", "jwt"}},
+		&core.RelationField{Name: "policySet", CollectionId: sets.Id, MaxSelect: 1},
+		&core.JSONField{Name: "overrides", MaxSize: 1 << 20},
+		// Higher priorities match first on a domain; equal priorities must not overlap.
+		&core.NumberField{Name: "priority", OnlyInt: true, Min: ptr(-1000.0), Max: ptr(1000.0)},
+		&core.NumberField{Name: "headerTimeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.NumberField{Name: "timeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.NumberField{Name: "idleTimeoutMs", OnlyInt: true, Min: ptr(0.0)},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	apis.AddIndex("idx_apis_group_name", true, "`group`, name", "")
+	apis.AddIndex("idx_apis_group_operation", true, "`group`, operation", "")
+	withDates(apis)
+	if err := saveAll(txApp, domains, apis); err != nil {
+		return err
+	}
+
+	consumers, err := txApp.FindCollectionByNameOrId(Consumers)
+	if err != nil {
+		return err
+	}
+	// Application-specific settings: the fifth policy layer, for that application's requests.
+	consumers.Fields.Add(&core.JSONField{Name: "policies", MaxSize: 1 << 20})
+	grants := core.NewBaseCollection(Grants)
+	grants.Fields.Add(
+		&core.RelationField{Name: "consumer", Required: true, CollectionId: consumers.Id, MaxSelect: 1, CascadeDelete: true},
+		// Exactly one of group and api.
+		&core.RelationField{Name: "group", CollectionId: groups.Id, MaxSelect: 1, CascadeDelete: true},
+		&core.RelationField{Name: "api", CollectionId: apis.Id, MaxSelect: 1, CascadeDelete: true},
+		// Empty is every environment.
+		&core.SelectField{Name: "stages", MaxSelect: len(Stages), Values: Stages},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	withDates(grants)
+
+	releases := core.NewBaseCollection(Releases)
+	releases.Fields.Add(
+		&core.SelectField{Name: "stage", Required: true, MaxSelect: 1, Values: Stages},
+		&core.SelectField{Name: "kind", Required: true, MaxSelect: 1, Values: []string{"api", "group"}},
+		// The API or group id; the definition keeps its name.
+		&core.TextField{Name: "target", Required: true, Max: 30},
+		&core.TextField{Name: "name", Max: 200},
+		&core.TextField{Name: "group", Max: 30},
+		&core.NumberField{Name: "version", Required: true, OnlyInt: true, Min: ptr(1.0)},
+		&core.NumberField{Name: "previousVersion", OnlyInt: true},
+		// The resolved definition served from this release; null takes the target offline.
+		&core.JSONField{Name: "definition", MaxSize: 4 << 20},
+		&core.TextField{Name: "actor", Max: 200},
+		&core.TextField{Name: "note", Max: 500},
+		&core.TextField{Name: "reason", Max: 500},
+		&core.BoolField{Name: "forced"},
+		&core.NumberField{Name: "rollbackOf", OnlyInt: true},
+	)
+	releases.AddIndex("idx_releases_target_version", true, "stage, kind, target, version", "")
+	releases.AddIndex("idx_releases_created", false, "created", "")
+	withDates(releases)
+
+	// One per release to an environment: the whole compiled input that environment
+	// serves, so a restart serves exactly what was released.
+	versions := core.NewBaseCollection(StageVersions)
+	versions.Fields.Add(
+		&core.SelectField{Name: "stage", Required: true, MaxSelect: 1, Values: Stages},
+		&core.NumberField{Name: "version", Required: true, OnlyInt: true, Min: ptr(1.0)},
+		&core.JSONField{Name: "config", Required: true, MaxSize: 16 << 20},
+		&core.TextField{Name: "actor", Max: 200},
+		&core.TextField{Name: "action", Max: 30},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	versions.AddIndex("idx_stage_versions_stage_version", true, "stage, version", "")
+	withDates(versions)
+
+	audit, err := txApp.FindCollectionByNameOrId(AuditLogs)
+	if err != nil {
+		return err
+	}
+	audit.Fields.Add(
+		&core.JSONField{Name: "before", MaxSize: 4 << 20},
+		&core.JSONField{Name: "after", MaxSize: 4 << 20},
+		&core.JSONField{Name: "diff", MaxSize: 4 << 20},
+	)
+	audit.AddIndex("idx_audit_logs_resource", false, "resource, resourceId", "")
+	if err := saveAll(txApp, consumers, grants, releases, versions, audit); err != nil {
+		return err
+	}
+	// Last, once every collection exists: on an existing data dir the control
+	// plane's hooks are already bound and read them. There is nothing to validate.
+	baseline := core.NewRecord(sets)
+	baseline.Load(map[string]any{"name": Baseline, "items": []any{}, "note": "Platform baseline: every API inherits it first."})
+	return txApp.SaveNoValidate(baseline)
 }
 
 func withDates(collection *core.Collection) {

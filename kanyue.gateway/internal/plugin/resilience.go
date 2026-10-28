@@ -53,8 +53,17 @@ var circuitBreaker = define("circuit-breaker", 500, `{"type":"object","additiona
 		}
 		return &breaker{window: seconds(c.WindowSeconds, 10), minRequests: orInt(c.MinRequests, 10), errorRatio: errorRatio,
 			slow: time.Duration(c.SlowMs) * time.Millisecond, slowRatio: c.SlowRatio, open: seconds(c.OpenSeconds, 30),
-			signal: scope.Signal, key: orString(scope.RouteName, scope.Route), now: now}, nil
+			signal: scope.Signal, key: signalKey(scope), now: now}, nil
 	})
+
+// signalKey names the API in breaker signals; environments other than RELEASE are suffixed.
+func signalKey(scope Scope) string {
+	key := orString(scope.RouteName, scope.Route)
+	if scope.Stage != "" && scope.Stage != "RELEASE" {
+		key += "@" + scope.Stage
+	}
+	return key
+}
 
 func seconds(value, fallback int) time.Duration {
 	return time.Duration(orInt(value, fallback)) * time.Second

@@ -3,6 +3,7 @@ package control
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -25,8 +26,13 @@ func (c *Control) routes(se *core.ServeEvent) {
 	})
 	admin := se.Router.Group("/gateway/v1")
 	superuser := apis.RequireSuperuserAuth()
-	admin.POST("/publish", c.publishRoute).Bind(superuser)
+	admin.POST("/release", c.releaseRoute).Bind(superuser)
+	admin.POST("/offline", c.offlineRoute).Bind(superuser)
 	admin.POST("/rollback", c.rollbackRoute).Bind(superuser)
+	admin.POST("/preview", c.previewRoute).Bind(superuser)
+	admin.GET("/states", c.statesRoute).Bind(superuser)
+	admin.GET("/apis/{id}/effective", c.effectiveRoute).Bind(superuser)
+	admin.POST("/impact", c.impactRoute).Bind(superuser)
 	admin.GET("/status", c.statusRoute).Bind(superuser)
 	admin.GET("/plugins", c.pluginsRoute).Bind(superuser)
 	admin.GET("/logs", c.logsRoute).Bind(superuser)
@@ -40,31 +46,89 @@ func (c *Control) routes(se *core.ServeEvent) {
 	bindConsole(se, console.FS())
 }
 
-func (c *Control) publishRoute(e *core.RequestEvent) error {
-	var release Release
-	if err := e.BindBody(&release); err != nil {
+func (c *Control) releaseRoute(e *core.RequestEvent) error {
+	var req Request
+	if err := e.BindBody(&req); err != nil {
 		return e.BadRequestError("Invalid body.", err)
 	}
-	version, err := c.Publish(actorOf(e.Auth), release)
-	if err != nil {
-		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+	return releaseResult(e, func() (Result, error) { return c.Release(actorOf(e.Auth), req) })
+}
+
+func (c *Control) offlineRoute(e *core.RequestEvent) error {
+	var req Request
+	if err := e.BindBody(&req); err != nil {
+		return e.BadRequestError("Invalid body.", err)
 	}
-	return e.JSON(http.StatusOK, map[string]any{"version": version})
+	return releaseResult(e, func() (Result, error) { return c.Offline(actorOf(e.Auth), req) })
 }
 
 func (c *Control) rollbackRoute(e *core.RequestEvent) error {
 	var body struct {
-		Release
+		Request
 		Version int `json:"version"`
 	}
 	if err := e.BindBody(&body); err != nil || body.Version < 1 {
 		return e.BadRequestError("A version to roll back to is required.", err)
 	}
-	version, err := c.Rollback(actorOf(e.Auth), body.Version, body.Release)
+	return releaseResult(e, func() (Result, error) { return c.Rollback(actorOf(e.Auth), body.Request, body.Version) })
+}
+
+// releaseResult answers a release: 409 with the differences when RELEASE would
+// differ from PRE without a reason, 422 for anything else that stopped it.
+func releaseResult(e *core.RequestEvent, run func() (Result, error)) error {
+	result, err := run()
+	var promotion *PromotionError
+	switch {
+	case errors.As(err, &promotion):
+		return e.JSON(http.StatusConflict, map[string]any{"error": err.Error(), "diffs": promotion.Diffs})
+	case err != nil:
+		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+	}
+	return e.JSON(http.StatusOK, result)
+}
+
+func (c *Control) previewRoute(e *core.RequestEvent) error {
+	var req Request
+	if err := e.BindBody(&req); err != nil {
+		return e.BadRequestError("Invalid body.", err)
+	}
+	out, err := c.Preview(req)
 	if err != nil {
 		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
 	}
-	return e.JSON(http.StatusOK, map[string]any{"version": version, "rollbackOf": body.Version})
+	return e.JSON(http.StatusOK, out)
+}
+
+func (c *Control) statesRoute(e *core.RequestEvent) error {
+	out, err := c.States()
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusOK, out)
+}
+
+func (c *Control) effectiveRoute(e *core.RequestEvent) error {
+	out, err := c.Effective(e.Request.PathValue("id"), e.Request.URL.Query().Get("stage"))
+	if err != nil {
+		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+	}
+	return e.JSON(http.StatusOK, out)
+}
+
+func (c *Control) impactRoute(e *core.RequestEvent) error {
+	var body struct {
+		Collection string         `json:"collection"`
+		ID         string         `json:"id"`
+		Fields     map[string]any `json:"fields"`
+	}
+	if err := e.BindBody(&body); err != nil {
+		return e.BadRequestError("Invalid body.", err)
+	}
+	out, err := c.Impact(body.Collection, body.ID, body.Fields)
+	if err != nil {
+		return e.JSON(http.StatusUnprocessableEntity, map[string]any{"error": err.Error()})
+	}
+	return e.JSON(http.StatusOK, out)
 }
 
 func (c *Control) statusRoute(e *core.RequestEvent) error {
@@ -74,7 +138,7 @@ func (c *Control) statusRoute(e *core.RequestEvent) error {
 		return err
 	}
 	return e.JSON(http.StatusOK, map[string]any{
-		"version":         c.handler.Version(),
+		"versions":        c.handler.Versions(),
 		"onlineInstances": online,
 		"endpoints":       c.handler.Endpoints().Status(time.Now()),
 		"signals":         c.handler.Signals(),

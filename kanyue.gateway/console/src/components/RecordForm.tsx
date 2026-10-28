@@ -13,6 +13,8 @@ export interface CustomFieldProps {
   value: unknown
   values: Values
   onChange: (value: unknown) => void
+  // recordId is the edited record, empty while creating one.
+  recordId: string
 }
 
 // FieldSpec declares one form field. Secrets are write-only: the form never
@@ -92,7 +94,8 @@ function RelationInput({ field, value, onChange }: { field: FieldSpec; value: un
   )
 }
 
-function FieldInput({ field, values, onChange, editing }: { field: FieldSpec; values: Values; onChange: (value: unknown) => void; editing: boolean }) {
+function FieldInput({ field, values, onChange, recordId }: { field: FieldSpec; values: Values; onChange: (value: unknown) => void; recordId: string }) {
+  const editing = Boolean(recordId)
   const value = values[field.name]
   switch (field.kind) {
     case 'bool':
@@ -117,7 +120,7 @@ function FieldInput({ field, values, onChange, editing }: { field: FieldSpec; va
     case 'relations':
       return <RelationInput field={field} onChange={onChange} value={value} />
     case 'custom':
-      return <>{field.render?.({ value, values, onChange })}</>
+      return <>{field.render?.({ value, values, onChange, recordId })}</>
     default:
       return <Input onChange={(event) => onChange(event.target.value)} value={String(value ?? '')} />
   }
@@ -158,7 +161,7 @@ export function RecordForm({ title, fields, record, defaults = {}, onSubmit, onC
         {visible.map((field) => (
           <Field group={field.kind === 'relations' || field.kind === 'custom'} hint={field.hint} key={field.name} label={field.label}>
             <FieldInput
-              editing={Boolean(record)}
+              recordId={String(record?.id ?? '')}
               field={field}
               onChange={(value) => setValues((prev) => ({ ...prev, ...field.resets, [field.name]: value }))}
               values={values}

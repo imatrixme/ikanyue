@@ -9,6 +9,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -78,13 +79,13 @@ func totpCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Co
 	return command
 }
 
-// exposureCommand applies a checked-in exposure plan as a draft; operators
-// review and publish it in the console.
+// exposureCommand applies a checked-in exposure plan as drafts; operators
+// review the APIs and release them per environment in the console.
 func exposureCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Command {
-	command := &cobra.Command{Use: "exposure", Short: "Apply checked-in lists of exposed operations"}
+	command := &cobra.Command{Use: "exposure", Short: "Apply checked-in API groups"}
 	command.AddCommand(&cobra.Command{
 		Use:          "apply <plan>",
-		Short:        "Make a site's routes select exactly the operations of an embedded plan, e.g. mapi; does not publish",
+		Short:        "Make an API group's domains and APIs match an embedded plan, e.g. mapi; releases nothing",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(_ *cobra.Command, args []string) error {
@@ -99,16 +100,15 @@ func exposureCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobr
 			if err != nil {
 				return err
 			}
-			for _, route := range applied {
-				fmt.Printf("route %s on %s: %d operations selected (+%d -%d)\n", route.Route, plan.Site, route.Selected, len(route.Added), len(route.Removed))
-				for _, pattern := range route.Removed {
-					fmt.Println("  removed:", pattern)
-				}
-				for _, pattern := range route.NotServed {
-					fmt.Println("  not served by the service now, apply again once it is:", pattern)
-				}
+			fmt.Printf("group %s on %s: %d APIs (+%d ~%d -%d)\n", applied.Group, strings.Join(plan.Domains, ", "), applied.Selected,
+				len(applied.Added), len(applied.Updated), len(applied.Removed))
+			for _, name := range applied.Removed {
+				fmt.Println("  removed draft, still served until taken offline:", name)
 			}
-			fmt.Println("Nothing is live yet: review the routes and publish in the console.")
+			for _, pattern := range applied.NotServed {
+				fmt.Println("  not served by the service now, apply again once it is:", pattern)
+			}
+			fmt.Println("Nothing is live yet: release the group and its APIs to TEST, PRE and RELEASE in the console.")
 			return nil
 		},
 	})

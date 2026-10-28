@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"kanyue.gateway/internal/policy"
 	"kanyue.gateway/internal/snapshot"
 )
 
@@ -29,21 +30,26 @@ func gatewayWith(t *testing.T, adjust func(*snapshot.Config), instances ...snaps
 	t.Helper()
 	h := New(loopback, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	cfg := snapshot.Config{Version: 1,
-		Sites:    []snapshot.Site{{ID: "site", Name: "site", Hosts: []string{"*"}}},
+		Groups:   []snapshot.Group{{ID: "site", Name: "site", Domains: []snapshot.Domain{{Host: "*"}}}},
 		Services: []snapshot.Service{{ID: "svc", Name: "svc"}},
-		Routes: []snapshot.Route{{ID: "all", Name: "all", Site: "site", Service: "svc",
-			Operations: []snapshot.Operation{{ID: "any", Path: "/{path...}"}, {ID: "missing", Method: "GET", Path: "/v1/gone"}}}},
+		APIs: []snapshot.API{{ID: "all", Name: "all", Group: "site", Service: "svc", Operation: snapshot.Operation{ID: "any", Path: "/{path...}"}},
+			{ID: "gone", Name: "gone", Group: "site", Service: "svc", Operation: snapshot.Operation{ID: "missing", Method: "GET", Path: "/v1/gone"}}},
 	}
 	adjust(&cfg)
-	routes, err := snapshot.Compile(cfg, h.Env(), func(s string) (string, error) { return s, nil })
-	if err != nil {
-		t.Fatal(err)
+	for _, stage := range policy.Stages {
+		cfg.Stage = stage
+		routes, err := snapshot.Compile(cfg, h.Env(), func(s string) (string, error) { return s, nil })
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := h.SetStage(routes); err != nil {
+			t.Fatal(err)
+		}
 	}
 	endpoints, err := snapshot.NewEndpoints(instances, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	h.SetRoutes(routes)
 	h.SetEndpoints(endpoints)
 	front := httptest.NewServer(h)
 	t.Cleanup(front.Close)
@@ -108,7 +114,7 @@ func TestForwardingHeadersAreAlwaysSet(t *testing.T) {
 	}
 }
 
-// X-Ca-Stage picks the stage's instances, RELEASE by default; failures answer in
+// X-Ca-Stage picks the environment and its instances, RELEASE by default; unknown ones are refused; failures answer in
 // the business envelope with Aliyun's error header.
 func TestStageSelectionAndGatewayErrors(t *testing.T) {
 	_, release := upstream(t, func(w http.ResponseWriter, r *http.Request) { io.WriteString(w, "release") })
@@ -138,8 +144,8 @@ func TestStageSelectionAndGatewayErrors(t *testing.T) {
 			t.Errorf("stage %q = %d %s", item.stage, status, body)
 		}
 	}
-	if status, body, reason := get("/v1/x", "PREVIEW"); status != 503 || !strings.Contains(body, `"code":503`) ||
-		reason != "No available instance for stage PREVIEW" {
+	if status, body, reason := get("/v1/x", "PREVIEW"); status != 400 || !strings.Contains(body, `"code":400`) ||
+		reason != "Invalid X-Ca-Stage" {
 		t.Errorf("unknown stage = %d %s %s", status, body, reason)
 	}
 	if status, body, reason := get("/v1/x", "PRE"); status != 502 || !strings.Contains(body, "服务暂不可用") || reason != "Upstream unavailable" {

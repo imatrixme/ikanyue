@@ -1,7 +1,7 @@
-// Package proxy is the data plane: it matches a request against the current
-// route snapshot, runs the route's plugin chain, picks a healthy instance for
-// the request's stage and streams the exchange. It never touches the database;
-// the control plane swaps snapshots.
+// Package proxy is the data plane: it resolves a request's environment, matches
+// it against that environment's snapshot, runs the API's plugin chain, picks a
+// healthy instance of the environment's stage and streams the exchange. It never
+// touches the database; the control plane swaps environments.
 package proxy
 
 import (
@@ -23,11 +23,12 @@ import (
 	"time"
 
 	"kanyue.gateway/internal/plugin"
+	"kanyue.gateway/internal/policy"
 	"kanyue.gateway/internal/snapshot"
 )
 
 // DefaultStage is Aliyun API Gateway's stage for requests without X-Ca-Stage.
-const DefaultStage = "RELEASE"
+const DefaultStage = policy.DefaultStage
 
 const defaultHeaderTimeout = 30 * time.Second
 
@@ -42,9 +43,11 @@ var internalHeaders = []string{"X-Kanyue-Consumer", "X-Kanyue-User"}
 
 // Entry is one finished exchange, for request logs and metrics.
 type Entry struct {
-	Time      time.Time
-	Host      string
+	Time time.Time
+	Host string
+	// Stage is the environment that served the request; Group and Route name its API group and API.
 	Stage     string
+	Group     string
 	Route     string
 	Operation string
 	Service   string
@@ -68,7 +71,8 @@ type Recorder interface {
 }
 
 type Handler struct {
-	routes    atomic.Pointer[snapshot.Routes]
+	table     atomic.Pointer[snapshot.Table]
+	tableMu   sync.Mutex // serializes environment swaps
 	endpoints atomic.Pointer[snapshot.Endpoints]
 	trusted   []netip.Prefix
 	proxy     *httputil.ReverseProxy
@@ -112,23 +116,36 @@ func newTransport() *http.Transport {
 // Env is shared by every snapshot this handler serves, so limits and nonces survive a publish.
 func (h *Handler) Env() *plugin.Env                           { return h.env }
 func (h *Handler) SetRecorder(recorder Recorder)              { h.recorder = recorder }
-func (h *Handler) SetRoutes(routes *snapshot.Routes)          { h.routes.Store(routes) }
-func (h *Handler) Routes() *snapshot.Routes                   { return h.routes.Load() }
+func (h *Handler) Table() *snapshot.Table                     { return h.table.Load() }
 func (h *Handler) SetEndpoints(endpoints *snapshot.Endpoints) { h.endpoints.Store(endpoints) }
 func (h *Handler) Endpoints() *snapshot.Endpoints             { return h.endpoints.Load() }
 func (h *Handler) MirrorDropped() int64                       { return h.mirrorDropped.Load() }
 
-// Version is the configuration version being served; 0 before the first publish.
-func (h *Handler) Version() int {
-	if routes := h.routes.Load(); routes != nil {
-		return routes.Version
-	}
-	return 0
+// Prepare is the table that would serve with routes swapped in for its
+// environment; it fails when a domain would be fixed to two environments.
+func (h *Handler) Prepare(routes *snapshot.Routes) (*snapshot.Table, error) {
+	return h.table.Load().With(routes)
 }
+
+// SetStage swaps one environment's routes; the others keep serving.
+func (h *Handler) SetStage(routes *snapshot.Routes) error {
+	h.tableMu.Lock()
+	defer h.tableMu.Unlock()
+	next, err := h.table.Load().With(routes)
+	if err != nil {
+		return err
+	}
+	h.table.Store(next)
+	return nil
+}
+
+// Versions is each environment's served version; 0 before its first release.
+func (h *Handler) Versions() map[string]int { return h.table.Load().Versions() }
 
 // exchange is one request's state across the proxy callbacks.
 type exchange struct {
 	ctx         *plugin.Context
+	stage       string
 	target      *snapshot.Target
 	endpoints   *snapshot.Endpoints
 	peer        *snapshot.Peer
@@ -158,7 +175,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer h.finish(ex)
 
-	target, ok := h.routes.Load().Match(r)
+	table := h.table.Load()
+	stage, ok := table.Stage(r.Host, r.Header.Get("X-Ca-Stage"))
+	if !ok {
+		h.reply(ex, plugin.Fail(http.StatusBadRequest, "环境不存在", "Invalid X-Ca-Stage"))
+		return
+	}
+	ex.stage = stage
+	target, ok := table.Routes(stage).Match(r)
 	if !ok {
 		h.reply(ex, plugin.Fail(http.StatusNotFound, "接口不存在", "No route matched"))
 		return
@@ -167,10 +191,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ex.target = target
 	ctx.Route, ctx.Operation = target.Route, target.Operation.Pattern()
 	ctx.Idempotent = target.Operation.Idempotent || r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions
-	ctx.Stage = strings.ToUpper(strings.TrimSpace(r.Header.Get("X-Ca-Stage")))
-	if ctx.Stage == "" {
-		ctx.Stage = DefaultStage
-	}
+	// The environment's own instances serve it unless traffic-split picks another stage.
+	ctx.Stage = stage
 	if reply := target.Chain.Request(ctx); reply != nil {
 		h.reply(ex, reply)
 		return
@@ -309,7 +331,7 @@ func (h *Handler) finish(ex *exchange) {
 	if h.recorder == nil {
 		return
 	}
-	entry := Entry{Time: ex.start, Host: hostOnly(ctx.Host), Stage: ctx.Stage, Operation: ctx.Operation, Instance: ctx.Upstream,
+	entry := Entry{Time: ex.start, Host: hostOnly(ctx.Host), Stage: ex.stage, Operation: ctx.Operation, Instance: ctx.Upstream,
 		Method: ctx.Request.Method, Path: ctx.Request.URL.Path, Status: ctx.Status, Duration: ctx.Duration,
 		BytesOut: ex.writer.bytes, ClientIP: ctx.ClientIP.String(), Consumer: ctx.Consumer, RequestID: ctx.RequestID}
 	if parts := strings.Split(ex.traceparent, "-"); len(parts) == 4 {
@@ -319,7 +341,7 @@ func (h *Handler) finish(ex *exchange) {
 		entry.BytesIn = ex.body.n
 	}
 	if ex.target != nil {
-		entry.Route, entry.Service = ex.target.RouteName, ex.target.Service.Name
+		entry.Group, entry.Route, entry.Service = ex.target.Group, ex.target.RouteName, ex.target.Service.Name
 	}
 	if ctx.Err != nil {
 		entry.Error = ctx.Err.Error()
@@ -490,7 +512,7 @@ func (b *countingBody) Read(p []byte) (int, error) {
 // mirror sends a copy without waiting; when 32 copies are in flight, more are dropped and counted.
 func (h *Handler) mirror(ctx *plugin.Context, serviceID, stage string, r *http.Request) {
 	var service *snapshot.Service
-	for _, candidate := range h.routes.Load().Services() {
+	for _, candidate := range h.table.Load().Services() {
 		if candidate.ID == serviceID {
 			service = candidate
 		}
@@ -555,7 +577,7 @@ func (h *Handler) Signals() []Signal {
 func (h *Handler) CheckHealth(ctx context.Context, now time.Time) {
 	endpoints := h.endpoints.Load()
 	var wg sync.WaitGroup
-	for _, service := range h.routes.Load().Services() {
+	for _, service := range h.table.Load().Services() {
 		for _, peer := range endpoints.Due(service, now) {
 			wg.Add(1)
 			go func() {

@@ -49,7 +49,7 @@ func redact(e proxy.Entry, truncate bool) Record {
 	if truncate {
 		ip = truncateIP(ip)
 	}
-	return Record{Time: e.Time, Kind: "request", Host: e.Host, Stage: e.Stage, Route: e.Route, Operation: e.Operation,
+	return Record{Time: e.Time, Kind: "request", Host: e.Host, Stage: e.Stage, Group: e.Group, Route: e.Route, Operation: e.Operation,
 		Service: e.Service, Instance: e.Instance, Method: e.Method, Path: redactPath(e.Path), Status: e.Status,
 		DurationMs: float64(e.Duration) / 1e6, BytesIn: e.BytesIn, BytesOut: e.BytesOut, ClientIP: ip,
 		Consumer: e.Consumer, TraceID: e.TraceID, RequestID: e.RequestID, Error: e.Error}

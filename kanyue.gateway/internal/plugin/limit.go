@@ -40,7 +40,8 @@ var rateLimit = define("rate-limit", 600, `{"type":"object","additionalPropertie
 			now = scope.Now
 		}
 		by := orString(c.By, "api")
-		return &limit{limiter: scope.Limiter, route: scope.Route, limit: c.Limit, window: windows[c.Window], by: by,
+		// Each stacked limit counts on its own: the API, its stage and the slot key the counter.
+		return &limit{limiter: scope.Limiter, route: scope.Route + "\x00" + scope.Stage + "\x00" + scope.Key, limit: c.Limit, window: windows[c.Window], by: by,
 			reply: Fail(http.StatusTooManyRequests, "请求过于频繁，请稍后再试", limitReasons[by]), now: now}, nil
 	})
 

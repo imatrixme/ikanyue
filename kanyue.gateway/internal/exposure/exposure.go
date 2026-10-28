@@ -1,7 +1,8 @@
-// Package exposure holds the checked-in lists of operations each public site
-// exposes. A list is applied to the configuration as a draft; nothing goes live
-// until it is published from the console. mapi.json is what the mini program
-// calls, kept equal to ikanyue.taro3 by scripts/gateway-exposure.test.mjs and to
+// Package exposure holds the checked-in API groups the gateway exposes: each
+// names a group, its domains and the operations exposed as its APIs. A plan is
+// applied as drafts; nothing goes live until its APIs are released to an
+// environment from the console. mapi.json is what the mini program calls, kept
+// equal to ikanyue.taro3 by scripts/gateway-exposure.test.mjs and to
 // kanyue.server's routes by its manifest test.
 package exposure
 
@@ -11,25 +12,32 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
 //go:embed *.json
 var files embed.FS
 
-// Plan is one site and the routes it exposes.
+// Plan is one API group and the APIs it exposes.
 type Plan struct {
-	Site   string   `json:"site"`
-	Hosts  []string `json:"hosts"`
-	Routes []Route  `json:"routes"`
+	Group   string   `json:"group"`
+	Domains []string `json:"domains"`
+	APIs    []APIs   `json:"apis"`
 }
 
-// Route selects operations of one service by their manifest pattern,
-// "METHOD /path/{param}", or the bare path for any-method operations.
-type Route struct {
-	Name       string   `json:"name"`
+// APIs selects operations of one service by their manifest pattern,
+// "METHOD /path/{param}", or the bare path for any-method operations, and
+// gives them the same settings.
+type APIs struct {
 	Service    string   `json:"service"`
 	Operations []string `json:"operations"`
+	// Visibility is public (default) or private.
+	Visibility string `json:"visibility,omitempty"`
+	// Auth is passthrough (default), none, signature or jwt.
+	Auth string `json:"auth,omitempty"`
+	// PolicySet names the policy set the APIs attach, if any.
+	PolicySet string `json:"policySet,omitempty"`
 }
 
 // Load reads the embedded plan name.json.
@@ -41,7 +49,7 @@ func Load(name string) (Plan, error) {
 	return Parse(raw)
 }
 
-// Parse decodes a plan strictly and rejects empty or duplicated entries.
+// Parse decodes a plan strictly and rejects empty, duplicated or malformed entries.
 func Parse(raw []byte) (Plan, error) {
 	var plan Plan
 	decoder := json.NewDecoder(bytes.NewReader(raw))
@@ -49,19 +57,26 @@ func Parse(raw []byte) (Plan, error) {
 	if err := decoder.Decode(&plan); err != nil {
 		return Plan{}, err
 	}
-	if plan.Site == "" || len(plan.Hosts) == 0 || len(plan.Routes) == 0 {
-		return Plan{}, errors.New("a plan needs a site, its hosts and at least one route")
+	if plan.Group == "" || len(plan.Domains) == 0 || len(plan.APIs) == 0 {
+		return Plan{}, errors.New("a plan needs a group, its domains and at least one batch of APIs")
 	}
-	for _, route := range plan.Routes {
-		if route.Name == "" || route.Service == "" || len(route.Operations) == 0 {
-			return Plan{}, fmt.Errorf("route %q needs a name, a service and operations", route.Name)
+	seen := map[string]bool{}
+	for i, batch := range plan.APIs {
+		if batch.Service == "" || len(batch.Operations) == 0 {
+			return Plan{}, fmt.Errorf("apis[%d] needs a service and operations", i)
 		}
-		seen := map[string]bool{}
-		for _, pattern := range route.Operations {
-			if seen[pattern] || !strings.HasPrefix(pattern[strings.Index(pattern, " ")+1:], "/") {
-				return Plan{}, fmt.Errorf("route %q: duplicated or malformed operation %q", route.Name, pattern)
+		if batch.Visibility != "" && !slices.Contains([]string{"public", "private"}, batch.Visibility) {
+			return Plan{}, fmt.Errorf("apis[%d]: unknown visibility %q", i, batch.Visibility)
+		}
+		if batch.Auth != "" && !slices.Contains([]string{"passthrough", "none", "signature", "jwt"}, batch.Auth) {
+			return Plan{}, fmt.Errorf("apis[%d]: unknown authentication %q", i, batch.Auth)
+		}
+		for _, pattern := range batch.Operations {
+			key := batch.Service + " " + pattern
+			if seen[key] || !strings.HasPrefix(pattern[strings.Index(pattern, " ")+1:], "/") {
+				return Plan{}, fmt.Errorf("apis[%d]: duplicated or malformed operation %q", i, pattern)
 			}
-			seen[pattern] = true
+			seen[key] = true
 		}
 	}
 	return plan, nil
