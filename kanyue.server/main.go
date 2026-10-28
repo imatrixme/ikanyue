@@ -60,8 +60,12 @@ func main() {
 		Registration: registration,
 	})
 
+	failed := exitOnFailure(app.RootCmd)
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
+	}
+	if failed() {
+		os.Exit(1)
 	}
 }
 

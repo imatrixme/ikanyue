@@ -42,8 +42,12 @@ func main() {
 	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway), rotateKeyCommand(app, gateway),
 		configCommand(app, gateway), backupCommand(gateway))
 
+	failed := exitOnFailure(app.RootCmd)
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
+	}
+	if failed() {
+		os.Exit(1)
 	}
 }
 
@@ -168,12 +172,7 @@ func backupCommand(gateway *control.Control) *cobra.Command {
 			check, err := gateway.VerifyBackup(name, maxAge)
 			out, _ := json.MarshalIndent(check, "", "  ")
 			fmt.Println(string(out))
-			if err != nil {
-				// PocketBase discards command errors; a scheduled drill needs the exit status.
-				fmt.Fprintln(os.Stderr, "Error:", err)
-				os.Exit(1)
-			}
-			return nil
+			return err
 		},
 	}
 	verify.Flags().DurationVar(&maxAge, "max-age", 26*time.Hour, "fail when the backup is older; 0 skips the check")

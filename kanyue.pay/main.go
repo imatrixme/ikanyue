@@ -49,7 +49,11 @@ func main() {
 		return se.Next()
 	})
 
+	failed := exitOnFailure(app.RootCmd)
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
+	}
+	if failed() {
+		os.Exit(1)
 	}
 }

@@ -33,11 +33,8 @@ func MaintenanceCommand() *cobra.Command {
 		}
 		if err != nil {
 			cmd.PrintErrln(codeOr(err, "MAINTENANCE_FAILED"))
-			cmd.PrintErrln("Error:", err)
-			// PocketBase discards command errors; release scripts and drills need the exit status.
-			os.Exit(1)
 		}
-		return nil
+		return err
 	}
 	var latest bool
 	backup := &cobra.Command{
