@@ -1,7 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:net';
-import { definition, environment, freePort, matchesIdentity, stageRelays, validIdentity } from './native-stack.mjs';
+import { definition, environment, freePort, matchesIdentity, stageRelays, upgrade, validIdentity } from './native-stack.mjs';
+
+test('older configs are upgraded: stale PocketBase addresses follow the ports, dead ports go, secrets stay', () => {
+  const old = { PORT: '1437', PAY_PORT: '1440', PAY_GATEWAY_URL: 'http://127.0.0.1:1440', PB_PORT: '18190', PAY_PB_PORT: '18192',
+    ADMIN_PORT: '18180', PB_URL: 'http://127.0.0.1:18190', PAY_PB_URL: 'http://127.0.0.1:18192', JWT_SECRET: 'kept' };
+  const next = upgrade(old);
+  assert.equal(next.PB_URL, 'http://127.0.0.1:1437');
+  assert.equal(next.PAY_PB_URL, 'http://127.0.0.1:1440');
+  for (const key of ['PB_PORT', 'PAY_PB_PORT', 'ADMIN_PORT']) assert.equal(key in next, false, key);
+  assert.equal(next.JWT_SECRET, 'kept');
+  assert.match(next.GATEWAY_ENCRYPTION_KEY, /^[a-f0-9]{32}$/);
+  assert.equal(old.PB_URL, 'http://127.0.0.1:18190', 'the input is left alone');
+  // An up-to-date config is a fixed point, so startup does not rewrite the file.
+  assert.equal(JSON.stringify(upgrade(next)), JSON.stringify(next));
+});
 
 test('port conflict preserves the unrelated listener', async () => {
   const listener = createServer();

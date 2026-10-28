@@ -39,25 +39,38 @@ const gatewayDefaults = () => ({
   GATEWAY_PB_PASSWORD: randomBytes(24).toString('hex'),
 });
 
+// Both binaries embed PocketBase, so PB_URL and PAY_PB_URL are their own addresses
+// (maintenance backups use them). They follow the ports and are kept in the file
+// so commands run straight from it reach the running services.
+const derived = (config) => ({ PB_URL: `http://127.0.0.1:${config.PORT}`, PAY_PB_URL: config.PAY_GATEWAY_URL });
+// Ports of the separate PocketBase processes and admin dev server that predate the Go binaries.
+const obsolete = ['PB_PORT', 'PAY_PB_PORT', 'ADMIN_PORT'];
+
+// upgrade brings an older config up to date: generated secrets it predates,
+// addresses that follow the ports, and no settings nothing reads any more.
+function upgrade(config) {
+  const next = { ...config };
+  // Older local configs predate JWT_SECRET and the gateway; persist them so sessions and keys survive restarts.
+  for (const [key, value] of Object.entries({ JWT_SECRET: randomBytes(32).toString('hex'), ...gatewayDefaults() })) {
+    if (!next[key]) next[key] = value;
+  }
+  Object.assign(next, derived(next));
+  for (const key of obsolete) delete next[key];
+  return next;
+}
+
 function settings() {
   if (!existsSync(configPath)) fail('Run test init first; normal startup never initializes data.');
   const config = read(configPath);
-  // Older local configs predate JWT_SECRET; persist one so sessions survive restarts.
-  const missing = Object.entries({ JWT_SECRET: randomBytes(32).toString('hex'), ...gatewayDefaults() })
-    .filter(([key]) => !config[key]);
-  if (missing.length) {
-    Object.assign(config, Object.fromEntries(missing));
-    writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
-  }
-  return config;
+  const next = upgrade(config);
+  if (JSON.stringify(next) !== JSON.stringify(config)) writeFileSync(configPath, JSON.stringify(next, null, 2), { mode: 0o600 });
+  return next;
 }
 const goBin = (config) => config.GO_BIN || 'go';
 function environment(config) {
-  // Both binaries embed PocketBase: PB_URL and PAY_PB_URL are their own addresses (maintenance backups use them).
   // Go builds stay single-package so a restart never saturates the machine.
   // Server and pay register with the local API gateway; each sets its own GATEWAY_INSTANCE_ADDRESS.
-  return { ...process.env, ...config, NODE_ENV: 'development', GOFLAGS: '-p=1',
-    PB_URL: `http://127.0.0.1:${config.PORT}`, PAY_PB_URL: config.PAY_GATEWAY_URL,
+  return { ...process.env, ...config, NODE_ENV: 'development', GOFLAGS: '-p=1', ...derived(config),
     GATEWAY_URL: `http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}` };
 }
 function definition(name, config) {
@@ -268,4 +281,4 @@ async function main() {
 if (process.argv[1] && resolve(process.argv[1]) === script) {
   main().catch((error) => { console.error(error.message); process.exitCode = 1; });
 }
-export { definition, environment, freePort, matchesIdentity, stageRelays, validIdentity };
+export { definition, environment, freePort, matchesIdentity, stageRelays, upgrade, validIdentity };
