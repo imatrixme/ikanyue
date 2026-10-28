@@ -63,8 +63,10 @@ services:
   # The API gateway that replaces the Aliyun API gateway at cutover; off unless started
   # with `--profile gateway`. OpenResty sends API traffic to the data plane (GATEWAY_PORT);
   # the admin plane and console stay on host loopback, reached over an SSH tunnel.
-  gateway:
+  gateway: &gateway
     profiles: ["gateway"]
+    # Named so the standby runs exactly the image built for the gateway.
+    image: kanyue-gateway:local
     build:
       context: ./kanyue.gateway
       dockerfile: Dockerfile
@@ -90,6 +92,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+    # The data plane drains in-flight requests for up to 10s on SIGTERM.
+    stop_grace_period: 30s
+
+  # Carries traffic while the gateway is recreated (scripts/gateway-rollout.mjs): same image
+  # and data volume, OpenResty lists it as the `backup` upstream. Runs only during a rollout.
+  gateway-standby:
+    <<: *gateway
+    profiles: ["gateway-standby"]
+    restart: "no"
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${GATEWAY_STANDBY_PORT:-1470}:1460"
+      - "127.0.0.1:${GATEWAY_STANDBY_ADMIN_PORT:-1471}:1461"
 
   miniapp:
     profiles: ["test"]

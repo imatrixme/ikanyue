@@ -269,11 +269,11 @@ func (c *Control) scheduleRebuild() {
 	}
 }
 
-// rebuildEndpoints swaps in the routable instances: online, and confirmed when typed by hand.
-func (c *Control) rebuildEndpoints() error {
+// routableInstances are online, and confirmed when typed by hand.
+func (c *Control) routableInstances() ([]snapshot.Instance, error) {
 	records, err := c.app.FindAllRecords(schema.Instances, dbx.HashExp{"status": "online"})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	instances := make([]snapshot.Instance, 0, len(records))
 	for _, record := range records {
@@ -283,20 +283,33 @@ func (c *Control) rebuildEndpoints() error {
 		instances = append(instances, snapshot.Instance{Service: record.GetString("service"), Stage: record.GetString("stage"),
 			Address: record.GetString("address"), Weight: record.GetInt("weight")})
 	}
+	return instances, nil
+}
+
+// rebuildEndpoints swaps in the routable instances.
+func (c *Control) rebuildEndpoints() error {
+	instances, err := c.routableInstances()
+	if err != nil {
+		return err
+	}
 	endpoints, err := snapshot.NewEndpoints(instances, c.handler.Endpoints())
 	if err != nil {
 		return err
 	}
 	c.handler.SetEndpoints(endpoints)
+	c.routable = routableKey(instances)
 	return nil
 }
 
-// loop runs expiry, DNS refresh and coalesced endpoint rebuilds until ctx ends.
+// loop runs expiry, DNS refresh, coalesced endpoint rebuilds and the sync with
+// other processes until ctx ends.
 func (c *Control) loop(ctx context.Context) {
 	expiry := time.NewTicker(HeartbeatInterval)
 	dns := time.NewTicker(dnsInterval)
+	sync := time.NewTicker(syncInterval)
 	defer expiry.Stop()
 	defer dns.Stop()
+	defer sync.Stop()
 	report := func(what string, err error) {
 		if err != nil {
 			c.app.Logger().Error(what+" failed", "error", err.Error())
@@ -313,6 +326,8 @@ func (c *Control) loop(ctx context.Context) {
 			report("DNS discovery", c.ResolveDNS(ctx, net.DefaultResolver.LookupHost))
 		case <-c.rebuild:
 			report("Endpoint rebuild", c.rebuildEndpoints())
+		case <-sync.C:
+			report("Sync with other processes", c.sync())
 		}
 	}
 }

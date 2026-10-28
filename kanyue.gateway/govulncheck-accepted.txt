@@ -1,0 +1,10 @@
+# Reachable vulnerabilities CI accepts, one ID per line with the reason.
+# Remove a line once the fix ships; CI warns about lines that no longer match.
+
+# PocketBase OAuth2 autolinking account pre-hijacking (fixed in v0.37.4). The gateway
+# has no OAuth2 providers: superusers sign in with password and TOTP only.
+GO-2026-5548
+# PocketBase unhandled panic in batch and realtime workers (fixed in v0.39.7). Batch is
+# off, and the admin plane answers on loopback only. Upgrading PocketBase runs its system
+# migrations on the data directory, so it is planned as its own change.
+GO-2026-6489

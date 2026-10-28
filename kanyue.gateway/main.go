@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -36,7 +37,7 @@ func main() {
 	handler := proxy.New(cfg.Trusted, slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	gateway := control.New(app, cfg, handler)
 	gateway.Register()
-	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway))
+	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway), rotateKeyCommand(app, gateway))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
@@ -112,5 +113,35 @@ func exposureCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobr
 			return nil
 		},
 	})
+	return command
+}
+
+// rotateKeyCommand re-seals the stored secrets with a new key while no gateway
+// serves the data directory; start the gateway with the new key afterwards.
+func rotateKeyCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Command {
+	var newKeyEnv string
+	command := &cobra.Command{
+		Use:          "rotate-key --newKeyEnv=<variable>",
+		Short:        "Re-seal secrets, released configurations and last-known-good files with a new encryption key",
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+		RunE: func(*cobra.Command, []string) error {
+			if newKeyEnv == "" {
+				return errors.New("--newKeyEnv names the variable holding the new 32 character key")
+			}
+			if err := app.RunAllMigrations(); err != nil {
+				return err
+			}
+			report, err := gateway.RotateKey(newKeyEnv)
+			out, _ := json.MarshalIndent(report, "", "  ")
+			fmt.Println(string(out))
+			if err != nil {
+				return err
+			}
+			fmt.Println("Rotated. Start the gateway with the new key; keep the old key while backups taken before now are kept.")
+			return nil
+		},
+	}
+	command.Flags().StringVar(&newKeyEnv, "newKeyEnv", "", "environment variable holding the new key")
 	return command
 }

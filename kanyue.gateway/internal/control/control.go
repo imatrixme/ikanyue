@@ -40,6 +40,7 @@ type Control struct {
 
 	publishMu sync.Mutex
 	rebuild   chan struct{}
+	routable  string   // routableKey of the endpoints served; owned by the loop
 	syncing   sync.Map // service id → manifest sync in flight
 
 	obs    observer
@@ -58,6 +59,17 @@ func (c *Control) Register() {
 		if err := c.checkAdminAddress(se.Server.Addr); err != nil {
 			return err
 		}
+		// Held until exit: shared with a rollout's other process, refused while the key rotates.
+		lock, err := lockDataDir(c.app.DataDir(), false)
+		if err != nil {
+			return fmt.Errorf("data directory: %w", err)
+		}
+		c.app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+			if lock != nil {
+				lock.Close()
+			}
+			return e.Next()
+		})
 		if err := c.migrateLegacy(); err != nil {
 			return fmt.Errorf("migrating sites and routes to API groups: %w", err)
 		}

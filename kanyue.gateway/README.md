@@ -162,7 +162,8 @@ docker compose --profile gateway up -d gateway
 
 ```nginx
 upstream kanyue_gateway {
-    server 127.0.0.1:1460;
+    server 127.0.0.1:1460 max_fails=1 fail_timeout=2s;
+    server 127.0.0.1:1470 backup;      # gateway-standby，只在升级期间运行
     keepalive 64;
 }
 
@@ -175,6 +176,7 @@ server {
     client_max_body_size 20m;          # 与 body-limit 插件一致或更大
     location / {
         proxy_pass http://kanyue_gateway;
+        proxy_next_upstream error timeout;   # 连接被拒时转到 backup，请求尚未发出
         proxy_http_version 1.1;
         proxy_set_header Connection "";
         proxy_set_header Host $host;
@@ -190,6 +192,59 @@ server {
 - 管理面 `1461` 不配置任何站点，用 SSH 隧道访问：
   - 执行 `ssh -L 1461:127.0.0.1:1461 <host>`；
   - 然后打开 `http://127.0.0.1:1461/console/`。
+
+### 零停机升级
+
+在仓库根目录运行：
+
+```sh
+node scripts/gateway-rollout.mjs        # 已构建好镜像时加 --no-build
+```
+
+流程：
+
+1. 构建镜像 `kanyue-gateway:local`；
+2. 用新镜像启动 `gateway-standby`（数据面 `1470`、管理面 `1471`，共用 `gateway_data`），等它健康；
+3. 重建 `gateway`：旧进程收到 SIGTERM 后排空在途请求（最多 10 秒，停止宽限 30 秒），新连接被拒，OpenResty 转给 `backup`；
+4. 等新的 `gateway` 健康，再停掉 `gateway-standby`。
+
+失败时：
+
+- standby 起不来：脚本停掉 standby 并退出，`gateway` 没有被动过；
+- 新 `gateway` 起不来：standby 继续承接流量，修好后重跑脚本。
+
+两个进程同时运行时：
+
+- 每 5 秒各自对齐一次：别的进程上线的版本、注册或下线的实例都会被采用，所以升级期间仍可上线和注册；
+- 分钟指标按主键合并，两边写同一分钟会累加，不丢数；
+- 告警可能被两个进程各评估一次，几十秒的窗口内可能重复通知；
+- 新版本启动时会执行迁移，旧进程要能读迁移后的库。发布说明标了“不兼容的 schema 变更”的版本，改用停机升级：`docker compose --profile gateway up -d --build gateway`。
+
+### 轮换加密密钥
+
+离线命令，要求独占数据目录锁：网关（或 standby）在运行时会被拒绝。
+
+1. 生成新的 32 字符密钥，放进另一个环境变量，例如 `GATEWAY_ENCRYPTION_KEY_NEXT`；
+2. 停网关：`docker compose --profile gateway stop gateway gateway-standby`；
+3. 运行：
+
+   ```sh
+   docker compose --profile gateway run --rm --no-deps -e GATEWAY_ENCRYPTION_KEY_NEXT gateway \
+     kanyue-gateway rotate-key --dir=/pb_data --encryptionEnv=GATEWAY_ENCRYPTION_KEY --newKeyEnv=GATEWAY_ENCRYPTION_KEY_NEXT
+   ```
+
+4. 把 `GATEWAY_ENCRYPTION_KEY` 换成新密钥，启动网关。
+
+命令做的事：
+
+- 先备份为 `pre-rotate-key-*.zip`；
+- 所有 `enc:v1:` 密文（插件密钥、消费者 AppSecret、告警与导出密钥、TOTP 种子，以及环境版本、上线记录里的副本）先全部用旧密钥解开，有一个解不开就中止，什么都不写；
+- 在一个事务里用新密钥重新加密并写回，同时用新密钥保存 PocketBase 设置；之后改写最近可用快照文件，并逐个环境用新密钥编译校验；
+- 输出只含计数；审计里记一条 `rotate-key`。
+
+中途失败可以直接重跑：已经是新密钥的值会保留并计入 `already`。
+
+旧密钥不要丢：轮换前的备份（包括 `pre-rotate-key-*.zip`）只能用旧密钥恢复，保留到这些备份过期为止。
 
 ## 同机 VictoriaLogs（可选）
 
