@@ -108,7 +108,7 @@ DAO impact:
 | `kanyue.pay` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；联调 `node scripts/commerce-smoke.mjs --tiered` |
 | `kanyue.server` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；契约测试 `BASE_URL=… node --test "kanyue.server/contract/*.test.mjs"` |
 | `kanyue.gateway` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；控制台在 `console/`：`npm run lint`、`npm test`、`npm run build`（产物嵌入网关）；压测 `GOMAXPROCS=1 go test -tags load -run TestLoad -v ./internal/control/` |
-| 根脚本 | `node --test scripts/native-stack.test.mjs`；OpenSpec 用 `openspec validate <change> --strict` |
+| 根脚本 | `node --test scripts/native-stack.test.mjs`、`node --test scripts/gateway-exposure.test.mjs`（小程序接口与网关暴露清单一致）；OpenSpec 用 `openspec validate <change> --strict` |
 <!--VERIFY-ATTENTION:END-->
 
 <!-- USER-REQUIREMENTS:START -->

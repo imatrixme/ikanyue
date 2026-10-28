@@ -37,9 +37,17 @@ The gateway SHALL build routes from discovered services and operations, and SHAL
 - **WHEN** a manifest no longer contains an operation used by a route
 - **THEN** the route is flagged in the console and an alert is raised, and the route is not deleted automatically
 
-### Requirement: Gateway imports Aliyun API definitions
-The gateway SHALL import Swagger exported from Aliyun API Gateway, including its `x-aliyun-apigateway-*` extensions, into draft services, operations and routes for review before publish.
+### Requirement: Gateway applies checked-in exposure plans
+The gateway SHALL ship checked-in exposure plans, each naming a site, its hosts and per route the exact operations to expose, and SHALL apply a plan as a draft that selects exactly the listed operations the service currently serves. The `mapi` plan SHALL equal the operations the mini program calls, which is what the Aliyun API Gateway exposes today, and checks SHALL fail when the plan, the mini program calls or the served routes drift apart.
 
-#### Scenario: Import creates drafts
-- **WHEN** an operator imports an Aliyun export
-- **THEN** draft routes are created with their stages, backends and policies, and nothing is published until the operator publishes
+#### Scenario: Apply creates a draft
+- **WHEN** an operator applies the `mapi` plan
+- **THEN** the `mapi.ikanyue.com` site and its route select exactly the listed operations, the change is audited, and nothing is published until the operator publishes
+
+#### Scenario: Listed operation is not served yet
+- **WHEN** a listed operation belongs to a feature the service has switched off
+- **THEN** the apply reports it as not served, selects the rest, and applying again after the feature is on selects it
+
+#### Scenario: Plan drifts from the mini program
+- **WHEN** the mini program calls an operation the plan does not list, or the plan lists one the mini program no longer calls or the service does not route
+- **THEN** the repository checks fail

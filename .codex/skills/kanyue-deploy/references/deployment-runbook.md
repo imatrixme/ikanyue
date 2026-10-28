@@ -130,13 +130,18 @@ If managed by 1Panel, use the 1Panel-managed reload path but still run syntax va
 2. In the console, confirm registration:
    - `kanyue.server` and `kanyue.pay` instances show online;
    - their operations show as pending.
-3. Publish only the selected operations.
-4. Verify on the data plane:
+3. Register what the Aliyun gateway exposes today, the mini program calls, then review the `miniapp` route in the console and publish:
    ```bash
-   curl -fsS -H 'Host: mapi.ikanyue.com' 'http://127.0.0.1:1460/v1/public/course-catalog'
+   docker compose exec gateway kanyue-gateway exposure apply mapi --dir=/pb_data --encryptionEnv=GATEWAY_ENCRYPTION_KEY
+   ```
+   Operations it lists as not served belong to switched-off features; apply again after turning them on.
+4. Verify on the data plane: a listed call answers, anything else is 404:
+   ```bash
+   curl -fsS -H 'Host: mapi.ikanyue.com' 'http://127.0.0.1:1460/v1/public/venues'
+   curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: mapi.ikanyue.com' 'http://127.0.0.1:1460/ops/students'   # 404
    ```
 5. Point a bypass domain at `127.0.0.1:1460` and run the mini program and a payment callback through it.
-6. Switch the API domains last.
+6. Switch `mapi.ikanyue.com` last.
 
 Rollback:
 - Point OpenResty back at the Aliyun gateway (or straight at `API_PORT`) and reload.

@@ -16,6 +16,7 @@ import (
 
 	"kanyue.gateway/internal/config"
 	"kanyue.gateway/internal/control"
+	"kanyue.gateway/internal/exposure"
 	"kanyue.gateway/internal/proxy"
 	_ "kanyue.gateway/internal/schema"
 )
@@ -34,7 +35,7 @@ func main() {
 	handler := proxy.New(cfg.Trusted, slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	gateway := control.New(app, cfg, handler)
 	gateway.Register()
-	app.RootCmd.AddCommand(totpCommand(app, gateway))
+	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
@@ -73,6 +74,43 @@ func totpCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Co
 		Short:        "Remove a superuser's authenticator",
 		SilenceUsage: true,
 		RunE:         run(gateway.RemoveTOTP),
+	})
+	return command
+}
+
+// exposureCommand applies a checked-in exposure plan as a draft; operators
+// review and publish it in the console.
+func exposureCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Command {
+	command := &cobra.Command{Use: "exposure", Short: "Apply checked-in lists of exposed operations"}
+	command.AddCommand(&cobra.Command{
+		Use:          "apply <plan>",
+		Short:        "Make a site's routes select exactly the operations of an embedded plan, e.g. mapi; does not publish",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, args []string) error {
+			plan, err := exposure.Load(args[0])
+			if err != nil {
+				return err
+			}
+			if err := app.RunAllMigrations(); err != nil {
+				return err
+			}
+			applied, err := gateway.ApplyExposure(plan, "cli")
+			if err != nil {
+				return err
+			}
+			for _, route := range applied {
+				fmt.Printf("route %s on %s: %d operations selected (+%d -%d)\n", route.Route, plan.Site, route.Selected, len(route.Added), len(route.Removed))
+				for _, pattern := range route.Removed {
+					fmt.Println("  removed:", pattern)
+				}
+				for _, pattern := range route.NotServed {
+					fmt.Println("  not served by the service now, apply again once it is:", pattern)
+				}
+			}
+			fmt.Println("Nothing is live yet: review the routes and publish in the console.")
+			return nil
+		},
 	})
 	return command
 }

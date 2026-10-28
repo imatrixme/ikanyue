@@ -1,0 +1,60 @@
+{
+  "site": "mapi",
+  "hosts": [
+    "mapi.ikanyue.com"
+  ],
+  "routes": [
+    {
+      "name": "miniapp",
+      "service": "kanyue.server",
+      "operations": [
+        "GET /v1/activity/find",
+        "GET /v1/points/me",
+        "GET /v1/public/venues",
+        "GET /v1/reward-items",
+        "GET /v1/schedule/upcoming",
+        "GET /v1/student/appointments",
+        "GET /v1/student/appointments/{appointmentId}",
+        "GET /v1/student/appointments/{appointmentId}/cancellation-preview",
+        "GET /v1/student/booking-options",
+        "GET /v1/student/booking-slots",
+        "GET /v1/student/commerce/catalog",
+        "GET /v1/student/commerce/orders",
+        "GET /v1/student/commerce/orders/{id}",
+        "GET /v1/student/commerce/orders/{id}/refund-preview",
+        "GET /v1/student/learning/courses/{courseId}",
+        "GET /v1/student/learning/lessons",
+        "GET /v1/student/learning/lessons/{lessonId}",
+        "GET /v1/student/learning/overview",
+        "GET /v1/student/learning/records",
+        "GET /v1/teacher/appointments",
+        "GET /v1/teacher/appointments/{appointmentId}",
+        "GET /v1/teacher/booking/dashboard",
+        "GET /v1/teacher/calendar",
+        "GET /v1/teacher/offerings/{offeringId}/availability",
+        "GET /v1/teacher/schedule",
+        "GET /v1/user/wechat-roles",
+        "POST /v1/student/appointments",
+        "POST /v1/student/appointments/{appointmentId}/cancel",
+        "POST /v1/student/appointments/{appointmentId}/withdraw",
+        "POST /v1/student/commerce/orders",
+        "POST /v1/student/commerce/orders/{id}/cashier",
+        "POST /v1/student/commerce/orders/{id}/refresh",
+        "POST /v1/student/commerce/orders/{id}/refunds",
+        "POST /v1/teacher/appointments/{appointmentId}/cancel",
+        "POST /v1/teacher/appointments/{appointmentId}/confirm",
+        "POST /v1/teacher/appointments/{appointmentId}/decline",
+        "POST /v1/teacher/appointments/{appointmentId}/reschedule",
+        "POST /v1/teacher/availability-overrides/{overrideId}/cancel",
+        "POST /v1/teacher/offerings/{offeringId}/availability-overrides",
+        "POST /v1/user/login",
+        "POST /v1/user/refresh",
+        "POST /v1/user/switch-wechat-role",
+        "POST /v1/user/update",
+        "POST /v1/user/wechat-login",
+        "POST /v1/user/wechat-role-login",
+        "PUT /v1/teacher/offerings/{offeringId}/availability"
+      ]
+    }
+  ]
+}

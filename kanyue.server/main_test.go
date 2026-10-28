@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -119,6 +121,41 @@ func TestManifestClassifiesEveryRoute(t *testing.T) {
 		op := listed[pattern]
 		if op["x-kanyue-module"] != want[0] || op["x-kanyue-auth"] != want[1] {
 			t.Errorf("%s = %v/%v, want %v", pattern, op["x-kanyue-module"], op["x-kanyue-auth"], want)
+		}
+	}
+
+	// The gateway's exposure plans name this service's routes exactly and never
+	// expose operator or service-to-service routes.
+	plans, err := filepath.Glob("../kanyue.gateway/internal/exposure/*.json")
+	if err != nil || len(plans) == 0 {
+		t.Fatalf("no exposure plans: %v", err)
+	}
+	for _, file := range plans {
+		raw, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var plan struct {
+			Routes []struct {
+				Service    string   `json:"service"`
+				Operations []string `json:"operations"`
+			} `json:"routes"`
+		}
+		if err := json.Unmarshal(raw, &plan); err != nil {
+			t.Fatal(err)
+		}
+		for _, route := range plan.Routes {
+			if route.Service != "kanyue.server" {
+				continue
+			}
+			for _, pattern := range route.Operations {
+				op, ok := listed[pattern]
+				if !ok {
+					t.Errorf("%s exposes %s, which is not served", filepath.Base(file), pattern)
+				} else if op["x-kanyue-auth"] == "ops" || op["x-kanyue-auth"] == "service" {
+					t.Errorf("%s exposes %s, an %v route", filepath.Base(file), pattern, op["x-kanyue-auth"])
+				}
+			}
 		}
 	}
 }

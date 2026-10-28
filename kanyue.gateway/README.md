@@ -22,6 +22,23 @@
   - 未勾选任何接口、勾选了已移除或其他服务的接口，都会让发布失败。
   - 内部接口不要勾选。
 
+## 暴露清单（mapi.ikanyue.com）
+
+阿里云网关目前只公开小程序在用的接口；迁移时照此登记，不导入 Swagger。
+
+- 清单：`internal/exposure/mapi.json`，内容是站点 `mapi`（`mapi.ikanyue.com`）和路由 `miniapp` 勾选的 `kanyue.server` 接口。
+  - 清单内嵌进二进制。
+  - 写法与接口清单一致：`METHOD /path/{param}`。
+- 应用：`kanyue-gateway exposure apply mapi --dir=… --encryptionEnv=GATEWAY_ENCRYPTION_KEY`。
+  - 站点和路由会被改成恰好勾选清单里的接口，并记审计。
+  - **不会发布**，在控制台核对后再发布。
+  - 控制台里对这条路由的手工勾选，会在下次应用时被覆盖。
+  - server 当前没提供的接口（例如 `COURSE_COMMERCE_ENABLED` 未开时的下单接口）会被列出并跳过；开启后再应用一次即可。
+- 守卫：
+  - `node --test scripts/gateway-exposure.test.mjs` 要求清单与 `ikanyue.taro3/utils` 里的 `iNet` 调用一致。只有 `mock-pay` 例外，它只在开发环境注册。
+  - kanyue.server 的清单测试要求清单里每个接口都由 server 提供，且不是 `ops` 或 `service` 接口。
+  - 小程序新增接口时，同一次改动里更新清单。
+
 ## 本地开发
 
 在仓库根目录：
@@ -95,7 +112,7 @@ docker compose --profile gateway up -d gateway
 
 切流前的检查：
 
-- 先在控制台建站点和路由、勾选接口并发布；
+- server 注册后运行 `kanyue-gateway exposure apply mapi`，在控制台核对路由并发布；
 - 发布前检查会要求每个服务在默认环境 `RELEASE` 至少一个健康实例（只有 LOCAL 等其他环境的实例不算）；
 - 再把 OpenResty 的 API 域名指到数据面。
 
@@ -110,7 +127,7 @@ upstream kanyue_gateway {
 server {
     listen 443 ssl;
     http2 on;
-    server_name mapi.ikanyue.com xapi.ikanyue.com;
+    server_name mapi.ikanyue.com;
     # ssl_certificate / ssl_certificate_key 由 1Panel 管理
 
     client_max_body_size 20m;          # 与 body-limit 插件一致或更大

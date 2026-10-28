@@ -1,5 +1,5 @@
 ## 0. Prerequisites
-- [ ] 0.1 Obtain the Aliyun API Gateway export (APIs, stages, throttling, IP control, plugins, custom domains) and resolve every "待确认" row in `design.md`
+- [ ] 0.1 (API list and domain settled: Aliyun exposes only the mini program calls on `mapi.ikanyue.com`; capability rows still open) Obtain the Aliyun API Gateway export (APIs, stages, throttling, IP control, plugins, custom domains) and resolve every "待确认" row in `design.md`
 - [ ] 0.2 Confirm VPS provider/region and ICP access filing for `mapi.ikanyue.com`
 - [ ] 0.3 Pick the alert channel(s); local ports default to `1460` (data plane) and `1461` (admin plane)
 
@@ -13,7 +13,7 @@
 - [x] 1.7 Manifest from the router itself in `kanyue.server` and `kanyue.pay` (`gatewaylink`); internal-only `/internal/gateway/manifest` (OpenAPI 3.1 with module, auth scope, idempotency); heartbeat registration from `GATEWAY_*` env
 - [x] 1.8 Guard tests that every served route is in the manifest with a module and a classified auth scope, and vice versa
 - [x] 1.9 Gateway pulls manifests on registration/hash change; new operations go to "pending", removed ones are marked, logged and block publishing routes that select them (alerting arrives with 3.5)
-- [ ] 1.10 Aliyun Swagger importer producing draft services, operations and routes (blocked on 0.1: needs the real export format)
+- [x] 1.10 Exposure plan instead of a Swagger importer: `internal/exposure/mapi.json` lists the mini program calls, `kanyue-gateway exposure apply mapi` writes the site and route as a draft; guarded by `scripts/gateway-exposure.test.mjs` and the kanyue.server manifest test
 - [x] 1.11 Graceful shutdown (deregister, drain) and `SO_REUSEPORT` restart
 
 ## 2. G1 Aliyun replacement

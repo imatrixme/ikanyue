@@ -14,7 +14,7 @@
 
 - 页面目录 `src/pages/<camelCase>/`：`index.vue`、`index.scss`、`index.config.js`，可选 `pageLogic.js`（纯逻辑，配单测）。共享组件放 `src/components/`（PascalCase）。
 - Vue 组件使用 Options API（`export default { data, computed, methods }`），4 空格缩进、单引号；不在单个改动里混入 `<script setup>` 迁移。
-- 网络请求只经根目录 `utils/request.js` 与 `utils/apis.js`；登录态与身份在 `utils/usermanager.js`、`utils/rolemanager.js`（教师底栏由 `RoleManager.applyTabBar` 切换）。
+- 网络请求只经根目录 `utils/request.js` 与 `utils/apis.js`（及同目录的 `commerce.js` 等）；新增或删除接口调用时，同一改动更新网关暴露清单 `kanyue.gateway/internal/exposure/mapi.json`，否则 `scripts/gateway-exposure.test.mjs` 失败、上线后经网关返回 404；登录态与身份在 `utils/usermanager.js`、`utils/rolemanager.js`（教师底栏由 `RoleManager.applyTabBar` 切换）。
 - 课程、预约、活动、积分的时间一律经 `utils/academyTime.js` 按看乐时间（UTC+08:00，与 API 一致）显示和拼装，不用 `getHours()` 等设备时区方法。
 - 带 `Idempotency-Key` 的写操作（预约、教师处理、可预约时间、下单、退款）经 `utils/commandKeys.js` 的 `withCommandKey(draft, send)`，同一用户同一草稿重试复用同一个键。
 - 样式只用 `src/styles/_tokens.scss` 与 `theme.mjs` 的 token；不写裸色值和裸字号/字重/行高（e2e 守卫会拦截）。`_brand.generated.scss` 由根目录 `scripts/sync-design-tokens.mjs` 生成，不手改。

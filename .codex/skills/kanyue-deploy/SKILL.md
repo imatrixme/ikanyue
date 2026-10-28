@@ -71,9 +71,9 @@ Bring-up order:
 2. Start the gateway with `GATEWAY_REGISTRATION_TOKEN` and a 32-character `GATEWAY_ENCRYPTION_KEY`.
 3. Enroll the console superuser's authenticator: `kanyue-gateway totp enroll <email> --dir=/pb_data --encryptionEnv=GATEWAY_ENCRYPTION_KEY` (inside the gateway container, which already has the key).
 4. Set `GATEWAY_URL=http://gateway:1461` plus the token on `server` (and pay) so they register.
-5. In the console, create the site and routes, tick exactly the operations to expose, and publish.
+5. Run `kanyue-gateway exposure apply mapi` (the mini program calls on `mapi.ikanyue.com`, which is all the Aliyun gateway exposes), review the route in the console, and publish.
 
-Shadow-run on a bypass domain first. Then switch the API domains in OpenResty; the Aliyun gateway stays as the rollback target until the observation window closes. Rolling back a bad config is a console rollback (it creates a new version), not a data restore. See `kanyue.gateway/README.md` (OpenResty sample, VictoriaLogs, backups).
+Shadow-run on a bypass domain first. Then switch `mapi.ikanyue.com` in OpenResty; the Aliyun gateway stays as the rollback target until the observation window closes. Rolling back a bad config is a console rollback (it creates a new version), not a data restore. See `kanyue.gateway/README.md` (OpenResty sample, VictoriaLogs, backups).
 
 ## References
 

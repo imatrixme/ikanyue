@@ -41,7 +41,7 @@ kanyue.gateway
 |---|---|---|
 | 服务（Service） | 自注册 / DNS / 静态登记 | 起名、分组、设置负载均衡与健康检查 |
 | 实例（Instance） | 自注册心跳、DNS 解析结果 | 只读；可临时摘除 |
-| 接口（Operation） | 服务的 OpenAPI 文档、阿里云 Swagger 导入 | 只读；选择后挂到路由 |
+| 接口（Operation） | 服务的 OpenAPI 文档 | 只读；选择后挂到路由 |
 | 路由（Route） | 运维创建：选择站点、环境、接口 | 配匹配条件、插件、流量策略 |
 | 消费者（Consumer） | 运维创建 | AppKey/Secret、JWT 声明映射、限流配额 |
 
@@ -199,7 +199,7 @@ type Exporter interface {
 | 日志服务 SLS、云监控告警 | 待确认 | 本地请求日志、指标、告警；外部日志用 JSON lines 导出到自建 VictoriaLogs（D10） |
 | 结果缓存 | 待确认 | 若在用，第一期补 `cache` 插件；否则放第二期 |
 | WebSocket | 待确认 | 原生支持 |
-| Swagger 导入导出 | — | 导入阿里云导出的 Swagger（含 `x-aliyun-apigateway-*` 扩展）生成服务、接口、路由草稿 |
+| Swagger 导入导出 | 不做 | 阿里云只公开小程序在用的接口；`kanyue.gateway/internal/exposure/mapi.json` 登记这些接口，`kanyue-gateway exposure apply mapi` 生成站点与路由草稿 |
 
 “待确认”项在拿到阿里云配置导出后定稿：在用的必须在第一期实现并通过对照测试，未用的可以下放。
 
