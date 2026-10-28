@@ -28,7 +28,7 @@ Administrators SHALL open each student on a dedicated page that gathers lesson-h
 
 #### Scenario: Administrator renews a student
 - **WHEN** an administrator opens `/students/:studentId` and chooses "报课/续课"
-- **THEN** Admin opens the enrollment dialog in 账务 with that student preselected
+- **THEN** Admin opens the enrollment dialog in 收款 → 报课 with that student preselected
 
 #### Scenario: Upcoming lessons on the student page
 - **WHEN** the student is on the roster of future lessons

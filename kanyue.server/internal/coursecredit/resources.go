@@ -52,6 +52,14 @@ var resources = map[string]resource{
 			"validTo", "version", "status", "created"},
 		statuses: []string{"draft", "active", "inactive"},
 	},
+	"conversionRules": {
+		collection: "conversion_rules", sort: "-validFrom,-version",
+		fields: []string{"id", "sourceCreditTypeId", "targetCreditTypeId", "sourceQuantity", "targetQuantity",
+			"minSourceQuantity", "maxSourceQuantity", "expiryPolicy", "activationMode",
+			"validityDurationDays", "activationDeadlineDays", "reversible", "referenceValueLimit",
+			"validFrom", "validTo", "version", "status", "created"},
+		statuses: []string{"draft", "active", "inactive"},
+	},
 	"classes": {
 		collection: "classes", sort: "-termStart,name",
 		fields: []string{"id", "code", "name", "courseSpecId", "defaultCreditTypeId", "termStart",
@@ -95,6 +103,13 @@ var resources = map[string]resource{
 		fields: []string{"id", "sessionId", "teacherId", "role", "assignmentSource", "actualStatus",
 			"creditStatus", "created", "updated"},
 		filterFields: []string{"sessionId", "teacherId", "actualStatus", "creditStatus"},
+	},
+	"teacherEvents": {
+		collection: "teacher_credit_events", sort: "-created",
+		fields: []string{"id", "sessionTeacherId", "teacherId", "ruleId", "eventType", "quantityDelta",
+			"status", "operationId", "confirmationOfEventId", "reversalOfEventId", "reason", "created"},
+		statuses:     []string{"pending", "confirmed", "reversed"},
+		filterFields: []string{"teacherId", "sessionTeacherId"},
 	},
 }
 

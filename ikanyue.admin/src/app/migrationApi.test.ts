@@ -17,7 +17,7 @@ describe('course credit migration api', () => {
     expect(shadow).toMatchObject({ status: 'passed', writeCount: 0 })
   })
 
-  it('maps inventory, preview, and apply to authenticated Hono routes', async () => {
+  it('maps inventory, preview, and apply to authenticated API routes', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ code: 10000, data: {} }) })
     vi.stubGlobal('fetch', fetchMock)
     const api = createHttpMigrationOpsApi('/ops')

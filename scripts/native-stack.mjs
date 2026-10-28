@@ -10,8 +10,7 @@ const script = fileURLToPath(import.meta.url);
 const root = resolve(dirname(script), '..');
 const state = join(root, '.local/native');
 const configPath = join(state, 'environment.json');
-const names = ['server', 'pay-pocketbase', 'gateway', 'hono', 'commerce-worker', 'admin', 'miniapp'];
-const backend = join(root, 'ikanyue.mapi.hono');
+const names = ['server', 'gateway', 'miniapp'];
 const server = join(root, 'kanyue.server');
 const pay = join(root, 'kanyue.pay');
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -19,6 +18,8 @@ const fail = (message) => { throw new Error(message); };
 const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
 const pidFile = (name) => join(state, 'run', `${name}.json`);
 const logFile = (name) => join(state, 'logs', `${name}.log`);
+const businessData = () => `--dir=${join(state, 'business-data')}`;
+const paymentData = () => `--dir=${join(state, 'payment-data')}`;
 
 function settings() {
   if (!existsSync(configPath)) fail('Run test init first; normal startup never initializes data.');
@@ -30,35 +31,19 @@ function settings() {
   }
   return config;
 }
-const honoPort = (config) => config.HONO_PORT || '1438';
 const goBin = (config) => config.GO_BIN || 'go';
-const honoOwns = (config, module) => String({ ...process.env, ...config }.KANYUE_HONO_MODULES || '')
-  .split(',').map((item) => item.trim()).includes(module);
 function environment(config) {
-  // kanyue.server owns PORT and proxies unmigrated routes to Hono; Hono and the seed scripts reach PocketBase through it.
-  return { ...process.env, ...config, NODE_ENV: 'development', KANYUE_ENV_FILE: '/dev/null',
-    PB_URL: `http://127.0.0.1:${config.PORT}`, HONO_UPSTREAM_URL: `http://127.0.0.1:${honoPort(config)}`,
-    HOST: '127.0.0.1', PAY_HOST: '127.0.0.1',
-    VITE_OPS_API_BASE: '/ops', KANYUE_LOCAL_API_ORIGIN: `http://127.0.0.1:${config.PORT}`,
-    PATH: `${dirname(config.BUN_BIN)}:${process.env.PATH || ''}` };
+  // Both binaries embed PocketBase: PB_URL and PAY_PB_URL are their own addresses (maintenance backups use them).
+  // Go builds stay single-package so a restart never saturates the machine.
+  return { ...process.env, ...config, NODE_ENV: 'development', GOFLAGS: '-p=1',
+    PB_URL: `http://127.0.0.1:${config.PORT}`, PAY_PB_URL: config.PAY_GATEWAY_URL };
 }
 function definition(name, config) {
-  // The payment PocketBase gets its own migrations directory and no dashboard auto-migrations; schema comes from its script.
-  const pb = (port, directory) => ({ cwd: root, command: [config.POCKETBASE_BIN, 'serve',
-    `--http=127.0.0.1:${port}`, `--dir=${join(state, directory)}`, `--migrationsDir=${join(state, `${directory}-migrations`)}`,
-    '--automigrate=false'], port: Number(port), url: `http://127.0.0.1:${port}/api/health` });
   const definitions = {
-    server: { cwd: server, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PORT}`,
-      `--dir=${join(state, 'business-data')}`], port: Number(config.PORT), url: `http://127.0.0.1:${config.PORT}/api/health` },
-    'pay-pocketbase': pb(config.PAY_PB_PORT, 'payment-data'),
-    gateway: { cwd: pay, command: [config.BUN_BIN, '--watch', 'src/index.ts'], port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
-    hono: { cwd: backend, command: [process.execPath, '--watch', 'src/app.js'], env: { PORT: honoPort(config) },
-      port: Number(honoPort(config)), url: `http://127.0.0.1:${honoPort(config)}/` },
-    // kanyue.server runs commerce recovery in process; the Hono worker idles unless commerce is handed back to Hono.
-    'commerce-worker': { cwd: backend, command: [process.execPath, '--watch', 'scripts/commerce-worker.js'],
-      env: honoOwns(config, 'commerce') ? {} : { COURSE_COMMERCE_ENABLED: 'false' } },
-    admin: { cwd: join(root, 'ikanyue.admin'), command: [process.execPath, 'node_modules/vite/bin/vite.js',
-      '--host', '127.0.0.1', '--port', config.ADMIN_PORT, '--strictPort'], port: Number(config.ADMIN_PORT), url: `http://127.0.0.1:${config.ADMIN_PORT}/` },
+    server: { cwd: server, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PORT}`, businessData()],
+      port: Number(config.PORT), url: `http://127.0.0.1:${config.PORT}/api/health` },
+    gateway: { cwd: pay, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
+      port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
     miniapp: { cwd: join(root, 'ikanyue.taro3'), command: [process.execPath, 'node_modules/@tarojs/cli/bin/taro', 'build', '--type', 'weapp', '--watch'] },
   };
   if (!definitions[name]) fail(`Unknown service: ${name}`);
@@ -142,48 +127,31 @@ async function initialize() {
   mkdirSync(state, { recursive: true }); mkdirSync(join(state, 'logs'), { recursive: true });
   if (!existsSync(configPath)) {
     const config = {
-      POCKETBASE_BIN: join(root, '.local/bin/pocketbase'),
-      BUN_BIN: join(root, '.local/toolchains/bun-1.4.1/node_modules/.bin/bun'),
-      PAY_PB_PORT: '18192', PORT: '1437', HONO_PORT: '1438', PAY_PORT: '1440', ADMIN_PORT: '18180',
-      PAY_PB_URL: 'http://127.0.0.1:18192',
+      PORT: '1437', PAY_PORT: '1440',
       PAY_GATEWAY_URL: 'http://127.0.0.1:1440', KANYUE_LOCAL_API_URL: 'http://127.0.0.1:1437',
-      VITE_OPS_API_BASE: '/ops', VITE_OPS_API_MOCK: 'false',
       PB_EMAIL: 'admin@local.com', PAY_PB_EMAIL: 'admin@local.com',
       PB_PASSWORD: 'admin870329', PAY_PB_PASSWORD: randomBytes(24).toString('hex'),
       JWT_SECRET: randomBytes(32).toString('hex'),
       PAY_SERVICE_TOKEN: randomBytes(32).toString('hex'), PAY_MOCK_TOKEN: randomBytes(32).toString('hex'),
       PAY_PROVIDER: 'wechatpay-mock', PAY_CLIENT_ID: 'kanyue', PAY_MOCK_ENABLED: 'true', COURSE_COMMERCE_ENABLED: 'true',
       COURSE_CREDIT_GRANTS_ENABLED: 'true', COURSE_CREDIT_RESERVATION_ENABLED: 'true',
-      COURSE_CREDIT_SETTLEMENT_ENABLED: 'true', COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED: 'false',
-      COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED: 'false', COURSE_CREDIT_MIGRATION_ENABLED: 'false',
-      OPS_BOOTSTRAP_CORE_COLLECTIONS: 'true', OPS_BOOTSTRAP_ADMIN_ENABLED: 'true',
-      OPS_BOOTSTRAP_ADMIN_USERNAME: 'admin', OPS_BOOTSTRAP_ADMIN_EMAIL: 'admin@local.com',
-      OPS_BOOTSTRAP_ADMIN_PASSWORD: 'admin870329!!', OPS_BOOTSTRAP_ADMIN_CELLPHONE: '13900000000',
-      OPS_BOOTSTRAP_ADMIN_NAME: '本地管理员', OPS_BOOTSTRAP_ADMIN_FORCE_PASSWORD_CHANGE: 'false',
+      COURSE_CREDIT_SETTLEMENT_ENABLED: 'true', COURSE_CREDIT_MIGRATION_ENABLED: 'false',
+      OPS_BOOTSTRAP_ADMIN_EMAIL: 'admin@local.com', OPS_BOOTSTRAP_ADMIN_CELLPHONE: '13900000000',
       KANYUE_LOCAL_SEED: 'true', LOCAL_STUDENT_PASSWORD: 'admin870329', LOCAL_TEACHER_PASSWORD: 'admin870329',
     };
     writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
   const config = settings();
-  for (const binary of [config.POCKETBASE_BIN, config.BUN_BIN]) if (!existsSync(binary)) fail(`Missing runtime: ${binary}`);
-  const businessData = `--dir=${join(state, 'business-data')}`;
+  // serve refuses to start while a migration is pending, so they always run here first.
   if (!existsSync(join(state, 'business-data', 'data.db'))) {
-    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PB_EMAIL, config.PB_PASSWORD, businessData], server, config, 'server initial account');
+    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PB_EMAIL, config.PB_PASSWORD, businessData()], server, config, 'Server dashboard account');
   }
-  // serve refuses to start while a migration is pending, so they always run first.
-  await command(goBin(config), ['run', '.', 'migrate', 'up', businessData], server, config, 'Server migrations');
-  await start('server', config);
+  await command(goBin(config), ['run', '.', 'migrate', 'up', businessData()], server, config, 'Server migrations');
+  await command(goBin(config), ['run', '.', 'seed', 'local', businessData()], server, config, 'Local fixtures');
   if (!existsSync(join(state, 'payment-data', 'data.db'))) {
-    await command(config.POCKETBASE_BIN, ['superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, `--dir=${join(state, 'payment-data')}`], root, config, 'pay-pocketbase initial account');
+    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Gateway dashboard account');
   }
-  await start('pay-pocketbase', config);
-  await command(process.execPath, ['scripts/pb-ensure-ops-schema.js'], backend, config, 'Ops schema');
-  await command(process.execPath, ['scripts/pb-ensure-course-credit-schema.js'], backend, config, 'Course schema');
-  await command(process.execPath, ['scripts/pb-ensure-commerce-schema.js'], backend, config, 'Commerce schema');
-  await command(config.BUN_BIN, ['scripts/schema.ts'], pay, config, 'Gateway schema');
-  await command(process.execPath, ['scripts/pb-seed-points-lite-local.js'], backend, config, 'Local students');
-  await command(process.execPath, ['scripts/pb-seed-course-booking-local.js'], backend, config, 'Local bookings');
-  await command(process.execPath, ['scripts/pb-seed-commerce-local.js'], backend, config, 'Local commerce offers');
+  await command(goBin(config), ['run', '.', 'migrate', 'up', paymentData()], pay, config, 'Gateway migrations');
   console.log('Native data initialized. Docker volumes untouched. Use test up to start applications.');
 }
 async function main() {
@@ -199,7 +167,7 @@ async function main() {
     return;
   }
   if (action === 'logs') {
-    const name = selected || 'hono'; if (!names.includes(name) && name !== 'bootstrap') fail('Unknown log');
+    const name = selected || 'server'; if (!names.includes(name) && name !== 'bootstrap') fail('Unknown log');
     console.log(existsSync(logFile(name)) ? readFileSync(logFile(name), 'utf8').split('\n').slice(-60).join('\n') : 'No logs');
     return;
   }
@@ -210,7 +178,8 @@ async function main() {
     const config = settings();
     if (!existsSync(join(state, 'payment-data/data.db'))) fail('Run test init before startup');
     for (const name of targets) await start(name, config);
-    console.log(`Admin: http://127.0.0.1:${config.ADMIN_PORT}; API: http://127.0.0.1:${config.PORT} (Hono upstream ${honoPort(config)}); gateway: ${config.PAY_GATEWAY_URL}`);
+    // The admin SPA is embedded at build time: run npm run build:server in ikanyue.admin, then restart server.
+    console.log(`Admin and API: http://127.0.0.1:${config.PORT}/; gateway: ${config.PAY_GATEWAY_URL}; dashboards: /_/ on both`);
     return;
   }
   if (action === 'smoke') {

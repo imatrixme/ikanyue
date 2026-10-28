@@ -9,7 +9,7 @@ import (
 
 // Feature gate cases ported from Hono's courseCreditFeatureFlags tests. Go reads
 // each switch into its module, so there is no gate object or unknown-feature code;
-// conversion switches belong to Hono.
+// the conversion switches went with the deleted student conversion endpoints.
 
 // Hono: courseCreditFeatureFlags › feature gate rejects disabled and unknown features with stable business codes
 // Hono: courseCreditFeatureFlags › disabled production features block write routes before services are loaded

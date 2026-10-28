@@ -3,6 +3,7 @@ package identity
 import (
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 
@@ -243,5 +244,100 @@ func TestOpsTokenScopeAndExpiry(t *testing.T) {
 	iat, _ := claims["iat"].(float64)
 	if claims["scope"] != auth.OpsScope || exp-iat != 12*3600 {
 		t.Fatalf("claims = %v", claims)
+	}
+}
+
+// Hono: pointsLiteCoverage › ops auth middleware covers expired teacher tokens
+func TestOpsMiddlewareRejectsExpiredAndForeignTokens(t *testing.T) {
+	f := opsSetup(t, config.Config{})
+	sign := func(id, role string, extra auth.Claims, ttl time.Duration) map[string]string {
+		token, err := f.signer.Sign(id, "sn", role, true, extra, ttl)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return testkit.Bearer(token)
+	}
+	ops := auth.Claims{"scope": auth.OpsScope}
+	guardedRoute := func(headers map[string]string) testkit.Response {
+		return testkit.Call(t, f.handler, http.MethodGet, "/ops/reward-items", nil, headers)
+	}
+	if result := guardedRoute(sign(f.teacher.Id, "teacher", ops, -10*time.Second)); result.Code() != 403 || result.Body["message"] != "后台登录已过期，请重新登录" {
+		t.Fatalf("expired = %v", result.Body)
+	}
+	if result := guardedRoute(sign("student_1", "student", ops, auth.OpsTokenTTL)); result.Body["message"] != "后台仅允许教师或管理员访问" {
+		t.Fatalf("student = %v", result.Body)
+	}
+	if result := guardedRoute(sign(f.teacher.Id, "teacher", nil, auth.AppTokenTTL)); result.Code() != 403 {
+		t.Fatalf("mini program teacher = %v", result.Body)
+	}
+	guarded := sign(f.teacher.Id, "teacher", auth.Claims{"scope": auth.OpsScope, "passwordChangeRequired": true}, auth.OpsTokenTTL)
+	changed := testkit.Call(t, f.handler, http.MethodPost, "/ops/auth/change-password", map[string]any{"currentPassword": "secret-pass",
+		"newPassword": "another-pass", "confirmPassword": "another-pass"}, guarded)
+	if changed.Code() != 10000 {
+		t.Fatalf("guarded change = %v", changed.Body)
+	}
+}
+
+// Hono: pointsLiteCoverage › ops auth direct service branches cover registration validation, duplicate create, blocked password changes, and profile fallbacks
+// Hono's injected repository write failure has no Go counterpart; the duplicate is a real unique cellphone.
+func TestOpsRegistrationAndPasswordBranches(t *testing.T) {
+	f := opsSetup(t, config.Config{OpsRegistrationEnabled: true})
+	teachers, err := f.app.FindCollectionByNameOrId("teachers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	teachers.Fields.GetByName("email").(*core.EmailField).Required = false
+	if err := f.app.Save(teachers); err != nil {
+		t.Fatal(err)
+	}
+	register := func(body map[string]any) testkit.Response {
+		return testkit.Call(t, f.handler, http.MethodPost, "/ops/auth/register", body, nil)
+	}
+	for _, item := range []struct {
+		body    map[string]any
+		message string
+	}{
+		{map[string]any{"cellphone": "", "password": "register-pass", "realName": "王老师"}, "手机号不能为空"},
+		{map[string]any{"cellphone": "123", "password": "register-pass", "realName": "王老师"}, "手机号格式不正确"},
+		{map[string]any{"cellphone": "13900000001", "password": "", "realName": "王老师"}, "密码不能为空"},
+		{map[string]any{"cellphone": "13900000001", "password": "short", "realName": "王老师"}, "密码至少需要 8 位"},
+		{map[string]any{"cellphone": "13900000001", "password": "register-pass"}, "姓名不能为空"},
+	} {
+		if result := register(item.body); result.Code() != 400 || result.Body["message"] != item.message {
+			t.Fatalf("%v = %v", item.body, result.Body)
+		}
+	}
+	nickOnly := register(map[string]any{"cellphone": "13900000002", "password": "register-pass", "nickName": "昵称老师"})
+	if nickOnly.Code() != 10000 || nickOnly.Data()["profile"].(map[string]any)["nickName"] != "昵称老师" {
+		t.Fatalf("nick only = %v", nickOnly.Body)
+	}
+	if again := register(map[string]any{"cellphone": "13900000002", "password": "register-pass", "realName": "王老师"}); again.Code() != 409 {
+		t.Fatalf("duplicate = %v", again.Body)
+	}
+
+	sign := func(id string) map[string]string {
+		token, err := f.signer.Sign(id, "sn", "teacher", true, auth.Claims{"scope": auth.OpsScope}, auth.OpsTokenTTL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return testkit.Bearer(token)
+	}
+	change := func(id, current, next string) testkit.Response {
+		return testkit.Call(t, f.handler, http.MethodPost, "/ops/auth/change-password",
+			map[string]any{"currentPassword": current, "newPassword": next, "confirmPassword": next}, sign(id))
+	}
+	if result := change(f.blocked.Id, "secret-pass", "another-pass"); result.Body["message"] != "教师账号不可用" {
+		t.Fatalf("blocked = %v", result.Body)
+	}
+	if result := change(f.teacher.Id, "secret-pass", "secret-pass"); result.Body["message"] != "新密码不能与当前密码相同" {
+		t.Fatalf("same = %v", result.Body)
+	}
+	f.teacher.Set("cellphone", "")
+	f.teacher.Set("username", "teacher_username")
+	if err := f.app.Save(f.teacher); err != nil {
+		t.Fatal(err)
+	}
+	if result := change(f.teacher.Id, "secret-pass", "another-pass"); result.Code() != 10000 {
+		t.Fatalf("username-only change = %v", result.Body)
 	}
 }

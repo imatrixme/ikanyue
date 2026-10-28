@@ -1,14 +1,17 @@
-FROM oven/bun:1.4.1 AS dependencies
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+FROM golang:1.26-alpine AS build
 
-FROM oven/bun:1.4.1
-WORKDIR /app
-ENV NODE_ENV=production PAY_HOST=0.0.0.0 PAY_PORT=1340
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY package.json ./
-COPY src ./src
-USER bun
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/kanyue-pay .
+
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates tzdata
+COPY --from=build /out/kanyue-pay /usr/local/bin/kanyue-pay
+
+ENV NODE_ENV=production
 EXPOSE 1340
-CMD ["bun", "src/index.ts"]
+# Schema changes never run here: release with `kanyue-pay migrate up --dir=/pb_data` after a backup.
+CMD ["kanyue-pay", "serve", "--http=0.0.0.0:1340", "--dir=/pb_data"]

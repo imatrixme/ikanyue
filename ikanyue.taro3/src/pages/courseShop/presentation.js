@@ -20,7 +20,7 @@ export function policyText(policy) {
 }
 function duration(minutes) { return minutes % 1440 === 0 ? `${minutes / 1440}天` : minutes % 60 === 0 ? `${minutes / 60}小时` : `${minutes}分钟`; }
 
-// Unpaid orders close after the gateway payment window (kanyue.pay PAYMENT_TTL_MS).
+// Unpaid orders close after the gateway payment window (kanyue.pay PaymentTTL).
 export const PENDING_ORDER_NOTICE = '请在下单后 30 分钟内完成支付，超时订单会自动关闭。';
 
 const PAYMENT_WINDOW_MS = 30 * 60000;

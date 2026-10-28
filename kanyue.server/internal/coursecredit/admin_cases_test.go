@@ -12,7 +12,7 @@ import (
 )
 
 // Admin resource cases ported from Hono's courseCreditAdminResourceCommands
-// and courseCreditAdminOperationRoutes tests. Conversion rules stay in Hono.
+// and courseCreditAdminOperationRoutes tests; conversion rules are in conversion_rules_cases_test.go.
 
 // admin is the fixture operator as an admin actor; audit rows relate actorId to teachers.
 func (f ledgerFixture) admin(t *testing.T) Actor {

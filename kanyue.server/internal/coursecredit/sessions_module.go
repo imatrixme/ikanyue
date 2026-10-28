@@ -6,11 +6,13 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.server/internal/auth"
+	"kanyue.server/internal/jsx"
 )
 
 // SessionsModule serves classes and sessions: class rosters and teachers,
 // session publication, reschedule and cancellation, attendance, settlement and
-// its reversal, the ops course calendar, teacher calendars and upcoming lessons.
+// its reversal, teacher workload confirmation, the ops course calendar, teacher
+// calendars and upcoming lessons.
 type SessionsModule struct {
 	Signer            *auth.Signer
 	SettlementEnabled bool
@@ -138,6 +140,33 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 	settlementInput := func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
 		return fields(actor, map[string]any{"reason": body.Get("reason"), "sessionId": path(e, "sessionId")})
 	}
+	router.POST("/ops/course-credits/teacher-events/{teacherCreditEventId}/confirm", command("confirmTeacherCredit",
+		func(user auth.Claims) error { return RequireCapability(user, Finance) }, false,
+		func(e *core.RequestEvent, body Body, actor Actor) map[string]any {
+			return fields(actor, map[string]any{"teacherCreditEventId": path(e, "teacherCreditEventId"), "reason": body.Get("reason")})
+		}, confirmTeacherCredit))
+	router.GET("/ops/course-credits/teacher-events", ops(func(e *core.RequestEvent) error {
+		return Query(e, func() (any, error) {
+			user := auth.User(e)
+			if err := RequireCapability(user, Teacher); err != nil {
+				return nil, err
+			}
+			query := queryParams(e, "page", "perPage", "status", "teacherId", "sessionTeacherId")
+			if !jsx.Truthy(user["isAdmin"]) {
+				query["teacherId"] = auth.ClaimString(user, "id")
+			}
+			return listTeacherEvents(e.App, query)
+		})
+	}))
+	router.GET("/ops/course-credits/teacher-events/{id}", ops(func(e *core.RequestEvent) error {
+		return Query(e, func() (any, error) {
+			user := auth.User(e)
+			if err := RequireCapability(user, Teacher); err != nil {
+				return nil, err
+			}
+			return assignedTeacherEvent(e.App, user, path(e, "id"))
+		})
+	}))
 	router.POST("/ops/course-credits/sessions/{sessionId}/settle", command("settleSession", settlement, true, settlementInput, settleSession))
 	router.POST("/ops/course-credits/sessions/{sessionId}/reverse-settlement", command("reverseSessionSettlement", settlement, false, settlementInput, reverseSessionSettlement))
 	router.POST("/ops/course-credits/sessions/{sessionId}/cancel", command("cancelSession", academic, true,

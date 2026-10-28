@@ -211,8 +211,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 	m.schedule(se.App, outboxes)
 }
 
-// schedule registers the in-process expiry, reconciliation and outbox jobs. They
-// only exist while this module is owned by Go, so Hono never runs them twice.
+// schedule registers the in-process expiry, reconciliation and outbox jobs.
 func (m LedgerModule) schedule(app core.App, outboxes *outboxRunner) {
 	if m.Dispatcher != nil {
 		app.Cron().MustAdd("courseCreditOutbox", outboxSchedule, func() { outboxes.tick(app) })

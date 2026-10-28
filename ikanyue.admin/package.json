@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "build": "tsc -b && vite build",
+    "build:server": "tsc -b && vite build --outDir ../kanyue.server/internal/console/site --emptyOutDir && touch ../kanyue.server/internal/console/site/.gitkeep",
     "lint": "eslint .",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",

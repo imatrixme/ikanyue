@@ -2,17 +2,22 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 
+	"kanyue.server/internal/activities"
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/catalog"
 	"kanyue.server/internal/config"
+	"kanyue.server/internal/console"
 	"kanyue.server/internal/coursecredit"
+	"kanyue.server/internal/devseed"
 	"kanyue.server/internal/identity"
 	"kanyue.server/internal/migrations"
+	"kanyue.server/internal/points"
 	"kanyue.server/internal/server"
 	"kanyue.server/internal/students"
 	"kanyue.server/internal/venues"
@@ -22,7 +27,7 @@ func main() {
 	app := pocketbase.New()
 	cfg := config.FromEnv()
 
-	app.RootCmd.AddCommand(migrations.Command(app))
+	app.RootCmd.AddCommand(migrations.Command(app), devseed.Command(app, os.Getenv))
 
 	// Only serving needs the secret and a valid outbox webhook; migrate and superuser commands run without them.
 	signer, signerErr := auth.NewSigner(cfg.JWTSecret)
@@ -39,8 +44,7 @@ func main() {
 	})
 	app.OnServe().BindFunc(migrations.RequireApplied)
 	server.Register(app, server.Config{
-		HonoURL:     cfg.HonoURL,
-		HonoModules: cfg.HonoModules,
+		Console: console.FS(),
 		Modules: []server.Module{
 			{Name: "venues", Register: venues.Module{Signer: signer}.Register},
 			{Name: "catalog", Register: catalog.Module{}.Register},
@@ -54,10 +58,13 @@ func main() {
 				Dispatcher: dispatcher}.Register},
 			{Name: "booking", Register: coursecredit.BookingModule{Signer: signer, ReservationEnabled: cfg.CourseCreditReservation}.Register},
 			{Name: "sessions", Register: coursecredit.SessionsModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
+			{Name: "migration", Register: coursecredit.MigrationModule{Signer: signer, Enabled: cfg.CourseCreditMigration}.Register},
 			{Name: "commerce", Register: coursecredit.CommerceModule{Signer: signer, Enabled: cfg.CourseCommerce,
 				Config: coursecredit.CommerceConfig{GatewayURL: cfg.PayGatewayURL, ServiceToken: cfg.PayServiceToken,
 					MockToken: cfg.PayMockToken, EventToken: cfg.PayEventToken, WechatAppID: cfg.WechatAppID, Mock: cfg.PayMockEnabled},
 				RecoveryInterval: 3 * time.Second}.Register},
+			{Name: "activities", Register: activities.Module{PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},
+			{Name: "points", Register: points.Module{Signer: signer, PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},
 		},
 	})
 

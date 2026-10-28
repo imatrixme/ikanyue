@@ -18,10 +18,10 @@ Admin SHALL show a server-authoritative preview of each student's lesson-hour co
 - **THEN** the preview shows one scheduled lesson hour returning to the student's course without mutating storage
 
 ### Requirement: Atomic Manual Settlement
-Confirmed attendance, student lesson-hour movements, actual teacher workload, lesson status, audit, and outbox events MUST commit atomically through Hono.
+Confirmed attendance, student lesson-hour movements, actual teacher workload, lesson status, audit, and outbox events MUST commit atomically in one `kanyue.server` transaction.
 
 #### Scenario: Teacher workload write fails
-- **WHEN** a teacher workload request fails in the settlement Batch
+- **WHEN** a teacher workload write fails inside the settlement transaction
 - **THEN** student lesson hours and lesson status remain unchanged
 
 ### Requirement: Settlement Correction

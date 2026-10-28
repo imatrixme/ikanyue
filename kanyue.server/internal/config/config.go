@@ -1,4 +1,4 @@
-// Package config reads the environment once; names match Hono's so both run from the same env file.
+// Package config reads the environment once; variable names are the ones the deploy env files already use.
 package config
 
 import (
@@ -8,8 +8,6 @@ import (
 
 type Config struct {
 	JWTSecret               string
-	HonoURL                 string
-	HonoModules             []string
 	WechatAppID             string
 	WechatSecret            string
 	WechatSessionURL        string
@@ -20,6 +18,7 @@ type Config struct {
 	CourseCreditGrants      bool
 	CourseCreditReservation bool
 	CourseCreditSettlement  bool
+	CourseCreditMigration   bool
 	// Commerce reads Hono's strict switch: only "true" enables online purchase.
 	CourseCommerce  bool
 	PayGatewayURL   string
@@ -37,8 +36,6 @@ type Config struct {
 func FromEnv() Config {
 	return Config{
 		JWTSecret:               os.Getenv("JWT_SECRET"),
-		HonoURL:                 os.Getenv("HONO_UPSTREAM_URL"),
-		HonoModules:             list(os.Getenv("KANYUE_HONO_MODULES")),
 		WechatAppID:             os.Getenv("WECHAT_APPID"),
 		WechatSecret:            os.Getenv("WECHAT_SECRET"),
 		WechatSessionURL:        fallback(os.Getenv("WECHAT_JSCODE2SESSION"), "https://api.weixin.qq.com/sns/jscode2session"),
@@ -49,6 +46,7 @@ func FromEnv() Config {
 		CourseCreditGrants:      featureSwitch(os.Getenv("COURSE_CREDIT_GRANTS_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCreditReservation: featureSwitch(os.Getenv("COURSE_CREDIT_RESERVATION_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCreditSettlement:  featureSwitch(os.Getenv("COURSE_CREDIT_SETTLEMENT_ENABLED"), os.Getenv("NODE_ENV") != "production"),
+		CourseCreditMigration:   featureSwitch(os.Getenv("COURSE_CREDIT_MIGRATION_ENABLED"), os.Getenv("NODE_ENV") != "production"),
 		CourseCommerce:          os.Getenv("COURSE_COMMERCE_ENABLED") == "true",
 		PayGatewayURL:           os.Getenv("PAY_GATEWAY_URL"),
 		PayServiceToken:         os.Getenv("PAY_SERVICE_TOKEN"),
@@ -79,16 +77,6 @@ func featureSwitch(value string, defaultEnabled bool) bool {
 		return true
 	}
 	return false
-}
-
-func list(value string) []string {
-	items := []string{}
-	for _, item := range strings.Split(value, ",") {
-		if item = strings.TrimSpace(item); item != "" {
-			items = append(items, item)
-		}
-	}
-	return items
 }
 
 func fallback(value, other string) string {

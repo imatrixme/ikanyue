@@ -7,9 +7,9 @@
 | Path | Description | Runtime |
 | --- | --- | --- |
 | `ikanyue.taro3` | 微信小程序 | Taro / Vue |
-| `ikanyue.mapi.hono` | 后端 API | Hono / Node.js or Bun |
-| `kanyue.pay` | 独立支付网关（当前仅 mock） | Hono / Bun 1.4.1 / 独立 PocketBase |
-| `ikanyue.admin` | 运营后台 | React / Vite |
+| `kanyue.server` | 业务服务单体：API + 内嵌 PocketBase（数据面板 `/_/`）+ 内嵌运营后台 | Go / PocketBase v0.32.0 |
+| `kanyue.pay` | 独立支付网关单体（当前仅 mock） | Go / 独立内嵌 PocketBase v0.32.0 |
+| `ikanyue.admin` | 运营后台（静态 SPA，构建后嵌入 `kanyue.server`） | React / Vite |
 | `ikanyue.website` | 看乐声乐官网 | Nuxt 4 |
 
 `ikanyue.m.nuxt`（旧活动页）和 `ikanyue.flutter`（规划中的 App）不在本仓库内，仍是各自的独立仓库；需要时克隆到根目录同名位置即可，根 `.gitignore` 已忽略这两个目录。
@@ -25,16 +25,15 @@ pnpm dev:weapp
 ```
 
 ```bash
-cd ikanyue.mapi.hono
-pnpm install
-pnpm dev
+cd kanyue.server
+GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...
 ```
 
 ## Git layout
 
 只有一个仓库、一条主线 `master`。跨子项目的改动（例如 API、后台、小程序同时改）放在同一次提交里，不再分仓库提交、也不再维护子模块指针。
 
-原独立仓库（`imatrixme/ikanyue.taro3`、`ikanyue.mapi.hono`、`ikanyue.admin`、`ikanyue.website`、`ikanyue.pay`）的历史已按目录并入，可用 `git log -- <目录>` 查看；这些旧仓库只作归档，不再提交。
+原独立仓库（`imatrixme/ikanyue.taro3`、`ikanyue.mapi.hono`（已由 `kanyue.server` 取代并删除）、`ikanyue.admin`、`ikanyue.website`、`ikanyue.pay`）的历史已按目录并入，可用 `git log -- <目录>` 查看；这些旧仓库只作归档，不再提交。
 ## Course credit system documents
 
 - Product requirements: [`docs/product/course-credit-system-prd.md`](docs/product/course-credit-system-prd.md)
@@ -45,71 +44,66 @@ pnpm dev
 
 ## Unified environment startup
 
-根目录使用同一个入口管理本地测试环境和正式 Compose 环境：
+本地测试不使用 Docker，入口是 `node scripts/native-stack.mjs`（`./scripts/kanyue-stack.sh test …` 是同一入口）：
 
 ```bash
-# 首次显式初始化：两个独立 PocketBase、课程和支付测试数据
-./scripts/kanyue-stack.sh test init
+# 首次显式初始化：迁移两个库、写入本地测试数据（go run . seed local）
+node scripts/native-stack.mjs init
 
-# 日常启动：两个 PocketBase、支付网关、Hono、恢复 worker、admin、小程序 watcher
-./scripts/kanyue-stack.sh test
+# 运营后台嵌入 server 二进制：首次和改动后端前先构建
+(cd ikanyue.admin && npm run build:server)
+
+# 日常启动：kanyue.server、kanyue.pay、小程序 watcher
+node scripts/native-stack.mjs up
 
 # 查看状态、日志、健康检查与关闭
-./scripts/kanyue-stack.sh test status
-./scripts/kanyue-stack.sh test logs
-./scripts/kanyue-stack.sh test smoke
-./scripts/kanyue-stack.sh test down
+node scripts/native-stack.mjs status
+node scripts/native-stack.mjs logs server
+node scripts/native-stack.mjs smoke
+node scripts/native-stack.mjs down
 ```
 
-本地测试不使用 Docker。`init` 显式创建 `.local/native/environment.json`（权限 0600）、独立业务库和支付库，初始化 schema 与测试数据。普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷；两个 PocketBase 使用各自的迁移目录并关闭自动迁移。旧本地库若启动时 Hono 报批处理容量低于 500，重新执行一次 `init` 即可补齐。业务库账号 `admin@local.com / admin870329`；Admin `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
+`init` 显式创建 `.local/native/environment.json`（权限 0600），对业务库和支付库执行 `migrate up`，并写入本地测试数据；普通 `up/restart` 不迁移、不造数据、不修改既有 Docker 卷，两个服务都会在有未执行迁移时拒绝启动。业务库 PocketBase 面板 `admin@local.com / admin870329`；后台 `admin / admin870329`；学员 `13800000001 / admin870329`；教师 `13800000000 / admin870329`。支付库面板密码和两个服务令牌随机生成，仅保存于忽略提交的本地配置。这些测试账号只绑定回环地址。
 
-默认端口：Admin `18180`、业务 API `1437`、支付网关 `1440`、业务 PocketBase `18190`、支付 PocketBase `18192`。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。
-
-运行前分别安装各子项目依赖。支付网关固定 Bun 1.4.1，可在根目录独立安装工具链（不创建根 JS 工作区）：
+默认端口：业务服务 `1437`（后台页面、API、PocketBase 面板 `/_/`）、支付网关 `1440`（API、PocketBase 面板 `/_/`）。停止只处理经过 PID 与启动令牌校验的自有进程，端口冲突不会杀掉其他服务。后台改界面时可在 `ikanyue.admin` 运行 `npm run dev`（代理 `/ops` 到 `1437`）。
 
 ```bash
-npm install --prefix .local/toolchains/bun-1.4.1 bun@1.4.1
-# PocketBase 0.32.0 可执行文件放在 .local/bin/pocketbase
-# kanyue.pay 内使用上述 Bun 执行 install --frozen-lockfile
-./scripts/kanyue-stack.sh test restart gateway
-./scripts/kanyue-stack.sh test logs commerce-worker
-node scripts/commerce-smoke.mjs
+node scripts/native-stack.mjs restart gateway
+node scripts/commerce-smoke.mjs --tiered
 ```
 
 在微信开发者工具中打开 `ikanyue.taro3` 项目目录，其 `project.config.json` 指向 `dist/` 构建产物。本地模拟支付不会扣真实款；`commerce-smoke` 会留下带联调标识的订单记录，不清空数据。真机不能访问 Mac 的 `127.0.0.1`，LAN 暴露需要另行显式配置。发布边界见 [支付架构决策](docs/architecture/payment-gateway.md)。
 
-支付运营入口是 Admin 的「收款与退款」：订单管理、课程商品、待处理异常、账单与到账。支持按姓名查订单、按原实付规则退款、发布分时间点取消政策、异常重试和账单核对。`node scripts/commerce-smoke.mjs --tiered` 验证分时点现金退费及失败重试。真实微信通道代码有显式上线门禁，本地仍为响应 mock；商户号、真机收银台和真实账单验收未完成前不要开启真实收款。
+支付运营入口是后台的「收款与退款」：订单管理、课程商品、待处理异常、账单与到账。支持按姓名查订单、按原实付规则退款、发布分时间点取消政策、异常重试和账单核对。`node scripts/commerce-smoke.mjs --tiered` 验证分时点现金退费、失败重试和网关重启恢复。真实微信通道代码有显式上线门禁，本地仍为响应 mock；商户号、真机收银台和真实账单验收未完成前不要开启真实收款。
 
-当前本地支付模式为 `wechatpay-mock`：微信 API v3 请求签名、应答验签、通知解密实际执行，仅渠道 HTTP 响应和收银结果模拟，不访问真实微信支付。既有 `mock` 订单保留原渠道；支付 schema 升级需显式执行，不随普通启动迁移。接口与验收边界见 [支付网关说明](kanyue.pay/README.md)。
+当前本地支付模式为 `wechatpay-mock`：微信 API v3 请求签名、应答验签、通知解密实际执行，仅渠道 HTTP 响应和收银结果模拟，不访问真实微信支付。支付 schema 升级需显式执行 `kanyue-pay migrate up`，不随普通启动迁移。接口与验收边界见 [支付网关说明](kanyue.pay/README.md)。
 
 ## 1Panel / OpenResty deploy
 
-根仓库提供轻量教务闭环的 Docker Compose 编排：PocketBase、Hono API、React admin。线上运维按 1Panel + OpenResty 使用：1Panel 导入 `compose.yaml` 构建并运行服务，OpenResty 负责把公网域名反向代理到 admin 容器暴露的端口。
+线上只有一个业务容器 `server`（`kanyue.server` 镜像，构建时把 `ikanyue.admin` 作为 `console` 构建上下文打进二进制）。1Panel 导入 `compose.yaml` 构建并运行；OpenResty 把后台域名反代到 `ADMIN_PORT`、API 域名反代到 `API_PORT`、数据域名反代到 `POCKETBASE_PORT`，三个端口进入同一个进程。支付网关单独用 `compose.pay.release.yaml` 发布。
 
 ```bash
 cp .env.deploy.example .env.deploy
 ./scripts/kanyue-stack.sh prod up --confirm-production
 ```
 
-在 1Panel 中导入 `compose.yaml`，设置 `.env.deploy` 中的端口、PocketBase 超级用户、公开文件域名、微信配置。OpenResty 站点反代到 `http://127.0.0.1:${ADMIN_PORT}`。
-
 默认端口：
 
 | Service | URL |
 | --- | --- |
-| Admin | `http://127.0.0.1:8080` |
-| Hono API | `http://127.0.0.1:1337` |
-| PocketBase | `http://127.0.0.1:8090` |
+| 运营后台（同源 `/ops`） | `http://127.0.0.1:8080` |
+| 业务 API | `http://127.0.0.1:1337` |
+| PocketBase 文件与面板 | `http://127.0.0.1:8090` |
 
-admin 容器内通过 Nginx 把 `/ops/*` 反向代理到 Hono，因此前端构建时使用 `VITE_OPS_API_BASE=/ops`。Hono 容器使用 `PB_URL=http://pocketbase:8090` 连接同一 compose 网络里的 PocketBase。
+PocketBase REST API 与面板 `/_/` 只响应私网直连（不带反代头），经 OpenResty 进来的请求一律 404；查看数据用 SSH 隧道：`ssh -L 8090:127.0.0.1:8090 <host>` 后打开 `http://127.0.0.1:8090/_/`。`/api/files` 仍公开，供历史图片地址使用。
 
-实物图片采用 PocketBase 托管写入、MinIO 公开读取：Admin 把 multipart 文件上传到 Hono，Hono 完成管理员鉴权和文件校验后写入 PocketBase 的 `reward_items.imageFile` 文件字段；PocketBase 再通过自身的 S3 存储配置写入 MinIO。Hono 返回记录时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接 `{collectionId}/{recordId}/{filename}`，Admin 和小程序直接访问公开 bucket URL，不经过 PocketBase 域名。`PUBLIC_ASSET_BASE_URL` 为空时仅用于本地开发，回退到 `${PB_PUBLIC_URL:-$PB_URL}/api/files/...`。
+实物图片采用 PocketBase 托管写入、MinIO 公开读取：后台把 multipart 文件上传到 kanyue.server，服务端完成管理员鉴权和文件校验后写入 PocketBase 的 `reward_items.imageFile` 文件字段；PocketBase 再通过自身的 S3 存储配置写入 MinIO。返回记录时使用 `PUBLIC_ASSET_BASE_URL=https://kyoss.abcmem.com/ikanyue-mp` 拼接 `{collectionId}/{recordId}/{filename}`。`PUBLIC_ASSET_BASE_URL` 为空时仅用于本地开发，回退到 `${PB_PUBLIC_URL:-$PB_URL}/api/files/...`。
 
-S3 endpoint、bucket、access key 和 secret key 只在 PocketBase 管理配置中维护，Admin、Hono 和小程序都不持有这些凭据。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`，并确认公开 bucket 的只读访问策略及 `PUBLIC_ASSET_BASE_URL` 与实际对象路径一致。
+S3 endpoint、bucket、access key 和 secret key 只在 PocketBase 管理配置中维护，后台和小程序都不持有这些凭据。生产部署前必须在 `.env.deploy` 中替换 `PB_EMAIL` 和 `PB_PASSWORD`，并确认公开 bucket 的只读访问策略及 `PUBLIC_ASSET_BASE_URL` 与实际对象路径一致。
 
-`JWT_SECRET`（至少 32 位随机字符）必须在 `.env.deploy` 中设置，否则 Hono 拒绝启动。首次设置或更换该值会让所有已签发令牌失效，学员、教师和后台用户各需重新登录一次。发布前先应用 `ikanyue.mapi.hono/pocketbase/pb_migrations`（含批处理容量迁移），Hono 启动检查发现 PocketBase 批处理容量低于 500 时会拒绝启动。
+`JWT_SECRET`（至少 32 位随机字符）必须在 `.env.deploy` 中设置，否则服务拒绝启动。它兼容旧 Hono 签发的令牌；更换该值会让所有已签发令牌失效。发布前先备份，再执行 `docker compose run --rm --entrypoint kanyue-server server migrate up --dir=/pb_data`；有未执行迁移时 `serve` 拒绝启动。
 
-`prod` 模式只负责启动、重启、停止和检查已经准备好的 Compose 服务，不自动构建发布镜像、不执行 PocketBase schema 迁移、不写入测试数据、不构建小程序，也不修改 OpenResty。正式发布仍须按 `.codex/skills/kanyue-deploy/references/deployment-runbook.md` 完成备份、旁路验证、schema 迁移和流量切换。
+`prod` 模式只负责启动、重启、停止和检查已经准备好的 Compose 服务，不自动构建发布镜像、不执行迁移、不写入测试数据、不构建小程序，也不修改 OpenResty。正式发布仍须按 `.codex/skills/kanyue-deploy/references/deployment-runbook.md` 完成备份、旁路验证、迁移和流量切换。
 
 旁路验证 Docker 版本时使用高位端口，并默认只绑定 `127.0.0.1`，不切换线上域名：
 

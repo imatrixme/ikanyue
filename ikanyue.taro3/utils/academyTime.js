@@ -1,5 +1,5 @@
 // Lessons, bookings and activities run on the academy clock: Asia/Shanghai, fixed UTC+08:00 (no DST).
-// The API books on the same clock (ikanyue.mapi.hono src/services/courseCredits/booking/time.js),
+// The API books on the same clock (kanyue.server internal/coursecredit/booking_domain.go),
 // so the miniapp must not depend on the device timezone when it displays or composes times.
 const ACADEMY_OFFSET_MS = 8 * 60 * 60 * 1000;
 const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];

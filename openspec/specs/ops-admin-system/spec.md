@@ -37,25 +37,6 @@ The Ops API SHALL enforce server-side role, ownership, and capability checks for
 - **WHEN** an administrator performs teacher, student, activity, material, course catalog, package, pricing, conversion, class, session, settlement, report, or audit management
 - **THEN** the system allows the operation after validating references, capability, workflow state, and required confirmation
 
-### Requirement: Standalone SSR Admin Project
-The management UI SHALL be implemented as a standalone `ikanyue.admin` project using Vite, React, Tailwind CSS, shadcn-style components, lifecycle-centered navigation, and SSR-capable entrypoints.
-
-#### Scenario: Admin app remains independent
-- **WHEN** the admin app is added or modified
-- **THEN** it has its own package metadata, scripts, lockfile, tests, and build configuration without adding a root JavaScript workspace
-
-#### Scenario: SSR entry renders the admin shell
-- **WHEN** the admin server entry renders an authenticated or unauthenticated route
-- **THEN** it returns deterministic HTML containing the admin shell state required for hydration
-
-#### Scenario: Admin UI uses operations APIs
-- **WHEN** the admin UI performs login, dashboard, module list, module detail, or mutation actions
-- **THEN** it calls `/ops/*` APIs and does not call PocketBase directly
-
-#### Scenario: Admin shell uses business-facing information architecture
-- **WHEN** the authenticated admin shell renders navigation and page headings
-- **THEN** ordinary labels use business-facing lifecycle terms and reserve internal resource terms for advanced maintenance or diagnostics
-
 ### Requirement: Audit Logging
 The Ops API SHALL record immutable audit logs for security-sensitive and data-changing operations, including before/after summaries for course-credit commands.
 
@@ -451,7 +432,7 @@ Admin SHALL surface schedule-claim conflicts, failed backfills, lost eligibility
 - **THEN** the system records a conflict with teacher, student, lesson, time, and suggested resolution while leaving both source lessons unchanged
 
 ### Requirement: Institution Course Calendar Workspace
-The Admin system SHALL expose a first-class institution timetable workspace that uses Hono schedule APIs and existing lesson command services.
+The Admin system SHALL expose a first-class institution timetable workspace that uses `kanyue.server` schedule APIs and existing lesson command services.
 
 #### Scenario: Timetable is directly navigable
 - **WHEN** an authorized academic operator selects the institution timetable navigation item
@@ -474,7 +455,7 @@ The Admin system SHALL expose a first-class institution timetable workspace that
 - **THEN** it uses a date agenda or list presentation without overlapping controls or unreadable event labels
 
 ### Requirement: Calendar Mutation Safety
-The Admin calendar SHALL delegate cancellation and rescheduling to existing versioned Hono commands and SHALL NOT mutate PocketBase directly.
+The Admin calendar SHALL delegate cancellation and rescheduling to existing versioned `kanyue.server` commands and SHALL NOT mutate PocketBase directly.
 
 #### Scenario: Reschedule succeeds
 - **WHEN** an operator submits a valid new interval from the lesson drawer
@@ -517,4 +498,23 @@ The standalone admin UI SHALL apply semantic relationship controls and business-
 #### Scenario: Diagnostic workspace remains precise
 - **WHEN** an authorized operator opens migration, reconciliation, audit, or technical trace detail
 - **THEN** the UI may show raw identifiers and expected-versus-actual values while clearly separating them from normal operational actions
+
+### Requirement: Standalone Admin Project
+The management UI SHALL be implemented as a standalone `ikanyue.admin` project using Vite, React, Tailwind CSS, shadcn-style components, and lifecycle-centered navigation, built as a static single-page app that `kanyue.server` embeds and serves on the same origin as `/ops`.
+
+#### Scenario: Admin app remains independent
+- **WHEN** the admin app is added or modified
+- **THEN** it has its own package metadata, scripts, lockfile, tests, and build configuration without adding a root JavaScript workspace
+
+#### Scenario: Server serves the admin shell
+- **WHEN** a browser navigates to an admin route on the `kanyue.server` origin
+- **THEN** the server returns the built `index.html` without caching and serves hashed assets with long-lived caching, and the client renders the shell
+
+#### Scenario: Admin UI uses operations APIs
+- **WHEN** the admin UI performs login, dashboard, module list, module detail, or mutation actions
+- **THEN** it calls `/ops/*` APIs and does not call PocketBase directly
+
+#### Scenario: Admin shell uses business-facing information architecture
+- **WHEN** the authenticated admin shell renders navigation and page headings
+- **THEN** ordinary labels use business-facing lifecycle terms and reserve internal resource terms for advanced maintenance or diagnostics
 

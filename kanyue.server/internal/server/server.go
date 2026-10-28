@@ -1,94 +1,79 @@
-// Package server wires migrated modules in front of Hono: owned routes run in Go,
-// PocketBase's own API stays internal, and everything else is proxied to Hono.
+// Package server wires the business modules: owned routes run in Go, PocketBase's
+// own API stays internal, the admin SPA is served on the same origin as /ops, and
+// every other path answers with the 404 envelope.
 package server
 
 import (
-	"fmt"
-	"io"
-	"log"
+	"io/fs"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"path"
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
 )
 
-// Module is one migrated business area; listing its name in KANYUE_HONO_MODULES hands it back to Hono.
+// Module is one business area's routes.
 type Module struct {
 	Name     string
 	Register func(se *core.ServeEvent)
 }
 
 type Config struct {
-	HonoURL     string
-	HonoModules []string
-	Modules     []Module
+	Modules []Module
+	// Console is the built admin SPA; nil serves no pages.
+	Console fs.FS
 }
 
 // Runs before PocketBase's own middlewares so storage routes never reach a handler.
 const internalOnlyPriority = -99998
 
-// Register wires routes on serve; HONO_UPSTREAM_URL is only required there, so
-// migrate and superuser commands run without it.
 func Register(app core.App, cfg Config) {
-	handedBack := map[string]bool{}
-	for _, name := range cfg.HonoModules {
-		handedBack[strings.TrimSpace(name)] = true
-	}
-
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		proxy, err := NewHonoProxy(cfg.HonoURL)
-		if err != nil {
-			return err
-		}
 		se.Router.Bind(&hook.Handler[*core.RequestEvent]{
 			Id:       "kanyueInternalOnly",
 			Priority: internalOnlyPriority,
 			Func:     internalOnly,
 		})
 		for _, module := range cfg.Modules {
-			if handedBack[module.Name] {
-				log.Printf("module served by Hono: %s", module.Name)
-				continue
-			}
 			module.Register(se)
 		}
 		// More specific routes registered above win over this catch-all.
-		se.Router.Any("/{path...}", func(e *core.RequestEvent) error {
-			proxy.ServeHTTP(e.Response, e.Request)
-			return nil
-		})
+		se.Router.Any("/{path...}", pages(cfg.Console))
 		return se.Next()
 	})
 }
 
-// NewHonoProxy forwards requests to Hono unchanged; upstream failures keep the client envelope.
-func NewHonoProxy(rawURL string) (http.Handler, error) {
-	upstream, err := url.Parse(rawURL)
-	if err != nil || upstream.Host == "" {
-		return nil, fmt.Errorf("invalid HONO_UPSTREAM_URL %q", rawURL)
-	}
-	proxy := httputil.NewSingleHostReverseProxy(upstream)
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		log.Printf("hono proxy %s %s: %v", r.Method, r.URL.Path, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadGateway)
-		_, _ = w.Write([]byte(`{"code":502,"message":"服务暂时不可用，请稍后重试","data":null}`))
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// PocketBase wraps bodies in a reader that rewinds at EOF; stop at Content-Length
-		// so the transport does not read the body twice.
-		if r.ContentLength > 0 {
-			r.Body = struct {
-				io.Reader
-				io.Closer
-			}{io.LimitReader(r.Body, r.ContentLength), r.Body}
+func notFound(e *core.RequestEvent) error {
+	return e.JSON(http.StatusNotFound, map[string]any{"code": 404, "message": "接口不存在", "data": nil})
+}
+
+// pages serves built admin files as they are and index.html for any other page
+// navigation, so client-side routes survive a reload. Requests that do not ask
+// for HTML (API calls, missing assets) keep the 404 envelope.
+func pages(console fs.FS) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		method := e.Request.Method
+		if console == nil || (method != http.MethodGet && method != http.MethodHead) {
+			return notFound(e)
 		}
-		proxy.ServeHTTP(w, r)
-	}), nil
+		name := strings.TrimPrefix(path.Clean("/"+e.Request.URL.Path), "/")
+		if info, err := fs.Stat(console, name); err == nil && !info.IsDir() && name != "index.html" {
+			if strings.HasPrefix(name, "assets/") {
+				e.Response.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			}
+			return e.FileFS(console, name)
+		}
+		if !strings.Contains(e.Request.Header.Get("Accept"), "text/html") {
+			return notFound(e)
+		}
+		if _, err := fs.Stat(console, "index.html"); err != nil {
+			return notFound(e)
+		}
+		e.Response.Header().Set("Cache-Control", "no-cache")
+		return e.FileFS(console, "index.html")
+	}
 }
 
 // internalOnly hides PocketBase's REST API and dashboard from anything that came
@@ -105,7 +90,7 @@ func internalOnly(e *core.RequestEvent) error {
 	if IsInternalRequest(e.Request) {
 		return e.Next()
 	}
-	return e.JSON(http.StatusNotFound, map[string]any{"code": 404, "message": "接口不存在", "data": nil})
+	return notFound(e)
 }
 
 func IsInternalRequest(r *http.Request) bool {

@@ -63,7 +63,7 @@ NUXT_PUBLIC_SITE_URL=https://ikanyue.com
 - Phone link is `tel:18521301857` and includes a Lucide phone icon.
 - QR caption is `长按识别或扫码`.
 - QR asset is `/images/wechat-contact-qr.jpg`.
-- Activities contain production records from Hono, including `通俗唱法高音问题与方法` in the current dataset.
+- Activities contain production records from kanyue.server, including `通俗唱法高音问题与方法` in the current dataset.
 
 Use stable structural probes first. Treat activity titles as replaceable content and override the expected activity text when production records change.
 

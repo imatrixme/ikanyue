@@ -37,7 +37,7 @@ Purpose → Map → Code → Evidence → Reflection → Updated Map
 ## 2. Scope Radius / 任务半径
 
 - **默认半径**：用户要求修改的文件或功能、直接调用方/被调用方、最近的局部规则、对应测试、必要构建配置、受影响的文档。
-- **可扩大**：构建或测试链路必须跨子项目修复；行为依赖上下游契约（小程序 / Admin / 官网 ↔ Hono API ↔ PocketBase / 支付网关）；发现安全、隐私、数据损坏、支付、认证、发布风险；文档与代码冲突影响当前正确性；用户要求架构分析或迁移。
+- **可扩大**：构建或测试链路必须跨子项目修复；行为依赖上下游契约（小程序 / Admin / 官网 ↔ kanyue.server API ↔ 内嵌 PocketBase / 支付网关）；发现安全、隐私、数据损坏、支付、认证、发布风险；文档与代码冲突影响当前正确性；用户要求架构分析或迁移。
 - **不得扩大**：“顺便整理”、“不够优雅”、“既然发现了就全修”、“让项目更 GEB”、“让文档体系完整”。
 - **禁止大爆炸**（除非用户明确要求）：全仓库重写文档、给每个目录建 `AGENTS.md`/`MODULE.md`、按理想架构重排目录、批量加文件头或 `*.js.md`、批量补测试、批量建 ADR、一次性迁移旧代码。
 
@@ -70,7 +70,7 @@ Purpose → Map → Code → Evidence → Reflection → Updated Map
 | 模块 | 子项目 `AGENTS.md` / `MODULE.md` / `*.js.md` | 职责、非职责、允许/禁止依赖、不变量、验证入口 | 模块职责、API、依赖方向变化 |
 | 文件 | file header contract | 输入、输出、职责、不变量 | 只用于领域服务、认证/支付/权限/隐私、数据迁移、网络/持久化边界、跨子项目 API、并发/调度核心 |
 
-文件名沿用项目已有习惯（如 Hono 的 `*.js.md`），不为形式统一改名。
+文件名沿用项目已有习惯（如 `*.js.md`），不为形式统一改名。
 
 **局部地图最小模板**（只填有证据支撑的条目，用不到的删掉）：Role / Non-Goals / Public Surface / Allowed Dependencies / Forbidden Dependencies / Invariants（`INV-001: ...`）/ Evidence（测试与命令）/ Drift Triggers。
 
@@ -123,10 +123,10 @@ Purpose → Map → Code → Evidence → Reflection → Updated Map
 
 **看乐系统边界**
 
-- 客户端（小程序、Admin、官网）只通过 Hono API 访问业务数据，不直连 PocketBase，不持有服务端令牌。
-- 业务库与支付库分离：只有 `kanyue.pay` 持有支付凭据与支付库；业务侧通过网关客户端交互，金额以服务端确认结果为准。
+- 业务后端是单体 `kanyue.server`（Go，内嵌 PocketBase 与运营后台 SPA）；客户端（小程序、Admin、官网）只通过它的 API 访问业务数据，不直连 PocketBase REST，不持有服务端令牌。PocketBase 面板 `/_/` 只供运维经私网/SSH 隧道查看。
+- 业务库与支付库分离：只有 `kanyue.pay`（Go 单体，独立内嵌 PocketBase）持有支付凭据与支付库；业务侧通过网关客户端交互，金额以服务端确认结果为准。
 - 返回给客户端的用户数据必须脱敏（密码、令牌、微信标识等）；存储过滤条件中的用户输入必须转义。
-- PocketBase schema 变更走版本化迁移，不依赖运行时自动迁移。
+- PocketBase schema 变更走二进制内的版本化迁移（`migrate up` 显式执行，`serve` 遇到未执行迁移拒绝启动），不依赖运行时自动迁移。
 - 用户可见行为变化要考虑可访问性、中文排版、时区（Asia/Shanghai）与回归风险。
 
 ## 9. Working Loop / 工作循环

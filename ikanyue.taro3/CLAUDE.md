@@ -4,7 +4,7 @@ Architecture reference for the 看乐 WeChat mini program. Working rules, verifi
 
 ## Overview
 
-Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers. WeChat (`weapp`) is the shipping target; H5 builds are used only for local preview. All data comes from the Hono API (`ikanyue.mapi.hono`).
+Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers. WeChat (`weapp`) is the shipping target; H5 builds are used only for local preview. All data comes from the business API (`kanyue.server`).
 
 ## Commands
 
@@ -24,6 +24,6 @@ Taro 4 + Vue 3 (Options API) + NutUI-Taro mini program for students and teachers
 - `src/components/` — shared PascalCase components (`EmptyState`, `AsyncState`, `StickyActionBar`, teacher calendar/booking homes, …).
 - `src/styles/` — `_tokens.scss` (imports `_brand.generated.scss`, generated from the root `design-system/brand-tokens.json`), `theme.mjs` (`canvasPageChrome`, `immersivePageChrome`, `themeColors`, `iconSizes`).
 - `utils/` (repo root, not `src/`) — `request` (envelope, auth header, clears the session on `AUTH_SESSION_INVALID`), `apis`, `usermanager`, `rolemanager`, `schedulemanager`, `venuemanager` (public venue list, remembered current venue, phone hand-off), `commerce`, `cashier`, `academyTime` (academy clock, UTC+08:00), `commandKeys` (retry-safe idempotency keys).
-- `config/` — Taro config; `SERVICE_URL` is `https://mapi.ikanyue.com` in prod and `KANYUE_LOCAL_API_URL` (default `http://127.0.0.1:1337`) in dev.
+- `config/` — Taro config; `SERVICE_URL` is `https://mapi.ikanyue.com` in prod and `KANYUE_LOCAL_API_URL` (default `http://127.0.0.1:1437`, the native-stack `kanyue.server`) in dev.
 - `scripts/` — build guards (`verify-student-course-boundary.mjs`, weapp output checks), icon generation.
 - `tests/e2e/` — Node scripts asserting on `dist/` output.

@@ -3067,5 +3067,258 @@
    "CREATE INDEX idx_session_credit_allocations_student_status ON session_credit_allocations (sessionStudentId, status)",
    "CREATE INDEX idx_session_credit_allocations_batch_status ON session_credit_allocations (batchId, status)"
   ]
+ },
+ {
+  "createRule": null,
+  "deleteRule": null,
+  "fields": [
+   {
+    "autogeneratePattern": "[a-z0-9]{15}",
+    "hidden": false,
+    "id": "text3208210256",
+    "max": 15,
+    "min": 15,
+    "name": "id",
+    "pattern": "^[a-z0-9]+$",
+    "presentable": false,
+    "primaryKey": true,
+    "required": true,
+    "system": true,
+    "type": "text"
+   },
+   {
+    "cascadeDelete": false,
+    "collectionId": "credit_types",
+    "hidden": false,
+    "id": "relation888982066",
+    "maxSelect": 1,
+    "minSelect": 0,
+    "name": "sourceCreditTypeId",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "relation"
+   },
+   {
+    "cascadeDelete": false,
+    "collectionId": "credit_types",
+    "hidden": false,
+    "id": "relation2411320728",
+    "maxSelect": 1,
+    "minSelect": 0,
+    "name": "targetCreditTypeId",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "relation"
+   },
+   {
+    "hidden": false,
+    "id": "number1527917941",
+    "max": null,
+    "min": 1,
+    "name": "sourceQuantity",
+    "onlyInt": true,
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "number3651480694",
+    "max": null,
+    "min": 1,
+    "name": "targetQuantity",
+    "onlyInt": true,
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "number2752444164",
+    "max": null,
+    "min": 1,
+    "name": "minSourceQuantity",
+    "onlyInt": true,
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "number2978292726",
+    "max": null,
+    "min": 1,
+    "name": "maxSourceQuantity",
+    "onlyInt": true,
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "select1490714160",
+    "maxSelect": 1,
+    "name": "expiryPolicy",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "select",
+    "values": [
+     "INHERIT_SOURCE",
+     "RESET_ON_CONVERSION",
+     "RESET_ON_ACTIVATION",
+     "MIN_SOURCE_AND_NEW",
+     "TARGET_TERM_END"
+    ]
+   },
+   {
+    "hidden": false,
+    "id": "select820119152",
+    "maxSelect": 1,
+    "name": "activationMode",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "select",
+    "values": [
+     "GRANT_TIME",
+     "FIRST_RESERVATION",
+     "FIRST_CHECK_IN",
+     "FIRST_COMPLETED_SESSION",
+     "TERM_START"
+    ]
+   },
+   {
+    "hidden": false,
+    "id": "number2148999412",
+    "max": null,
+    "min": 0,
+    "name": "validityDurationDays",
+    "onlyInt": true,
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "number1318019663",
+    "max": null,
+    "min": 0,
+    "name": "activationDeadlineDays",
+    "onlyInt": true,
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "bool3037078019",
+    "name": "reversible",
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "bool"
+   },
+   {
+    "hidden": false,
+    "id": "number2285775005",
+    "max": null,
+    "min": 0,
+    "name": "referenceValueLimit",
+    "onlyInt": false,
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "date1321367048",
+    "max": "",
+    "min": "",
+    "name": "validFrom",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "date"
+   },
+   {
+    "hidden": false,
+    "id": "date2274640688",
+    "max": "",
+    "min": "",
+    "name": "validTo",
+    "presentable": false,
+    "required": false,
+    "system": false,
+    "type": "date"
+   },
+   {
+    "hidden": false,
+    "id": "number3206337475",
+    "max": null,
+    "min": 1,
+    "name": "version",
+    "onlyInt": true,
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "number"
+   },
+   {
+    "hidden": false,
+    "id": "select2063623452",
+    "maxSelect": 1,
+    "name": "status",
+    "presentable": false,
+    "required": true,
+    "system": false,
+    "type": "select",
+    "values": [
+     "draft",
+     "active",
+     "inactive"
+    ]
+   },
+   {
+    "hidden": false,
+    "id": "autodate2990389176",
+    "name": "created",
+    "onCreate": true,
+    "onUpdate": false,
+    "presentable": false,
+    "system": false,
+    "type": "autodate"
+   },
+   {
+    "hidden": false,
+    "id": "autodate3332085495",
+    "name": "updated",
+    "onCreate": true,
+    "onUpdate": true,
+    "presentable": false,
+    "system": false,
+    "type": "autodate"
+   }
+  ],
+  "id": "pbc_849320905",
+  "indexes": [
+   "CREATE UNIQUE INDEX idx_conversion_rules_version ON conversion_rules (sourceCreditTypeId, targetCreditTypeId, version)",
+   "CREATE INDEX idx_conversion_rules_active ON conversion_rules (sourceCreditTypeId, targetCreditTypeId, status, validFrom)"
+  ],
+  "listRule": null,
+  "name": "conversion_rules",
+  "system": false,
+  "type": "base",
+  "updateRule": null,
+  "viewRule": null
  }
 ]

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('local admin uses real Hono and PocketBase through row dialogs', async ({ page }, testInfo) => {
+test('local admin uses the real kanyue.server through row dialogs', async ({ page }, testInfo) => {
   const account = process.env.OPS_BOOTSTRAP_ADMIN_USERNAME
   const password = process.env.OPS_BOOTSTRAP_ADMIN_PASSWORD
   if (!account || !password) throw new Error('OPS_BOOTSTRAP_ADMIN_USERNAME and OPS_BOOTSTRAP_ADMIN_PASSWORD are required')

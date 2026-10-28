@@ -24,6 +24,11 @@ func Data(e *core.RequestEvent, data any) error {
 	return e.JSON(http.StatusOK, envelope{Code: CodeOK, Message: nil, Data: data})
 }
 
+// DataMessage is Hono's c.data(data, message).
+func DataMessage(e *core.RequestEvent, data any, message string) error {
+	return e.JSON(http.StatusOK, envelope{Code: CodeOK, Message: message, Data: data})
+}
+
 func Error(e *core.RequestEvent, code int, message string) error {
 	return e.JSON(http.StatusOK, envelope{Code: code, Message: message, Data: nil})
 }

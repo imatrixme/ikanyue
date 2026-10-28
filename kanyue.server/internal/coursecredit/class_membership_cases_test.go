@@ -56,7 +56,7 @@ func (f membershipFixture) member(t *testing.T, classID, effectiveFrom string) s
 		"effectiveFrom": effectiveFrom, "effectiveTo": ""}).Id
 }
 
-// conversion_allocations belongs to Hono's conversion module and is not part of the Go schema.
+// conversion_allocations exists in the schema but only the deleted student conversion wrote it.
 var ledgerCollections = []string{"credit_batches", "credit_events", "session_credit_allocations"}
 
 // Hono: courseCreditClassMembershipService › student membership command writes teaching relation and audit without changing credit quantities

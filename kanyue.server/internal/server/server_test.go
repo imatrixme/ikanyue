@@ -1,47 +1,69 @@
 package server
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 
-	"github.com/pocketbase/pocketbase/tools/router"
+	"github.com/pocketbase/pocketbase/apis"
+	"github.com/pocketbase/pocketbase/core"
+
+	"kanyue.server/internal/testkit"
 )
 
-func TestHonoProxyForwardsRereadableBodyOnce(t *testing.T) {
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		_, _ = w.Write([]byte(r.Method + " " + r.URL.RequestURI() + " " + r.Header.Get("Authorization") + " " + string(body)))
-	}))
-	defer upstream.Close()
-	proxy, err := NewHonoProxy(upstream.URL)
-	if err != nil {
-		t.Fatal(err)
+// Without Hono behind it, a path no module owns answers with the client 404 envelope.
+// Hono: pointsLite › light branch does not expose removed full-admin operation routes
+func TestUnownedRouteIsNotFound(t *testing.T) {
+	handler := testkit.Serve(t, testkit.NewApp(t), func(se *core.ServeEvent) {
+		se.Router.GET("/v1/owned", func(e *core.RequestEvent) error { return e.JSON(http.StatusOK, map[string]any{"code": 10000}) })
+		se.Router.Any("/{path...}", pages(nil))
+	})
+	for _, path := range []string{"/v1/course-credits/summary", "/swagger", "/", "/ops/dashboard", "/ops/assessment-templates"} {
+		result := testkit.Call(t, handler, http.MethodGet, path, nil, nil)
+		if result.Status != http.StatusNotFound || result.Body["message"] != "接口不存在" {
+			t.Fatalf("%s = %d %v", path, result.Status, result.Body)
+		}
 	}
-
-	payload := `{"username":"x"}`
-	r := httptest.NewRequest("POST", "/ops/auth/login?a=1", strings.NewReader(payload))
-	r.Header.Set("Authorization", "Bearer t")
-	r.Body = &router.RereadableReadCloser{ReadCloser: r.Body} // what PocketBase's router hands us
-	w := httptest.NewRecorder()
-	proxy.ServeHTTP(w, r)
-
-	if want := "POST /ops/auth/login?a=1 Bearer t " + payload; w.Code != 200 || w.Body.String() != want {
-		t.Fatalf("got %d %q, want %q", w.Code, w.Body.String(), want)
+	if owned := testkit.Raw(t, handler, http.MethodGet, "/v1/owned", "", nil); owned.Status != http.StatusOK {
+		t.Fatalf("owned = %d", owned.Status)
 	}
 }
 
-func TestHonoProxyDownKeepsEnvelope(t *testing.T) {
-	proxy, err := NewHonoProxy("http://127.0.0.1:1")
-	if err != nil {
-		t.Fatal(err)
+// The admin SPA shares the origin: built files as they are, index.html for page
+// navigations, and the 404 envelope for anything that is not asking for a page.
+func TestPagesServeTheAdminConsole(t *testing.T) {
+	console := fstest.MapFS{
+		"index.html":         {Data: []byte("<div id=root>console</div>")},
+		"assets/app-1a2b.js": {Data: []byte("console.log(1)")},
 	}
-	w := httptest.NewRecorder()
-	proxy.ServeHTTP(w, httptest.NewRequest("GET", "/v1/student/appointments", nil))
-	if w.Code != http.StatusBadGateway || !strings.Contains(w.Body.String(), `"code":502`) {
-		t.Fatalf("got %d %s", w.Code, w.Body.String())
+	handler := testkit.Serve(t, testkit.NewApp(t), func(se *core.ServeEvent) {
+		se.Router.Any("/{path...}", pages(console))
+	})
+	get := func(path, accept string) *httptest.ResponseRecorder {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		request.Header.Set("Accept", accept)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		return recorder
+	}
+	for _, path := range []string{"/", "/payments", "/students/abc"} {
+		page := get(path, "text/html,application/xhtml+xml")
+		if page.Code != http.StatusOK || !strings.Contains(page.Body.String(), "console") {
+			t.Fatalf("%s = %d %q", path, page.Code, page.Body.String())
+		}
+	}
+	asset := get("/assets/app-1a2b.js", "*/*")
+	if asset.Code != http.StatusOK || !strings.Contains(asset.Header().Get("Cache-Control"), "immutable") {
+		t.Fatalf("asset = %d %v", asset.Code, asset.Header())
+	}
+	for _, request := range []struct{ method, path string }{{http.MethodGet, "/v1/unknown"}, {http.MethodGet, "/assets/missing.js"},
+		{http.MethodPost, "/payments"}} {
+		result := testkit.Call(t, handler, request.method, request.path, nil, nil)
+		if result.Status != http.StatusNotFound || result.Body["message"] != "接口不存在" {
+			t.Fatalf("%s %s = %d %v", request.method, request.path, result.Status, result.Body)
+		}
 	}
 }
 
@@ -69,5 +91,66 @@ func TestIsInternalRequest(t *testing.T) {
 				t.Fatalf("got %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+// Register wires the storage guard, the modules and the console together; PocketBase's
+// own REST API stays reachable only from a direct private-network connection.
+func TestRegisterHidesStorageFromPublicRequests(t *testing.T) {
+	app := testkit.NewApp(t)
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Register(app, Config{
+		Modules: []Module{{Name: "owned", Register: func(se *core.ServeEvent) {
+			se.Router.GET("/v1/owned", func(e *core.RequestEvent) error { return e.JSON(http.StatusOK, map[string]any{"code": 10000}) })
+		}}},
+		Console: fstest.MapFS{"index.html": {Data: []byte("<div id=root></div>")}},
+	})
+	if err := app.OnServe().Trigger(&core.ServeEvent{App: app, Router: router}, func(*core.ServeEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	handler, err := router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	send := func(method, path, remote string, headers map[string]string) *httptest.ResponseRecorder {
+		request := httptest.NewRequest(method, path, nil)
+		request.RemoteAddr = remote
+		for key, value := range headers {
+			request.Header.Set(key, value)
+		}
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		return recorder
+	}
+	hidden := func(recorder *httptest.ResponseRecorder) bool {
+		return recorder.Code == http.StatusNotFound && strings.Contains(recorder.Body.String(), "接口不存在")
+	}
+	const public, private = "203.0.113.9:4000", "127.0.0.1:4000"
+	proxied := map[string]string{"X-Forwarded-For": "203.0.113.9"}
+	for _, item := range []struct {
+		name, method, path, remote string
+		headers                    map[string]string
+		hidden                     bool
+	}{
+		{"public records", http.MethodGet, "/api/collections/students/records", public, nil, true},
+		{"proxied records", http.MethodGet, "/api/collections/students/records", private, proxied, true},
+		{"public dashboard", http.MethodGet, "/_/", public, nil, true},
+		{"public dashboard root", http.MethodGet, "/_", public, nil, true},
+		{"public file upload", http.MethodPost, "/api/files/students/x/a.png", public, nil, true},
+		{"private records", http.MethodGet, "/api/collections/students/records", private, nil, false},
+		{"public file download", http.MethodGet, "/api/files/students/x/a.png", public, nil, false},
+	} {
+		if got := hidden(send(item.method, item.path, item.remote, item.headers)); got != item.hidden {
+			t.Errorf("%s: hidden = %v, want %v", item.name, got, item.hidden)
+		}
+	}
+	if owned := send(http.MethodGet, "/v1/owned", public, proxied); owned.Code != http.StatusOK {
+		t.Fatalf("module route = %d", owned.Code)
+	}
+	if page := send(http.MethodGet, "/students", public, map[string]string{"Accept": "text/html"}); page.Code != http.StatusOK || !strings.Contains(page.Body.String(), "root") {
+		t.Fatalf("console page = %d %s", page.Code, page.Body.String())
 	}
 }

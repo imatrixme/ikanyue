@@ -49,6 +49,16 @@ var adminSchemas = map[string]adminSchema{
 		validate:   validatePriceVersion,
 		revisioned: true,
 	},
+	"conversionRules": {
+		collection: "conversion_rules",
+		fields: []string{"sourceCreditTypeId", "targetCreditTypeId", "sourceQuantity", "targetQuantity",
+			"minSourceQuantity", "maxSourceQuantity", "expiryPolicy", "activationMode",
+			"validityDurationDays", "activationDeadlineDays", "reversible", "referenceValueLimit",
+			"validFrom", "validTo", "version", "status"},
+		statuses:   []string{"draft", "active", "inactive"},
+		validate:   validateConversionRuleInput,
+		revisioned: true,
+	},
 	"classes": {
 		collection: "classes",
 		fields: []string{"code", "name", "courseSpecId", "defaultCreditTypeId", "termStart", "termEnd",
@@ -94,6 +104,9 @@ func createResource(app core.App, name string, actor Actor, input Body) (map[str
 	if name == "lessons" && data["status"] != "draft" {
 		return nil, Fail("LESSON_MUST_START_DRAFT", "新课堂必须先保存为草稿", nil)
 	}
+	if name == "conversionRules" && data["status"] != "draft" {
+		return nil, Fail("CONVERSION_RULE_MUST_START_DRAFT", "新兑换规则必须先保存为草稿", nil)
+	}
 	id := ids.Record()
 	if err := commit(app, config.collection, "", id, data, auditEntry(actor, name, id, "create", map[string]any{})); err != nil {
 		return nil, err
@@ -137,6 +150,11 @@ func setStatus(app core.App, name, id string, status, reason any, actor Actor) (
 	}
 	if name == "packages" && status == "active" {
 		if err := validatePackagePublication(app, id); err != nil {
+			return nil, err
+		}
+	}
+	if name == "conversionRules" && status == "active" {
+		if err := validateConversionPublication(app, id); err != nil {
 			return nil, err
 		}
 	}
@@ -198,6 +216,11 @@ func validatePackagePublication(app core.App, packageID string) error {
 
 func createRevision(app core.App, name string, current, data map[string]any, actor Actor) (map[string]any, error) {
 	config := adminSchemas[name]
+	if name == "conversionRules" {
+		if err := conversionRuleSuperseded(app, current); err != nil {
+			return nil, err
+		}
+	}
 	id := ids.Record()
 	version := max(positiveVersion(current["version"])+1, positiveVersion(jsx.Get(data, "version")))
 	data["version"] = version
@@ -477,7 +500,7 @@ func optional(data map[string]any, key string, check func(map[string]any, string
 	return check(data, key, code)
 }
 
-// blank is Hono's `value === undefined || value === null || value === ”`.
+// blank is Hono's `value === undefined || value === null || value === ""`.
 func blank(value any) bool {
 	switch v := value.(type) {
 	case nil, jsx.Undefined:

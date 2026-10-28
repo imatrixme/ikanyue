@@ -34,6 +34,7 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addNumber(teachers, "gender", "age")
 	addDate(teachers, "lastPasswordChangedAt", "lastLoginAt")
 	teachers.Fields.Add(&core.JSONField{Name: "courseCreditCapabilities"})
+	addAutodates(teachers)
 	save(t, app, teachers)
 
 	students := core.NewBaseCollection("students")
@@ -56,7 +57,7 @@ func NewApp(t *testing.T) *tests.TestApp {
 
 	audits := core.NewBaseCollection("ops_audit_logs")
 	audits.Fields.Add(&core.RelationField{Name: "actorId", CollectionId: teachers.Id, MaxSelect: 1})
-	audits.Fields.Add(&core.SelectField{Name: "actorRole", MaxSelect: 1, Values: []string{"teacher", "admin"}})
+	audits.Fields.Add(&core.SelectField{Name: "actorRole", MaxSelect: 1, Values: []string{"teacher", "admin", "anonymous", "student"}})
 	addText(audits, "action", "resourceType", "resourceId")
 	audits.Fields.Add(&core.SelectField{Name: "outcome", MaxSelect: 1, Required: true, Values: []string{"allowed", "denied", "success", "failed"}})
 	audits.Fields.Add(&core.JSONField{Name: "metadata"})

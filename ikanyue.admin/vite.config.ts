@@ -5,10 +5,17 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rolldownOptions: {
+      // Third-party code changes far less often than the app; a separate chunk keeps
+      // it cached across deploys.
+      output: { codeSplitting: { groups: [{ name: 'vendor', test: /node_modules/ }] } },
+    },
+  },
   server: {
     proxy: {
       '/ops': {
-        target: process.env.KANYUE_LOCAL_API_ORIGIN || 'http://127.0.0.1:1337',
+        target: process.env.KANYUE_LOCAL_API_ORIGIN || 'http://127.0.0.1:1437',
         changeOrigin: true,
       },
     },

@@ -9,7 +9,7 @@ import (
 
 // BookingModule serves one-to-one course booking: student requests, the
 // teacher workbench, ops booking configuration and the appointment workers.
-// Calendars live in SessionsModule; schedule backfill stays in Hono.
+// Calendars live in SessionsModule; it also serves the schedule claim backfill.
 // It also schedules the expire/fulfill workers, which Hono left to manual runs.
 type BookingModule struct {
 	Signer             *auth.Signer
@@ -245,6 +245,9 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 	router.GET("/ops/course-bookings/availability", opsQuery(func(e *core.RequestEvent) (any, error) {
 		return opsAvailability(e.App, queryParams(e, "status", "teacherId", "offeringId"))
 	}))
+	router.GET("/ops/course-bookings/backfill/preview", opsQuery(func(e *core.RequestEvent) (any, error) {
+		return backfillPreview(e.App, queryParams(e, "from", "to"))
+	}))
 	router.GET("/ops/course-bookings/conflicts", opsQuery(func(e *core.RequestEvent) (any, error) {
 		return opsConflicts(e.App, queryParams(e, "page", "perPage", "status", "teacherId"))
 	}))
@@ -277,6 +280,7 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 	}, false))
 	router.POST("/ops/course-bookings/availability-overrides/{overrideId}/cancel", opsRoute("cancelTeacherAvailabilityOverride", "overrideId", cancelOverrideForOperator, false))
 	router.POST("/ops/course-bookings/conflicts/{conflictId}/resolve", opsRoute("resolveBookingConflict", "conflictId", resolveConflict, false))
+	router.POST("/ops/course-bookings/backfill", opsRoute("backfillScheduleClaims", "", backfillScheduleClaims, false))
 	router.POST("/ops/course-bookings/workers/expire", opsRoute("expireAppointments", "", expireAppointments, false))
 	router.POST("/ops/course-bookings/workers/fulfill", opsRoute("fulfillAppointments", "", fulfillAppointments, false))
 

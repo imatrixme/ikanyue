@@ -32,7 +32,7 @@
 
 - Affected specs: 新增 `renewal-reminders`。
 - Affected code:
-  - `ikanyue.mapi.hono`：新集合与迁移、扫描任务、ops 接口、学员端提醒查询。
+  - `kanyue.server`：新集合与 Go 迁移、进程内每日扫描任务、ops 接口、学员端提醒查询。
   - `ikanyue.admin`：待续费列表与发送操作。
   - `ikanyue.taro3`：首页“教务提醒”，以及可选的订阅授权按钮。
 - Data：新增集合，不修改已有数据。

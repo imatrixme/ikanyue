@@ -5,7 +5,7 @@
 - 状态：Approved for release candidate
 - 基线：`release/2.0.0`
 - 工作分支：`feature/course-credit-system`
-- 覆盖系统：Admin、Hono API、小程序、官网
+- 覆盖系统：Admin、业务 API（`kanyue.server`）、小程序、官网
 - 不复用对象：实物积分 `student_points` / `point_events`
 - 关联技术设计：`docs/architecture/course-credit-system-technical-design.md`
 - 关联 OpenSpec：`openspec/changes/add-course-credit-system/`
@@ -422,7 +422,7 @@ Admin 采用结构化工作区，不使用一页内无限 View 切换：
 - 重复支付、重复冻结、重复结算和重复冲正不会改变第二次结果。
 - 任意余额变化都能追踪到订单、兑换、课堂或人工操作。
 - Admin、小程序与官网只展示各自权限范围内的数据。
-- Admin、Hono、小程序和官网中所有受影响项目均提供可重复的本地覆盖率命令，四项覆盖率分别不低于 95%。
+- Admin、业务 API（`kanyue.server`）、小程序和官网中所有受影响项目均提供可重复的本地覆盖率命令，四项覆盖率分别不低于 95%。
 - 课程点批次、激活、有效期、兑换、冻结、结算、冲正和教师课堂点的关键分支均有成功与失败路径测试。
 
 ## 24. 分阶段范围
@@ -452,4 +452,4 @@ Admin 采用结构化工作区，不使用一页内无限 View 切换：
 - 到课和迟到消费课程点；提前 12 小时请假释放，超时请假和无故缺席消费；机构取消释放课程点且默认不产生教师补偿点。
 - 兑换只允许管理员发布的有向规则，默认不可逆，参考价值不得增长，单次规则允许的参考价值损失上限为 20%；隐式兑换必须取得本次明确同意。
 - 首发订单渠道仅为 Admin 和经 Admin 审核的线下订单；监护人代付与自动现金退款暂不启用。
-- 以上规则的机器可读来源为 `ikanyue.mapi.hono/scripts/fixtures/course-credit-rules.v1.json`，规则变化必须创建新版本，不能修改历史快照。
+- 以上规则的机器可读来源为 `docs/product/course-credit-rules.v1.json`，规则变化必须创建新版本，不能修改历史快照。

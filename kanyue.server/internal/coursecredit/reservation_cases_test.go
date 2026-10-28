@@ -8,7 +8,7 @@ import (
 
 // Reservation planning cases ported from Hono's courseCreditReservationService
 // tests. Go plans reservations for booking confirmation; the student
-// session-student reserve service behind /v1/course-credits/* stays in Hono.
+// session-student reserve service behind /v1/course-credits/* had no caller and was deleted.
 
 const (
 	reservationNow   = "2026-07-17T10:00:00.000Z"

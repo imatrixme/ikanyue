@@ -20,10 +20,10 @@ Verify:
 
 - `NUXT_PUBLIC_API_BASE=https://xapi.ikanyue.com`
 - the upstream endpoint `/v1/activity/find`
-- the website adapter unwraps Hono's `{ code, message, data }` envelope
+- the website adapter (`server/utils/api-response.ts`) unwraps the API's `{ code, message, data }` envelope
 - the response uses `data.items`, not top-level `items`
 
-Do not change Hono for this website-side contract problem.
+Do not change kanyue.server for this website-side contract problem.
 
 ## Static Export Looks Fine but Activities Fail
 

@@ -1,29 +1,32 @@
 services:
-  # Business API with embedded PocketBase. HONO_PORT (API domain) and POCKETBASE_PORT
-  # (data domain, public file downloads) both reach it; the PocketBase REST API and
-  # dashboard answer only direct private-network calls (Hono), never proxied traffic.
+  # The single business binary: API, embedded PocketBase and the admin SPA. ADMIN_PORT
+  # (admin domain), API_PORT (API domain) and POCKETBASE_PORT (data domain, public file
+  # downloads) all reach it; the PocketBase REST API and dashboard answer only direct
+  # private-network calls (SSH tunnel, compose network), never proxied traffic.
   server:
     build:
       context: ./kanyue.server
       dockerfile: Dockerfile
+      additional_contexts:
+        console: ./ikanyue.admin
     restart: unless-stopped
     user: "0:0"
     ports:
-      - "${BIND_ADDR:-127.0.0.1}:${HONO_PORT:-1337}:8090"
+      - "${BIND_ADDR:-127.0.0.1}:${ADMIN_PORT:-8080}:8090"
+      - "${BIND_ADDR:-127.0.0.1}:${API_PORT:-${HONO_PORT:-1337}}:8090"
       - "${BIND_ADDR:-127.0.0.1}:${POCKETBASE_PORT:-8090}:8090"
     environment:
       PB_EMAIL: "${PB_EMAIL:-admin@example.com}"
       PB_PASSWORD: "${PB_PASSWORD:-change-me}"
-      HONO_UPSTREAM_URL: http://hono:1337
-      KANYUE_HONO_MODULES: "${KANYUE_HONO_MODULES:-}"
       PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
       JWT_SECRET: "${JWT_SECRET:?Set a random JWT_SECRET of at least 32 characters}"
       OPS_REGISTRATION_ENABLED: "${OPS_REGISTRATION_ENABLED:-false}"
-      # The ledger, booking and sessions modules read the same feature switches as Hono (default on outside production).
+      # Release stages are switched on independently (default on outside production).
       NODE_ENV: "${NODE_ENV:-production}"
       COURSE_CREDIT_GRANTS_ENABLED: "${COURSE_CREDIT_GRANTS_ENABLED:-false}"
       COURSE_CREDIT_RESERVATION_ENABLED: "${COURSE_CREDIT_RESERVATION_ENABLED:-false}"
       COURSE_CREDIT_SETTLEMENT_ENABLED: "${COURSE_CREDIT_SETTLEMENT_ENABLED:-false}"
+      COURSE_CREDIT_MIGRATION_ENABLED: "${COURSE_CREDIT_MIGRATION_ENABLED:-false}"
       # Online purchase needs the payment gateway; only "true" enables it. Mock payment never runs in production.
       COURSE_COMMERCE_ENABLED: "${COURSE_COMMERCE_ENABLED:-false}"
       PAY_GATEWAY_URL: "${PAY_GATEWAY_URL:-}"
@@ -51,59 +54,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-
-  hono:
-    build:
-      context: ./ikanyue.mapi.hono
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      server:
-        condition: service_healthy
-    environment:
-      NODE_ENV: "${NODE_ENV:-production}"
-      HOST: "${HOST:-0.0.0.0}"
-      PORT: "1337"
-      PB_URL: http://server:8090
-      PB_PUBLIC_URL: "${PB_PUBLIC_URL:-https://data.ikanyue.com}"
-      PB_EMAIL: "${PB_EMAIL:-admin@example.com}"
-      PB_PASSWORD: "${PB_PASSWORD:-change-me}"
-      JWT_SECRET: "${JWT_SECRET:?Set a random JWT_SECRET of at least 32 characters}"
-      OPS_REGISTRATION_ENABLED: "${OPS_REGISTRATION_ENABLED:-false}"
-      PUBLIC_ASSET_BASE_URL: "${PUBLIC_ASSET_BASE_URL:-https://kyoss.abcmem.com/ikanyue-mp}"
-      DEFAULT_AVATAR: "${DEFAULT_AVATAR:-}"
-      WECHAT_APPID: "${WECHAT_APPID:-}"
-      WECHAT_SECRET: "${WECHAT_SECRET:-}"
-      WECHAT_JSCODE2SESSION: "${WECHAT_JSCODE2SESSION:-https://api.weixin.qq.com/sns/jscode2session}"
-      COURSE_CREDIT_GRANTS_ENABLED: "${COURSE_CREDIT_GRANTS_ENABLED:-false}"
-      COURSE_CREDIT_RESERVATION_ENABLED: "${COURSE_CREDIT_RESERVATION_ENABLED:-false}"
-      COURSE_CREDIT_SETTLEMENT_ENABLED: "${COURSE_CREDIT_SETTLEMENT_ENABLED:-false}"
-      COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED: "${COURSE_CREDIT_EXPLICIT_CONVERSION_ENABLED:-false}"
-      COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED: "${COURSE_CREDIT_IMPLICIT_CONVERSION_ENABLED:-false}"
-      COURSE_CREDIT_MIGRATION_ENABLED: "${COURSE_CREDIT_MIGRATION_ENABLED:-false}"
-      COURSE_CREDIT_OUTBOX_WEBHOOK_URL: "${COURSE_CREDIT_OUTBOX_WEBHOOK_URL:-}"
-      COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET: "${COURSE_CREDIT_OUTBOX_WEBHOOK_SECRET:-}"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1337/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
-  admin:
-    build:
-      context: ./ikanyue.admin
-      dockerfile: Dockerfile
-      args:
-        VITE_OPS_API_BASE: "${VITE_OPS_API_BASE:-/ops}"
-        VITE_OPS_API_MOCK: "${VITE_OPS_API_MOCK:-false}"
-    restart: unless-stopped
-    depends_on:
-      server:
-        condition: service_healthy
-      hono:
-        condition: service_healthy
-    ports:
-      - "${BIND_ADDR:-127.0.0.1}:${ADMIN_PORT:-8080}:80"
 
   miniapp:
     profiles: ["test"]

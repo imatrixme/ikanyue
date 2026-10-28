@@ -24,27 +24,22 @@ Student self-enrollment and QR attendance are deliberately deferred. They are no
 
 ## Local real-backend testing
 
-The Vite development server proxies `/ops` to `KANYUE_LOCAL_API_ORIGIN` (default `http://127.0.0.1:1337`). The normal E2E suite keeps using the in-memory API; the live suite requires the parent local environment and seeded PocketBase data. Reward images are uploaded as multipart data through Hono; the browser never receives PocketBase superuser or MinIO credentials. Returned image URLs point at the configured public asset base in production and PocketBase `/api/files` in the local environment.
+The Vite development server proxies `/ops` to `KANYUE_LOCAL_API_ORIGIN` (default `http://127.0.0.1:1437`, the native-stack `kanyue.server`). The normal E2E suite keeps using the in-memory API; the live suite requires the parent local environment and seeded PocketBase data. Reward images are uploaded as multipart data through `kanyue.server`; the browser never receives PocketBase superuser or MinIO credentials. Returned image URLs point at the configured public asset base in production and PocketBase `/api/files` in the local environment.
 
 ```bash
 npm run dev -- --port 4173
 PLAYWRIGHT_LIVE=true npm run test:e2e:live
 ```
 
-## Docker
+## Production build
 
-The production image serves the built admin app with Nginx. `/ops/*` is proxied to the Hono service name used by the parent Compose stack.
-
-Do not use Docker as the normal development verification loop for this fork. Run Docker only for final release verification.
+The admin is a static single-page app embedded in `kanyue.server` and served on the same origin as `/ops`; there is no separate container, SSR, or Nginx.
 
 ```bash
-docker build \
-  --build-arg VITE_OPS_API_BASE=/ops \
-  --build-arg VITE_OPS_API_MOCK=false \
-  -t openregistry.local/ikanyue/admin:latest .
+npm run build:server   # writes ../kanyue.server/internal/console/site, embedded by go:embed
 ```
 
-In production this image is expected to be pushed to OpenRegistry and run by the parent repository's `compose.yaml` through 1Panel.
+Run it before `go run` / `go build` in `kanyue.server`; the Docker image of `kanyue.server` builds the admin itself.
 
 ## Vite notes
 

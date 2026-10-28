@@ -149,5 +149,5 @@ The table-dialog restructuring SHALL use the existing points-lite Admin API and 
 
 #### Scenario: Admin build is inspected
 - **WHEN** the restructured workflows are built and exercised
-- **THEN** they continue using the existing `/ops/points/*` and `/ops/reward-items*` requests without adding a root dependency, Hono route, or PocketBase field
+- **THEN** they continue using the existing `/ops/points/*` and `/ops/reward-items*` requests without adding a root dependency, a new server route, or a PocketBase field
 

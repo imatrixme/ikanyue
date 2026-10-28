@@ -10,7 +10,7 @@ import (
 
 // Ops route cases ported from Hono's courseCreditOpsRoutes tests. Go serves the real
 // read models, so the cases check capability gates and the data each scope sees.
-// Teacher event routes stay in Hono and are not part of these cases.
+// Teacher event routes are covered in teacher_credits_cases_test.go.
 
 func opsRoutes(t *testing.T, f opsQueryFixture) (func(path string, headers map[string]string) testkit.Response, *auth.Signer, http.Handler) {
 	t.Helper()

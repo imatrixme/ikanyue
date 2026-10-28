@@ -23,7 +23,7 @@ func TestUpCreatesVenuesOnceAndSeedsTheStudio(t *testing.T) {
 		t.Fatalf("serve must refuse and name the pending migration, got %v", err)
 	}
 	applied, err := Up(app)
-	if err != nil || len(applied) != 2 {
+	if err != nil || len(applied) != len(list.Items()) {
 		t.Fatalf("Up = %v, %v", applied, err)
 	}
 	schema, err := app.FindCollectionByNameOrId("venues")
@@ -80,5 +80,29 @@ func TestUpStopsLoginsFromOverwritingCreated(t *testing.T) {
 	}
 	if got := reloaded.GetDateTime("created").String(); got != created {
 		t.Fatalf("created changed from %v to %v after an update", created, got)
+	}
+}
+
+func TestUpLetsAuditKeepAnonymousAndStudentActors(t *testing.T) {
+	app := testkit.NewApp(t)
+	audits, err := app.FindCollectionByNameOrId("ops_audit_logs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	audits.Fields.GetByName("actorRole").(*core.SelectField).Values = []string{"teacher", "admin"}
+	if err := app.Save(audits); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if err := allowAuditActorRoles(app); err != nil {
+			t.Fatal(err)
+		}
+	}
+	audits, err = app.FindCollectionByNameOrId("ops_audit_logs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if values := audits.Fields.GetByName("actorRole").(*core.SelectField).Values; strings.Join(values, ",") != "teacher,admin,anonymous,student" {
+		t.Fatalf("actorRole values = %v", values)
 	}
 }

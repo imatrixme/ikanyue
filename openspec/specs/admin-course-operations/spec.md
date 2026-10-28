@@ -15,7 +15,7 @@ Admin SHALL provide stable URL routes grouped into six task sections — 今天 
 - **THEN** Admin replaces it with the new route and keeps the query string
 
 ### Requirement: Course Catalog Management
-Authorized finance or admin operators SHALL create, edit, activate, and deactivate course specifications, packages, grant lines, and price versions through explicit Hono commands.
+Authorized finance or admin operators SHALL create, edit, activate, and deactivate course specifications, packages, grant lines, and price versions through explicit `kanyue.server` commands.
 
 #### Scenario: Operator publishes a package
 - **WHEN** all course-hour grant lines, price, activation, and validity fields pass validation
@@ -36,7 +36,7 @@ Authorized academic operators SHALL manage class membership, teacher assignments
 - **THEN** the system snapshots a deduplicated roster and evaluates each student's lesson-hour eligibility
 
 ### Requirement: Capability-Scoped Navigation
-Admin SHALL derive visible sections, section tabs and allowed actions from server-provided capabilities and SHALL still rely on Hono for authoritative authorization. A section SHALL be visible only when at least one of its tabs is accessible, and selecting it SHALL open its first accessible tab.
+Admin SHALL derive visible sections, section tabs and allowed actions from server-provided capabilities and SHALL still rely on `kanyue.server` for authoritative authorization. A section SHALL be visible only when at least one of its tabs is accessible, and selecting it SHALL open its first accessible tab.
 
 #### Scenario: Teacher opens Admin
 - **WHEN** a teacher has only assigned-teaching capabilities

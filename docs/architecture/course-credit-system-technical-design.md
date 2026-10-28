@@ -15,7 +15,7 @@
 
 ### 2.2 一致性缺口
 
-当前 `PointService.applyDelta` 先更新余额快照，再创建事件，两次 PocketBase JS SDK 请求没有跨集合事务。如果第二步失败，会出现余额变化但缺少事件；并发请求也可能读取相同旧余额。
+原 Hono 实现的 `PointService.applyDelta` 先更新余额快照，再创建事件，两次 PocketBase JS SDK 请求没有跨集合事务；第二步失败会出现余额变化但缺少事件，并发请求也可能读到相同旧余额。kanyue.server 的积分写入已改为在同一个 `app.RunInTransaction` 内更新快照和写事件。
 
 课程点兑换和课堂结算通常同时修改多个批次、分配记录、流水、课堂状态和通知事件，因此不得复用该写入方式。
 
@@ -27,7 +27,7 @@
 - 使用不可变操作和事件提供审计，使用批次快照提供高效查询。
 - 支持通用点、特定课程点、批次有效期、首次使用激活和有向兑换。
 - 支持多班合课、多学员名单快照、多教师实际结算。
-- 四端只通过 Hono API 使用领域能力，不直接访问 PocketBase 私有集合。
+- 四端只通过业务 API（`kanyue.server`）使用领域能力，不直接访问 PocketBase 私有集合。
 - 所有命令具备幂等、权限、审计、对账和失败恢复机制。
 - 所有受影响项目的行、分支、函数和语句覆盖率分别达到 95% 以上。
 
@@ -42,50 +42,46 @@
 ## 4. 总体架构
 
 ```text
-Admin / Mini Program / Website
+Admin SPA / Mini Program / Website
               |
               v
-       Hono API and RBAC
-       - request validation
-       - identity and scope
-       - query composition
-       - domain services
+   kanyue.server (Go single binary)
+       - request validation, identity and scope (RBAC)
+       - query composition, domain services
        - transaction planning
+       - in-process timers: expiry, outbox, reconciliation, commerce recovery
+       - serves the embedded admin SPA on the same origin as /ops
               |
               v
-PocketBase JavaScript SDK
-       - pb.createBatch()
-       - one transactional /api/batch request
+   embedded PocketBase v0.32.0 (Go library)
+       - app.RunInTransaction: one SQLite write transaction per command
+       - dashboard /_/ for private-network inspection only
               |
               v
-      PocketBase SQLite/S3
+          SQLite / S3 files
 ```
 
-PocketBase 官方 Batch API 支持在一个请求中事务化创建、更新、upsert 或删除多条记录；当前 JavaScript SDK 通过 `pb.createBatch()` 构造该请求。Batch API 必须在 PocketBase Application Settings 中显式启用；课程积分功能启用时，Hono 启动检查未通过就拒绝启动。参考：[PocketBase batch records API](https://pocketbase.io/docs/api-records/#batch-createupdateupsertdelete-records)。
+2026-10-27 起业务 API 由 `kanyue.server` 承担，`ikanyue.mapi.hono` 已删除，接口契约与数据形状不变；对照见 `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go/test-parity.md`。
 
 ## 5. 关键技术决策
 
-### 5.1 账本业务在 Hono 执行，PocketBase 只提供事务存储
+### 5.1 账本业务在 kanyue.server 执行，PocketBase 作为内嵌事务存储
 
-所有课程点规则、权限、幂等判断、FEFO 规划和状态机都在 Hono service 中执行。事务仓储使用现有 PocketBase JavaScript SDK 的 `createBatch()`，一次性提交账本集合变更。PocketBase 不实现任何后端业务 hook；记录生命周期、自定义路由、定时任务和 hook 内事务都禁止使用。
+所有课程点规则、权限、幂等判断、FEFO 规划和状态机都在 kanyue.server 的 Go domain service 中执行。PocketBase 以库的形式内嵌在同一进程：一次命令的全部账本集合变更在 `app.RunInTransaction` 内提交，要么全部生效要么全部回滚。PocketBase REST API 不再承担业务写入，只对私网直连开放；不使用 JS hooks（`pb_hooks`）。
 
 选择原因：
 
-- 保留当前 PocketBase 数据和运维体系。
-- 通过 PocketBase 官方 Batch API 在同一个读写事务内更新多个集合。
+- 保留当前 PocketBase 数据、文件存储和运维体系，数据目录原样接管。
+- 进程内事务替代跨进程 Batch API：不再依赖 `batch.enabled` 与批量上限，也没有网络往返的部分失败。
+- 单一二进制：API、存储、后台页面与定时任务同进程，部署只剩一个容器。
 - 避免新增独立数据库和双写同步。
-- 保持现有 Hono service/repository 与 PocketBase SDK 的项目结构。
 
 备选方案：
 
-- Hono 顺序 SDK 写入与补偿事务：不能消除部分写入，拒绝。
-- PocketBase 业务 hook：会把 API 层业务规则下沉到存储层，拒绝。
+- 保留 Hono + PocketBase Batch API：两套运行时、跨进程事务与外部调度，运维负担更大，已替换。
 - 新增 PostgreSQL：一致性更强、扩展性更好，但会增加基础设施和数据同步，暂不采用。
-- Hono 本地 SQLite：容器持久化、备份和多实例写入风险较高，拒绝。
 
-生产卷副本已确认运行 `elestio/pocketbase:v0.32.0`，其 Batch API 配置为启用状态。Hono 启动时只校验 SDK 能力与 `batch.enabled=true`，具体限额保留为运行诊断信息，不进入业务分支。迁移、Hono transaction repository、能力探针和契约测试全部纳入 `ikanyue.mapi.hono` 版本控制。
-
-`ikanyue.mapi.hono` 提供仓库级无 hook 守卫并接入 lint：禁止 `pb_hooks`、`.pb.js`、PocketBase hook API 和 `--hooksDir` 等运行配置。Record hook 的状态机和不可变约束由 Hono domain service 与 transaction repository 承担；bootstrap hook 被 Hono 启动期 Batch API 强制校验替代；custom serve hook 被显式 Hono route 替代；cron hook 被外部调度器调用 `POST /ops/course-credits/workers/expiry/run`、`POST /ops/course-credits/workers/outbox/deliver` 和对账 route 替代。PocketBase 只接收 SDK 读请求与 `createBatch().send()` 事务写入。
+Schema 由 kanyue.server 内的版本化迁移维护：`kanyue-server migrate up` 显式执行，`serve` 发现未执行迁移时拒绝启动；迁移只增加集合、字段和索引，不修改或删除已有内容。到期、outbox 投递、对账与支付恢复由进程内定时器执行，同时保留对应的 `/ops/course-credits/workers/*` 手动入口。
 
 ### 5.2 命令与查询分离
 
@@ -115,7 +111,7 @@ PocketBase 官方 Batch API 支持在一个请求中事务化创建、更新、u
 
 支付验证在账本事务前完成；通知、短信、订阅消息和分析事件在事务内写 `outbox_events`，事务提交后异步发送。事务内不得发起外部 HTTP 请求。
 
-外部单实例 worker 调用 Hono Outbox service：先把到期事件标记 `processing`，再使用事件 ID 作为提供方幂等键投递。失败按指数退避进入 `failed`，达到配置上限进入 `dead_letter`；超过处理超时的 `processing` 事件可重新领取。管理接口只返回 topic、聚合标识、尝试次数和安全错误码，不返回原始 payload。
+kanyue.server 进程内定时任务（配置 `COURSE_CREDIT_OUTBOX_WEBHOOK_URL` 时每分钟一轮，也可经 worker 路由手动触发）：先把到期事件标记 `processing`，再使用事件 ID 作为提供方幂等键投递。失败按指数退避进入 `failed`，达到配置上限进入 `dead_letter`；超过处理超时的 `processing` 事件可重新领取。管理接口只返回 topic、聚合标识、尝试次数和安全错误码，不返回原始 payload。
 
 ## 6. 数据模型
 
@@ -181,7 +177,7 @@ settled -> correction_pending -> settled
 5. 更新批次 `available -> frozen`，创建 allocation 和事件。
 6. 将课堂学员 `credit_status=reserved`。
 
-当请求携带有效 `authorizationId` 且精确课程点不足时，Hono 在同一个 SDK Batch 中继续执行：来源批次 `available -> consumed`、目标批次创建、目标批次 `available -> frozen`、`conversion_allocations`、`session_credit_allocations`、不可变事件、课堂学员版本更新和 Outbox。任何一个请求失败时整批回滚；不得先调用独立兑换接口再调用预约接口。
+隐式兑换（携带 `authorizationId` 时在同一事务内先兑换再冻结）原由学员自助接口 `/v1/course-credits/*` 提供，该接口没有调用方，已随 Hono 删除；约课只使用精确课程点。恢复隐式兑换时必须在同一个事务内完成来源批次消费、目标批次创建与冻结、`conversion_allocations`、`session_credit_allocations`、事件、课堂学员版本和 Outbox，不得先调用独立兑换接口再调用预约接口。
 
 ### 8.4 `rescheduleSession`
 
@@ -190,7 +186,7 @@ settled -> correction_pending -> settled
 3. 仍有效的 allocation 只更新 `reserved_for_start_at`；失效 allocation 从 `frozen` 释放。
 4. 若释放时批次已经到期，数量直接进入 `expired`，不得短暂回到 `available`；否则进入 `available`。
 5. 按新课堂时间重新执行 FEFO。只有缺口可以被完整覆盖时才创建新冻结，不能留下部分新冻结和 `credit_insufficient` 的混合状态。
-6. 课堂时间、批次桶、旧/new allocation、课堂学员状态、不可变事件、操作记录和 Outbox 在同一个 SDK Batch 中提交。
+6. 课堂时间、批次桶、旧/new allocation、课堂学员状态、不可变事件、操作记录和 Outbox 在同一个事务中提交。
 
 ### 8.5 `activateBatch`
 
@@ -207,7 +203,7 @@ settled -> correction_pending -> settled
 
 `scheduled` 和 `checked_in` 不是最终出勤事实，必须拒绝结算。机构取消的课堂无条件释放所有学员冻结，不允许快照覆盖为消费。单学员规划只改变 `credit_status`、allocation 状态和批次桶，不改写 `attendance_status`；整堂课事务由 `settleSession` 命令统一组合。
 
-上述所有写入只调用一次 PocketBase JS SDK `createBatch().send()`。任一教师事件、学生批次、allocation、session 或 Outbox 请求失败时，PocketBase 回滚整个请求；Hono 不执行补偿写。
+上述所有写入在同一个 `app.RunInTransaction` 中提交。任一教师事件、学生批次、allocation、session 或 Outbox 写入失败时整个事务回滚，不执行补偿写。
 
 机构取消不会创建普通 `earn`。只有课堂的版本化 `teacher_rule_snapshot` 对角色配置了 `cancellation_compensation`，且实际教师状态在规则白名单中时，结算才创建 `compensate` pending 事件。教师数量独立计算，不要求与学员释放数量守恒。
 
@@ -218,17 +214,17 @@ settled -> correction_pending -> settled
 3. 原消费或释放数量从 `consumed|available|expired` 回到 `frozen`；原 allocation 标记 `reversed`，同时创建替代 `reserved` allocation，避免改写历史事实。
 4. 原教师收益生成负数 `reverse` 事件，原教师事件保持不变；课堂教师状态标记为已冲正。
 5. 课堂进入 `correction_pending`，并在 `correction_base_status` 保存原 `completed|cancelled` 事实。
-6. 冲正的批次、allocation、学员/教师状态、反向事件、操作审计、课堂和 Outbox 在一个 SDK Batch 中提交。
+6. 冲正的批次、allocation、学员/教师状态、反向事件、操作审计、课堂和 Outbox 在一个事务中提交。
 
 修正出勤或教师事实后再次调用 `settleSession`。重结算使用 `correction_base_status` 作为有效课堂状态，生成新的结算操作和事件，成功后清空该字段并替换 `settlement_operation_id`。任何原终态桶数量已被后续操作占用时，冲正拒绝执行，不通过补偿写掩盖冲突。
 
 ### 8.8 `expireBatches`
 
-外部调度器调用 Hono 到期 service，按业务时区找到到期批次，将未冻结可用量转为过期量。已冻结量按 `reserved_for_start_at` 判断：服务时间有效则保留，否则释放后过期。不得使用 PocketBase cron hook。
+kanyue.server 进程内定时任务每 5 分钟执行一次（也可经 `/ops/course-credits/workers/expiry/run` 手动触发），按业务时区找到到期批次，将未冻结可用量转为过期量。已冻结量按 `reserved_for_start_at` 判断：服务时间有效则保留，否则释放后过期。定时任务用 Go 注册，不使用 `pb_hooks` JS 脚本。
 
 ### 8.9 `confirmTeacherCredit`
 
-1. 只允许 Hono 认证后的管理员确认 `pending` 状态的 `earn|compensate` 事件，并要求审计原因和幂等键。
+1. 只允许经业务 API 认证的管理员确认 `pending` 状态的 `earn|compensate` 事件，并要求审计原因和幂等键。
 2. 原收益事件保持不变，创建同数量的 `confirm` 事件，通过 `confirmation_of_event_id` 唯一关联原事件。
 3. 同一事务把 `session_teachers.credit_status` 更新为 `confirmed`，并写操作记录和 Outbox。
 4. 同一收益使用不同幂等键重复确认时，由唯一关联和服务校验共同拒绝；同一请求重试返回原结果。
@@ -282,7 +278,7 @@ settled -> correction_pending -> settled
 
 `reverse-settlement` 是已结算课堂重新进入修正流程的唯一入口；它先追加冲正事件并将课堂置为 `correction_pending`，不直接改写原结算事实。
 
-worker route 只负责受控触发 Hono service，不接受任意集合名、过滤器或写入计划。到期 worker 使用结算能力，Outbox worker 使用审计能力；调度账号仍需通过 Hono 认证。到期扫描按批次独立提交一个 SDK Batch，保留服务时间仍有效的冻结 allocation，并把失效 allocation、对应课堂学员状态、事件、审计和 Outbox 一次性提交。
+worker route 只负责受控触发与进程内定时任务相同的 service，不接受任意集合名、过滤器或写入计划。到期 worker 使用结算能力，Outbox worker 使用审计能力；调用方仍需通过 `/ops` 认证。到期扫描按批次独立提交一个事务，保留服务时间仍有效的冻结 allocation，并把失效 allocation、对应课堂学员状态、事件、审计和 Outbox 一次性提交。
 
 ### 9.3 通用协议
 
@@ -294,12 +290,12 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 
 ## 10. 四端职责
 
-### 10.1 `ikanyue.mapi.hono`
+### 10.1 `kanyue.server`
 
-- 身份认证、RBAC、输入校验、领域服务、查询聚合和 PocketBase SDK batch transaction。
-- 版本化 PocketBase migrations、事务仓储、Batch API 能力探针和契约测试。
-- Hono worker/service 承载到期、Outbox、对账等被调度任务；PocketBase 只持久化任务状态。
-- 禁止普通资源 CRUD 直接修改账本集合。
+- 身份认证、RBAC、输入校验、领域服务、查询聚合和进程内事务（`app.RunInTransaction`）。
+- 版本化 Go 迁移（`kanyue-server migrate up`）、契约测试（`kanyue.server/contract`）。
+- 进程内定时任务承载到期、Outbox、对账和支付恢复；PocketBase 只持久化任务状态。
+- 禁止普通资源 CRUD 直接修改账本集合；PocketBase REST API 与面板只对私网直连开放。
 - `price_versions`、`conversion_rules`、`teacher_credit_rules` 只允许创建新版本，草稿修改、发布和停用都不得原地 update/upsert/delete。
 
 ### 10.2 `ikanyue.admin`
@@ -322,7 +318,7 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 ## 11. 安全与权限
 
 - PocketBase 账本集合默认禁止公开 API 写入。
-- Hono 当前使用仅服务端持有的 PocketBase superuser 凭据调用 SDK；客户端永远不能取得该凭据或直接调用 Batch API。若后续引入可覆盖私有集合与 Batch API 的最小权限服务身份，再单独迁移并轮换凭据。
+- PocketBase 以库的形式内嵌在 kanyue.server，业务写入不经 REST API，也不需要 superuser 凭据；superuser 只用于私网面板与运维备份，客户端永远不能取得。
 - 课程点权限拆分为 `academic`、`finance`、`settlement`、`audit`、`teacher`、`student`、`guardian` 七类能力。超级管理员拥有全部运营能力，普通教师必须显式授权；越权拒绝写入 `ops_audit_logs`，审计存储故障不得放行原请求。
 - 学员 ID 从认证上下文获取，不能由客户端替换。
 - 规则发布、延期、冲正和教师收益调整需要二次确认与原因。
@@ -353,7 +349,7 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 ### 14.1 准备
 
 1. 固定 `release/2.0.0`，禁止继续增加 `students.hours` / `teachers.hours` 写逻辑。
-2. 建立新集合、索引、Hono transaction repository 和只读查询。
+2. 建立新集合、索引、事务仓储和只读查询。
 3. 对旧 `learning_*` 集合和实际 PocketBase schema 做生产前盘点。
 
 ### 14.2 数据迁移
@@ -374,7 +370,7 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 
 ### 14.4 回滚
 
-- 关闭 Hono 新命令路由和规则发布，不删除新数据。
+- 关闭新命令路由和规则发布，不删除新数据。
 - 已提交的新账本事件不反写旧 `hours`。
 - 通过 feature flag 暂停冻结/结算，保留查询和导出用于人工处理。
 - 修复后从最后成功操作继续，不直接重跑无幂等键脚本。
@@ -384,12 +380,12 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 ### 15.1 后端
 
 - 领域单元测试：有效期、激活、FEFO、兑换图、出勤规则。
-- PocketBase SDK Batch API 集成测试：启用状态、事务回滚、重复命令、真实发放与预约。
-- 契约测试：Hono service/repository 请求计划、权限和错误码。
+- 内嵌 PocketBase 事务集成测试（`tests.NewTestApp`）：事务回滚、重复命令、真实发放与预约。
+- 契约测试：`kanyue.server/contract` 对运行中的服务校验路由、权限和错误码。
 - 属性测试：任意操作序列后批次数量守恒且不为负。
-- Hono API、领域服务和 SDK transaction repository 受影响代码的 lines、branches、functions、statements 分别不得低于 95%。
+- 原 Hono 业务单元测试逐条对照到 Go 测试，见 `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go/test-parity.md`；Go 测试单线程运行（`GOMAXPROCS=1 go test -p 1 -parallel 1`）。
 - 批次守恒、兑换、有效期、冻结、结算和冲正内核的关键分支必须完整覆盖。
-- 关键失败矩阵必须有具名测试：输入校验、权限拒绝、重复命令、Batch 回滚、并发预约、半开区间到期边界、结算冲正和对账差异；真实 PocketBase 事务测试在本地容器可用时运行，纯服务测试始终运行。
+- 关键失败矩阵必须有具名测试：输入校验、权限拒绝、重复命令、事务回滚、并发预约、半开区间到期边界、结算冲正和对账差异；内嵌 PocketBase 事务测试与纯领域测试始终运行。
 
 ### 15.2 Admin
 
@@ -417,7 +413,7 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 
 ## 16. 风险与缓解
 
-- PocketBase Batch API 未启用或版本不支持 -> Hono 启动检查失败并停止课程积分服务，先修正存储配置再发布。
+- 迁移未执行或 schema 不匹配 -> `serve` 拒绝启动并列出待执行迁移，先备份再 `migrate up`。
 - SQLite 单写者限制高峰结算 -> 保持短事务、按课堂拆分、队列化热点账户。
 - 兑换环产生套利 -> 发布前图检测、参考价值上限、默认不可逆。
 - 首次签到激活与取消产生歧义 -> 明确激活事件，候选课堂取消不激活。
@@ -428,6 +424,6 @@ worker route 只负责受控触发 Hono service，不接受任意集合名、过
 ## 17. 首发规则来源
 
 首发业务规则已经确认，以 `docs/product/course-credit-system-prd.md` 第 25 节和
-`ikanyue.mapi.hono/scripts/fixtures/course-credit-rules.v1.json` 为共同来源。规则包括通用点
+`docs/product/course-credit-rules.v1.json` 为共同来源。规则包括通用点
 人民币参考计量、滚动课包首次签到激活、12 小时请假边界、有向不可逆兑换及 20% 参考价值
 损失上限，以及 Admin/线下首发订单渠道。后续调整必须新增规则版本，不得修改历史快照。

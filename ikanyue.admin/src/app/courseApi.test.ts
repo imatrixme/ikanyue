@@ -51,7 +51,7 @@ describe('course operations api', () => {
     expect(await api.setClassTeacher(token, 'class_1', 'teacher_2', 'assistant', 'active')).toMatchObject({ role: 'assistant' })
   })
 
-  it('maps every HTTP operation to an authenticated Hono route', async () => {
+  it('maps every HTTP operation to an authenticated API route', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ code: 10000, data: {} }) })
     vi.stubGlobal('fetch', fetchMock)
     const api = createOpsApi({ baseUrl: '/ops', mock: false })

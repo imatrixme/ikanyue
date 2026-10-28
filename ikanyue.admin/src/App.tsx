@@ -285,7 +285,7 @@ function AppContent({ api: injectedApi }: AppProps) {
 }
 
 function readCachedSession(): LoginResult | null {
-  /* v8 ignore next 3 -- SSR import path does not call readCachedSession; browser tests always provide localStorage. */
+  /* v8 ignore next 3 -- non-browser runtimes have no localStorage; browser tests always provide localStorage. */
   if (typeof localStorage === 'undefined') {
     return null
   }

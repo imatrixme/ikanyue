@@ -22,29 +22,21 @@ test('PID reuse and malformed process identities never establish ownership', () 
   for (const pid of [0, 1, -123, NaN, 2.5]) assert.equal(validIdentity({ ...entry, pid }), false);
   assert.equal(validIdentity({ ...entry, token: 'not-an-ownership-token' }), false);
 });
-test('native definitions do not run Docker or schema initialization during startup', () => {
-  const config = { BUN_BIN: '/runtime/bun-1.4.1/bun', POCKETBASE_BIN: '/runtime/pocketbase',
-    PAY_PB_PORT: '18192', PORT: '1437', HONO_PORT: '1438', PAY_PORT: '1440', ADMIN_PORT: '18180',
-    PAY_GATEWAY_URL: 'http://127.0.0.1:1440' };
-  for (const name of ['server', 'pay-pocketbase', 'gateway', 'hono', 'commerce-worker', 'admin', 'miniapp']) {
+test('native definitions do not run Docker or initialization during startup', () => {
+  const config = { PORT: '1437', PAY_PORT: '1440', PAY_GATEWAY_URL: 'http://127.0.0.1:1440' };
+  for (const name of ['server', 'gateway', 'miniapp']) {
     const service = definition(name, config);
-    assert.doesNotMatch(service.command.join(' '), /docker|schema|seed|superuser|upsert/);
+    assert.doesNotMatch(service.command.join(' '), /docker|migrate|seed|superuser|upsert/);
   }
-  const business = definition('server', config).command.join(' ');
-  const payment = definition('pay-pocketbase', config).command.join(' ');
-  // kanyue.server owns the API port over the existing business data; migrations only run in init.
-  assert.match(business, /^go run \. serve --http=127\.0\.0\.1:1437 --dir=\S+business-data$/);
-  assert.equal(definition('hono', config).env.PORT, '1438');
-  // Go runs commerce recovery; the Hono worker only works when commerce is handed back to Hono.
-  assert.equal(definition('commerce-worker', { ...config, KANYUE_HONO_MODULES: '' }).env.COURSE_COMMERCE_ENABLED, 'false');
-  assert.deepEqual(definition('commerce-worker', { ...config, KANYUE_HONO_MODULES: 'booking, commerce' }).env, {});
-  assert.match(payment, /--migrationsDir=\S+payment-data-migrations --automigrate=false/);
+  for (const name of ['hono', 'admin', 'pay-pocketbase']) assert.throws(() => definition(name, config), /Unknown service/);
+  // Both binaries serve their existing data; migrations and fixtures only run in init.
+  assert.match(definition('server', config).command.join(' '), /^go run \. serve --http=127\.0\.0\.1:1437 --dir=\S+business-data$/);
+  assert.match(definition('gateway', config).command.join(' '), /^go run \. serve --http=127\.0\.0\.1:1440 --dir=\S+payment-data$/);
+  assert.equal(definition('gateway', config).url, 'http://127.0.0.1:1440/ready');
   const env = environment(config);
-  assert.equal(env.VITE_OPS_API_BASE, '/ops');
-  assert.equal(env.KANYUE_LOCAL_API_ORIGIN, 'http://127.0.0.1:1437');
   assert.equal(env.PB_URL, 'http://127.0.0.1:1437');
-  assert.equal(env.HONO_UPSTREAM_URL, 'http://127.0.0.1:1438');
-  assert.equal(env.HOST, '127.0.0.1');
+  assert.equal(env.PAY_PB_URL, 'http://127.0.0.1:1440');
   assert.equal(env.NODE_ENV, 'development');
-  assert.ok(env.PATH.startsWith('/runtime/bun-1.4.1:'));
+  assert.equal(env.GOFLAGS, '-p=1');
+  assert.equal(env.HONO_UPSTREAM_URL, undefined);
 });

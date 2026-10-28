@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.server/internal/auth"
@@ -140,8 +141,11 @@ func TestOpsAuth(t *testing.T) {
 	if claims := signer.SessionUser(token); claims["scope"] != auth.OpsScope || claims["passwordChangeRequired"] != true {
 		t.Fatalf("ops token claims: %v", claims)
 	}
-	if audits, _ := app.CountRecords("ops_audit_logs"); audits != 1 {
-		t.Fatalf("want the allowed login audited once (anonymous denials fail validation like Hono), got %d", audits)
+	if denied, _ := app.CountRecords("ops_audit_logs", dbx.HashExp{"actorRole": "anonymous", "outcome": "denied"}); denied != 1 {
+		t.Fatalf("want the failed login audited as anonymous, got %d", denied)
+	}
+	if allowed, _ := app.CountRecords("ops_audit_logs", dbx.HashExp{"actorId": teacher.Id, "outcome": "allowed"}); allowed != 1 {
+		t.Fatalf("want the allowed login audited once, got %d", allowed)
 	}
 
 	me := testkit.Call(t, handler, http.MethodGet, "/ops/auth/me", nil, testkit.Bearer(token))

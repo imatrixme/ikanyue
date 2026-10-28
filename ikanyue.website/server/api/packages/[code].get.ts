@@ -1,13 +1,13 @@
 import { normalizePublicPackage } from '../../utils/course-catalog'
-import { unwrapHonoData, type HonoResponse } from '../../utils/hono-response'
+import { unwrapApiData, type ApiResponse } from '../../utils/api-response'
 
 export default defineEventHandler(async (event) => {
   const code = getRouterParam(event, 'code') || ''
   const config = useRuntimeConfig()
   const path = `/v1/public/course-catalog/packages/${encodeURIComponent(code)}`
-  const response = await $fetch<HonoResponse<unknown>>(
+  const response = await $fetch<ApiResponse<unknown>>(
     new URL(path, config.public.apiBase).toString(),
     { timeout: 5000 },
   )
-  return normalizePublicPackage(unwrapHonoData(response))
+  return normalizePublicPackage(unwrapApiData(response))
 })

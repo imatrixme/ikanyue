@@ -2,8 +2,8 @@
 
 ## Topology
 
-- Mini program can call `mapi.ikanyue.com` or direct Hono.
-- Hono backend domain: `xapi.ikanyue.com`.
+- One business binary, `kanyue.server`: API, embedded PocketBase and the embedded admin SPA.
+- Mini program calls `mapi.ikanyue.com` or `xapi.ikanyue.com`; both reach kanyue.server.
 - PocketBase public domain: `data.ikanyue.com`.
 - Object access domain: `https://kyoss.abcmem.com/ikanyue-mp`.
 - OpenResty is expected to terminate/reverse-proxy external traffic.
@@ -15,8 +15,6 @@ Record these before changing anything:
 
 ```bash
 rtk git rev-parse HEAD
-rtk git -C ikanyue.admin rev-parse HEAD
-rtk git -C ikanyue.mapi.hono rev-parse HEAD
 rtk docker compose ls
 rtk docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
 ```
@@ -34,7 +32,7 @@ nginx -t || openresty -t
 
 Backup must happen before:
 
-- `ops:schema:apply`
+- `kanyue-server migrate up`
 - replacing PB volume/data
 - switching traffic to a stack that writes to PB
 
@@ -50,51 +48,26 @@ Recommended local-on-server backup:
 Restore command shape:
 
 ```bash
-systemctl stop <live-service> || docker compose -p <project> stop pocketbase hono
+systemctl stop <live-service> || docker compose -p <project> stop server
 mv /root/services/dockers/pb_data.ikanyue/pb_data /root/services/dockers/pb_data.ikanyue/pb_data.broken.$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p /root/services/dockers/pb_data.ikanyue/pb_data
 tar -xzf /root/services/backups/pocketbase/<backup>.tar.gz -C /root/services/dockers/pb_data.ikanyue/pb_data
-docker compose -p <project> up -d pocketbase hono
+docker compose -p <project> up -d server
 ```
 
 Do not restore PB data casually. Restoring a backup discards writes made after the backup.
 
 ## Schema Migration
 
-Run schema migration against the target PB, not against a local copy unless doing dry-run validation.
-
-For a host-accessible PB:
+Migrations ship inside the binary and run only on request, against the target data directory:
 
 ```bash
-cd ikanyue.mapi.hono
-PB_URL=http://127.0.0.1:8090 \
-PB_EMAIL="$PB_EMAIL" \
-PB_PASSWORD="$PB_PASSWORD" \
-npm run ops:schema:apply
+docker compose --env-file .env.deploy -p <project> run --rm --entrypoint kanyue-server \
+  server migrate up --dir=/pb_data
 ```
 
-For a compose network:
-
-```bash
-docker compose --env-file .env.production run --rm \
-  -e PB_URL=http://pocketbase:8090 \
-  -e PB_EMAIL="$PB_EMAIL" \
-  -e PB_PASSWORD="$PB_PASSWORD" \
-  hono npm run ops:schema:apply
-```
-
-Required collections after apply:
-
-```text
-assessment_templates
-assessment_records
-assessment_report_snapshots
-assessment_share_links
-teacher_student_relations
-operation_slots
-activity_signups
-ops_audit_logs
-```
+A second run prints `No pending migrations.`; `serve` refuses to start while one is pending and names it.
+Migrations only add collections, fields and indexes; nothing present is changed or dropped.
 
 ## Bypass Verification
 
@@ -102,30 +75,30 @@ Use alternate ports/project names first. Example local/bypass ports:
 
 ```text
 admin:      127.0.0.1:18080
-hono:       127.0.0.1:1337 or 127.0.0.1:11337
-pocketbase: 127.0.0.1:18090
+api:        127.0.0.1:11337
+pocketbase: 127.0.0.1:18090   (all three reach the same server)
 ```
 
 Run:
 
 ```bash
-./.codex/skills/kanyue-deploy/scripts/verify_stack.sh --hono http://127.0.0.1:1337
+./.codex/skills/kanyue-deploy/scripts/verify_stack.sh --server http://127.0.0.1:11337
 ```
 
 Manual checks:
 
 ```bash
-curl -fsS 'http://127.0.0.1:1337/v1/activity/find?page=1&perPage=100'
-curl -fsS 'http://127.0.0.1:1337/ops/public/operation-slots?channel=wechat-mini&placement=home-banner'
+curl -fsS 'http://127.0.0.1:11337/v1/activity/find?page=1&perPage=100'
+curl -fsS 'http://127.0.0.1:11337/v1/public/course-catalog'
+curl -fsS -H 'Accept: text/html' 'http://127.0.0.1:18080/' 
 ```
 
 Expected:
 
 - activity list returns `code=10000`
-- operation slots returns `code=10000`, even if `items=[]`
+- course catalog returns `code=10000`
+- the admin page returns the SPA shell
 - image URLs include `https://kyoss.abcmem.com/ikanyue-mp/`
-- no `Missing collection context`
-- no `每页数量不能超过100`
 - no `未配置微信小程序的 APPID 或 SECRET` once real WeChat env is configured
 
 ## Traffic Switch

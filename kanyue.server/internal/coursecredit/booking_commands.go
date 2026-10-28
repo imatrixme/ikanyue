@@ -32,7 +32,7 @@ func bookingInput(body Body, actor Actor, route map[string]any) map[string]any {
 	return input
 }
 
-// text is `typeof input[key] === 'string' ? input[key] : ”`.
+// text is `typeof input[key] === 'string' ? input[key] : ""`.
 func text(input map[string]any, key string) string {
 	value, _ := input[key].(string)
 	return value

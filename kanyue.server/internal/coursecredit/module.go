@@ -9,7 +9,7 @@ import (
 )
 
 // CatalogModule serves the ops course catalog: course specs, credit types,
-// packages, grant lines and price versions (reads and admin writes).
+// packages, grant lines, price versions and conversion rules (reads and admin writes).
 type CatalogModule struct {
 	Signer *auth.Signer
 }
@@ -21,6 +21,7 @@ var catalogReads = []struct{ path, resource string }{
 	{"/ops/course-credits/packages", "packages"},
 	{"/ops/course-credits/package-grant-lines", "grantLines"},
 	{"/ops/course-credits/price-versions", "priceVersions"},
+	{"/ops/course-credits/conversion-rules", "conversionRules"},
 }
 
 // catalogWrites maps /ops/course-operations paths to resources; grant lines have no status.
@@ -32,6 +33,7 @@ var catalogWrites = []struct {
 	{"packages", "packages", true},
 	{"grant-lines", "grantLines", false},
 	{"price-versions", "priceVersions", true},
+	{"conversion-rules", "conversionRules", true},
 }
 
 func (m CatalogModule) Register(se *core.ServeEvent) {

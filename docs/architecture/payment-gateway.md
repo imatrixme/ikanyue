@@ -4,9 +4,9 @@ Status: operational implementation on `feature/payment-gateway-commerce`, OpenSp
 
 ## Ownership
 
-`kanyue.pay` is standalone Hono/Bun 1.4.1 with independent lockfile/PocketBase. The root temporarily tracks it because no separate remote was supplied. Existing subprojects retain independent repositories; no root JS workspace.
+`kanyue.pay` is a standalone Go binary with its own embedded PocketBase v0.32.0 (one `pay_entities` collection; dashboard `/_/` for read-only inspection). It is a separate Go module from `kanyue.server`, in the single repository. It replaced the Hono/Bun gateway (2026-10-27) with the same HTTP contract, ids and fingerprints, and adopts the TypeScript-era data in place with `kanyue-pay migrate up`.
 
-Business Hono owns immutable offer/order price/policy snapshots, eligibility, credits and cancellation rules. Gateway owns provider protocol/credentials, money identity, reserved refund principal, receipt events, retries and cash reconciliation. Admin/Taro call Hono only. Personal/offline transfers never become gateway receipts.
+`kanyue.server` owns immutable offer/order price/policy snapshots, eligibility, credits and cancellation rules. Gateway owns provider protocol/credentials, money identity, reserved refund principal, receipt events, retries and cash reconciliation. Admin/Taro call kanyue.server only. Personal/offline transfers never become gateway receipts.
 
 ## Operational Workflows
 
@@ -24,11 +24,11 @@ Official ALL bills retain hashes/provenance, normalized rows, fees, mismatches a
 
 ## Environment and Release
 
-Native ports: Admin 18180, Hono 1437, gateway 1440, business PB 18190, payment PB 18192; loopback only. Ignored `.local/native/environment.json` is mode 0600. Explicit `test init` is separate from ordinary start/restart. Docker data remains untouched. Watcher startup/build and device acceptance are separate.
+Native ports: kanyue.server 1437 (API, admin pages, business PB dashboard), gateway 1440 (API, payment PB dashboard); loopback only. Ignored `.local/native/environment.json` is mode 0600. Explicit `test init` is separate from ordinary start/restart. Docker data remains untouched. Watcher startup/build and device acceptance are separate.
 
-Explicitly apply business commerce schema (offer version/audit/cases), money-precision upgrade and additive gateway entity kinds before rollout, backing up both stores first. Startup verifies rather than migrates. Release-only Compose uses read-only credentials and immutable images. Preflight checks configuration, external attestations, clean revisions and recent hashed backup reports, not live activation.
+Explicitly apply business commerce schema (offer version/audit/cases), money-precision upgrade and additive gateway entity kinds before rollout, backing up both stores first. Startup verifies rather than migrates: both binaries refuse `serve` while a migration is pending. Release-only Compose uses read-only credentials and immutable images. `kanyue-pay maintenance preflight` checks configuration, external attestations, clean revisions and recent hashed backup reports, not live activation.
 
-Both native stores were backed up through PB, extracted into fresh directories, verified with read-only SQLite integrity/count queries and hashed. Active data was never restored/overwritten. Durable off-host retention and a full bypass-stack restore/start rehearsal remain release duties. Roll back app/routing while retaining financial writes and compatible workers; database rollback requires separate approval.
+Both native stores were backed up through PB (`kanyue-pay maintenance backup payment|business`), extracted into fresh directories, verified with read-only SQLite integrity/count queries and hashed. Active data was never restored/overwritten. Durable off-host retention and a full bypass-stack restore/start rehearsal remain release duties. Roll back app/routing while retaining financial writes and compatible workers; database rollback requires separate approval.
 
 ## Evidence and Remaining Acceptance
 
@@ -36,7 +36,8 @@ Both native stores were backed up through PB, extracted into fresh directories, 
 - Native tiered smoke: 800 yuan/four units, one cancellation with 100 yuan fee plus 100 yuan refund, failed-refund retry, remaining 600 yuan refund and gateway restart. Final captured 800 / refunded 700 / fee 100 / available units zero. Test records retained.
 - Admin desktop/mobile browser evidence covers order details and bill import/details; component tests separately cover refund confirmation/recoverable errors. Builds/lint are separate from runtime acceptance.
 - Browser acceptance additionally saved an unpublished test offer, saved/resolved a verified test exception (open count 11 to 10), and exported the persisted bill report. Screenshots are under ignored `output/playwright/payment-*`; native records are retained.
-- Automated totals: gateway 32 passing (185 assertions, isolated PB restarts), business 543 passing / 4 opt-in skips, Admin 156 passing, miniapp 110 passing, native launcher 3 passing. Gateway types, all three app lints, Admin client/SSR and miniapp builds plus compiled contracts pass. Admin bundle-size and Node deprecation warnings remain.
+- Go gateway (2026-10-27): 41 Go tests (75% statements) port the TypeScript gateway, WeChat, operations and PocketBase suites; the native tiered smoke passes against it, including the gateway restart.
+- Historical TypeScript-era totals: gateway 32 passing (185 assertions, isolated PB restarts), business 543 passing / 4 opt-in skips, Admin 156 passing, miniapp 110 passing, native launcher 3 passing. Gateway types, all three app lints, Admin client/SSR and miniapp builds plus compiled contracts pass. Admin bundle-size and Node deprecation warnings remain.
 - WeChat login was confirmed (`loginExpired:false`) after user login. The runtime read returned `Error: timeout waiting for automator response`; further IDE automation paused under the skill. Compilation is not runtime/device acceptance.
 - Merchant acceptance, real device cashier/transactions, next-day official bills, key-rotation rehearsal, insufficient-funds/refund-window handling and public callback verification remain unexecuted.
 - Channel-funded promotions/actual-cash splits, external messaging alerts, bank feeds and indexed high-volume scheduling are outside this implementation. Persistent retries still enumerate records. Old receipts lacking acceptance times need evidence review. Neither docs nor preflight flags certify payment compliance.

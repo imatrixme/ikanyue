@@ -102,12 +102,11 @@ DAO impact:
 
 | 子项目 | 常用验证 |
 |---|---|
-| `ikanyue.mapi.hono` | `pnpm lint`、`TZ=Asia/Shanghai pnpm test`、`pnpm check-docs` |
 | `ikanyue.taro3` | `pnpm lint`、`TZ=Asia/Shanghai pnpm test`、`pnpm build:weapp` 后 `pnpm test:e2e` |
-| `ikanyue.admin` | `npm run lint`、`TZ=Asia/Shanghai npm test`、`npm run build` |
+| `ikanyue.admin` | `npm run lint`、`TZ=Asia/Shanghai npm test`、`npm run build:server`（产物嵌入 server） |
 | `ikanyue.website` | `npm run lint`、`npm test`、`npm run build`、`npm run test:e2e` |
-| `kanyue.pay` | `bun run typecheck`、`bun test` |
-| `kanyue.server` | `gofmt -l .`、`go vet ./...`、`go test ./...`；契约测试 `BASE_URL=… node --test "kanyue.server/contract/*.test.mjs"` |
+| `kanyue.pay` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；联调 `node scripts/commerce-smoke.mjs --tiered` |
+| `kanyue.server` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；契约测试 `BASE_URL=… node --test "kanyue.server/contract/*.test.mjs"` |
 | 根脚本 | `node --test scripts/native-stack.test.mjs`；OpenSpec 用 `openspec validate <change> --strict` |
 <!--VERIFY-ATTENTION:END-->
 
@@ -137,12 +136,11 @@ DAO impact:
 
 | Path | 角色 | 技术栈 | 局部规则 |
 |---|---|---|---|
-| `ikanyue.mapi.hono` | 业务 API（学员、教师、课程点、预约、积分、订单） | Hono / Node 22（兼容 Bun）/ PocketBase | `ikanyue.mapi.hono/AGENTS.md` |
 | `ikanyue.taro3` | 微信小程序（学员与教师） | Taro 4 / Vue 3 / NutUI | `ikanyue.taro3/AGENTS.md` |
-| `ikanyue.admin` | 运营后台 | React / Vite / SSR | — |
+| `ikanyue.admin` | 运营后台（静态 SPA，`npm run build:server` 后由 kanyue.server 同源提供） | React / Vite | — |
 | `ikanyue.website` | 声乐官网与公开课程目录 | Nuxt 4 | — |
-| `kanyue.pay` | 独立支付网关（当前仅 mock 渠道） | Hono / Bun / 独立 PocketBase | — |
-| `kanyue.server` | Go 重写中的业务服务（内嵌 PocketBase，未迁移接口转发给 Hono）；已接管场馆、公开课程目录、身份 | Go / PocketBase v0.32.0 | `openspec/changes/rewrite-studio-backend-in-go` |
+| `kanyue.pay` | 独立支付网关单体（当前仅 mock 渠道；PocketBase 面板 `/_/` 只读查看） | Go / 独立内嵌 PocketBase v0.32.0 | `kanyue.pay/README.md` |
+| `kanyue.server` | 业务服务单体：学员、教师、课程点、预约、课表结算、积分、订单与支付对接；内嵌 PocketBase（面板 `/_/` 仅私网直连）与运营后台 | Go / PocketBase v0.32.0 | `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go` |
 | `ikanyue.m.nuxt`、`ikanyue.flutter` | 旧活动页与规划中的 App，不在当前版本线 | Nuxt / Flutter | — |
 
 - 跨子项目约束见 `GEB.MD` §8“看乐系统边界”；产品与架构文档在 `docs/product`、`docs/architecture`；需求级变更在 `openspec/changes`。

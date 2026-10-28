@@ -1,6 +1,6 @@
 ---
 name: kanyue-website-deploy
-description: Deploy, update, migrate, verify, and roll back the ikanyue.website Nuxt official site on Linux VPS hosts managed by 1Panel and OpenResty. Use when publishing ikanyue.com, moving the website to another server, creating the standalone Node/systemd runtime, correcting 1Panel static-versus-proxy drift, switching releases through a current symlink, validating the live ICP/contact/activity experience, or preparing a production rollback. Keep Hono, PocketBase, Admin, and mini-program services outside this workflow unless the user explicitly includes them.
+description: Deploy, update, migrate, verify, and roll back the ikanyue.website Nuxt official site on Linux VPS hosts managed by 1Panel and OpenResty. Use when publishing ikanyue.com, moving the website to another server, creating the standalone Node/systemd runtime, correcting 1Panel static-versus-proxy drift, switching releases through a current symlink, validating the live ICP/contact/activity experience, or preparing a production rollback. Keep kanyue.server (API, PocketBase, Admin), kanyue.pay, and mini-program services outside this workflow unless the user explicitly includes them.
 ---
 
 # Kanyue Website Deploy
@@ -16,7 +16,7 @@ Deploy the Nuxt website as a standalone Node service on loopback, then expose it
 - Preserve the previous release until the new release passes public verification.
 - Use a timestamped backup before changing OpenResty, 1Panel metadata, an existing site directory, or the 1Panel database.
 - Prefer the 1Panel UI/API for website metadata. Use direct SQLite updates only as the guarded fallback in `references/onepanel-metadata.md`.
-- Do not modify Hono to compensate for website deployment problems. Verify the website adapter and `NUXT_PUBLIC_API_BASE` first.
+- Do not modify kanyue.server to compensate for website deployment problems. Verify the website adapter and `NUXT_PUBLIC_API_BASE` first.
 - Never overwrite PocketBase data, change Admin, or restart unrelated containers in this workflow.
 - Do not declare success while an SSH session, bypass process, or deployment command is still running.
 
@@ -85,7 +85,7 @@ Use `scripts/verify-website.sh` with the public domain and optional direct VPS I
 - `www` host when configured
 - homepage and ICP filing
 - contact phone, `tel:` link, phone icon, QR asset, and current QR caption
-- activities page backed by the real Hono response
+- activities page backed by the real kanyue.server response
 - OpenResty syntax, systemd state, and recent logs
 
 ### 7. Close Cleanly

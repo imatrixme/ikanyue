@@ -4,6 +4,7 @@ package audit
 
 import (
 	"log"
+	"maps"
 
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -45,8 +46,15 @@ func Record(app core.App, entry Entry) {
 	if metadata == nil {
 		metadata = map[string]any{}
 	}
+	// actorId is a relation to teachers; students keep their id in metadata.
+	actorID := actor.ID
+	if actorID != "" && actor.Role == "student" {
+		metadata = maps.Clone(metadata)
+		metadata["actorId"] = actorID
+		actorID = ""
+	}
 	record := core.NewRecord(target)
-	record.Set("actorId", actor.ID)
+	record.Set("actorId", actorID)
 	record.Set("actorRole", actor.Role)
 	record.Set("action", entry.Action)
 	record.Set("resourceType", entry.ResourceType)

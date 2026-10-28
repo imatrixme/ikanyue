@@ -2,11 +2,11 @@
 
 - [ ] 0.1 Confirm the thresholds, cooldown, scan time, WeChat subscribe message, and teacher visibility listed in `proposal.md`.
 
-## 1. API (`ikanyue.mapi.hono`)
+## 1. API (`kanyue.server`)
 
-- [ ] 1.1 Add the `renewal_reminders` collection and migration (student, course, trigger, reason, channel, status, operator, round key).
-- [ ] 1.2 Add a reminder service with a pure eligibility function reusing `studentLearningService` course summaries; unit tests use `TZ=Asia/Shanghai`.
-- [ ] 1.3 Add the daily scan job with an idempotent round key.
+- [ ] 1.1 Add the `renewal_reminders` collection as a Go migration (student, course, trigger, reason, channel, status, operator, round key).
+- [ ] 1.2 Add a reminder service with a pure eligibility function reusing the student learning course summaries in `internal/coursecredit`; Go tests run with `TZ=Asia/Shanghai`.
+- [ ] 1.3 Add the daily scan as an in-process cron job with an idempotent round key.
 - [ ] 1.4 Add ops endpoints: list renewal candidates, send manual reminders (single/batch, daily limit).
 - [ ] 1.5 Add a student endpoint for unread 教务提醒 and mark-read.
 - [ ] 1.6 Optional: WeChat subscribe message adapter behind config; record `skipped` when unconfigured.

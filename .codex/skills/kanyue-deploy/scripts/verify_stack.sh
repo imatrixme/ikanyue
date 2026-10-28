@@ -4,34 +4,34 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  verify_stack.sh --hono <base_url> [--student-token <jwt>]
+  verify_stack.sh --server <base_url> [--student-token <jwt>]
 
-Verifies Kanyue Hono endpoints for bypass or production smoke testing.
+Verifies a kanyue.server release (API, embedded admin SPA) for bypass or production smoke testing.
 
 Examples:
-  verify_stack.sh --hono http://127.0.0.1:1337
-  verify_stack.sh --hono https://xapi.ikanyue.com --student-token "$TOKEN"
+  verify_stack.sh --server http://127.0.0.1:1337
+  verify_stack.sh --server https://xapi.ikanyue.com --student-token "$TOKEN"
 EOF
 }
 
-HONO=""
+SERVER=""
 TOKEN=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --hono) HONO="${2:-}"; shift 2 ;;
+    --server) SERVER="${2:-}"; shift 2 ;;
     --student-token) TOKEN="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
 done
 
-if [[ -z "$HONO" ]]; then
+if [[ -z "$SERVER" ]]; then
   usage >&2
   exit 2
 fi
 
-HONO="${HONO%/}"
+SERVER="${SERVER%/}"
 
 request() {
   local label="$1"
@@ -57,12 +57,12 @@ console.log(label + ": ok" + (count === "" ? "" : " count=" + count));
 ' "$label" "$body"
 }
 
-request "activity_list" "$HONO/v1/activity/find?page=1&perPage=100"
-request "operation_slots" "$HONO/ops/public/operation-slots?channel=wechat-mini&placement=home-banner"
+curl -fsS -H 'Accept: text/html' "$SERVER/" | grep -q 'id="root"' && echo "admin_console: ok"
+request "activity_list" "$SERVER/v1/activity/find?page=1&perPage=100"
+request "course_catalog" "$SERVER/v1/public/course-catalog"
 
 if [[ -n "$TOKEN" ]]; then
-  request "signup_list" "$HONO/v1/activity-signup/find?page=1&perPage=10" -H "token: $TOKEN"
-  request "student_reports" "$HONO/v1/student/reports?page=1&perPage=20" -H "token: $TOKEN"
+  request "upcoming_schedule" "$SERVER/v1/schedule/upcoming" -H "token: $TOKEN"
 else
-  echo "student_token=not_provided; skipped signup/report authenticated checks"
+  echo "student_token=not_provided; skipped authenticated student checks"
 fi

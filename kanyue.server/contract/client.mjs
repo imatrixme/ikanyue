@@ -1,4 +1,4 @@
-// Black-box contract client. The same suite runs against Hono and kanyue.server:
+// Black-box contract client for a running kanyue.server:
 //   BASE_URL=http://127.0.0.1:1437 node --test "kanyue.server/contract/*.test.mjs"
 // COMPARE_URL adds read parity checks against a second server on the same data.
 // Credentials are optional; tests needing them skip when they are absent:
