@@ -18,6 +18,7 @@ import { BookingSettingsWorkspace } from './BookingSettingsWorkspace'
 import { VenuesWorkspace } from './VenuesWorkspace'
 import { BookingWorkspace } from './BookingWorkspace'
 import { CourseCalendarWorkspace } from './CourseCalendarWorkspace'
+import { RenewalsWorkspace } from './RenewalsWorkspace'
 import { RewardItemsPanel } from './RewardItemsPanel'
 import { StudentDetailPage } from './StudentDetailPage'
 import { StudentWorkspace } from './StudentWorkspace'
@@ -65,6 +66,7 @@ export function AdminWorkspaceRoutes(props: AdminWorkspaceRoutesProps) {
       <Route path={viewPaths.appointments} element={<Gate profile={props.profile} view="appointments"><BookingWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.bookingSettings} element={<Gate profile={props.profile} view="bookingSettings"><BookingSettingsWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.accounts} element={<Gate profile={props.profile} view="accounts"><AccountsWorkspace {...courseProps} /></Gate>} />
+      <Route path={viewPaths.renewals} element={<Gate profile={props.profile} view="renewals"><RenewalsWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.payments} element={<Gate profile={props.profile} view="payments"><PaymentsWorkspace token={props.token} /></Gate>} />
       <Route path={viewPaths.teachers} element={<Gate profile={props.profile} view="teachers"><TeacherWorkloadWorkspace {...courseProps} /></Gate>} />
       <Route path={viewPaths.exceptions} element={<Gate profile={props.profile} view="exceptions"><ExceptionsWorkspace {...courseProps} /></Gate>} />

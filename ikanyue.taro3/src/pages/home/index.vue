@@ -20,6 +20,18 @@
                 </view>
             </view>
 
+            <view v-if="isLogin && reminder" class="home-notice" aria-role="button" aria-label="查看教务提醒的课包" @tap="openReminder">
+                <view class="home-notice__header">
+                    <text class="home-notice__sender">{{ reminder.sender }}</text>
+                    <text class="home-notice__tag">教务提醒</text>
+                </view>
+                <text class="home-notice__message">{{ reminder.message }}</text>
+                <view class="home-notice__action">
+                    <text>查看课包</text>
+                    <app-icon name="chevron-primary" size="sm" />
+                </view>
+            </view>
+
             <view v-if="state === 'signedOut'" class="home-state">
                 <async-state
                     action-label="去登录"
@@ -82,6 +94,15 @@
                             <app-icon name="chevron-primary" size="sm" />
                         </view>
                     </view>
+                    <view
+                        v-if="subscribeTemplateId"
+                        class="home-course__renewal home-subscribe"
+                        aria-role="button"
+                        @tap="subscribeReminders"
+                    >
+                        <text>课时不足时用微信提醒我</text>
+                        <app-icon name="chevron-primary" size="sm" />
+                    </view>
                 </view>
                 <venue-handoff v-if="closed" :venue="venue" />
                 <nut-button v-else block type="primary" class="home-primary-button" @click="goBooking">去约课</nut-button>
@@ -108,7 +129,7 @@ import UpcomingLessons from '../../components/UpcomingLessons.vue';
 import VenueHandoff from '../../components/VenueHandoff.vue';
 import { learningErrorMessage, normalizeOverview } from '../courses/pageLogic';
 import { venueFacts } from '../venues/pageLogic';
-import { homeCourseRows, homeState } from './pageLogic';
+import { homeCourseRows, homeState, normalizeReminders } from './pageLogic';
 import './index.scss';
 
 export default {
@@ -117,8 +138,8 @@ export default {
     },
     data() {
         return {
-            errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(),
-            requestSerial: 0, role: 'student', venue: null,
+            errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(), reminder: null,
+            requestSerial: 0, role: 'student', subscribeTemplateId: '', venue: null,
         };
     },
     computed: {
@@ -155,6 +176,33 @@ export default {
         goProfile() { Taro.switchTab({ url: '/pages/profile/index' }); },
         goShop() { Taro.navigateTo({ url: '/pages/courseShop/index' }); },
         goVenues() { Taro.navigateTo({ url: '/pages/venues/index' }); },
+        // Reminders are a side note: a failed load never blocks the lesson balance.
+        async loadReminders() {
+            try {
+                const { reminder, subscribeTemplateId } = normalizeReminders(await Api.listRenewalReminders());
+                this.reminder = reminder;
+                this.subscribeTemplateId = subscribeTemplateId;
+            } catch (error) {
+                this.reminder = null;
+            }
+        },
+        openReminder() {
+            this.reminder = null;
+            Api.readRenewalReminders().catch(() => {});
+            this.goShop();
+        },
+        // One-time subscribe: every accepted prompt allows one WeChat reminder.
+        async subscribeReminders() {
+            const templateId = this.subscribeTemplateId;
+            try {
+                const result = await Taro.requestSubscribeMessage({ tmplIds: [templateId] });
+                if (result[templateId] !== 'accept') return;
+                await Api.subscribeRenewalReminders();
+                Taro.showToast({ title: '已开启微信提醒', icon: 'success' });
+            } catch (error) {
+                Taro.showToast({ title: error?.message || '暂时无法开启微信提醒', icon: 'none' });
+            }
+        },
         async loadVenue() {
             this.venue = (await VenueManager.loadVenues()).current;
             Taro.setNavigationBarTitle({ title: this.venue?.name || '看乐艺术' });
@@ -166,9 +214,12 @@ export default {
                 this.loading = false;
                 this.errorMessage = '';
                 this.overview = normalizeOverview();
+                this.reminder = null;
+                this.subscribeTemplateId = '';
                 return;
             }
             this.$nextTick(() => this.$refs.upcomingLessons?.refresh(force));
+            this.loadReminders();
             if (this.loading && !force) return;
             const requestId = this.requestSerial + 1;
             this.requestSerial = requestId;

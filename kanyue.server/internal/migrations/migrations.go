@@ -20,6 +20,7 @@ func init() {
 	list.Register(freezeCreatedTimestamps, nil, "kanyue_0002_freeze_created")
 	list.Register(ensureBaseline, nil, "kanyue_0003_baseline")
 	list.Register(allowAuditActorRoles, nil, "kanyue_0004_audit_actor_roles")
+	list.Register(EnsureRenewalReminders, nil, "kanyue_0005_renewal_reminders")
 }
 
 // Up applies pending migrations in one transaction and returns their names.

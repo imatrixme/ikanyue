@@ -1,3 +1,4 @@
+import { academyParts } from '../../../utils/academyTime';
 import { courseValidityText } from '../courses/pageLogic';
 
 const LOW_LESSON_THRESHOLD = 2;
@@ -31,6 +32,39 @@ function homeCourseRows(courses = []) {
     }));
 }
 
+// The newest unread 教务提醒 and the subscribe template the student may opt into.
+function normalizeReminders(payload = {}) {
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    const latest = items[0];
+    return {
+        reminder: latest ? {
+            id: latest.id || '',
+            message: latest.message || '',
+            sender: latest.sender || '看乐教务',
+        } : null,
+        subscribeTemplateId: payload.subscribeTemplateId || '',
+    };
+}
+
+const RENEWAL_REASONS = Object.freeze({ low_balance: '课时不足', expiring: '即将到期' });
+
+// Teachers only see who is due; the academy sends the reminders.
+function teacherRenewalRows(payload = {}) {
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    return items.map((item) => {
+        const date = academyParts(item.validUntil);
+        const detail = item.reason === 'expiring' && date
+            ? `${date.month}月${date.day}日到期`
+            : `剩 ${Number(item.remainingLessons) || 0} 节`;
+        return {
+            key: `${item.studentId}-${item.courseId}`,
+            title: item.studentName || '学员',
+            description: [item.courseName, RENEWAL_REASONS[item.reason] || ''].filter(Boolean).join(' · '),
+            value: detail,
+        };
+    });
+}
+
 export {
-    LOW_LESSON_THRESHOLD, homeCourseRows, homeState, needsRenewal, renewalHint,
+    LOW_LESSON_THRESHOLD, homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
 };

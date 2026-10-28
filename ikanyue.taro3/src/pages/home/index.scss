@@ -182,6 +182,59 @@
 
 .home-course__renewal:active { opacity: 0.76; }
 
+.home-subscribe {
+    background: $ky-surface;
+    border-top-color: $ky-line-tinted;
+    color: $ky-primary-strong;
+}
+
+.home-notice {
+    background: $ky-gold-wash;
+    border: 1px solid $ky-gold-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    margin-top: $ky-space-4;
+    padding: $ky-space-4;
+}
+
+.home-notice:active { opacity: 0.76; }
+
+.home-notice__header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.home-notice__sender {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-bold;
+}
+
+.home-notice__tag,
+.home-notice__action {
+    color: $ky-gold-foreground;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-semibold;
+}
+
+.home-notice__message {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-readable;
+}
+
+.home-notice__action {
+    align-items: center;
+    align-self: flex-end;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    gap: $ky-space-1;
+    min-height: 44px;
+}
+
 .home-primary-button {
     --nut-primary-color: #{$ky-primary-strong};
     --nut-primary-color-end: #{$ky-primary-strong};

@@ -45,6 +45,18 @@
                     </view>
                 </ticket-section>
             </template>
+            <ticket-section v-if="renewals.length" subtitle="教务会提醒学员查看课包，无需你沟通续费" title="待续费学员">
+                <view class="teacher-workbench__list">
+                    <account-row
+                        v-for="row in renewals"
+                        :key="row.key"
+                        :description="row.description"
+                        :icon-text="row.title.slice(0, 1)"
+                        :title="row.title"
+                        :value="row.value"
+                    />
+                </view>
+            </ticket-section>
         </view>
     </page-chrome>
 </template>
@@ -62,6 +74,7 @@ import UpcomingLessons from './UpcomingLessons.vue';
 import {
     appointmentDetailUrl, availabilityUrl, bookingErrorMessage, normalizeTeacherDashboard,
 } from '../pages/appointments/pageLogic';
+import { teacherRenewalRows } from '../pages/home/pageLogic';
 
 export default {
     name: 'TeacherBookingHome',
@@ -69,7 +82,7 @@ export default {
         AccountRow, AppIcon, AppointmentRow, AsyncState, PageChrome, TicketSection, UpcomingLessons,
     },
     data() {
-        return { dashboard: normalizeTeacherDashboard(), errorMessage: '', loading: false, requestSerial: 0 };
+        return { dashboard: normalizeTeacherDashboard(), errorMessage: '', loading: false, renewals: [], requestSerial: 0 };
     },
     computed: {
         state() {
@@ -89,7 +102,15 @@ export default {
         goAvailability(offering) { Taro.navigateTo({ url: availabilityUrl(offering.offeringId) }); },
         async refresh(force = false) {
             await this.$nextTick();
-            return Promise.all([this.loadDashboard(force), this.$refs.upcomingLessons?.refresh(force)]);
+            return Promise.all([this.loadDashboard(force), this.loadRenewals(), this.$refs.upcomingLessons?.refresh(force)]);
+        },
+        // Read-only and optional: without the list the workbench still works.
+        async loadRenewals() {
+            try {
+                this.renewals = teacherRenewalRows(await Api.listTeacherRenewals());
+            } catch (error) {
+                this.renewals = [];
+            }
         },
         async loadDashboard(force = false) {
             if (this.loading && !force) return;

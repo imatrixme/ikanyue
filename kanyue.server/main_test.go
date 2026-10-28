@@ -35,7 +35,7 @@ func TestManifestClassifiesEveryRoute(t *testing.T) {
 	cfg := config.Config{CourseCreditGrants: true, CourseCreditReservation: true, CourseCreditSettlement: true,
 		CourseCreditMigration: true, CourseCommerce: true, PayGatewayURL: "http://127.0.0.1:1",
 		PayServiceToken: strings.Repeat("s", 32), PayEventToken: strings.Repeat("e", 32), NodeEnv: "test"}
-	server.Register(app, server.Config{Modules: modules(cfg, signer, nil)})
+	server.Register(app, server.Config{Modules: modules(cfg, signer, nil, nil)})
 	if err := app.OnServe().Trigger(&core.ServeEvent{App: app, Router: router}, func(*core.ServeEvent) error { return nil }); err != nil {
 		t.Fatal(err)
 	}

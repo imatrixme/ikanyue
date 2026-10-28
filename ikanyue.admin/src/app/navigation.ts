@@ -13,6 +13,7 @@ export const viewPaths: Record<AppView, string> = {
   teachers: '/schedule/workload',
   enrollments: '/billing/enrollments',
   payments: '/billing/orders',
+  renewals: '/billing/renewals',
   accounts: '/billing/lesson-hours',
   exceptions: '/billing/exceptions',
   audit: '/billing/audit',
@@ -72,6 +73,7 @@ export const navigationSections: NavigationSection[] = [
     tabs: [
       { view: 'payments', label: '订单收款' },
       { view: 'enrollments', label: '报课' },
+      { view: 'renewals', label: '待续费' },
     ],
   },
   {

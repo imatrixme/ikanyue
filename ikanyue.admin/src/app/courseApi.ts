@@ -9,6 +9,9 @@ import type {
   CourseResourceKey,
   CourseWritableResource,
   EnrollmentInput,
+  RenewalCandidate,
+  RenewalRules,
+  RenewalSendResult,
   RosterSyncPreview,
   SettlementPreview,
   StudentFollowUp,
@@ -43,6 +46,8 @@ export interface CourseOpsApi {
   getStudentOverview(token: string, studentIds: string[]): Promise<StudentOverview[]>
   listFollowUps(token: string, studentId: string): Promise<StudentFollowUp[]>
   recordFollowUp(token: string, studentId: string, input: StudentFollowUpInput): Promise<StudentFollowUp>
+  listRenewals(token: string): Promise<{ items: RenewalCandidate[]; rules: RenewalRules }>
+  sendRenewalReminders(token: string, studentIds: string[]): Promise<RenewalSendResult>
 }
 
 /** Upper bound for {@link listAllPages}; past this the caller shows a truncation notice. */
@@ -177,12 +182,21 @@ export function createHttpCourseOpsApi(baseUrl: string): CourseOpsApi {
     recordFollowUp(token, studentId, input) {
       return command(token, `/course-credits/students/${encodeURIComponent(studentId)}/follow-ups`, input)
     },
+    listRenewals(token) {
+      return request(`${baseUrl}/course-credits/renewals`, { token })
+    },
+    sendRenewalReminders(token, studentIds) {
+      return command(token, '/course-operations/renewal-reminders', { studentIds })
+    },
   }
 }
 
 export function createMockCourseOpsApi(): CourseOpsApi {
   const store = createMockStore()
   const followUps: StudentFollowUp[] = []
+  const renewals: RenewalCandidate[] = [
+    { studentId: 'student_1', studentName: '张同学', courseId: 'course_1', courseName: '综合声乐班', reason: 'low_balance', remainingLessons: 1, validUntil: '2027-01-31T00:00:00.000Z', lastReminder: null, remindedToday: false },
+  ]
   return {
     async listCourseResource<T extends CourseRecord = CourseRecord>(_token: string, resource: CourseResourceKey, query: CourseQuery = {}): Promise<CoursePage<T>> {
       const source = resource === 'assignedLessons' ? assignedLessons(store) : store[resource]
@@ -280,6 +294,21 @@ export function createMockCourseOpsApi(): CourseOpsApi {
       const record: StudentFollowUp = { id: `follow_up_${followUps.length + 1}`, studentId, status: input.status, note: input.note || '', snoozeUntil: input.snoozeUntil, actorId: 'admin_1', created: new Date().toISOString() }
       followUps.unshift(record)
       return clone(record)
+    },
+    async listRenewals() {
+      return { items: clone(renewals), rules: { lowLessons: 2, expiryDays: 14, cooldownDays: 7, roundLimit: 3 } }
+    },
+    async sendRenewalReminders(_token, studentIds) {
+      const items = studentIds.map((studentId) => {
+        const candidate = renewals.find((item) => item.studentId === studentId)
+        if (!candidate) return { studentId, status: 'rejected' as const, message: '该学员没有可提醒的课程' }
+        if (candidate.remindedToday) return { studentId, status: 'rejected' as const, message: '今天已经提醒过该学员，明天再试' }
+        candidate.remindedToday = true
+        candidate.lastReminder = { trigger: 'manual', reason: candidate.reason, wechatStatus: 'skipped', read: false, created: new Date().toISOString() }
+        return { studentId, status: 'sent' as const, message: '已发送', wechatStatus: 'skipped' }
+      })
+      const sent = items.filter((item) => item.status === 'sent').length
+      return { items, sent, rejected: items.length - sent }
     },
   }
 }

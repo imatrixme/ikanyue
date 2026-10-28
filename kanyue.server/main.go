@@ -35,12 +35,17 @@ func main() {
 	dispatcher, dispatcherErr := coursecredit.NewNotificationDispatcher(cfg.OutboxWebhookURL, cfg.OutboxWebhookSecret,
 		cfg.OutboxWebhookTimeoutMs, cfg.NodeEnv)
 	registration, registrationErr := gatewaylink.RegistrationFromEnv(os.Getenv, "kanyue.server")
+	renewalWechat, renewalWechatErr := coursecredit.NewRenewalWechat(cfg.WechatAppID, cfg.WechatSecret,
+		cfg.WechatRenewalTemplateID, cfg.WechatRenewalTemplateData, cfg.WechatMiniprogramState, cfg.WechatAPIURL)
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		if signerErr != nil {
 			return signerErr
 		}
 		if dispatcherErr != nil {
 			return dispatcherErr
+		}
+		if renewalWechatErr != nil {
+			return renewalWechatErr
 		}
 		if registrationErr != nil {
 			return registrationErr
@@ -56,7 +61,7 @@ func main() {
 	app.OnServe().BindFunc(migrations.RequireApplied)
 	server.Register(app, server.Config{
 		Console:      console.FS(),
-		Modules:      modules(cfg, signer, dispatcher),
+		Modules:      modules(cfg, signer, dispatcher, renewalWechat),
 		Registration: registration,
 	})
 
@@ -70,7 +75,7 @@ func main() {
 }
 
 // modules lists the business areas in registration order.
-func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dispatcher) []server.Module {
+func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dispatcher, renewalWechat *coursecredit.RenewalWechat) []server.Module {
 	return []server.Module{
 		{Name: "venues", Register: venues.Module{Signer: signer}.Register},
 		{Name: "catalog", Register: catalog.Module{}.Register},
@@ -89,6 +94,7 @@ func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dis
 			Config: coursecredit.CommerceConfig{GatewayURL: cfg.PayGatewayURL, ServiceToken: cfg.PayServiceToken,
 				MockToken: cfg.PayMockToken, EventToken: cfg.PayEventToken, WechatAppID: cfg.WechatAppID, Mock: cfg.PayMockEnabled},
 			RecoveryInterval: 3 * time.Second}.Register},
+		{Name: "renewals", Register: coursecredit.RenewalsModule{Signer: signer, Wechat: renewalWechat}.Register},
 		{Name: "activities", Register: activities.Module{PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},
 		{Name: "points", Register: points.Module{Signer: signer, PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},
 	}

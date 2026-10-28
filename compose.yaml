@@ -41,6 +41,10 @@ services:
       WECHAT_APPID: "${WECHAT_APPID:-}"
       WECHAT_SECRET: "${WECHAT_SECRET:-}"
       WECHAT_JSCODE2SESSION: "${WECHAT_JSCODE2SESSION:-https://api.weixin.qq.com/sns/jscode2session}"
+      # Renewal reminders by subscribe message; a blank template id records every attempt as skipped.
+      WECHAT_RENEWAL_TEMPLATE_ID: "${WECHAT_RENEWAL_TEMPLATE_ID:-}"
+      WECHAT_RENEWAL_TEMPLATE_DATA: "${WECHAT_RENEWAL_TEMPLATE_DATA:-}"
+      WECHAT_MINIPROGRAM_STATE: "${WECHAT_MINIPROGRAM_STATE:-formal}"
       # Registration with the API gateway (profile "gateway"): set GATEWAY_URL=http://gateway:1461.
       GATEWAY_URL: "${GATEWAY_URL:-}"
       GATEWAY_REGISTRATION_TOKEN: "${GATEWAY_REGISTRATION_TOKEN:-}"

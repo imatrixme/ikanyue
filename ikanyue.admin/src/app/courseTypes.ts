@@ -163,6 +163,34 @@ export interface StudentFollowUp {
   created: string | null
 }
 
+export type RenewalReason = 'low_balance' | 'expiring' | 'manual'
+
+/** A student due for renewal, with their most urgent course. */
+export interface RenewalCandidate {
+  studentId: string
+  studentName: string
+  courseId: string
+  courseName: string
+  reason: RenewalReason
+  remainingLessons: number
+  validUntil: string | null
+  lastReminder: { trigger: 'auto' | 'manual'; reason: RenewalReason; wechatStatus: 'pending' | 'sent' | 'skipped' | 'failed'; read: boolean; created: string } | null
+  remindedToday: boolean
+}
+
+export interface RenewalRules {
+  lowLessons: number
+  expiryDays: number
+  cooldownDays: number
+  roundLimit: number
+}
+
+export interface RenewalSendResult {
+  sent: number
+  rejected: number
+  items: Array<{ studentId: string; status: 'sent' | 'rejected'; message: string; reminderId?: string; wechatStatus?: string }>
+}
+
 export interface StudentFollowUpInput {
   status: FollowUpStatus
   note?: string

@@ -128,6 +128,13 @@ const getLearningLesson = (lessonId) => iNet.get(`/v1/student/learning/lessons/$
 
 const listLearningRecords = (params = {}) => iNet.get('/v1/student/learning/records', params);
 
+const listRenewalReminders = () => iNet.get('/v1/student/renewal-reminders');
+
+const readRenewalReminders = () => iNet.post('/v1/student/renewal-reminders/read', {});
+
+// Records one accepted one-time subscribe grant; each grant lets the academy send one WeChat reminder.
+const subscribeRenewalReminders = () => iNet.post('/v1/student/renewal-reminders/subscriptions', {});
+
 const listStudentBookingOptions = (params = {}) => iNet.get('/v1/student/booking-options', params);
 
 const listStudentBookingSlots = (params = {}) => iNet.get('/v1/student/booking-slots', params);
@@ -150,6 +157,8 @@ const cancelStudentAppointment = (appointmentId, payload, idempotencyKey) => iNe
 );
 
 const getTeacherBookingDashboard = () => iNet.get('/v1/teacher/booking/dashboard');
+
+const listTeacherRenewals = () => iNet.get('/v1/teacher/renewals');
 
 const listTeacherAppointments = (params = {}) => iNet.get('/v1/teacher/appointments', params);
 
@@ -214,6 +223,9 @@ const Api = {
     listLearningLessons,
     getLearningLesson,
     listLearningRecords,
+    listRenewalReminders,
+    readRenewalReminders,
+    subscribeRenewalReminders,
     listStudentBookingOptions,
     listStudentBookingSlots,
     listStudentAppointments,
@@ -223,6 +235,7 @@ const Api = {
     withdrawStudentAppointment,
     cancelStudentAppointment,
     getTeacherBookingDashboard,
+    listTeacherRenewals,
     listTeacherAppointments,
     getTeacherAppointment,
     getTeacherCalendar,

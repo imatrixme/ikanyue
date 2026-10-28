@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-    homeCourseRows, homeState, needsRenewal, renewalHint,
+    homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
 } from './pageLogic';
 
 const course = (overrides = {}) => ({
@@ -46,5 +46,27 @@ describe('home page logic', () => {
             renewalHint: '仅剩 1 节，可查看续费课包',
             validityText: '长期有效',
         }]);
+    });
+
+    it('shows the newest 教务提醒 and the subscribe template', () => {
+        expect(normalizeReminders()).toEqual({ reminder: null, subscribeTemplateId: '' });
+        expect(normalizeReminders({
+            items: [{ id: 'r2', sender: '看乐教务', message: '《声乐》剩余 1 节课时。' }, { id: 'r1', message: '旧提醒' }],
+            subscribeTemplateId: 'tpl',
+        })).toEqual({ reminder: { id: 'r2', message: '《声乐》剩余 1 节课时。', sender: '看乐教务' }, subscribeTemplateId: 'tpl' });
+    });
+
+    it('lists due students for teachers in academy dates', () => {
+        expect(teacherRenewalRows({
+            items: [
+                { studentId: 's1', studentName: '张同学', courseId: 'c1', courseName: '声乐', reason: 'low_balance', remainingLessons: 1 },
+                // 18:00Z is already the next day in Shanghai.
+                { studentId: 's2', studentName: '', courseId: 'c1', courseName: '声乐', reason: 'expiring', remainingLessons: 5, validUntil: '2026-11-09T18:00:00.000Z' },
+            ],
+        })).toEqual([
+            { key: 's1-c1', title: '张同学', description: '声乐 · 课时不足', value: '剩 1 节' },
+            { key: 's2-c1', title: '学员', description: '声乐 · 即将到期', value: '11月10日到期' },
+        ]);
+        expect(teacherRenewalRows()).toEqual([]);
     });
 });

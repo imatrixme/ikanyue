@@ -22,6 +22,7 @@ export type AppView =
   | 'points'
   | 'rewards'
   | 'venues'
+  | 'renewals'
 
 export interface OpsProfile {
   id: string

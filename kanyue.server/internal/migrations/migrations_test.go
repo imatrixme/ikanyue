@@ -106,3 +106,29 @@ func TestUpLetsAuditKeepAnonymousAndStudentActors(t *testing.T) {
 		t.Fatalf("actorRole values = %v", values)
 	}
 }
+
+func TestUpAddsRenewalRemindersWithUniqueAttempts(t *testing.T) {
+	app := testkit.NewApp(t)
+	for range 2 {
+		if err := EnsureRenewalReminders(app); err != nil {
+			t.Fatal(err)
+		}
+	}
+	student := testkit.Create(t, app, "students", map[string]any{"realName": "学员"})
+	reminder := map[string]any{"studentId": student.Id, "trigger": "manual", "reason": "manual",
+		"dedupeKey": "manual:" + student.Id + ":2026-10-28", "wechatStatus": "skipped"}
+	testkit.Create(t, app, "renewal_reminders", reminder)
+	collection, err := app.FindCollectionByNameOrId("renewal_reminders")
+	if err != nil {
+		t.Fatal(err)
+	}
+	duplicate := core.NewRecord(collection)
+	duplicate.Load(reminder)
+	if err := app.Save(duplicate); err == nil {
+		t.Fatal("a second reminder with the same dedupe key must be rejected")
+	}
+	subscriptions, err := app.FindCollectionByNameOrId("renewal_subscriptions")
+	if err != nil || subscriptions.ListRule != nil || collection.ListRule != nil {
+		t.Fatalf("renewal collections must stay superuser-only: %v", err)
+	}
+}
