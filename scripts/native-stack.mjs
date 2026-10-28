@@ -23,6 +23,9 @@ const stageRelays = [
 const server = join(root, 'kanyue.server');
 const pay = join(root, 'kanyue.pay');
 const gateway = join(root, 'kanyue.gateway');
+// Go services run from binaries compiled here, so no `go run` toolchain process stays resident.
+const goServices = { gateway, server, pay };
+const binary = (name) => join(state, 'bin', name);
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 const fail = (message) => { throw new Error(message); };
 const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
@@ -76,13 +79,13 @@ function environment(config) {
 function definition(name, config) {
   const definitions = {
     gateway: { cwd: gateway,
-      command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.GATEWAY_ADMIN_PORT}`, gatewayData(), '--encryptionEnv=GATEWAY_ENCRYPTION_KEY'],
+      command: [binary('gateway'), 'serve', `--http=127.0.0.1:${config.GATEWAY_ADMIN_PORT}`, gatewayData(), '--encryptionEnv=GATEWAY_ENCRYPTION_KEY'],
       env: { GATEWAY_LISTEN: `127.0.0.1:${config.GATEWAY_PORT}` },
       port: Number(config.GATEWAY_ADMIN_PORT), url: `http://127.0.0.1:${config.GATEWAY_ADMIN_PORT}/api/health` },
-    server: { cwd: server, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PORT}`, businessData()],
+    server: { cwd: server, command: [binary('server'), 'serve', `--http=127.0.0.1:${config.PORT}`, businessData()],
       env: { GATEWAY_INSTANCE_ADDRESS: `127.0.0.1:${config.PORT}` },
       port: Number(config.PORT), url: `http://127.0.0.1:${config.PORT}/api/health` },
-    pay: { cwd: pay, command: [goBin(config), 'run', '.', 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
+    pay: { cwd: pay, command: [binary('pay'), 'serve', `--http=127.0.0.1:${config.PAY_PORT}`, paymentData()],
       env: { GATEWAY_INSTANCE_ADDRESS: `127.0.0.1:${config.PAY_PORT}` },
       port: Number(config.PAY_PORT), url: `${config.PAY_GATEWAY_URL}/ready` },
     // Ready once the first relay forwards to the server; relays listen only after the first heartbeat.
@@ -92,6 +95,25 @@ function definition(name, config) {
   };
   if (!definitions[name]) fail(`Unknown service: ${name}`);
   return definitions[name];
+}
+// Compiling stays single-threaded like every other Go build here; the build cache keeps unchanged trees fast.
+function buildCommand(name, config) {
+  return { executable: goBin(config), args: ['build', '-o', binary(name), '.'], cwd: goServices[name], env: { GOMAXPROCS: '1' } };
+}
+// restart and init replace every selected Go binary; up only compiles services it is about to start.
+function buildTargets(action, targets, running) {
+  return targets.filter((name) => goServices[name] && (action !== 'up' || !running(name)));
+}
+// --no-build reuses the last binaries and refuses to start without one.
+async function compile(targets, config, reuse) {
+  for (const name of targets) {
+    if (reuse) {
+      if (!existsSync(binary(name))) fail(`${binary(name)} is missing; run once without --no-build`);
+      continue;
+    }
+    const step = buildCommand(name, config);
+    await command(step.executable, step.args, step.cwd, config, `${name} build`, step.env);
+  }
 }
 function owned(name) {
   if (!existsSync(pidFile(name))) return null;
@@ -194,15 +216,16 @@ async function relay() {
     });
   }
 }
-async function command(executable, args, cwd, config, label) {
+async function command(executable, args, cwd, config, label, env = {}) {
+  mkdirSync(join(state, 'logs'), { recursive: true });
   const log = openSync(logFile('bootstrap'), 'a', 0o600);
-  const child = spawn(executable, args, { cwd, env: environment(config), stdio: ['ignore', log, log] });
+  const child = spawn(executable, args, { cwd, env: { ...environment(config), ...env }, stdio: ['ignore', log, log] });
   const code = await new Promise((done) => { child.on('exit', done); child.on('error', () => done(1)); });
   closeSync(log);
   if (code !== 0) fail(`${label} failed; inspect ${logFile('bootstrap')}`);
   console.log(`${label}: complete`);
 }
-async function initialize() {
+async function initialize(reuse) {
   mkdirSync(state, { recursive: true }); mkdirSync(join(state, 'logs'), { recursive: true });
   if (!existsSync(configPath)) {
     const config = {
@@ -221,34 +244,39 @@ async function initialize() {
     writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
   const config = settings();
+  await compile(buildTargets('init', Object.keys(goServices)), config, reuse);
   // serve refuses to start while a migration is pending, so they always run here first.
   if (!existsSync(join(state, 'business-data', 'data.db'))) {
-    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PB_EMAIL, config.PB_PASSWORD, businessData()], server, config, 'Server dashboard account');
+    await command(binary('server'), ['superuser', 'upsert', config.PB_EMAIL, config.PB_PASSWORD, businessData()], server, config, 'Server dashboard account');
   }
-  await command(goBin(config), ['run', '.', 'migrate', 'up', businessData()], server, config, 'Server migrations');
-  await command(goBin(config), ['run', '.', 'seed', 'local', businessData()], server, config, 'Local fixtures');
+  await command(binary('server'), ['migrate', 'up', businessData()], server, config, 'Server migrations');
+  await command(binary('server'), ['seed', 'local', businessData()], server, config, 'Local fixtures');
   if (!existsSync(join(state, 'payment-data', 'data.db'))) {
-    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Pay dashboard account');
+    await command(binary('pay'), ['superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Pay dashboard account');
   }
-  await command(goBin(config), ['run', '.', 'migrate', 'up', paymentData()], pay, config, 'Pay migrations');
+  await command(binary('pay'), ['migrate', 'up', paymentData()], pay, config, 'Pay migrations');
   // The gateway has no migrate command: serve runs its migrations, then converts legacy sites and routes once.
   if (!config.GATEWAY_PB_EMAIL) {
     // The console needs password + authenticator: enroll with `GATEWAY_ENCRYPTION_KEY=... go run . totp enroll <email> --dir=... --encryptionEnv=GATEWAY_ENCRYPTION_KEY` in kanyue.gateway.
     config.GATEWAY_PB_EMAIL = config.PB_EMAIL;
-    await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.GATEWAY_PB_EMAIL, config.GATEWAY_PB_PASSWORD, gatewayData()], gateway, config, 'Gateway console account');
+    await command(binary('gateway'), ['superuser', 'upsert', config.GATEWAY_PB_EMAIL, config.GATEWAY_PB_PASSWORD, gatewayData()], gateway, config, 'Gateway console account');
     writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
   }
   console.log('Native data initialized. Docker volumes untouched. Use test up to start applications.');
 }
 async function main() {
-  const [action = 'status', selected, token] = process.argv.slice(2);
+  const [action = 'status', ...rest] = process.argv.slice(2);
+  const reuse = rest.includes('--no-build');
+  const [selected, token] = rest.filter((arg) => arg !== '--no-build');
   if (action === '--help' || action === '-h' || action === 'help') {
-    console.log(`Usage: test {init|up|down|restart|status|logs|smoke} [service]\nServices: ${names.join(', ')}\nInitialization is explicit; regular startup never seeds data or builds Docker images.`);
+    console.log(`Usage: test {init|up|down|restart|status|logs|smoke} [service] [--no-build]\nServices: ${names.join(', ')}\n`
+      + 'Initialization is explicit; regular startup never seeds data or builds Docker images.\n'
+      + 'init, up and restart compile the Go services into .local/native/bin first; --no-build reuses the last binaries.');
     return;
   }
   if (action === 'supervise') return supervise(selected, token);
   if (action === 'relay') return relay();
-  if (action === 'init' || action === 'bootstrap') return initialize();
+  if (action === 'init' || action === 'bootstrap') return initialize(reuse);
   if (action === 'status') {
     for (const name of names) console.log(`${name}: ${owned(name) ? 'running' : 'stopped'}`);
     return;
@@ -258,12 +286,17 @@ async function main() {
     console.log(existsSync(logFile(name)) ? readFileSync(logFile(name), 'utf8').split('\n').slice(-60).join('\n') : 'No logs');
     return;
   }
-  const targets = selected && selected !== '--no-build' ? [selected] : names;
+  const targets = selected ? [selected] : names;
   if (targets.some((name) => !names.includes(name))) fail('Unknown service');
-  if (action === 'down' || action === 'restart') for (const name of [...targets].reverse()) await stop(name);
-  if (action === 'up' || action === 'restart') {
-    const config = settings();
+  const starting = action === 'up' || action === 'restart';
+  const config = starting ? settings() : null;
+  if (starting) {
     if (!existsSync(join(state, 'payment-data/data.db')) || !existsSync(join(state, 'gateway-data/data.db'))) fail('Run test init before startup');
+    // Compile before anything stops, so a tree that does not build leaves running services alone.
+    await compile(buildTargets(action, targets, (name) => Boolean(owned(name))), config, reuse);
+  }
+  if (action === 'down' || action === 'restart') for (const name of [...targets].reverse()) await stop(name);
+  if (starting) {
     for (const name of targets) await start(name, config);
     // Consoles are embedded at build time: npm run build:server in ikanyue.admin, npm run build in kanyue.gateway/console.
     console.log(`Admin and API: http://127.0.0.1:${config.PORT}/; pay: ${config.PAY_GATEWAY_URL}; `
@@ -281,4 +314,4 @@ async function main() {
 if (process.argv[1] && resolve(process.argv[1]) === script) {
   main().catch((error) => { console.error(error.message); process.exitCode = 1; });
 }
-export { definition, environment, freePort, matchesIdentity, stageRelays, upgrade, validIdentity };
+export { buildCommand, buildTargets, definition, environment, freePort, matchesIdentity, stageRelays, upgrade, validIdentity };

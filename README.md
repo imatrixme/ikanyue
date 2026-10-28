@@ -47,13 +47,14 @@ GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...
 本地测试不使用 Docker，入口是 `node scripts/native-stack.mjs`（`./scripts/kanyue-stack.sh test …` 是同一入口）：
 
 ```bash
-# 首次显式初始化：迁移两个库、写入本地测试数据（go run . seed local）
+# 首次显式初始化：编译三个 Go 服务到 .local/native/bin，迁移两个库、写入本地测试数据（seed local）
 node scripts/native-stack.mjs init
 
 # 运营后台嵌入 server 二进制：首次和改动后端前先构建
 (cd ikanyue.admin && npm run build:server)
 
 # 日常启动：API 网关、kanyue.server、kanyue.pay、TEST/PRE 中继（stages）、小程序 watcher
+# up/restart 先编译要启动的 Go 服务（编译失败时不停旧进程），再直接运行二进制；--no-build 复用上次编译结果
 node scripts/native-stack.mjs up
 
 # 查看状态、日志、健康检查与关闭
