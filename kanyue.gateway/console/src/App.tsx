@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router-do
 import { Button } from './components/ui/Button'
 import { cn } from './components/ui/utils'
 import { session } from './lib/api'
+import { ApprovalsPage, ComparePage, TokensPage } from './pages/AccessPages'
 import { ConsumersPage, OperationsPage, SecretsPage, ServicesPage } from './pages/ConfigPages'
 import { ApisPage, GrantsPage, GroupsPage, PolicySetsPage } from './pages/GroupPages'
 import { LoginPage } from './pages/LoginPage'
@@ -25,6 +26,8 @@ const sections: { title: string; pages: Page[] }[] = [
       { path: 'apis', title: 'API', Component: ApisPage },
       { path: 'policy-sets', title: '策略组', Component: PolicySetsPage },
       { path: 'release', title: '发布', Component: ReleasePage },
+      { path: 'approvals', title: '审批', Component: ApprovalsPage },
+      { path: 'compare', title: '环境比对', Component: ComparePage },
     ],
   },
   {
@@ -43,6 +46,7 @@ const sections: { title: string; pages: Page[] }[] = [
       { path: 'alert-rules', title: '告警规则', Component: AlertRulesPage },
       { path: 'alert-channels', title: '告警渠道', Component: AlertChannelsPage },
       { path: 'exporters', title: '日志导出', Component: ExportersPage },
+      { path: 'tokens', title: '访问令牌', Component: TokensPage },
       { path: 'audit', title: '审计', Component: AuditPage },
     ],
   },

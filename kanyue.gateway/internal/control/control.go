@@ -132,6 +132,7 @@ func (c *Control) bindHooks() {
 	c.bindTOTP()
 	c.bindObservability()
 	c.bindValidation()
+	c.bindTokens()
 	schedule := func(e *core.RecordEvent) error {
 		c.scheduleRebuild()
 		return e.Next()
@@ -170,7 +171,7 @@ func (c *Control) bindHooks() {
 	readOnly := func(e *core.RecordRequestEvent) error {
 		return e.ForbiddenError("This collection is read-only; edit API groups and release them instead.", nil)
 	}
-	locked := append(slices.Clone(schema.Legacy), schema.AppendOnly...)
+	locked := slices.Concat(schema.Legacy, schema.AppendOnly, []string{schema.Approvals})
 	c.app.OnRecordCreateRequest(locked...).BindFunc(readOnly)
 	c.app.OnRecordUpdateRequest(locked...).BindFunc(readOnly)
 	c.app.OnRecordDeleteRequest(locked...).BindFunc(readOnly)

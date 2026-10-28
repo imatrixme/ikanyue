@@ -82,12 +82,21 @@ type change struct {
 
 // Release resolves the targets' drafts and serves them in req.Stage.
 func (c *Control) Release(actor string, req Request) (Result, error) {
-	if err := checkRequest(req); err != nil {
+	changes, err := c.resolveAll(req)
+	if err != nil {
 		return Result{}, err
+	}
+	return c.apply(actor, "release", req, changes)
+}
+
+// resolveAll checks req and resolves every target's draft.
+func (c *Control) resolveAll(req Request) ([]change, error) {
+	if err := checkRequest(req); err != nil {
+		return nil, err
 	}
 	d, err := loadDrafts(c.app, nil)
 	if err != nil {
-		return Result{}, err
+		return nil, err
 	}
 	var changes []change
 	var errs []error
@@ -99,10 +108,7 @@ func (c *Control) Release(actor string, req Request) (Result, error) {
 		}
 		changes = append(changes, next)
 	}
-	if err := errors.Join(errs...); err != nil {
-		return Result{}, err
-	}
-	return c.apply(actor, "release", req, changes)
+	return changes, errors.Join(errs...)
 }
 
 // Offline stops serving the targets in req.Stage; deleted drafts can be taken offline too.

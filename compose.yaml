@@ -84,6 +84,8 @@ services:
       # Host OpenResty reaches the container through the Docker bridge.
       GATEWAY_TRUSTED_PROXIES: "${GATEWAY_TRUSTED_PROXIES:-127.0.0.1,::1,172.16.0.0/12}"
       GATEWAY_LOG_SAMPLE: "${GATEWAY_LOG_SAMPLE:-0.1}"
+      # 1: a release to RELEASE waits for a second identity's approval.
+      GATEWAY_RELEASE_APPROVAL: "${GATEWAY_RELEASE_APPROVAL:-}"
     command: ["kanyue-gateway", "serve", "--http=0.0.0.0:1461", "--dir=/pb_data", "--encryptionEnv=GATEWAY_ENCRYPTION_KEY"]
     volumes:
       - "${GATEWAY_DATA_SOURCE:-gateway_data}:/pb_data"

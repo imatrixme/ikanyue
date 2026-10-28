@@ -36,6 +36,14 @@ describe('ReleasePage', () => {
     })
   })
 
+  it('tells that a release to RELEASE waits for approval', async () => {
+    serve(() => ({ status: 202, body: { approval: { id: 'p1', status: 'pending' } } }))
+    page('/release?select=api:a1')
+    await userEvent.selectOptions(await screen.findByLabelText('环境'), 'RELEASE')
+    await userEvent.click(await screen.findByRole('button', { name: '上线到生产' }))
+    expect(await screen.findByText(/已提交上线生产的审批/)).toBeInTheDocument()
+  })
+
   it('shows how RELEASE would differ from PRE and releases once a reason is given', async () => {
     const calls = serve((call) => (call.body as { reason: string }).reason
       ? { body: { stage: 'RELEASE', version: 3, released: [{ kind: 'api', id: 'a1', name: 'get-x', version: 1, previous: 0 }] } }

@@ -12,7 +12,7 @@ import { ApiError, errorText, listRecords, type BaseRecord } from '../lib/api'
 import { formatTime } from '../lib/format'
 import {
   gateway, parseTarget, stageLabels, stages, targetKey,
-  type Change, type Preview, type ReleaseRequest, type ReleaseResult, type Released, type Stage, type Target,
+  type Approval, type Change, type Preview, type ReleaseRequest, type ReleaseResult, type Released, type Stage, type Target,
 } from '../lib/gateway'
 import { useResource } from '../lib/useResource'
 
@@ -30,7 +30,7 @@ async function loadCandidates(): Promise<Candidate[]> {
   ]
 }
 
-function Diff({ diff }: { diff?: Record<string, Change> | null }) {
+export function Diff({ diff }: { diff?: Record<string, Change> | null }) {
   const entries = Object.entries(diff ?? {})
   if (entries.length === 0) return <Muted>无差异</Muted>
   return (
@@ -70,12 +70,17 @@ export function ReleasePage() {
   }
   const rows = (candidates.data ?? []).filter((candidate) => !onlyPending || pending(candidate))
 
-  const run = async (action: () => Promise<ReleaseResult>, done: string) => {
+  const run = async (action: () => Promise<ReleaseResult | { approval: Approval }>, done: string) => {
     setBusy(true)
     setResult(null)
     setPromotion(null)
     try {
       const out = await action()
+      if ('approval' in out) {
+        setResult({ tone: 'success', text: `已提交上线${stageLabels[stage]}的审批，需要另一人在“审批”页批准后才生效。` })
+        setPreview(null)
+        return
+      }
       const released = out.released ?? []
       setResult({
         tone: 'success',

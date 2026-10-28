@@ -45,11 +45,26 @@ The repository SHALL run the gateway's formatting, static checks, tests, vulnera
 - **THEN** CI runs the checks and reports the failure
 
 ### Requirement: Automation uses scoped machine tokens
-The admin plane SHALL accept machine tokens limited to a role and to the environments they may release to, revocable one by one, with every use audited.
+The admin plane SHALL accept machine tokens limited to a role and to the environments they may release to, stored only as a hash, revocable one by one, with their last use recorded and every change and refusal audited under the token's name.
 
 #### Scenario: Releaser token outside its environments
 - **WHEN** a token allowed to release to TEST and PRE tries to release to RELEASE
 - **THEN** the request is refused and audited
+
+#### Scenario: A token tries to mint a token
+- **WHEN** a machine token calls the token endpoint
+- **THEN** the request is refused; only a signed-in superuser mints tokens
+
+### Requirement: Releases to RELEASE can require a second approval
+With release approval switched on, the gateway SHALL hold a release to RELEASE as a request until a different identity approves it, and SHALL release only the definitions the request resolved to.
+
+#### Scenario: Approved by a second identity
+- **WHEN** one identity requests a release to RELEASE and another approves it
+- **THEN** RELEASE serves the requested definitions and both identities are recorded
+
+#### Scenario: Drafts changed after the request
+- **WHEN** a draft named in a pending request changes before approval
+- **THEN** the approval is refused, the request becomes stale, and nothing is released
 
 ### Requirement: Configuration can be exported and applied as drafts
 The gateway SHALL export groups, domains, APIs, policy sets and grants to a file without secret values, and apply such a file as drafts that release nothing, reporting the differences.
@@ -57,3 +72,7 @@ The gateway SHALL export groups, domains, APIs, policy sets and grants to a file
 #### Scenario: Apply a reviewed file
 - **WHEN** an operator applies an exported and edited file
 - **THEN** the drafts match the file, the differences are listed and audited, and no environment changes until a release
+
+#### Scenario: Compare two environments
+- **WHEN** an operator compares PRE with RELEASE
+- **THEN** every group and API they serve differently is listed with its versions and differences

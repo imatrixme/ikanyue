@@ -22,13 +22,13 @@
 - [ ] 4.4 Run `gateway-rollout.mjs` behind the real OpenResty under load
 
 ## 5. P1 Machine tokens and roles
-- [ ] 5.1 `admin_tokens` (hashed, role, stages, expiry, last use), roles viewer / releaser / admin, enforced on the admin API
-- [ ] 5.2 Optional second approval for RELEASE; audit of requests and approvals
-- [ ] 5.3 Console: tokens, roles and approvals
+- [x] 5.1 `admin_tokens` (hashed, role, stages, expiry, last use), roles viewer / releaser / admin, enforced on the admin API
+- [x] 5.2 Optional second approval for RELEASE; audit of requests and approvals
+- [x] 5.3 Console: tokens, roles and approvals
 
 ## 6. P1 Configuration as code
-- [ ] 6.1 `config export` / `config apply` (drafts only, diff output, secrets by name)
-- [ ] 6.2 Console comparison of two environments
+- [x] 6.1 `config export` / `config apply` (drafts only, diff output, secrets by name)
+- [x] 6.2 Console comparison of two environments
 
 ## 7. Later, when needed
 - [ ] 7.1 Prometheus scrape endpoint and OpenTelemetry export

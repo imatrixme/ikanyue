@@ -18,6 +18,8 @@ type Config struct {
 	RegistrationToken string
 	// AdminPublic allows binding the admin plane to a public address (GATEWAY_ADMIN_PUBLIC=1), e.g. inside a container.
 	AdminPublic bool
+	// ReleaseApproval makes a release to RELEASE wait for a second identity's approval (GATEWAY_RELEASE_APPROVAL=1).
+	ReleaseApproval bool
 	// Request logs: GATEWAY_LOG_SAMPLE (share of fast successes kept, default 0.1), GATEWAY_LOG_SLOW_MS
 	// (always kept above, default 1000), GATEWAY_LOG_TRUNCATE_IP=1, GATEWAY_LOG_RETENTION_DAYS (7)
 	// and GATEWAY_METRIC_RETENTION_DAYS (90).
@@ -35,6 +37,7 @@ func Load(getenv func(string) string) (Config, error) {
 		Listen:            fallback(getenv("GATEWAY_LISTEN"), "127.0.0.1:1460"),
 		RegistrationToken: getenv("GATEWAY_REGISTRATION_TOKEN"),
 		AdminPublic:       getenv("GATEWAY_ADMIN_PUBLIC") == "1",
+		ReleaseApproval:   getenv("GATEWAY_RELEASE_APPROVAL") == "1",
 	}
 	var err error
 	if cfg.LogSample, err = number(getenv, "GATEWAY_LOG_SAMPLE", 0.1, 0, 1); err != nil {

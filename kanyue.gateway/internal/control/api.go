@@ -25,22 +25,31 @@ func (c *Control) routes(se *core.ServeEvent) {
 		return e.Next()
 	})
 	admin := se.Router.Group("/gateway/v1")
-	superuser := apis.RequireSuperuserAuth()
-	admin.POST("/release", c.releaseRoute).Bind(superuser)
-	admin.POST("/offline", c.offlineRoute).Bind(superuser)
-	admin.POST("/rollback", c.rollbackRoute).Bind(superuser)
-	admin.POST("/preview", c.previewRoute).Bind(superuser)
-	admin.GET("/states", c.statesRoute).Bind(superuser)
-	admin.GET("/apis/{id}/effective", c.effectiveRoute).Bind(superuser)
-	admin.POST("/impact", c.impactRoute).Bind(superuser)
-	admin.GET("/status", c.statusRoute).Bind(superuser)
-	admin.GET("/plugins", c.pluginsRoute).Bind(superuser)
-	admin.GET("/logs", c.logsRoute).Bind(superuser)
-	admin.GET("/metrics", c.metricsRoute).Bind(superuser)
-	admin.GET("/graph", c.graphRoute).Bind(superuser)
-	admin.GET("/events", c.eventsRoute).Bind(superuser)
-	admin.GET("/reports", c.reportsRoute).Bind(superuser)
-	admin.POST("/exporters/{id}/probe", c.probeRoute).Bind(superuser)
+	viewer, releaser, adminRole := c.require("viewer"), c.require("releaser"), c.require("admin")
+	// Releasers are further limited to their environments inside the handlers.
+	admin.POST("/release", c.releaseRoute).BindFunc(releaser)
+	admin.POST("/offline", c.offlineRoute).BindFunc(releaser)
+	admin.POST("/rollback", c.rollbackRoute).BindFunc(releaser)
+	admin.GET("/approvals", c.approvalsRoute).BindFunc(viewer)
+	admin.POST("/approvals/{id}/approve", c.decideRoute(true)).BindFunc(releaser)
+	admin.POST("/approvals/{id}/reject", c.decideRoute(false)).BindFunc(releaser)
+	admin.POST("/preview", c.previewRoute).BindFunc(viewer)
+	admin.GET("/states", c.statesRoute).BindFunc(viewer)
+	admin.GET("/compare", c.compareRoute).BindFunc(viewer)
+	admin.GET("/apis/{id}/effective", c.effectiveRoute).BindFunc(viewer)
+	admin.POST("/impact", c.impactRoute).BindFunc(viewer)
+	admin.GET("/status", c.statusRoute).BindFunc(viewer)
+	admin.GET("/plugins", c.pluginsRoute).BindFunc(viewer)
+	admin.GET("/logs", c.logsRoute).BindFunc(viewer)
+	admin.GET("/metrics", c.metricsRoute).BindFunc(viewer)
+	admin.GET("/graph", c.graphRoute).BindFunc(viewer)
+	admin.GET("/events", c.eventsRoute).BindFunc(viewer)
+	admin.GET("/reports", c.reportsRoute).BindFunc(viewer)
+	admin.GET("/config", c.exportConfigRoute).BindFunc(viewer)
+	admin.POST("/config/apply", c.applyConfigRoute).BindFunc(adminRole)
+	admin.POST("/exporters/{id}/probe", c.probeRoute).BindFunc(adminRole)
+	// Only a signed-in superuser mints tokens, so a leaked token cannot make more.
+	admin.POST("/tokens", c.createTokenRoute).Bind(apis.RequireSuperuserAuth())
 	admin.POST("/heartbeat", c.heartbeatRoute)
 	admin.POST("/deregister", c.deregisterRoute)
 	bindConsole(se, console.FS())
@@ -51,7 +60,18 @@ func (c *Control) releaseRoute(e *core.RequestEvent) error {
 	if err := e.BindBody(&req); err != nil {
 		return e.BadRequestError("Invalid body.", err)
 	}
-	return releaseResult(e, func() (Result, error) { return c.Release(actorOf(e.Auth), req) })
+	if err := c.mayRelease(e, req.Stage); err != nil {
+		return err
+	}
+	actor := principalOf(e).Actor
+	if needsApproval(c.cfg.ReleaseApproval, req.Stage) {
+		approval, result, err := c.RequestRelease(actor, req)
+		if err != nil || approval == nil {
+			return releaseResult(e, func() (Result, error) { return result, err })
+		}
+		return e.JSON(http.StatusAccepted, map[string]any{"approval": approval.PublicExport()})
+	}
+	return releaseResult(e, func() (Result, error) { return c.Release(actor, req) })
 }
 
 func (c *Control) offlineRoute(e *core.RequestEvent) error {
@@ -59,7 +79,10 @@ func (c *Control) offlineRoute(e *core.RequestEvent) error {
 	if err := e.BindBody(&req); err != nil {
 		return e.BadRequestError("Invalid body.", err)
 	}
-	return releaseResult(e, func() (Result, error) { return c.Offline(actorOf(e.Auth), req) })
+	if err := c.mayRelease(e, req.Stage); err != nil {
+		return err
+	}
+	return releaseResult(e, func() (Result, error) { return c.Offline(principalOf(e).Actor, req) })
 }
 
 func (c *Control) rollbackRoute(e *core.RequestEvent) error {
@@ -70,7 +93,10 @@ func (c *Control) rollbackRoute(e *core.RequestEvent) error {
 	if err := e.BindBody(&body); err != nil || body.Version < 1 {
 		return e.BadRequestError("A version to roll back to is required.", err)
 	}
-	return releaseResult(e, func() (Result, error) { return c.Rollback(actorOf(e.Auth), body.Request, body.Version) })
+	if err := c.mayRelease(e, body.Stage); err != nil {
+		return err
+	}
+	return releaseResult(e, func() (Result, error) { return c.Rollback(principalOf(e).Actor, body.Request, body.Version) })
 }
 
 // releaseResult answers a release: 409 with the differences when RELEASE would

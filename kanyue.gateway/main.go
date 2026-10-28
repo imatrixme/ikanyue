@@ -10,6 +10,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/pocketbase/pocketbase"
@@ -37,7 +38,8 @@ func main() {
 	handler := proxy.New(cfg.Trusted, slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	gateway := control.New(app, cfg, handler)
 	gateway.Register()
-	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway), rotateKeyCommand(app, gateway))
+	app.RootCmd.AddCommand(totpCommand(app, gateway), exposureCommand(app, gateway), rotateKeyCommand(app, gateway),
+		configCommand(app, gateway))
 
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
@@ -143,5 +145,79 @@ func rotateKeyCommand(app *pocketbase.PocketBase, gateway *control.Control) *cob
 		},
 	}
 	command.Flags().StringVar(&newKeyEnv, "newKeyEnv", "", "environment variable holding the new key")
+	return command
+}
+
+// configCommand exports the drafts of groups, domains, APIs, policy sets and
+// grants to a file, and applies such a file as drafts; nothing is released.
+func configCommand(app *pocketbase.PocketBase, gateway *control.Control) *cobra.Command {
+	command := &cobra.Command{Use: "config", Short: "Export or apply API drafts as a file"}
+	command.AddCommand(&cobra.Command{
+		Use:          "export [file]",
+		Short:        "Write the drafts to file, or to stdout",
+		Args:         cobra.MaximumNArgs(1),
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, args []string) error {
+			if err := app.RunAllMigrations(); err != nil {
+				return err
+			}
+			file, err := gateway.ExportConfig()
+			if err != nil {
+				return err
+			}
+			out, err := json.MarshalIndent(file, "", "  ")
+			if err != nil {
+				return err
+			}
+			if len(args) == 0 {
+				fmt.Println(string(out))
+				return nil
+			}
+			return os.WriteFile(args[0], append(out, '\n'), 0o644)
+		},
+	})
+	var dryRun bool
+	apply := &cobra.Command{
+		Use:          "apply <file>",
+		Short:        "Make the drafts match file and list the differences; nothing is released",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(_ *cobra.Command, args []string) error {
+			raw, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+			var file control.ConfigFile
+			if err := json.Unmarshal(raw, &file); err != nil {
+				return fmt.Errorf("%s: %w", args[0], err)
+			}
+			if err := app.RunAllMigrations(); err != nil {
+				return err
+			}
+			changes, err := gateway.ApplyConfig("cli", file, dryRun)
+			if err != nil {
+				return err
+			}
+			for _, change := range changes {
+				fields := make([]string, 0, len(change.Diff))
+				for field := range change.Diff {
+					fields = append(fields, field)
+				}
+				slices.Sort(fields)
+				fmt.Printf("%-6s %-9s %s %s\n", change.Action, change.Resource, change.Name, strings.Join(fields, ","))
+			}
+			switch {
+			case len(changes) == 0:
+				fmt.Println("The drafts already match the file.")
+			case dryRun:
+				fmt.Printf("Dry run: %d changes, nothing written.\n", len(changes))
+			default:
+				fmt.Printf("%d changes written as drafts. Nothing is live until released.\n", len(changes))
+			}
+			return nil
+		},
+	}
+	apply.Flags().BoolVar(&dryRun, "dry-run", false, "list the differences without writing")
+	command.AddCommand(apply)
 	return command
 }

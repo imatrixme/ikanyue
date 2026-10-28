@@ -355,7 +355,7 @@ interface Grant extends BaseRecord {
   expand?: { consumer?: { name: string }; group?: { name: string }; api?: { name: string } }
 }
 
-function StagesInput({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) {
+export function StagesInput({ value, onChange }: { value: string[]; onChange: (value: string[]) => void }) {
   return (
     <span className="flex flex-wrap gap-3">
       {stages.map((stage) => (

@@ -113,6 +113,7 @@ npm run build   # 产物写入 internal/console/site，随 go build 嵌入
 | `GATEWAY_REGISTRATION_TOKEN` | — | 服务心跳注册令牌，至少 32 字符；server/pay 用同名变量 |
 | `GATEWAY_TRUSTED_PROXIES` | `127.0.0.1,::1` | 可信上一跳（IP 或 CIDR），客户端 IP 取 `X-Forwarded-For` 最右侧不可信地址 |
 | `GATEWAY_ADMIN_PUBLIC` | — | `1` 时允许管理面绑定非私网地址；只在容器内（宿主机只在回环发布端口）使用 |
+| `GATEWAY_RELEASE_APPROVAL` | — | `1` 时上线到 RELEASE 需要另一身份批准（见“自动化与审批”） |
 | `--encryptionEnv=<变量名>` | — | 启动参数。指向 32 字符密钥，用于加密插件密钥、消费者 AppSecret、告警/导出密钥、TOTP 种子与 PocketBase 设置；不设则无法保存这些密钥 |
 | `GATEWAY_LOG_SAMPLE` | `0.1` | 成功请求的日志采样率；错误、无响应、插件错误与慢请求全量保留 |
 | `GATEWAY_LOG_SLOW_MS` | `1000` | 慢请求阈值 |
@@ -124,6 +125,40 @@ npm run build   # 产物写入 internal/console/site，随 go build 嵌入
 
 - `BACKUP_*` 在 `kanyue.server`、`kanyue.pay` 中含义相同。
 - 每个服务在心跳里上报最近一次备份结果，网关在概览页展示；规则模板 `backup-overdue` 在超时、失败或从未备份时告警。
+
+## 自动化与审批
+
+访问令牌（控制台“访问令牌”页签发）：
+
+- 给 CI 和脚本调用管理面 `/gateway/v1`，请求头 `Authorization: Bearer kgt_…`；
+- 角色：
+  - `viewer`：只读，可看状态、预览、比对、导出配置；
+  - `releaser`：另可上线、下线、回滚到签发时勾选的环境，并批准这些环境的上线申请；
+  - `admin`：另可应用配置、测试导出目标；
+- 令牌只在签发时显示一次，库里只存哈希；删除即吊销；可设过期日期，最近使用时间按分钟记录；
+- 令牌不能访问 PocketBase 数据集合，也不能签发令牌（只有登录的超管可以）；被拒的请求和令牌做的变更都写入审计（操作人 `token:<名称>`）。
+
+上线生产的二次批准（`GATEWAY_RELEASE_APPROVAL=1`）：
+
+- 上线到 RELEASE 返回 202 并生成申请，其他环境不受影响；另一身份在“审批”页或 `POST /gateway/v1/approvals/{id}/approve` 批准；
+- 申请记下所选对象解析出的定义摘要，批准时草稿必须仍解析为同样的定义，否则申请作废（需重新申请）；24 小时后过期；
+- 批准时上线检查失败（如没有健康实例）则申请回到待批准，并记下原因；
+- 下线、回滚不需要批准，事故处理时要快；都写入审计。
+
+配置即代码：
+
+```sh
+kanyue-gateway config export mapi-drafts.json --dir=… --encryptionEnv=GATEWAY_ENCRYPTION_KEY
+kanyue-gateway config apply mapi-drafts.json --dry-run --dir=… --encryptionEnv=GATEWAY_ENCRYPTION_KEY
+```
+
+- 文件包含策略组、分组（域名、API）与授权，按名称引用；API 用“服务 + `METHOD /path`”引用接口；不含任何密钥值（插件按名称引用密钥，应用及其 AppSecret 只在控制台维护）；
+- `apply` 让草稿与文件完全一致（文件里没有的分组、API、域名、授权、策略组会删除草稿，平台基线除外），在一个事务里完成并逐条列出差异、写入审计；`--dry-run` 只列差异；
+- 只改草稿，不上线；已上线的对象在各环境照常服务，直到上线或下线；
+- 名称就是身份：改名等于删除再新建；
+- 也可用令牌调用：`GET /gateway/v1/config`（viewer）、`POST /gateway/v1/config/apply?dryRun=1`（admin）。
+
+环境比对：控制台“环境比对”页或 `GET /gateway/v1/compare?from=PRE&to=RELEASE`，按正在生效的版本列出不一致的分组与 API。
 
 ## 部署
 

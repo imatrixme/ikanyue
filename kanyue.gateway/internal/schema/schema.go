@@ -31,7 +31,12 @@ const (
 	Grants         = "grants"
 	Releases       = "releases"
 	StageVersions  = "stage_versions"
+	AdminTokens    = "admin_tokens"
+	Approvals      = "release_approvals"
 )
+
+// Roles a machine token can hold, weakest first; superusers act as admin.
+var Roles = []string{"viewer", "releaser", "admin"}
 
 // Baseline is the built-in policy set every API inherits first.
 const Baseline = "baseline"
@@ -41,7 +46,7 @@ var Stages = policy.Stages
 
 // Audited are the collections whose admin edits land in the audit log.
 var Audited = []string{Services, Instances, Operations, Consumers, Secrets, Exporters, AlertChannels, AlertRules,
-	APIGroups, GroupDomains, APIs, PolicySets, Grants}
+	APIGroups, GroupDomains, APIs, PolicySets, Grants, AdminTokens}
 
 // Legacy are the collections of the site and route model; they stay readable
 // after the migration to API groups, and the admin API refuses writes to them.
@@ -56,6 +61,7 @@ func init() {
 	core.AppMigrations.Register(console, nil, "gateway_0003_console")
 	core.AppMigrations.Register(observability, nil, "gateway_0004_observability")
 	core.AppMigrations.Register(groups, nil, "gateway_0005_groups")
+	core.AppMigrations.Register(operations, nil, "gateway_0006_operations")
 }
 
 func initial(txApp core.App) error {
@@ -465,6 +471,46 @@ func groups(txApp core.App) error {
 	baseline := core.NewRecord(sets)
 	baseline.Load(map[string]any{"name": Baseline, "items": []any{}, "note": "Platform baseline: every API inherits it first."})
 	return txApp.SaveNoValidate(baseline)
+}
+
+// operations adds machine tokens for automation and the second approval of
+// releases to RELEASE.
+func operations(txApp core.App) error {
+	tokens := core.NewBaseCollection(AdminTokens)
+	tokens.Fields.Add(
+		&core.TextField{Name: "name", Required: true, Max: 60, Pattern: `^[a-z0-9][a-z0-9._-]*$`},
+		&core.SelectField{Name: "role", Required: true, MaxSelect: 1, Values: Roles},
+		// The environments a releaser may release to; admins release everywhere.
+		&core.SelectField{Name: "stages", MaxSelect: len(Stages), Values: Stages},
+		// Empty never expires.
+		&core.DateField{Name: "expires"},
+		&core.DateField{Name: "lastUsed"},
+		// SHA-256 of the token, which is shown once when it is created.
+		&core.TextField{Name: "hash", Required: true, Hidden: true, Max: 64},
+		&core.TextField{Name: "note", Max: 500},
+	)
+	tokens.AddIndex("idx_admin_tokens_name", true, "name", "")
+	tokens.AddIndex("idx_admin_tokens_hash", true, "hash", "")
+	withDates(tokens)
+
+	approvals := core.NewBaseCollection(Approvals)
+	approvals.Fields.Add(
+		&core.SelectField{Name: "stage", Required: true, MaxSelect: 1, Values: Stages},
+		// The release request as asked, and what it would change when asked.
+		&core.JSONField{Name: "request", Required: true, MaxSize: 1 << 20},
+		&core.JSONField{Name: "changes", MaxSize: 4 << 20},
+		// SHA-256 of the resolved definitions; approval releases only if the drafts still resolve to it.
+		&core.TextField{Name: "digest", Required: true, Max: 64},
+		&core.TextField{Name: "requester", Required: true, Max: 200},
+		&core.TextField{Name: "approver", Max: 200},
+		&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"pending", "approved", "rejected", "stale", "expired"}},
+		&core.DateField{Name: "decided"},
+		&core.NumberField{Name: "stageVersion", OnlyInt: true},
+		&core.TextField{Name: "error", Max: 2000},
+	)
+	approvals.AddIndex("idx_release_approvals_created", false, "created", "")
+	withDates(approvals)
+	return saveAll(txApp, tokens, approvals)
 }
 
 func withDates(collection *core.Collection) {

@@ -98,10 +98,40 @@ export interface EffectiveView {
 
 export interface Impacted { api: string; id: string; group: string; stage: Stage; error?: string }
 
+// A release to RELEASE waits for a second identity when the gateway runs with GATEWAY_RELEASE_APPROVAL=1.
+export interface Approval {
+  id: string
+  created: string
+  stage: Stage
+  request: ReleaseRequest
+  changes: Released[] | null
+  requester: string
+  approver: string
+  status: 'pending' | 'approved' | 'rejected' | 'stale' | 'expired'
+  decided: string
+  stageVersion: number
+  error: string
+}
+
+export interface StageDiff extends Target {
+  name: string
+  fromVersion: number
+  toVersion: number
+  diff?: Record<string, Change> | null
+}
+
+export interface MintedToken { token: string; record: { id: string; name: string } }
+
 export const gateway = {
   states: () => request<States>('GET', '/gateway/v1/states'),
   preview: (req: ReleaseRequest) => request<Preview[] | null>('POST', '/gateway/v1/preview', req),
-  release: (req: ReleaseRequest) => request<ReleaseResult>('POST', '/gateway/v1/release', req),
+  release: (req: ReleaseRequest) => request<ReleaseResult | { approval: Approval }>('POST', '/gateway/v1/release', req),
+  approvals: () => request<Approval[]>('GET', '/gateway/v1/approvals'),
+  approve: (id: string) => request<ReleaseResult>('POST', `/gateway/v1/approvals/${id}/approve`),
+  reject: (id: string) => request<null>('POST', `/gateway/v1/approvals/${id}/reject`),
+  compare: (from: Stage, to: Stage) => request<StageDiff[]>('GET', `/gateway/v1/compare?from=${from}&to=${to}`),
+  mintToken: (body: { name: string; role: string; stages: Stage[]; expires: string; note: string }) =>
+    request<MintedToken>('POST', '/gateway/v1/tokens', body),
   offline: (req: ReleaseRequest) => request<ReleaseResult>('POST', '/gateway/v1/offline', req),
   rollback: (req: ReleaseRequest & { version: number }) => request<ReleaseResult>('POST', '/gateway/v1/rollback', req),
   effective: (api: string, stage: Stage) => request<EffectiveView>('GET', `/gateway/v1/apis/${api}/effective?stage=${stage}`),
