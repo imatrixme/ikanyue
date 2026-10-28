@@ -22,6 +22,7 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 
+	"kanyue.gateway/internal/proxy"
 	"kanyue.gateway/internal/schema"
 )
 
@@ -232,7 +233,7 @@ func (c *Control) findings(rule *core.Record, in alertInputs, now time.Time) map
 		}
 		for id, names := range affected {
 			name := in.services[id]
-			if healthy, _ := c.handler.Endpoints().Healthy(id, now); healthy == 0 && matches(target, name) {
+			if healthy, _ := c.handler.Endpoints().Healthy(id, proxy.DefaultStage, now); healthy == 0 && matches(target, name) {
 				sort.Strings(names)
 				out[name] = finding{0, fmt.Sprintf("服务 %s 没有健康实例，受影响路由：%s", name, strings.Join(names, "、"))}
 			}

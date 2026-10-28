@@ -289,20 +289,19 @@ func (e *Endpoints) Status(now time.Time) []Status {
 	return out
 }
 
-// Healthy counts the healthy peers of a service across stages.
-func (e *Endpoints) Healthy(service string, now time.Time) (healthy, total int) {
+// Healthy counts the healthy peers of a service in one stage.
+func (e *Endpoints) Healthy(service, stage string, now time.Time) (healthy, total int) {
 	if e == nil {
 		return 0, 0
 	}
-	for _, p := range e.pools {
-		if p.service != service {
-			continue
-		}
-		for _, peer := range p.peers {
-			total++
-			if peer.Healthy(now) {
-				healthy++
-			}
+	p := e.pools[poolKey(service, stage)]
+	if p == nil {
+		return 0, 0
+	}
+	for _, peer := range p.peers {
+		total++
+		if peer.Healthy(now) {
+			healthy++
 		}
 	}
 	return healthy, total

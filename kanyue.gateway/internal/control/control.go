@@ -216,8 +216,9 @@ func (c *Control) compile(cfg snapshot.Config) (*snapshot.Routes, error) {
 	return snapshot.Compile(cfg, c.handler.Env(), c.open)
 }
 
-// precheck refuses to publish routes to a service without a healthy instance,
-// unless forced with a reason.
+// precheck refuses to publish routes to a service without a healthy instance in
+// the default stage, which serves every request without X-Ca-Stage, unless forced
+// with a reason.
 func (c *Control) precheck(cfg snapshot.Config, release Release) error {
 	if release.Force {
 		if strings.TrimSpace(release.Reason) == "" {
@@ -232,8 +233,8 @@ func (c *Control) precheck(cfg snapshot.Config, release Release) error {
 	var errs []error
 	now := time.Now()
 	for _, id := range cfg.RoutedServices() {
-		if healthy, _ := c.handler.Endpoints().Healthy(id, now); healthy == 0 {
-			errs = append(errs, fmt.Errorf("service %q has no healthy instance; publish with force and a reason to proceed", names[id]))
+		if healthy, _ := c.handler.Endpoints().Healthy(id, proxy.DefaultStage, now); healthy == 0 {
+			errs = append(errs, fmt.Errorf("service %q has no healthy %s instance; publish with force and a reason to proceed", names[id], proxy.DefaultStage))
 		}
 	}
 	return errors.Join(errs...)

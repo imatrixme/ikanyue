@@ -116,7 +116,7 @@ type Instance interface {
 - 管理端口只绑内网；PocketBase 超级用户登录，开启 TOTP 二次验证：沿用 PocketBase 的 MFA 流程（密码 → `mfaId` → OTP），OTP 一步由钩子改为校验验证器动态码，邮件 OTP 关闭，同一个码不能重复使用；验证器用 `kanyue-gateway totp enroll` 在服务器上绑定，密钥加密保存。
 - 所有配置写入经控制面接口，带审计（谁、何时、改了什么、发布哪个版本）。
 - AppSecret、Webhook 密钥、日志导出令牌加密保存（AES-GCM，主密钥来自 PocketBase `--encryptionEnv` 指定的环境变量，不进库、不进仓库）；保存后只显示掩码与指纹，不出现在日志与审计明细里。
-- 发布前校验：路由冲突、插件配置 Schema、引用的服务/接口存在、至少一个健康实例（可强制跳过并记录原因）。
+- 发布前校验：路由冲突、插件配置 Schema、引用的服务/接口存在、默认环境 `RELEASE` 至少一个健康实例（可强制跳过并记录原因）；“没有健康实例”告警同样只看 `RELEASE`。
 
 ### D9. 性能设计
 

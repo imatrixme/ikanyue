@@ -125,13 +125,26 @@ func TestSealedSecretsConsumersAndBindings(t *testing.T) {
 	}
 }
 
-// Routes to a service without a healthy instance publish only when forced with a reason.
+// Routes to a service without a healthy RELEASE instance publish only when forced with a reason.
 func TestPublishNeedsAHealthyInstanceUnlessForced(t *testing.T) {
 	c, app := newControl(t)
 	publishedServer(t, c, app)
 	instances, err := app.FindAllRecords(schema.Instances)
 	if err != nil {
 		t.Fatal(err)
+	}
+	// Instances of another stage do not serve requests without X-Ca-Stage.
+	for _, instance := range instances {
+		instance.Set("stage", "LOCAL")
+		if err := app.Save(instance); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := c.rebuildEndpoints(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Publish("ops", Release{Note: "cutover"}); err == nil || !strings.Contains(err.Error(), "no healthy RELEASE instance") {
+		t.Fatalf("published with only LOCAL instances: %v", err)
 	}
 	for _, instance := range instances {
 		instance.Set("status", "offline")
@@ -142,7 +155,7 @@ func TestPublishNeedsAHealthyInstanceUnlessForced(t *testing.T) {
 	if err := c.rebuildEndpoints(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := c.Publish("ops", Release{Note: "cutover"}); err == nil || !strings.Contains(err.Error(), "no healthy instance") {
+	if _, err := c.Publish("ops", Release{Note: "cutover"}); err == nil || !strings.Contains(err.Error(), "no healthy RELEASE instance") {
 		t.Fatalf("published without instances: %v", err)
 	}
 	if _, err := c.Publish("ops", Release{Force: true}); err == nil || !strings.Contains(err.Error(), "needs a reason") {

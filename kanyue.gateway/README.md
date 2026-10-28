@@ -96,7 +96,7 @@ docker compose --profile gateway up -d gateway
 切流前的检查：
 
 - 先在控制台建站点和路由、勾选接口并发布；
-- 发布前检查会要求每个服务至少一个健康实例；
+- 发布前检查会要求每个服务在默认环境 `RELEASE` 至少一个健康实例（只有 LOCAL 等其他环境的实例不算）；
 - 再把 OpenResty 的 API 域名指到数据面。
 
 1Panel OpenResty 站点示例（TLS 由 1Panel 终止与续期）：

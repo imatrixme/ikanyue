@@ -121,7 +121,7 @@ func TestPassiveEjectionAndActiveChecks(t *testing.T) {
 	}
 
 	rebuilt := threePeers(t, endpoints)
-	if healthy, total := rebuilt.Healthy("s", now); healthy != 2 || total != 3 {
+	if healthy, total := rebuilt.Healthy("s", "RELEASE", now); healthy != 2 || total != 3 {
 		t.Fatalf("health lost in rebuild: %d/%d", healthy, total)
 	}
 	for _, other := range rebuilt.pools[poolKey("s", "RELEASE")].peers {
@@ -131,7 +131,7 @@ func TestPassiveEjectionAndActiveChecks(t *testing.T) {
 			}
 		}
 	}
-	if healthy, _ := rebuilt.Healthy("s", now); healthy != 1 {
+	if healthy, _ := rebuilt.Healthy("s", "RELEASE", now); healthy != 1 {
 		t.Fatalf("the last healthy peer was ejected: %d healthy", healthy)
 	}
 
