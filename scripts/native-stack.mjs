@@ -172,7 +172,7 @@ async function initialize() {
     await command(goBin(config), ['run', '.', 'superuser', 'upsert', config.PAY_PB_EMAIL, config.PAY_PB_PASSWORD, paymentData()], pay, config, 'Pay dashboard account');
   }
   await command(goBin(config), ['run', '.', 'migrate', 'up', paymentData()], pay, config, 'Pay migrations');
-  await command(goBin(config), ['run', '.', 'migrate', 'up', gatewayData()], gateway, config, 'Gateway migrations');
+  // The gateway has no migrate command: serve runs its migrations, then converts legacy sites and routes once.
   if (!config.GATEWAY_PB_EMAIL) {
     // The console needs password + authenticator: enroll with `GATEWAY_ENCRYPTION_KEY=... go run . totp enroll <email> --dir=... --encryptionEnv=GATEWAY_ENCRYPTION_KEY` in kanyue.gateway.
     config.GATEWAY_PB_EMAIL = config.PB_EMAIL;

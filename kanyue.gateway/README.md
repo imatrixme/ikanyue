@@ -144,7 +144,19 @@ docker compose --profile gateway up -d gateway
 
 - server 注册后运行 `kanyue-gateway exposure apply mapi`，在控制台核对分组与 API，依次上线到 TEST、PRE、RELEASE；
 - 上线检查会要求每个服务在默认服务环境 `RELEASE` 至少一个健康实例（只有 LOCAL 等其他服务环境的实例不算）；
+- 每个环境只把请求转给该环境的实例：TEST/PRE 需要以 `GATEWAY_STAGE=TEST`/`PRE` 注册的实例（地址不同，实例按服务 + 地址唯一），否则返回 503；
+- 逐个环境跑契约测试：`BASE_URL=https://mapi.ikanyue.com CONTRACT_STAGE=<环境> node --test "kanyue.server/contract/*.test.mjs"`。
+  - `mapi` 只暴露小程序接口，`/ops/*` 等用例会因 404“接口不存在”失败，这是预期；要验证全量契约，用绑定 `*` 的分组，并设 `COMPARE_URL` 为直连 server 做读一致性对比；
 - 再把 OpenResty 的 API 域名指到数据面。
+
+域名与 HTTPS：
+
+- 网关不终止 TLS、不管理证书；分组绑定的域名只用于按 `Host` 选择分组（和固定环境）。证书仍由 1Panel 申请与续期。
+- 每给分组绑定一个域名，就在 1Panel 的同一个反代站点里加上这个域名，并让证书覆盖它（证书加 SAN，或用 DNS 验证申请 `*.ikanyue.com` 通配证书）。
+  - 推荐 DNS 验证：不依赖 80 端口和流量走向，也能签通配证书。
+  - 用 HTTP 验证时，1Panel 自己应答 `/.well-known/acme-challenge/`，不会转给网关。
+- 反代必须保留 `Host`（`proxy_set_header Host $host`），否则网关匹配不到分组；`X-Forwarded-For` 只信任 `GATEWAY_TRUSTED_PROXIES` 里的上一跳。
+- 1Panel 里有站点、网关里没绑定的域名会返回 404；网关里绑定了、1Panel 里没加的域名根本到不了网关。两边要同时改。
 
 1Panel OpenResty 站点示例（TLS 由 1Panel 终止与续期）：
 

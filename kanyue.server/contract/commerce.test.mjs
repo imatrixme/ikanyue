@@ -3,7 +3,7 @@
 // Only reads and commands rejected before any write run here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BASE_URL, COMPARE_URL, OPS_TOKEN, call, ops, student } from './client.mjs';
+import { BASE_URL, COMPARE_URL, OPS_TOKEN, STAGE_HEADERS, call, ops, student } from './client.mjs';
 
 const error = (code, message) => ({ code, message, data: null });
 const TRACE = { 'X-Trace-Id': 'contract-trace' };
@@ -35,7 +35,7 @@ test('stage 6 routes require a session', { skip: disabled }, async () => {
   assert.deepEqual((await call('/ops/commerce/recover', { method: 'POST', body: {} })).body, error(403, '后台未登录'));
   // The gateway callback answers raw JSON; it is absent when PAY_EVENT_TOKEN is not configured.
   const event = await fetch(`${BASE_URL}/internal/commerce/payment-events`, { method: 'POST', body: '{}',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer wrong' } });
+    headers: { ...STAGE_HEADERS, 'Content-Type': 'application/json', Authorization: 'Bearer wrong' } });
   if (event.status === 401) assert.deepEqual(await event.json(), { error: 'UNAUTHORIZED' });
   else assert.equal(event.status, 404);
 });

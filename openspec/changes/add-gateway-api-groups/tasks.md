@@ -25,4 +25,4 @@
 
 ## 4. Rollout
 - [x] 4.1 Update `kanyue.gateway/README.md`, deploy skill and runbook, `GEB.MD` §8 (no deploy skill or runbook exists; README carries the deploy steps)
-- [ ] 4.2 Run the migration on the native stack and the kanyue.server contract tests through every stage before the `mapi.ikanyue.com` cutover (migration verified on a copy of the native data: 2 groups, 262 APIs, every stage v1, parity passed; contract tests through every stage still to run)
+- [x] 4.2 Run the migration on the native stack and the kanyue.server contract tests through every stage before the `mapi.ikanyue.com` cutover (native data migrated: 2 groups, 262 APIs, every stage v1; contracts pass through the `*` group in TEST, PRE and RELEASE with read parity against the server; through `mapi` every gateway 404 is an operation outside the plan and every exposed operation reaches the server; repeat against the VPS before the cutover)
