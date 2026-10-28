@@ -12,6 +12,8 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/hook"
+
+	"kanyue.server/internal/gatewaylink"
 )
 
 // Module is one business area's routes.
@@ -24,6 +26,8 @@ type Config struct {
 	Modules []Module
 	// Console is the built admin SPA; nil serves no pages.
 	Console fs.FS
+	// Registration announces this instance to kanyue.gateway; nil does not register.
+	Registration *gatewaylink.Registration
 }
 
 // Runs before PocketBase's own middlewares so storage routes never reach a handler.
@@ -36,11 +40,18 @@ func Register(app core.App, cfg Config) {
 			Priority: internalOnlyPriority,
 			Func:     internalOnly,
 		})
-		for _, module := range cfg.Modules {
-			module.Register(se)
+		ops, err := registerModules(se, cfg.Modules)
+		if err != nil {
+			return err
 		}
 		// More specific routes registered above win over this catch-all.
 		se.Router.Any("/{path...}", pages(cfg.Console))
+		ops = append(ops, gatewaylink.Operation{Route: gatewaylink.Route{Path: "/{path...}"}, Module: "console"})
+		manifest := gatewaylink.Manifest("kanyue.server", gatewaylink.Version(), classify(ops))
+		se.Router.GET(gatewaylink.ManifestPath, gatewaylink.ManifestHandler(manifest, IsInternalRequest))
+		if cfg.Registration != nil {
+			gatewaylink.Start(se.App, *cfg.Registration, manifest)
+		}
 		return se.Next()
 	})
 }

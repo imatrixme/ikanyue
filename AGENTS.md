@@ -107,6 +107,7 @@ DAO impact:
 | `ikanyue.website` | `npm run lint`、`npm test`、`npm run build`、`npm run test:e2e` |
 | `kanyue.pay` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；联调 `node scripts/commerce-smoke.mjs --tiered` |
 | `kanyue.server` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；契约测试 `BASE_URL=… node --test "kanyue.server/contract/*.test.mjs"` |
+| `kanyue.gateway` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 go test -p 1 -parallel 1 ./...` |
 | 根脚本 | `node --test scripts/native-stack.test.mjs`；OpenSpec 用 `openspec validate <change> --strict` |
 <!--VERIFY-ATTENTION:END-->
 
@@ -141,6 +142,7 @@ DAO impact:
 | `ikanyue.website` | 声乐官网与公开课程目录 | Nuxt 4 | — |
 | `kanyue.pay` | 独立支付网关单体（当前仅 mock 渠道；PocketBase 面板 `/_/` 只读查看） | Go / 独立内嵌 PocketBase v0.32.0 | `kanyue.pay/README.md` |
 | `kanyue.server` | 业务服务单体：学员、教师、课程点、预约、课表结算、积分、订单与支付对接；内嵌 PocketBase（面板 `/_/` 仅私网直连）与运营后台 | Go / PocketBase v0.32.0 | `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go` |
+| `kanyue.gateway` | 自研 API 网关（一期替代阿里云 API 网关）：数据面 `GATEWAY_LISTEN` 默认 `127.0.0.1:1460`，管理面 PocketBase `--http=127.0.0.1:1461`；服务心跳注册、接口清单自动发现，发布/回滚有版本 | Go / 独立内嵌 PocketBase v0.32.0 | `openspec/changes/add-kanyue-gateway` |
 | `ikanyue.m.nuxt`、`ikanyue.flutter` | 旧活动页与规划中的 App，不在当前版本线 | Nuxt / Flutter | — |
 
 - 跨子项目约束见 `GEB.MD` §8“看乐系统边界”；产品与架构文档在 `docs/product`、`docs/architecture`；需求级变更在 `openspec/changes`。
