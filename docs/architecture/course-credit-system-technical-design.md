@@ -53,7 +53,7 @@ Admin SPA / Mini Program / Website
        - serves the embedded admin SPA on the same origin as /ops
               |
               v
-   embedded PocketBase v0.32.0 (Go library)
+   embedded PocketBase v0.39.11 (Go library)
        - app.RunInTransaction: one SQLite write transaction per command
        - dashboard /_/ for private-network inspection only
               |

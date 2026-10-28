@@ -4,7 +4,7 @@ Status: operational implementation on `feature/payment-gateway-commerce`, OpenSp
 
 ## Ownership
 
-`kanyue.pay` is a standalone Go binary with its own embedded PocketBase v0.32.0 (one `pay_entities` collection; dashboard `/_/` for read-only inspection). It is a separate Go module from `kanyue.server`, in the single repository. It replaced the Hono/Bun gateway (2026-10-27) with the same HTTP contract, ids and fingerprints, and adopts the TypeScript-era data in place with `kanyue-pay migrate up`.
+`kanyue.pay` is a standalone Go binary with its own embedded PocketBase v0.39.11 (one `pay_entities` collection; dashboard `/_/` for read-only inspection). It is a separate Go module from `kanyue.server`, in the single repository. It replaced the Hono/Bun gateway (2026-10-27) with the same HTTP contract, ids and fingerprints, and adopts the TypeScript-era data in place with `kanyue-pay migrate up`.
 
 `kanyue.server` owns immutable offer/order price/policy snapshots, eligibility, credits and cancellation rules. Gateway owns provider protocol/credentials, money identity, reserved refund principal, receipt events, retries and cash reconciliation. Admin/Taro call kanyue.server only. Personal/offline transfers never become gateway receipts.
 

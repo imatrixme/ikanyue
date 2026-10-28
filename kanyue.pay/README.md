@@ -1,6 +1,6 @@
 # kanyue.pay
 
-Standalone Go gateway: one binary with an embedded PocketBase v0.32.0 (`pay_entities`). Business orders, prices, refund rules and credits belong to kanyue.server. The PB dashboard at `/_/` is the read-only data panel for operators; money changes go only through the gateway API.
+Standalone Go gateway: one binary with an embedded PocketBase v0.39.11 (`pay_entities`). Business orders, prices, refund rules and credits belong to kanyue.server. The PB dashboard at `/_/` is the read-only data panel for operators; money changes go only through the gateway API, so PocketBase's SQL console (`POST /api/sql`) answers 403.
 
 ## Local Development
 

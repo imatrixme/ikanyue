@@ -50,6 +50,11 @@ func TestManifestListsThePaymentAPI(t *testing.T) {
 	if fetch("203.0.113.9:4000", "").Code != http.StatusNotFound || fetch("127.0.0.1:4000", "203.0.113.9").Code != http.StatusNotFound {
 		t.Fatal("manifest reachable from outside")
 	}
+	sql := httptest.NewRecorder()
+	handler.ServeHTTP(sql, httptest.NewRequest(http.MethodPost, "/api/sql", strings.NewReader(`{"query":"select 1"}`)))
+	if sql.Code != http.StatusForbidden {
+		t.Fatalf("SQL console = %d", sql.Code)
+	}
 	internal := fetch("10.0.0.5:4000", "")
 	if internal.Code != http.StatusOK || internal.Body.String() != string(manifest) {
 		t.Fatalf("internal manifest = %d", internal.Code)

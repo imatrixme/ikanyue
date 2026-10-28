@@ -7,8 +7,8 @@
 | Path | Description | Runtime |
 | --- | --- | --- |
 | `ikanyue.taro3` | 微信小程序 | Taro / Vue |
-| `kanyue.server` | 业务服务单体：API + 内嵌 PocketBase（数据面板 `/_/`）+ 内嵌运营后台 | Go / PocketBase v0.32.0 |
-| `kanyue.pay` | 独立支付网关单体（当前仅 mock） | Go / 独立内嵌 PocketBase v0.32.0 |
+| `kanyue.server` | 业务服务单体：API + 内嵌 PocketBase（数据面板 `/_/`）+ 内嵌运营后台 | Go / PocketBase v0.39.11 |
+| `kanyue.pay` | 独立支付网关单体（当前仅 mock） | Go / 独立内嵌 PocketBase v0.39.11 |
 | `ikanyue.admin` | 运营后台（静态 SPA，构建后嵌入 `kanyue.server`） | React / Vite |
 | `ikanyue.website` | 看乐声乐官网 | Nuxt 4 |
 

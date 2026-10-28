@@ -140,8 +140,8 @@ DAO impact:
 | `ikanyue.taro3` | 微信小程序（学员与教师） | Taro 4 / Vue 3 / NutUI | `ikanyue.taro3/AGENTS.md` |
 | `ikanyue.admin` | 运营后台（静态 SPA，`npm run build:server` 后由 kanyue.server 同源提供） | React / Vite | — |
 | `ikanyue.website` | 声乐官网与公开课程目录 | Nuxt 4 | — |
-| `kanyue.pay` | 独立支付网关单体（当前仅 mock 渠道；PocketBase 面板 `/_/` 只读查看） | Go / 独立内嵌 PocketBase v0.32.0 | `kanyue.pay/README.md` |
-| `kanyue.server` | 业务服务单体：学员、教师、课程点、预约、课表结算、积分、订单与支付对接；内嵌 PocketBase（面板 `/_/` 仅私网直连）与运营后台 | Go / PocketBase v0.32.0 | `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go` |
+| `kanyue.pay` | 独立支付网关单体（当前仅 mock 渠道；PocketBase 面板 `/_/` 只读查看） | Go / 独立内嵌 PocketBase v0.39.11 | `kanyue.pay/README.md` |
+| `kanyue.server` | 业务服务单体：学员、教师、课程点、预约、课表结算、积分、订单与支付对接；内嵌 PocketBase（面板 `/_/` 仅私网直连）与运营后台 | Go / PocketBase v0.39.11 | `openspec/changes/archive/2026-10-27-rewrite-studio-backend-in-go` |
 | `kanyue.gateway` | 自研 API 网关（一期替代阿里云 API 网关）：数据面 `GATEWAY_LISTEN` 默认 `127.0.0.1:1460`，管理面与控制台 `/console/` 在 `--http=127.0.0.1:1461`（超管密码 + TOTP）；服务全量心跳注册，接口清单只登记候选、登记为 API 并在环境（TEST/PRE/RELEASE）上线才暴露；API 分组绑定域名、策略组（不组合）、插件链、上线/下线/回滚、日志指标告警、JSON lines 导出 | Go / 独立内嵌 PocketBase v0.39.11；控制台 React + Vite | `kanyue.gateway/README.md`、`openspec/changes/add-kanyue-gateway`、`openspec/changes/add-gateway-api-groups` |
 | `ikanyue.m.nuxt`、`ikanyue.flutter` | 旧活动页与规划中的 App，不在当前版本线 | Nuxt / Flutter | — |
 

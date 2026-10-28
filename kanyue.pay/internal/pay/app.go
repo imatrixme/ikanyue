@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -102,6 +103,13 @@ func present(row Row, svc Service) (map[string]any, error) {
 func Register(se *core.ServeEvent, svc Service, cfg Config) {
 	g := svc.Core()
 	routes := se.Router
+	// PocketBase's SQL console would make the read-only dashboard a way to rewrite payments.
+	routes.BindFunc(func(e *core.RequestEvent) error {
+		if strings.TrimSuffix(e.Request.URL.Path, "/") == "/api/sql" {
+			return e.ForbiddenError("The SQL console is disabled.", nil)
+		}
+		return e.Next()
+	})
 	routes.GET("/health", func(e *core.RequestEvent) error {
 		return e.JSON(http.StatusOK, map[string]any{"service": "kanyue.pay", "provider": cfg.Provider, "status": "ok"})
 	})

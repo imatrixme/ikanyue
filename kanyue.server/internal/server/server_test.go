@@ -147,6 +147,9 @@ func TestRegisterHidesStorageFromPublicRequests(t *testing.T) {
 			t.Errorf("%s: hidden = %v, want %v", item.name, got, item.hidden)
 		}
 	}
+	if sql := send(http.MethodPost, "/api/sql", private, nil); sql.Code != http.StatusForbidden {
+		t.Fatalf("SQL console from a private address = %d", sql.Code)
+	}
 	if owned := send(http.MethodGet, "/v1/owned", public, proxied); owned.Code != http.StatusOK {
 		t.Fatalf("module route = %d", owned.Code)
 	}

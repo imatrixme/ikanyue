@@ -95,6 +95,10 @@ func internalOnly(e *core.RequestEvent) error {
 	if !strings.HasPrefix(path, "/api/") && path != "/_" && !strings.HasPrefix(path, "/_/") {
 		return e.Next()
 	}
+	// PocketBase's SQL console would let a superuser write business data past every hook.
+	if strings.TrimSuffix(path, "/") == "/api/sql" {
+		return e.ForbiddenError("The SQL console is disabled.", nil)
+	}
 	if strings.HasPrefix(path, "/api/files/") && (e.Request.Method == http.MethodGet || e.Request.Method == http.MethodHead) {
 		return e.Next()
 	}
