@@ -1,0 +1,123 @@
+<block wx:if="{{role === 'teacher'}}">
+    <view class="home-bar" style="padding-top: {{navBar.statusBar}}px; height: {{navBar.height}}px;">
+        <text class="home-bar__title">工作台</text>
+    </view>
+    <teacher-booking-home id="teacherHome" />
+</block>
+<view wx:else class="page-chrome home-page">
+    <!-- The page draws its own top: the cover runs under the status bar and the capsule. -->
+    <view class="home-hero__cover" style="height: {{navBar.statusBar + navBar.height + 132}}px;" aria-hidden="true">
+        <image wx:if="{{coverShown}}" class="home-hero__image" src="{{venue.coverUrl}}" mode="aspectFill" binderror="markCoverFailed" />
+    </view>
+    <view class="home-hero" style="padding-top: {{navBar.statusBar + navBar.height + 76}}px;">
+        <view wx:if="{{venue}}" class="home-studio">
+            <view class="home-studio__header">
+                <view class="home-studio__copy">
+                    <text class="home-studio__name">{{venue.name}}</text>
+                    <text wx:if="{{venue.intro}}" class="home-studio__tagline">{{venue.intro}}</text>
+                </view>
+                <view wx:if="{{venue.phone}}" class="home-studio__call" aria-role="button" aria-label="拨打电话咨询" bindtap="callVenue">
+                    <app-icon name="account-phone" size="md" />
+                </view>
+            </view>
+            <view wx:for="{{venueRows}}" wx:for-item="row" wx:key="key" class="home-studio__fact">
+                <app-icon name="{{row.icon}}" size="sm" />
+                <text>{{row.text}}</text>
+            </view>
+            <view class="home-studio__switch" aria-role="button" aria-label="切换场馆" bindtap="goVenues">
+                <text>切换场馆</text>
+                <app-icon name="chevron-primary" size="sm" />
+            </view>
+        </view>
+    </view>
+
+    <view class="home-content">
+        <view wx:if="{{isLogin && reminder}}" class="home-notice" aria-role="button" aria-label="查看教务提醒的课包" bindtap="openReminder">
+            <view class="home-notice__header">
+                <text class="home-notice__sender">{{reminder.sender}}</text>
+                <text class="home-notice__tag">教务提醒</text>
+            </view>
+            <text class="home-notice__message">{{reminder.message}}</text>
+            <view class="home-notice__action">
+                <text>查看课包</text>
+                <app-icon name="chevron-primary" size="sm" />
+            </view>
+        </view>
+
+        <view wx:if="{{state === 'signedOut'}}" class="home-state">
+            <async-state
+                action-label="去登录"
+                compact="{{true}}"
+                description="登录后可以查看剩余课时，并在线预约上课时间。"
+                kind="account"
+                state="empty"
+                title="登录后查看课时与预约"
+                bind:action="goProfile"
+            />
+        </view>
+
+        <view wx:elif="{{state === 'loading'}}" class="home-state">
+            <async-state compact="{{true}}" state="loading" title="正在加载课时" />
+        </view>
+
+        <view wx:elif="{{state === 'error'}}" class="home-state">
+            <async-state
+                action-label="重新加载"
+                compact="{{true}}"
+                description="{{errorMessage}}"
+                kind="network"
+                state="error"
+                title="课时暂时无法加载"
+                bind:action="retry"
+            />
+        </view>
+
+        <ticket-section wx:elif="{{state === 'noCourse'}}" title="开始学习">
+            <view class="home-enroll">
+                <text class="home-enroll__title">报课后即可在线约课</text>
+                <text class="home-enroll__description">报课完成后，剩余课时和可预约时间会显示在这里。</text>
+                <button wx:if="{{venue && venue.phone}}" class="k-button home-primary-button" bindtap="callVenue">电话咨询报课</button>
+            </view>
+            <view class="home-links">
+                <account-row description="单节课与课包" icon="course-book" interactive="{{true}}" title="查看课程课包" bind:select="goShop" />
+            </view>
+        </ticket-section>
+
+        <ticket-section wx:else action-label="课程详情" title="我的课时" bind:action="goCourses">
+            <view class="home-courses">
+                <view wx:for="{{courseRows}}" wx:for-item="course" wx:key="courseId" class="home-course">
+                    <view class="home-course__main">
+                        <view class="home-course__copy">
+                            <text class="home-course__name">{{course.name}}</text>
+                            <text class="home-course__validity">{{course.validityText}}</text>
+                        </view>
+                        <view class="home-course__balance">
+                            <text class="home-course__count">{{course.remainingLessons}}</text>
+                            <text class="home-course__unit">节</text>
+                        </view>
+                    </view>
+                    <view
+                        wx:if="{{course.renewalHint}}"
+                        class="home-course__renewal"
+                        aria-role="button"
+                        bindtap="goShop">
+                        <text>{{course.renewalHint}}</text>
+                        <app-icon name="chevron-primary" size="sm" />
+                    </view>
+                </view>
+                <view
+                    wx:if="{{subscribeTemplateId}}"
+                    class="home-course__renewal home-subscribe"
+                    aria-role="button"
+                    bindtap="subscribeReminders">
+                    <text>课时不足时用微信提醒我</text>
+                    <app-icon name="chevron-primary" size="sm" />
+                </view>
+            </view>
+            <venue-handoff wx:if="{{closed}}" venue="{{venue}}" />
+            <button wx:else class="k-button home-primary-button" bindtap="goBooking">去约课</button>
+        </ticket-section>
+
+        <upcoming-lessons wx:if="{{isLogin}}" id="upcoming" />
+    </view>
+</view>

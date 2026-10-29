@@ -1,0 +1,25 @@
+<wxs module="deck" src="./deck.wxs" />
+<view
+    class="deck {{cards.length > 1 ? 'deck--stacked' : ''}}"
+    change:prop="{{deck.sync}}" prop="{{deckKey}}"
+    bindtouchstart="{{deck.start}}"
+    bindtouchmove="{{deck.move}}"
+    bindtouchend="{{deck.end}}"
+    bindtouchcancel="{{deck.end}}">
+    <view
+        wx:for="{{cards}}" wx:for-item="card" wx:key="id"
+        class="deck__slot"
+        style="z-index: {{cards.length - index}}; opacity: {{index === active ? 1 : 0}};">
+        <member-card card="{{card}}" bind:select="onSelect" />
+    </view>
+</view>
+<view wx:if="{{cards.length > 1}}" class="deck__dots">
+    <view
+        wx:for="{{cards}}" wx:for-item="card" wx:key="id"
+        class="deck__dot {{index === active ? 'deck__dot--active' : ''}}"
+        aria-role="button"
+        aria-label="查看{{card.name}}会员卡"
+        data-index="{{index}}"
+        bindtap="showCard"
+    />
+</view>

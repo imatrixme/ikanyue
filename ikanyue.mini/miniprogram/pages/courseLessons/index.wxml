@@ -1,0 +1,21 @@
+<view class="page-chrome courses-page">
+    <view class="courses-content">
+        <segmented-control value="{{scope}}" ext-class="courses-filter" options="{{scopeOptions}}" bind:change="changeScope" />
+        <view wx:if="{{state !== 'ready'}}" class="courses-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{state === 'error' ? errorMessage : emptyDescription}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'empty' ? '暂无课程日程' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <view class="courses-list">
+                <lesson-row wx:for="{{lessons}}" wx:for-item="lesson" wx:key="lessonId" hide-course="{{!!courseId}}" lesson="{{lesson}}" bind:select="goLesson" />
+            </view>
+            <pagination-state has-more="{{hasMore}}" loaded="{{lessons.length}}" loading="{{loadingMore}}" total="{{pagination.totalItems}}" />
+        </block>
+    </view>
+</view>

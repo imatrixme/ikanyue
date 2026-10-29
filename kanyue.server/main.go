@@ -77,7 +77,7 @@ func main() {
 // modules lists the business areas in registration order.
 func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dispatcher, renewalWechat *coursecredit.RenewalWechat) []server.Module {
 	return []server.Module{
-		{Name: "venues", Register: venues.Module{Signer: signer}.Register},
+		{Name: "venues", Register: venues.Module{Signer: signer, PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},
 		{Name: "catalog", Register: catalog.Module{}.Register},
 		{Name: "identity", Register: identity.Module{Signer: signer, Config: cfg}.Register},
 		{Name: "students", Register: func(se *core.ServeEvent) {

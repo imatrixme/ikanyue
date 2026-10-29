@@ -1,0 +1,6 @@
+<view wx:if="{{visible}}" class="k-popup">
+    <view class="k-popup__overlay" bindtap="onOverlay" catchtouchmove="noop"></view>
+    <view class="k-popup__panel {{panelClass}}" aria-role="dialog">
+        <slot></slot>
+    </view>
+</view>

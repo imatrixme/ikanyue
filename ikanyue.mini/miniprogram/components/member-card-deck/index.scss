@@ -1,0 +1,43 @@
+@import '../../styles/tokens';
+
+// Slots share one spot; deck.wxs moves them. A stacked deck leaves room on the right for the peeking cards.
+// The deck bleeds to the screen edges and clips there, so a flicked card never widens the page.
+.deck {
+    height: 312rpx;
+    margin: 0 (-$ky-space-4);
+    overflow: hidden;
+    position: relative;
+}
+
+.deck__slot {
+    left: $ky-space-4;
+    position: absolute;
+    top: 8rpx;
+    transform-origin: right center;
+    width: calc(100% - 2 * #{$ky-space-4});
+    will-change: transform;
+}
+
+.deck--stacked .deck__slot {
+    width: calc(100% - 2 * #{$ky-space-4} - 48rpx);
+}
+
+.deck__dots {
+    display: flex;
+    gap: $ky-space-2;
+    justify-content: center;
+    margin-top: $ky-space-1;
+}
+
+.deck__dot {
+    background: $ky-line-tinted;
+    border-radius: $ky-radius-pill;
+    height: 10rpx;
+    transition: width $ky-motion-base ease, background-color $ky-motion-base ease;
+    width: 10rpx;
+}
+
+.deck__dot--active {
+    background: $ky-primary;
+    width: 32rpx;
+}

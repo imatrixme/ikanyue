@@ -1,0 +1,67 @@
+<view class="page-chrome slot-page">
+    <view class="slot-summary">
+        <view class="slot-summary__icon"><app-icon name="course-book" size="xl" /></view>
+        <view class="slot-summary__copy">
+            <text class="slot-summary__course">{{option.course.name}}</text>
+            <text class="slot-summary__teacher">{{option.teacher.name}}</text>
+            <text class="slot-summary__meta">{{optionMeta}}</text>
+        </view>
+    </view>
+
+    <view wx:if="{{state !== 'ready'}}" class="slot-state">
+        <async-state
+            action-label="{{state === 'error' ? '重新加载' : ''}}"
+            description="{{stateDescription}}"
+            kind="{{state === 'error' ? 'network' : 'default'}}"
+            state="{{state}}"
+            title="{{stateTitle}}"
+            bind:action="retry"
+        />
+    </view>
+
+    <block wx:else>
+        <view class="slot-intro">
+            <text class="slot-intro__title">可预约时间</text>
+            <text class="slot-intro__description">教师确认后，该时间才会正式保留。</text>
+        </view>
+        <view class="slot-groups">
+            <view wx:for="{{slotGroups}}" wx:for-item="group" wx:for-index="groupIndex" wx:key="dateKey" class="slot-group">
+                <view class="slot-group__date">
+                    <text class="slot-group__day">{{group.dateLabel}}</text>
+                    <text class="slot-group__weekday">{{group.weekday}}</text>
+                </view>
+                <view class="slot-grid">
+                    <view
+                        wx:for="{{group.slots}}" wx:for-item="slot" wx:for-index="slotIndex"
+                        wx:key="startAt"
+                        class="slot-chip {{selectedStartAt === slot.startAt ? 'slot-chip--selected' : ''}}"
+                        data-group="{{groupIndex}}"
+                        data-slot="{{slotIndex}}"
+                        bindtap="selectSlot">
+                        {{slot.label}}
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <view class="slot-note">
+            <text class="slot-note__label">给老师的备注</text>
+            <textarea
+                value="{{note}}" data-field="note" bindinput="onField"
+                class="slot-note__input"
+                maxlength="500"
+                placeholder="可填写练习内容、希望重点解决的问题（选填）"
+                placeholder-class="slot-note__placeholder"
+            />
+            <text class="slot-note__count">{{note.length}}/500</text>
+        </view>
+    </block>
+
+    <view
+        wx:if="{{state === 'ready'}}"
+        class="slot-action {{canSubmit ? '' : 'slot-action--disabled'}}"
+        aria-role="button"
+        bindtap="submitBooking">
+        <text>{{submitLabel}}</text>
+    </view>
+</view>

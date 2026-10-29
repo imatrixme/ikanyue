@@ -1,0 +1,25 @@
+@import '../../styles/tokens';
+
+.lesson-row { align-items: center; background: $ky-surface; display: flex; min-height: 152rpx; padding: $ky-space-3 $ky-space-4; }
+.lesson-row--prominent { background: $ky-primary-wash; min-height: 196rpx; }
+.lesson-row--compact { min-height: 152rpx; }
+.lesson-row--compact .lesson-row__date { height: 92rpx; flex-basis: 88rpx; }
+.lesson-row--compact .lesson-row__day { font-size: $ky-font-size-title; }
+.lesson-row + .lesson-row { border-top: 1px solid $ky-hairline; }
+.lesson-row:active { background: $ky-primary-wash; }
+.lesson-row__date { align-items: center; background: $ky-primary-wash; border-radius: $ky-radius-lg; display: flex; flex: 0 0 88rpx; flex-direction: column; height: 96rpx; justify-content: center; }
+.lesson-row__day,
+.lesson-row__month,
+.lesson-row__title,
+.lesson-row__course,
+.lesson-row__notice { display: block; }
+.lesson-row__day { color: $ky-primary; font-size: $ky-font-size-title; font-weight: $ky-font-weight-medium; line-height: $ky-leading-tight; }
+.lesson-row__month { color: $ky-text-secondary; font-size: $ky-font-size-2xs; }
+.lesson-row__copy { flex: 1; min-width: 0; padding: 0 $ky-space-3; }
+.lesson-row__head { align-items: flex-start; display: flex; justify-content: space-between; }
+.lesson-row__title { color: $ky-ink-strong; flex: 1; font-size: $ky-font-size-body; font-weight: $ky-font-weight-medium; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lesson-row__status { color: $ky-primary; flex-shrink: 0; font-size: $ky-font-size-xs; margin-left: $ky-space-2; }
+.lesson-row__course { color: $ky-text-secondary; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+.lesson-row__context { color: $ky-text-secondary; display: block; font-size: $ky-font-size-xs; margin-top: $ky-space-1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lesson-row__meta { color: $ky-text-muted; display: flex; flex-wrap: wrap; font-size: $ky-font-size-xs; gap: $ky-space-2; margin-top: $ky-space-1; }
+.lesson-row__notice { color: $ky-danger; font-size: $ky-font-size-xs; margin-top: $ky-space-2; }

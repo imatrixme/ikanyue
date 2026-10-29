@@ -1,0 +1,68 @@
+<teacher-booking-home wx:if="{{role === 'teacher'}}" id="teacherHome" />
+<view wx:else class="page-chrome courses-page">
+    <view class="courses-content">
+        <view wx:if="{{!isLogin}}" class="courses-state">
+            <async-state
+                action-label="前往登录"
+                description="登录后可以查看当前课程、课时和上课记录。"
+                kind="account"
+                state="empty"
+                title="登录后查看课程"
+                bind:action="goProfile"
+            />
+        </view>
+        <block wx:elif="{{state !== 'ready'}}">
+            <view class="courses-state">
+                <async-state
+                    action-label="{{state === 'error' ? '重新加载' : ''}}"
+                    description="{{state === 'error' ? errorMessage : '课程由教务老师统一安排，安排完成后会显示在这里。'}}"
+                    kind="{{state === 'error' ? 'network' : 'default'}}"
+                    state="{{state}}"
+                    title="{{state === 'empty' ? '暂无课程安排' : ''}}"
+                    bind:action="retry"
+                />
+            </view>
+            <view wx:if="{{state === 'empty'}}" class="courses-shop-entry">
+                <account-row description="单节课、课包与购买记录" icon="course-book" interactive="{{true}}" title="选课与订单" bind:select="goShop" />
+            </view>
+        </block>
+        <block wx:else>
+            <view class="courses-summary">
+                <text>剩余 <text class="courses-summary__value">{{remainingLessons}}</text> 课时</text>
+                <text>已安排 <text class="courses-summary__value">{{scheduledLessons}}</text> 节</text>
+            </view>
+
+            <ticket-section wx:if="{{overview.upcomingLessons.length}}" action-label="全部日程" title="即将上课" bind:action="goLessons">
+                <view class="courses-list">
+                    <lesson-row
+                        wx:for="{{overview.upcomingLessons}}" wx:for-item="lesson" wx:for-index="index"
+                        wx:key="lessonId"
+                        compact="{{index > 0}}"
+                        lesson="{{lesson}}"
+                        prominent="{{index === 0}}"
+                        bind:select="goLesson"
+                    />
+                </view>
+            </ticket-section>
+
+            <ticket-section wx:if="{{overview.warnings.length}}" subtitle="请及时联系教学管理" title="需要处理">
+                <view class="courses-notices">
+                    <view wx:for="{{overview.warnings}}" wx:for-item="warning" wx:key="lessonId" class="courses-notice-link" data-lesson-id="{{warning.lessonId}}" bindtap="goWarning">
+                        <validity-notice description="{{warning.message}}" title="{{warning.title}}" tone="warning" />
+                    </view>
+                </view>
+            </ticket-section>
+
+            <ticket-section title="当前课程">
+                <course-summary-card wx:for="{{overview.courses}}" wx:for-item="course" wx:key="courseId" course="{{course}}" bind:select="goCourse" />
+            </ticket-section>
+
+            <ticket-section action-label="全部记录" title="课时记录" bind:action="goRecords">
+                <view wx:if="{{overview.recentRecords.length}}" class="courses-list">
+                    <lesson-record-row wx:for="{{overview.recentRecords}}" wx:for-item="record" wx:key="recordId" record="{{record}}" />
+                </view>
+                <validity-notice wx:else description="完成课程或调整课程安排后，记录会显示在这里。" title="暂无课时记录" />
+            </ticket-section>
+        </block>
+    </view>
+</view>

@@ -1,0 +1,282 @@
+@import '../../styles/tokens';
+
+.home-page {
+    background: $ky-canvas;
+    color: $ky-ink;
+    min-height: 100vh;
+}
+
+.home-content {
+    box-sizing: border-box;
+    padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
+}
+
+// Teacher home keeps a plain title bar, since the page hides the system one.
+.home-bar {
+    align-items: center;
+    background: $ky-canvas;
+    box-sizing: content-box;
+    display: flex;
+    justify-content: center;
+}
+
+.home-bar__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-semibold;
+}
+
+// Full-bleed venue cover under the status bar; without one (or when it fails) the pale wash stays.
+.home-hero__cover {
+    background: $ky-hero-wash;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+.home-hero__image {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.home-page {
+    position: relative;
+}
+
+.home-hero {
+    // padding-top is inline: it follows the cover height, so the venue card overlaps the cover bottom.
+    padding: 0 $ky-space-4;
+    position: relative;
+}
+
+.home-studio {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-raised;
+    color: $ky-ink;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    padding: $ky-space-4;
+}
+
+.home-studio__header {
+    align-items: flex-start;
+    display: flex;
+    gap: $ky-space-3;
+    justify-content: space-between;
+}
+
+.home-studio__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-1;
+    min-width: 0;
+}
+
+.home-studio__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-heading;
+    font-weight: $ky-font-weight-semibold;
+    line-height: $ky-leading-tight;
+}
+
+.home-studio__tagline {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+}
+
+.home-studio__call {
+    align-items: center;
+    background: $ky-primary-wash;
+    border-radius: 50%;
+    display: flex;
+    flex-shrink: 0;
+    height: 80rpx;
+    justify-content: center;
+    width: 80rpx;
+}
+
+.home-studio__call:active { opacity: 0.76; }
+
+.home-studio__fact {
+    align-items: center;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    gap: $ky-space-2;
+}
+
+.home-studio__switch {
+    align-items: center;
+    align-self: flex-start;
+    color: $ky-primary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    gap: 4rpx;
+    min-height: 64rpx;
+}
+
+.home-studio__switch:active { opacity: 0.76; }
+
+.home-state { margin-top: $ky-space-6; min-height: 400rpx; }
+
+.home-enroll {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    padding: $ky-space-5 $ky-space-4;
+}
+
+.home-enroll__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-title;
+    font-weight: $ky-font-weight-black;
+}
+
+.home-enroll__description {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-readable;
+    margin-bottom: $ky-space-2;
+}
+
+.home-links {
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    margin-top: $ky-space-3;
+    overflow: hidden;
+}
+
+.home-courses {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    margin-bottom: $ky-space-4;
+    overflow: hidden;
+}
+
+.home-course + .home-course { border-top: 1px solid $ky-line-tinted; }
+
+.home-course__main {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-3;
+    justify-content: space-between;
+    padding: $ky-space-4;
+}
+
+.home-course__copy {
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-1;
+    min-width: 0;
+}
+
+.home-course__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-bold;
+}
+
+.home-course__validity {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-xs;
+}
+
+.home-course__balance {
+    align-items: baseline;
+    display: flex;
+    flex-shrink: 0;
+    gap: $ky-space-1;
+}
+
+.home-course__count {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-balance-sm;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
+}
+
+.home-course__unit {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+}
+
+.home-course__renewal {
+    align-items: center;
+    background: $ky-gold-wash;
+    border-top: 1px solid $ky-gold-line;
+    color: $ky-gold-foreground;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-semibold;
+    justify-content: space-between;
+    min-height: 88rpx;
+    padding: 0 $ky-space-4;
+}
+
+.home-course__renewal:active { opacity: 0.76; }
+
+.home-subscribe {
+    background: $ky-surface;
+    border-top-color: $ky-line-tinted;
+    color: $ky-primary-strong;
+}
+
+.home-notice {
+    background: $ky-gold-wash;
+    border: 1px solid $ky-gold-line;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    margin-top: $ky-space-4;
+    padding: $ky-space-4;
+}
+
+.home-notice:active { opacity: 0.76; }
+
+.home-notice__header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.home-notice__sender {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-bold;
+}
+
+.home-notice__tag,
+.home-notice__action {
+    color: $ky-gold-foreground;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-semibold;
+}
+
+.home-notice__message {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-readable;
+}
+
+.home-notice__action {
+    align-items: center;
+    align-self: flex-end;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    gap: $ky-space-1;
+    min-height: 88rpx;
+}
+
+.home-primary-button {
+    min-height: 96rpx;
+}

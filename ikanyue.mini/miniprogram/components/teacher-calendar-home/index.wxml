@@ -1,0 +1,77 @@
+<view class="page-chrome teacher-calendar">
+    <view class="teacher-calendar__content">
+        <view class="teacher-calendar__week-nav">
+            <view class="teacher-calendar__nav-button teacher-calendar__nav-button--previous" aria-role="button" aria-label="上一周" bindtap="previousWeek">
+                <app-icon name="chevron-primary" size="sm" />
+            </view>
+            <text class="teacher-calendar__week-label">{{weekLabel}}</text>
+            <view class="teacher-calendar__nav-button" aria-role="button" aria-label="下一周" bindtap="nextWeek">
+                <app-icon name="chevron-primary" size="sm" />
+            </view>
+        </view>
+
+        <view class="teacher-calendar__date-strip">
+            <view
+                wx:for="{{days}}"
+                wx:for-item="day"
+                wx:key="dateKey"
+                class="teacher-calendar__day {{day.isSelected ? 'teacher-calendar__day--selected' : ''}} {{day.isToday ? 'teacher-calendar__day--today' : ''}}"
+                data-date="{{day.dateKey}}"
+                bindtap="selectDate">
+                <text class="teacher-calendar__weekday">{{day.weekday}}</text>
+                <text class="teacher-calendar__day-number">{{day.day}}</text>
+            </view>
+        </view>
+
+        <view class="teacher-calendar__availability-toggle">
+            <view>
+                <text class="teacher-calendar__toggle-title">显示可预约时间</text>
+                <text class="teacher-calendar__toggle-subtitle">作为背景参考，不代表已安排课程</text>
+            </view>
+            <switch checked="{{showAvailability}}" color="{{primaryColor}}" bindchange="toggleAvailability" />
+        </view>
+
+        <view wx:if="{{state !== 'ready'}}" class="teacher-calendar__state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '课程日历加载失败' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+
+        <block wx:else>
+            <ticket-section subtitle="{{selectedDateLabel}}" title="当日课程">
+                <view wx:if="{{dailyLessons.length}}" class="teacher-calendar__list">
+                    <lesson-row
+                        wx:for="{{dailyLessons}}"
+                        wx:for-item="lesson"
+                        wx:key="lessonId"
+                        lesson="{{lesson}}"
+                        perspective="teacher"
+                        bind:select="goDetail"
+                    />
+                </view>
+                <view wx:else class="teacher-calendar__empty">
+                    <app-icon name="course-calendar" size="xl" />
+                    <view>
+                        <text class="teacher-calendar__empty-title">当天没有课程</text>
+                        <text class="teacher-calendar__empty-copy">切换日期查看本周其他安排</text>
+                    </view>
+                </view>
+            </ticket-section>
+
+            <ticket-section wx:if="{{showAvailability}}" subtitle="已扣除临时关闭时段" title="可预约时间">
+                <view wx:if="{{dailyAvailability.length}}" class="teacher-calendar__availability-list">
+                    <view wx:for="{{dailyAvailability}}" wx:for-item="window" wx:key="key" class="teacher-calendar__availability-window">
+                        <text class="teacher-calendar__availability-course">{{window.course.name}}</text>
+                        <text class="teacher-calendar__availability-time">{{window.timeText}}</text>
+                    </view>
+                </view>
+                <view wx:else class="teacher-calendar__availability-empty">当天没有开放可预约时段</view>
+            </ticket-section>
+        </block>
+    </view>
+</view>

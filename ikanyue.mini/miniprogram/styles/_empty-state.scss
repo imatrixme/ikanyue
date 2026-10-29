@@ -1,0 +1,126 @@
+@import './tokens';
+
+.empty-state {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 600rpx;
+    padding: 48rpx 44rpx 64rpx;
+    text-align: center;
+    width: 100%;
+}
+
+.empty-state__visual {
+    align-items: center;
+    background: $ky-primary-soft;
+    border: 12rpx solid $ky-primary-wash;
+    border-radius: 50%;
+    display: flex;
+    height: 176rpx;
+    justify-content: center;
+    width: 176rpx;
+}
+
+.empty-state__content {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+.empty-state__copy {
+    min-width: 0;
+    width: 100%;
+}
+
+.empty-state__title,
+.empty-state__description {
+    display: block;
+}
+
+.empty-state__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-semibold;
+    line-height: $ky-leading-title;
+    margin-top: 32rpx;
+}
+
+.empty-state__description {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-relaxed;
+    margin: 14rpx auto 0;
+    max-width: 560rpx;
+}
+
+.empty-state__action {
+    align-items: center;
+    background: $ky-primary;
+    border: none;
+    border-radius: $ky-radius-md;
+    box-shadow: $ky-shadow-button;
+    color: $ky-surface;
+    display: flex;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
+    height: 80rpx;
+    justify-content: center;
+    line-height: $ky-leading-none;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 40rpx;
+    min-width: 240rpx;
+    padding: 0 36rpx;
+
+    &::after {
+        border: none;
+    }
+
+    &:active {
+        background: $ky-primary-pressed;
+        box-shadow: $ky-shadow-button-pressed;
+    }
+}
+
+.empty-state--compact {
+    align-items: center;
+    min-height: 500rpx;
+    padding: 40rpx 28rpx 48rpx;
+    text-align: center;
+
+    .empty-state__visual {
+        border-width: 10rpx;
+        height: 140rpx;
+        width: 140rpx;
+    }
+
+    .empty-state__content {
+        align-items: center;
+        width: 100%;
+    }
+
+    .empty-state__title {
+        font-size: $ky-font-size-body-lg;
+        line-height: $ky-leading-title;
+        margin-top: 24rpx;
+    }
+
+    .empty-state__description {
+        font-size: $ky-font-size-sm;
+        line-height: $ky-leading-readable;
+        margin-top: 10rpx;
+        max-width: 420rpx;
+    }
+
+    .empty-state__action {
+        height: 72rpx;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 28rpx;
+        min-width: 208rpx;
+    }
+}

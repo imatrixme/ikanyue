@@ -69,6 +69,7 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addBool(venues, "bookable")
 	venues.Fields.Add(&core.SelectField{Name: "status", MaxSelect: 1, Values: []string{"active", "inactive"}})
 	addNumber(venues, "sortOrder")
+	venues.Fields.Add(&core.FileField{Name: "cover", MaxSelect: 1, MaxSize: 5 * 1024 * 1024, MimeTypes: []string{"image/jpeg", "image/png", "image/webp"}})
 	save(t, app, venues)
 
 	// Catalog collections mirror Hono's catalogSchemas field types; required flags are

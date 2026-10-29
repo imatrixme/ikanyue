@@ -1,0 +1,8 @@
+@import '../../styles/tokens';
+
+.teacher-workbench { background: $ky-canvas; min-height: 100vh; padding-bottom: $ky-space-8; }
+.teacher-workbench__content { padding: $ky-space-4; }
+.teacher-workbench__state { background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; margin-top: $ky-space-4; min-height: 520rpx; }
+.teacher-workbench__list,
+.teacher-workbench__offerings { border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; overflow: hidden; }
+.teacher-workbench__empty { align-items: center; background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; color: $ky-text-muted; display: flex; font-size: $ky-font-size-body-sm; gap: $ky-space-3; min-height: 144rpx; padding: $ky-space-4; }

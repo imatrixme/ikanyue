@@ -1,0 +1,100 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/activity/index",
+    "pages/courses/index",
+    "pages/points/index",
+    "pages/profile/index",
+    "pages/courseDetail/index",
+    "pages/courseShop/index",
+    "pages/courseOrder/index",
+    "pages/courseLessons/index",
+    "pages/courseLessonDetail/index",
+    "pages/teacherLessonDetail/index",
+    "pages/courseRecords/index",
+    "pages/appointmentBooking/index",
+    "pages/appointmentSlots/index",
+    "pages/appointments/index",
+    "pages/appointmentDetail/index",
+    "pages/venues/index",
+    "pages/teacherAvailability/index",
+    "pages/pointsHistory/index",
+    "pages/rewardCatalog/index",
+    "pages/userinfo/index",
+    "pages/activityDetail/index",
+    "pages/imageDetail/index",
+    "pages/webview/index",
+    "pages/agreement/index",
+    "pages/memberCard/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "看乐艺术",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#5f6f69",
+    "selectedColor": "#006241",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "iconPath": "imgs/icons/tab-home.png",
+        "selectedIconPath": "imgs/icons/tab-home-selected.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/appointmentBooking/index",
+        "iconPath": "imgs/icons/tab-booking.png",
+        "selectedIconPath": "imgs/icons/tab-booking-selected.png",
+        "text": "约课"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "iconPath": "imgs/icons/tab-profile.png",
+        "selectedIconPath": "imgs/icons/tab-profile-selected.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "networkTimeout": {
+    "request": 10000,
+    "downloadFile": 60000
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "usingComponents": {
+    "account-row": "/components/account-row/index",
+    "activity-ticket": "/components/activity-ticket/index",
+    "app-icon": "/components/app-icon/index",
+    "appointment-row": "/components/appointment-row/index",
+    "async-state": "/components/async-state/index",
+    "booking-option-card": "/components/booking-option-card/index",
+    "booking-status-badge": "/components/booking-status-badge/index",
+    "course-summary-card": "/components/course-summary-card/index",
+    "empty-state": "/components/empty-state/index",
+    "form-row": "/components/form-row/index",
+    "k-popup": "/components/k-popup/index",
+    "lesson-record-row": "/components/lesson-record-row/index",
+    "lesson-row": "/components/lesson-row/index",
+    "media-thumb": "/components/media-thumb/index",
+    "page-header": "/components/page-header/index",
+    "pagination-state": "/components/pagination-state/index",
+    "point-event-row": "/components/point-event-row/index",
+    "points-pass": "/components/points-pass/index",
+    "reward-voucher": "/components/reward-voucher/index",
+    "section-header": "/components/section-header/index",
+    "segmented-control": "/components/segmented-control/index",
+    "teacher-booking-home": "/components/teacher-booking-home/index",
+    "teacher-calendar-home": "/components/teacher-calendar-home/index",
+    "ticket-section": "/components/ticket-section/index",
+    "upcoming-lessons": "/components/upcoming-lessons/index",
+    "validity-notice": "/components/validity-notice/index",
+    "venue-handoff": "/components/venue-handoff/index",
+    "entry-grid": "/components/entry-grid/index",
+    "member-card": "/components/member-card/index",
+    "member-card-deck": "/components/member-card-deck/index"
+  }
+}

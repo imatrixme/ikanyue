@@ -1,0 +1,35 @@
+@import '../../styles/tokens';
+
+.teacher-calendar { background: $ky-canvas; min-height: 100vh; padding-bottom: $ky-space-8; }
+.teacher-calendar__content { padding: $ky-space-4 $ky-space-4 0; }
+.teacher-calendar__week-nav { align-items: center; display: flex; justify-content: space-between; }
+.teacher-calendar__nav-button { align-items: center; background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-md; display: flex; height: 88rpx; justify-content: center; width: 88rpx; }
+.teacher-calendar__nav-button--previous .app-icon { transform: rotate(180deg); }
+.teacher-calendar__week-label { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
+.teacher-calendar__date-strip { background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); margin-top: $ky-space-3; padding: $ky-space-2 0; }
+.teacher-calendar__day { align-items: center; display: flex; flex-direction: column; min-width: 0; }
+.teacher-calendar__day--selected .teacher-calendar__day-number { background: $ky-primary; }
+.teacher-calendar__weekday,
+.teacher-calendar__day-number { display: block; }
+.teacher-calendar__weekday { color: $ky-text-muted; font-size: $ky-font-size-2xs; }
+.teacher-calendar__day-number { border-radius: 50%; color: $ky-ink-strong; font-size: $ky-font-size-title-sm; font-weight: $ky-font-weight-black; align-items: center; display: flex; height: 68rpx; justify-content: center; margin-top: $ky-space-1; width: 68rpx; }
+.teacher-calendar__day--today:not(.teacher-calendar__day--selected) .teacher-calendar__day-number { color: $ky-primary-strong; }
+.teacher-calendar__day--selected .teacher-calendar__weekday { color: $ky-primary-strong; font-weight: $ky-font-weight-bold; }
+.teacher-calendar__day--selected .teacher-calendar__day-number { color: $ky-on-primary; }
+.teacher-calendar__availability-toggle { align-items: center; background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; display: flex; justify-content: space-between; margin-top: $ky-space-3; min-height: 128rpx; padding: 0 $ky-space-4; }
+.teacher-calendar__toggle-title,
+.teacher-calendar__toggle-subtitle { display: block; }
+.teacher-calendar__toggle-title { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
+.teacher-calendar__toggle-subtitle { color: $ky-text-muted; font-size: $ky-font-size-xs; margin-top: 6rpx; }
+.teacher-calendar__state { background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; margin-top: $ky-space-4; min-height: 520rpx; }
+.teacher-calendar__list { border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; overflow: hidden; }
+.teacher-calendar__empty { align-items: center; background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; color: $ky-text-muted; display: flex; gap: $ky-space-3; min-height: 152rpx; padding: $ky-space-4; }
+.teacher-calendar__empty-title,
+.teacher-calendar__empty-copy { display: block; }
+.teacher-calendar__empty-title { color: $ky-ink-strong; font-size: $ky-font-size-body; font-weight: $ky-font-weight-bold; }
+.teacher-calendar__empty-copy { font-size: $ky-font-size-xs; margin-top: 6rpx; }
+.teacher-calendar__availability-list { display: grid; gap: $ky-space-2; }
+.teacher-calendar__availability-window { align-items: center; background: $ky-primary-wash; border: 1px solid $ky-primary-line; border-radius: $ky-radius-md; display: flex; justify-content: space-between; min-height: 92rpx; padding: 0 $ky-space-3; }
+.teacher-calendar__availability-course { color: $ky-ink-strong; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-semibold; }
+.teacher-calendar__availability-time { color: $ky-primary-strong; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; }
+.teacher-calendar__availability-empty { background: $ky-primary-wash; border: 1px solid $ky-hairline; border-radius: $ky-radius-md; color: $ky-text-muted; font-size: $ky-font-size-body-sm; padding: $ky-space-4; text-align: center; }

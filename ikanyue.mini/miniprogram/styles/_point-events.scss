@@ -1,0 +1,127 @@
+@import './tokens';
+
+.point-events {
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+.point-event {
+    align-items: flex-start;
+    display: flex;
+    padding: 30rpx 28rpx;
+}
+
+.point-event + .point-event {
+    border-top: 1px solid $ky-line;
+}
+
+.point-event__rail {
+    display: flex;
+    flex: 0 0 28rpx;
+    justify-content: center;
+    margin-right: 20rpx;
+    padding-top: 8rpx;
+    width: 28rpx;
+}
+
+.point-event__dot {
+    background: $ky-success;
+    border: 6rpx solid $ky-success-soft;
+    border-radius: 50%;
+    box-sizing: border-box;
+    font-size: 0;
+    height: 26rpx;
+    width: 26rpx;
+}
+
+.point-event--spend .point-event__dot {
+    background: $ky-danger;
+    border-color: $ky-danger-soft;
+}
+
+.point-event__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.point-event__title,
+.point-event__reason,
+.point-event__remark,
+.point-event__meta,
+.point-event__delta {
+    display: block;
+}
+
+.point-event__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-black;
+}
+
+.point-event__reason {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    margin-top: 6rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.point-event__remark {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 6rpx;
+}
+
+.point-event__meta {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 16rpx;
+}
+
+.point-event__amount {
+    flex: 0 0 auto;
+    margin-left: 20rpx;
+    min-width: 124rpx;
+    text-align: right;
+}
+
+.point-event__delta {
+    color: $ky-success;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+    background: $ky-success-soft;
+    border-radius: $ky-radius-sm;
+    padding: 6rpx 10rpx;
+}
+
+.point-event--spend .point-event__delta {
+    background: $ky-danger-soft;
+    color: $ky-danger;
+}
+
+.point-event__balance {
+    color: $ky-text-muted;
+    display: block;
+    font-size: $ky-font-size-xs;
+    margin-top: 10rpx;
+}
+
+@media (max-width: 350px) {
+    .point-event {
+        padding-left: 24rpx;
+        padding-right: 24rpx;
+    }
+
+    .point-event__rail {
+        margin-right: 16rpx;
+    }
+
+    .point-event__amount {
+        margin-left: 16rpx;
+        min-width: 108rpx;
+    }
+}

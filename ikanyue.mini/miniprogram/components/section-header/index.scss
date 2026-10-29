@@ -1,0 +1,50 @@
+@import '../../styles/tokens';
+
+.section-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-height: 68rpx;
+}
+
+.section-header__identity {
+    align-items: center;
+    display: flex;
+    min-width: 0;
+}
+
+.section-header__copy {
+    min-width: 0;
+}
+
+.section-header__title,
+.section-header__subtitle {
+    display: block;
+}
+
+.section-header__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-section;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-tight;
+}
+
+.section-header__subtitle {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-sm;
+    margin-top: $ky-space-1;
+}
+
+.section-header__action {
+    align-items: center;
+    color: $ky-primary-strong;
+    display: flex;
+    flex-shrink: 0;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-bold;
+    gap: $ky-space-1;
+    // 88rpx hit area; the negative margin keeps the header height unchanged.
+    margin: -14rpx 0;
+    min-height: 88rpx;
+    padding-left: $ky-space-3;
+}

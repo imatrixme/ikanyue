@@ -11,7 +11,7 @@ const root = resolve(dirname(script), '..');
 const state = join(root, '.local/native');
 const configPath = join(state, 'environment.json');
 // gateway (kanyue.gateway) starts first so server and pay register on their first heartbeat.
-const names = ['gateway', 'server', 'pay', 'stages', 'miniapp'];
+const names = ['gateway', 'server', 'pay', 'stages'];
 // Server and pay register themselves for RELEASE. The TEST and PRE pools reuse the same
 // processes: instances are unique per address, so each stage gets a loopback relay port.
 const stageRelays = [
@@ -91,7 +91,6 @@ function definition(name, config) {
     // Ready once the first relay forwards to the server; relays listen only after the first heartbeat.
     stages: { cwd: root, command: [process.execPath, script, 'relay'],
       ports: stageRelays.map((entry) => entry.port), url: `http://127.0.0.1:${stageRelays[0].port}/api/health` },
-    miniapp: { cwd: join(root, 'ikanyue.taro3'), command: [process.execPath, 'node_modules/@tarojs/cli/bin/taro', 'build', '--type', 'weapp', '--watch'] },
   };
   if (!definitions[name]) fail(`Unknown service: ${name}`);
   return definitions[name];

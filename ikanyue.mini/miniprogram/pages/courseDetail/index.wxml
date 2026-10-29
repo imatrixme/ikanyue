@@ -1,0 +1,48 @@
+<view class="page-chrome courses-page">
+    <page-header subtitle="{{validityText}}" title="{{course.courseName}}">
+        <view class="courses-metrics">
+            <view class="courses-metric"><text class="courses-metric__value">{{course.remainingLessons}}</text><text class="courses-metric__label">剩余课时</text></view>
+            <view class="courses-metric"><text class="courses-metric__value">{{course.scheduledLessons}}</text><text class="courses-metric__label">已安排</text></view>
+            <view class="courses-metric"><text class="courses-metric__value">{{course.completedLessons}}</text><text class="courses-metric__label">已完成</text></view>
+        </view>
+    </page-header>
+    <view class="courses-content">
+        <view wx:if="{{state !== 'ready'}}" class="courses-state">
+            <async-state action-label="{{state === 'error' ? '重新加载' : ''}}" description="{{errorMessage}}" kind="{{state === 'error' ? 'network' : 'default'}}" state="{{state}}" title="{{state === 'empty' ? '暂无课程信息' : ''}}" bind:action="loadCourse" />
+        </view>
+        <block wx:else>
+            <validity-notice wx:if="{{course.awaitingActivation || course.expiringSoon}}" description="{{course.awaitingActivation ? '教学管理完成课程安排后即可开始使用。' : '请结合课程日程合理安排剩余课时。'}}" title="{{validityText}}" tone="warning" />
+
+            <ticket-section action-label="全部日程" title="课程日程" bind:action="goLessons">
+                <view wx:if="{{course.recentLessons.length}}" class="courses-list">
+                    <lesson-row wx:for="{{course.recentLessons}}" wx:for-item="lesson" wx:key="lessonId" hide-course="{{true}}" lesson="{{lesson}}" bind:select="goLesson" />
+                </view>
+                <validity-notice wx:else description="排课后将在这里显示时间和地点。" title="暂无课程日程" />
+            </ticket-section>
+
+            <ticket-section title="课时来源">
+                <view class="courses-sources">
+                    <view wx:for="{{sourceRows}}" wx:for-item="source" wx:key="key" class="courses-source">
+                        <view class="courses-source__head">
+                            <text class="courses-source__title">{{source.initialLessons}} 课时</text>
+                            <text class="courses-source__status">{{source.validityText}}</text>
+                        </view>
+                        <view class="courses-source__metrics">
+                            <text>剩余 {{source.remainingLessons}}</text>
+                            <text>已安排 {{source.scheduledLessons}}</text>
+                            <text>已完成 {{source.completedLessons}}</text>
+                            <text>安排日期 {{source.grantedLabel}}</text>
+                        </view>
+                    </view>
+                </view>
+            </ticket-section>
+
+            <ticket-section action-label="全部记录" title="课时记录" bind:action="goRecords">
+                <view wx:if="{{course.recentRecords.length}}" class="courses-list">
+                    <lesson-record-row wx:for="{{course.recentRecords}}" wx:for-item="record" wx:key="recordId" record="{{record}}" />
+                </view>
+                <validity-notice wx:else description="完成课程后会形成对应记录。" title="暂无课时记录" />
+            </ticket-section>
+        </block>
+    </view>
+</view>

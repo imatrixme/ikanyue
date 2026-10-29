@@ -1,0 +1,26 @@
+@import '../../styles/tokens';
+
+.form-row {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    min-height: 116rpx;
+    padding: 0 $ky-space-4;
+}
+
+.form-row + .form-row {
+    border-top: 1px solid $ky-line;
+}
+
+.form-row__label {
+    color: $ky-ink-strong;
+    flex-shrink: 0;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-semibold;
+    width: 152rpx;
+}
+
+.form-row__control {
+    flex: 1;
+    min-width: 0;
+}

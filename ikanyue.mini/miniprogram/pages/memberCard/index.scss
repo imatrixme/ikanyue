@@ -1,0 +1,77 @@
+@import '../../styles/tokens';
+
+.card-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    color: $ky-ink;
+    min-height: 100vh;
+    padding: $ky-space-4 $ky-space-4 calc(#{$ky-space-10} + env(safe-area-inset-bottom));
+}
+
+.card-state { min-height: 480rpx; }
+
+.card-booking {
+    background: $ky-primary;
+    border-radius: $ky-radius-pill;
+    box-shadow: $ky-shadow-button;
+    color: $ky-on-primary;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
+    margin-top: $ky-space-4;
+    padding: $ky-space-3 0;
+    text-align: center;
+}
+
+.card-booking:active { background: $ky-primary-pressed; }
+
+.card-venues,
+.card-links {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+.card-venue {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-3;
+    padding: $ky-space-4;
+}
+
+.card-venue + .card-venue { border-top: 1px solid $ky-hairline; }
+
+.card-venue__copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: $ky-space-1;
+    min-width: 0;
+}
+
+.card-venue__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
+}
+
+.card-venue__fact {
+    align-items: center;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    gap: $ky-space-2;
+}
+
+.card-venue__call {
+    align-items: center;
+    background: $ky-primary-wash;
+    border-radius: 50%;
+    display: flex;
+    flex-shrink: 0;
+    height: 72rpx;
+    justify-content: center;
+    width: 72rpx;
+}
+
+.card-venue__call:active { opacity: 0.76; }

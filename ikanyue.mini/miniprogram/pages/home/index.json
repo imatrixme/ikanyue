@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "看乐艺术",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#d4e9e2",
+  "backgroundColorBottom": "#f4f4f2",
+  "backgroundColorTop": "#d4e9e2",
+  "backgroundTextStyle": "dark",
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black"
+}

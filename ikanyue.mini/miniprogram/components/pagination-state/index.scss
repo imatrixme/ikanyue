@@ -1,0 +1,8 @@
+@import '../../styles/tokens';
+
+.pagination-state {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    padding: $ky-space-4 0 $ky-space-2;
+    text-align: center;
+}

@@ -2,18 +2,25 @@
 package venues
 
 import (
+	"errors"
 	"fmt"
 	"math"
+	"mime/multipart"
+	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 
 	"kanyue.server/internal/audit"
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/httpx"
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/migrations"
+	"kanyue.server/internal/records"
 )
 
 const collection = "venues"
@@ -29,11 +36,15 @@ var fieldLimits = []struct {
 
 type Module struct {
 	Signer *auth.Signer
+	// PublicAssetBaseURL and PBPublicURL build the cover URL, as for activity covers.
+	PublicAssetBaseURL string
+	PBPublicURL        string
 }
 
 type venue struct {
 	Address      string `json:"address"`
 	Bookable     bool   `json:"bookable"`
+	CoverURL     string `json:"coverUrl"`
 	ID           string `json:"id"`
 	Intro        string `json:"intro"`
 	Name         string `json:"name"`
@@ -49,39 +60,92 @@ type listResult struct {
 
 func (m Module) Register(se *core.ServeEvent) {
 	se.Router.GET("/v1/public/venues", func(e *core.RequestEvent) error {
-		return httpx.Respond(e, func() (any, error) { return list(e.App, `status = "active"`, false) })
+		return httpx.Respond(e, func() (any, error) { return m.list(e.App, `status = "active"`, false) })
 	})
 	se.Router.GET("/ops/venues", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 		return httpx.Respond(e, func() (any, error) {
 			if err := assertAdmin(e); err != nil {
 				return nil, err
 			}
-			return list(e.App, "", true)
+			return m.list(e.App, "", true)
 		})
 	}))
 	se.Router.POST("/ops/venues", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 		body := httpx.ReadBody(e)
-		return httpx.Respond(e, func() (any, error) { return save(e, "", false, body) })
+		return httpx.Respond(e, func() (any, error) { return m.save(e, "", false, body) })
 	}))
 	se.Router.POST("/ops/venues/{id}", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 		body := httpx.ReadBody(e)
-		return httpx.Respond(e, func() (any, error) { return save(e, strings.TrimSpace(e.Request.PathValue("id")), true, body) })
+		return httpx.Respond(e, func() (any, error) { return m.save(e, strings.TrimSpace(e.Request.PathValue("id")), true, body) })
+	}))
+	se.Router.POST("/ops/venues/{id}/cover", m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
+		return httpx.Respond(e, func() (any, error) { return m.uploadCover(e, strings.TrimSpace(e.Request.PathValue("id"))) })
 	}))
 }
 
-func list(app core.App, filter string, admin bool) (listResult, error) {
+func (m Module) list(app core.App, filter string, admin bool) (listResult, error) {
 	records, err := app.FindRecordsByFilter(collection, filter, "sortOrder", 200, 0)
 	if err != nil {
 		return listResult{}, err
 	}
 	items := make([]venue, 0, len(records))
 	for _, record := range records {
-		items = append(items, project(record, admin))
+		items = append(items, m.project(record, admin))
 	}
 	return listResult{Items: items}, nil
 }
 
-func save(e *core.RequestEvent, id string, update bool, input httpx.Body) (any, error) {
+// uploadCover replaces the venue's cover; the previous file is removed by PocketBase.
+func (m Module) uploadCover(e *core.RequestEvent, id string) (any, error) {
+	if err := e.Request.ParseMultipartForm(32 << 20); err != nil && !errors.Is(err, http.ErrNotMultipart) {
+		return nil, userError("封面上传请求解析失败")
+	}
+	if err := assertAdmin(e); err != nil {
+		return nil, err
+	}
+	if id == "" {
+		return nil, userError("场馆不能为空")
+	}
+	var header *multipart.FileHeader
+	if form := e.Request.MultipartForm; form != nil && len(form.File["cover"]) > 0 {
+		header = form.File["cover"][0]
+	}
+	switch {
+	case header == nil:
+		return nil, userError("请选择封面图片")
+	case header.Size <= 0:
+		return nil, userError("封面图片不能为空")
+	case header.Size > migrations.VenueCoverMaxSize:
+		return nil, userError("封面图片不能超过 5MB")
+	case !slices.Contains(migrations.VenueCoverTypes, strings.ToLower(header.Header.Get("Content-Type"))):
+		return nil, userError("仅支持 JPG、PNG 或 WebP 图片")
+	}
+	record, err := e.App.FindRecordById(collection, id)
+	if err != nil {
+		return nil, err
+	}
+	file, err := filesystem.NewFileFromMultipart(header)
+	if err != nil {
+		return nil, err
+	}
+	record.Set("cover", file)
+	if err := e.App.Save(record); err != nil {
+		return nil, err
+	}
+	result := m.project(record, true)
+	user := auth.User(e)
+	audit.Record(e.App, audit.Entry{
+		Actor:        &audit.Actor{ID: auth.ClaimString(user, "id"), Role: auth.ClaimString(user, "role")},
+		Action:       "ops.venue.cover",
+		ResourceType: collection,
+		ResourceID:   result.ID,
+		Outcome:      "success",
+		Metadata:     map[string]any{"name": result.Name},
+	})
+	return result, nil
+}
+
+func (m Module) save(e *core.RequestEvent, id string, update bool, input httpx.Body) (any, error) {
 	if err := assertAdmin(e); err != nil {
 		return nil, err
 	}
@@ -116,7 +180,7 @@ func save(e *core.RequestEvent, id string, update bool, input httpx.Body) (any, 
 	if err := e.App.Save(record); err != nil {
 		return nil, err
 	}
-	result := project(record, true)
+	result := m.project(record, true)
 	action := "ops.venue.create"
 	if update {
 		action = "ops.venue.update"
@@ -161,10 +225,11 @@ func validate(input httpx.Body) (map[string]any, error) {
 	return payload, nil
 }
 
-func project(record *core.Record, admin bool) venue {
+func (m Module) project(record *core.Record, admin bool) venue {
 	result := venue{
 		Address:      record.GetString("address"),
 		Bookable:     record.GetBool("bookable"),
+		CoverURL:     records.FileURL(record, record.GetString("cover"), m.PublicAssetBaseURL, m.PBPublicURL),
 		ID:           record.Id,
 		Intro:        record.GetString("intro"),
 		Name:         record.GetString("name"),

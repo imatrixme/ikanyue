@@ -1,0 +1,13 @@
+<view class="points-pass {{compact ? 'points-pass--compact' : ''}}">
+    <view class="points-pass__content">
+        <text class="points-pass__label">{{label}}</text>
+        <view class="points-pass__balance">
+            <text class="points-pass__value">{{balance}}</text>
+            <text class="points-pass__unit">PT</text>
+        </view>
+        <text wx:if="{{caption}}" class="points-pass__caption">{{caption}}</text>
+    </view>
+    <view class="points-pass__staff" aria-hidden="true">
+        <view wx:for="{{staffLines}}" wx:key="*this" class="points-pass__staff-line" />
+    </view>
+</view>

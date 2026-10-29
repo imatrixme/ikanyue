@@ -1,0 +1,1 @@
+<image wx:if="{{source}}" class="app-icon {{extClass}}" src="{{source}}" style="{{iconStyle}}" mode="aspectFit" />

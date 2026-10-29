@@ -1,0 +1,35 @@
+@import '../../styles/tokens';
+
+.venue-handoff {
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    padding: $ky-space-5 $ky-space-4;
+}
+
+.venue-handoff__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-title;
+    font-weight: $ky-font-weight-black;
+}
+
+.venue-handoff__description {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    line-height: $ky-leading-readable;
+    margin-bottom: $ky-space-2;
+}
+
+.venue-handoff__call {
+    min-height: 96rpx;
+}
+
+.venue-handoff__links {
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    margin-top: $ky-space-1;
+    overflow: hidden;
+}

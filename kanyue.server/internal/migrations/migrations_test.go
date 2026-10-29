@@ -132,3 +132,29 @@ func TestUpAddsRenewalRemindersWithUniqueAttempts(t *testing.T) {
 		t.Fatalf("renewal collections must stay superuser-only: %v", err)
 	}
 }
+
+func TestUpAddsAnOptionalVenueCover(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	if _, err := Up(app); err != nil {
+		t.Fatal(err)
+	}
+	collection, err := app.FindCollectionByNameOrId("venues")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cover, ok := collection.Fields.GetByName("cover").(*core.FileField)
+	if !ok || cover.Required || cover.MaxSelect != 1 || cover.MaxSize != VenueCoverMaxSize || len(cover.MimeTypes) != 3 {
+		t.Fatalf("cover field = %#v", collection.Fields.GetByName("cover"))
+	}
+	venues, err := app.FindAllRecords("venues")
+	if err != nil || len(venues) != 1 || venues[0].GetString("cover") != "" {
+		t.Fatalf("the seeded venue must keep no cover: %v, %v", venues, err)
+	}
+	if err := addVenueCover(app); err != nil {
+		t.Fatalf("re-running must be a no-op: %v", err)
+	}
+}

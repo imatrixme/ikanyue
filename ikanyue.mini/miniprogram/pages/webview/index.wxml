@@ -1,0 +1,12 @@
+<view wx:if="{{!loadError}}" class="webview-container">
+    <web-view src="{{url}}" bind:error="handleError"></web-view>
+</view>
+<view wx:else class="webview-error">
+    <empty-state
+        action-label="返回活动"
+        description="{{loadError}}"
+        kind="network"
+        title="网页暂时无法打开"
+        bind:action="goBack"
+    />
+</view>

@@ -1,0 +1,38 @@
+<view class="page-chrome venues-page">
+    <view class="venues-content">
+        <view wx:if="{{loading}}" class="venues-state">
+            <async-state compact="{{true}}" state="loading" title="正在加载场馆" />
+        </view>
+        <view wx:elif="{{!cards.length}}" class="venues-state">
+            <async-state
+                action-label="重新加载"
+                compact="{{true}}"
+                description="请检查网络后重试。"
+                kind="network"
+                state="error"
+                title="场馆暂时无法加载"
+                bind:action="loadData"
+            />
+        </view>
+        <view wx:else class="venues-list">
+            <view
+                wx:for="{{cards}}" wx:for-item="card"
+                wx:key="id"
+                class="venue-card {{card.current ? 'venue-card--current' : ''}}"
+                aria-role="button"
+                aria-label="切换到{{card.name}}"
+                data-id="{{card.id}}" bindtap="select">
+                <view class="venue-card__header">
+                    <text class="venue-card__name">{{card.name}}</text>
+                    <text wx:if="{{card.current}}" class="venue-card__current">当前场馆</text>
+                </view>
+                <text wx:if="{{card.intro}}" class="venue-card__intro">{{card.intro}}</text>
+                <view wx:for="{{card.facts}}" wx:for-item="row" wx:key="key" class="venue-card__fact">
+                    <app-icon name="{{row.icon}}" size="sm" />
+                    <text>{{row.text}}</text>
+                </view>
+                <text class="venue-card__booking">{{card.bookingText}}</text>
+            </view>
+        </view>
+    </view>
+</view>

@@ -1,0 +1,46 @@
+{
+    "appid": "wx9cd85dbfdf22c771",
+    "miniprogramRoot": "miniprogram/",
+    "projectname": "ikanyue",
+    "description": "看乐艺术",
+    "setting": {
+        "urlCheck": false,
+        "es6": true,
+        "enhance": true,
+        "postcss": true,
+        "minified": true,
+        "minifyWXSS": true,
+        "minifyWXML": true,
+        "uploadWithSourceMap": true,
+        "useCompilerPlugins": [
+            "sass"
+        ],
+        "ignoreUploadUnusedFiles": true,
+        "compileWorklet": false,
+        "uglifyFileName": false,
+        "packNpmManually": false,
+        "packNpmRelationList": [],
+        "localPlugins": false,
+        "disableUseStrict": false,
+        "condition": false,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        },
+        "sassSetting": {
+            "sassCommonUseFilePath": "global.sass",
+            "scssCommonUseFilePath": "global.scss"
+        }
+    },
+    "compileType": "miniprogram",
+    "packOptions": {
+        "ignore": [],
+        "include": []
+    },
+    "editorSetting": {
+        "tabIndent": "insertSpaces",
+        "tabSize": 4
+    },
+    "simulatorPluginLibVersion": {}
+}

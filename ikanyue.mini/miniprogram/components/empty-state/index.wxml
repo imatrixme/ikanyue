@@ -1,0 +1,12 @@
+<view class="empty-state empty-state--{{kind}} {{compact ? 'empty-state--compact' : ''}}">
+    <view class="empty-state__visual" aria-hidden="true">
+        <app-icon name="{{iconName}}" size="{{compact ? 'emptyCompact' : 'empty'}}" />
+    </view>
+    <view class="empty-state__content">
+        <view class="empty-state__copy">
+            <text class="empty-state__title">{{title}}</text>
+            <text wx:if="{{description}}" class="empty-state__description">{{description}}</text>
+        </view>
+        <button wx:if="{{actionLabel}}" class="empty-state__action" bindtap="onAction">{{actionLabel}}</button>
+    </view>
+</view>

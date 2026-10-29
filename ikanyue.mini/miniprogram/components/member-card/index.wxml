@@ -1,0 +1,25 @@
+<view
+    class="member-card member-card--{{card.theme}} {{large ? 'member-card--large' : ''}}"
+    aria-role="{{large ? '' : 'button'}}"
+    aria-label="{{card.name}}会员卡"
+    bindtap="onTap">
+    <image wx:if="{{coverShown}}" class="member-card__cover" src="{{card.coverUrl}}" mode="aspectFill" binderror="markCoverFailed" />
+    <view class="member-card__veil {{coverShown ? 'member-card__veil--cover' : ''}}" />
+    <view class="member-card__orb member-card__orb--large" />
+    <view class="member-card__orb member-card__orb--small" />
+    <view class="member-card__sheen" />
+    <view class="member-card__body">
+        <view class="member-card__head">
+            <view class="member-card__badge">{{initial}}</view>
+            <view class="member-card__copy">
+                <text class="member-card__name">{{card.name}}</text>
+                <text wx:if="{{card.tagline}}" class="member-card__tagline">{{card.tagline}}</text>
+            </view>
+            <text class="member-card__chip">会员卡</text>
+        </view>
+        <view class="member-card__foot">
+            <text class="member-card__summary">{{card.summary}}</text>
+            <text wx:if="{{!large}}" class="member-card__enter">进入</text>
+        </view>
+    </view>
+</view>

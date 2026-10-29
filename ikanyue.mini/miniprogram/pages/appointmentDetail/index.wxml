@@ -1,0 +1,130 @@
+<view class="page-chrome appointment-detail-page">
+    <view wx:if="{{state !== 'ready'}}" class="appointment-detail-state">
+        <async-state
+            action-label="{{state === 'error' ? '重新加载' : ''}}"
+            description="{{errorMessage || '正在读取预约详情。'}}"
+            kind="{{state === 'error' ? 'network' : 'default'}}"
+            state="{{state}}"
+            title="{{state === 'error' ? '预约详情加载失败' : ''}}"
+            bind:action="retry"
+        />
+    </view>
+
+    <block wx:else>
+        <view class="appointment-detail-hero">
+            <view class="appointment-detail-hero__icon">
+                <app-icon name="{{heroIcon}}" size="xl" />
+            </view>
+            <view class="appointment-detail-hero__copy">
+                <view class="appointment-detail-hero__heading">
+                    <text class="appointment-detail-hero__title">{{appointment.course.name}}</text>
+                    <booking-status-badge status="{{appointment.status}}" />
+                </view>
+                <text class="appointment-detail-hero__time">{{timeLabel}}</text>
+                <text class="appointment-detail-hero__person">{{personLabel}}</text>
+            </view>
+        </view>
+
+        <view class="appointment-detail-section">
+            <text class="appointment-detail-section__title">预约信息</text>
+            <view class="appointment-detail-fields">
+                <view class="appointment-detail-field">
+                    <text>课程</text><text>{{appointment.course.name}}</text>
+                </view>
+                <view class="appointment-detail-field">
+                    <text>{{role === 'teacher' ? '学员' : '教师'}}</text><text>{{personName}}</text>
+                </view>
+                <view class="appointment-detail-field">
+                    <text>时间</text><text>{{timeLabel}}</text>
+                </view>
+                <view class="appointment-detail-field">
+                    <text>地点</text><text>{{appointment.location || '待老师确认'}}</text>
+                </view>
+                <view wx:if="{{appointment.status === 'pending' && appointment.responseDeadline}}" class="appointment-detail-field">
+                    <text>确认期限</text><text>{{deadlineLabel}}</text>
+                </view>
+            </view>
+        </view>
+
+        <view wx:if="{{appointment.note || appointment.responseReason}}" class="appointment-detail-section">
+            <text class="appointment-detail-section__title">沟通记录</text>
+            <view wx:if="{{appointment.note}}" class="appointment-detail-note">
+                <text class="appointment-detail-note__label">学员备注</text>
+                <text class="appointment-detail-note__content">{{appointment.note}}</text>
+            </view>
+            <view wx:if="{{appointment.responseReason}}" class="appointment-detail-note">
+                <text class="appointment-detail-note__label">处理说明</text>
+                <text class="appointment-detail-note__content">{{appointment.responseReason}}</text>
+            </view>
+        </view>
+
+        <view wx:if="{{appointment.lessonId}}" class="appointment-detail-section">
+            <text class="appointment-detail-section__title">关联课程</text>
+            <account-row
+                description="查看课程状态、上课地点和课程提醒"
+                icon="course-calendar"
+                interactive="{{true}}"
+                title="查看课程详情"
+                bind:select="goLesson"
+            />
+        </view>
+
+        <view wx:if="{{hasActions}}" class="appointment-detail-section appointment-detail-section--actions">
+            <text class="appointment-detail-section__title">可用操作</text>
+            <view wx:if="{{role === 'teacher' && appointment.canConfirm}}" class="appointment-detail-primary {{actionLoading ? 'disabled' : ''}}" aria-role="button" bindtap="confirmAppointment">
+                确认预约并保留时间
+            </view>
+            <view class="appointment-detail-secondary-actions">
+                <view wx:if="{{role === 'teacher' && appointment.canDecline}}" aria-role="button" bindtap="openDecline">拒绝申请</view>
+                <view wx:if="{{role === 'student' && appointment.canWithdraw}}" aria-role="button" bindtap="withdrawAppointment">撤回申请</view>
+                <view wx:if="{{appointment.canCancel}}" aria-role="button" bindtap="openCancel">取消预约</view>
+                <view wx:if="{{canReschedule}}" aria-role="button" bindtap="openReschedule">调整时间</view>
+            </view>
+        </view>
+    </block>
+
+    <k-popup visible="{{showReasonPopup}}" panel-class="appointment-action-popup-shell" bind:close="closeReasonPopup">
+        <view class="appointment-action-popup">
+            <view class="appointment-action-popup__bar" />
+            <text class="appointment-action-popup__title">{{reasonActionTitle}}</text>
+            <text wx:if="{{cancellationText}}" class="appointment-action-popup__description">{{cancellationText}}</text>
+            <text class="appointment-action-popup__description">请填写简短原因，学员与教师都能看到处理结果。</text>
+            <textarea value="{{reason}}" data-field="reason" bindinput="onField" class="appointment-action-popup__textarea" maxlength="500" placeholder="请输入至少 2 个字" />
+            <view class="appointment-action-popup__submit {{reasonReady ? '' : 'disabled'}}" aria-role="button" bindtap="submitReasonAction">
+                {{actionLoading ? '正在提交' : '确认提交'}}
+            </view>
+        </view>
+    </k-popup>
+
+    <k-popup visible="{{showReschedulePopup}}" panel-class="appointment-action-popup-shell" bind:close="closeReschedulePopup">
+        <view class="appointment-action-popup">
+            <view class="appointment-action-popup__bar" />
+            <text class="appointment-action-popup__title">调整预约时间</text>
+            <text class="appointment-action-popup__description">新时间需位于可预约时间内，且不能与其他课程冲突。</text>
+            <view class="appointment-action-popup__field">
+                <text>日期</text>
+                <picker mode="date" start="{{today}}" value="{{reschedule.date}}" bindchange="changeRescheduleDate">
+                    <view>{{reschedule.date}}</view>
+                </picker>
+            </view>
+            <view class="appointment-action-popup__windows">
+                <text class="appointment-action-popup__windows-label">当天可预约</text>
+                <text class="appointment-action-popup__windows-value">{{rescheduleWindowsText}}</text>
+            </view>
+            <view class="appointment-action-popup__field">
+                <text>开始时间</text>
+                <picker mode="time" value="{{reschedule.startTime}}" bindchange="changeRescheduleTime">
+                    <view>{{reschedule.startTime}}</view>
+                </picker>
+            </view>
+            <view class="appointment-action-popup__field">
+                <text>结束时间</text>
+                <text>{{rescheduleEndText}}</text>
+            </view>
+            <input value="{{reschedule.reason}}" bindinput="changeRescheduleReason" class="appointment-action-popup__input" maxlength="500" placeholder="改期原因（至少 2 个字）" />
+            <view class="appointment-action-popup__submit {{rescheduleReady ? '' : 'disabled'}}" aria-role="button" bindtap="submitReschedule">
+                {{actionLoading ? '正在提交' : '确认调整时间'}}
+            </view>
+        </view>
+    </k-popup>
+</view>

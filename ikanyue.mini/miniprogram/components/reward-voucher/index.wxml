@@ -1,0 +1,20 @@
+<view class="reward-voucher {{redeemable ? 'reward-voucher--ready' : ''}}" bindtap="onTap">
+    <media-thumb
+        ext-class="reward-voucher__media"
+        fallback-icon="account-rewards"
+        show-image="{{showImage}}"
+        src="{{item.image}}"
+        bind:error="onImageError"
+    />
+    <view class="reward-voucher__body">
+        <text class="reward-voucher__name">{{item.name}}</text>
+        <text wx:if="{{description}}" class="reward-voucher__description">{{description}}</text>
+        <view class="reward-voucher__price">
+            <text>{{item.pointsPrice}}</text>
+            <text class="reward-voucher__unit">PT</text>
+        </view>
+    </view>
+    <view class="reward-voucher__status {{redeemable ? 'reward-voucher__status--ready' : ''}}">
+        {{redeemable ? readyLabel : lockedLabel}}
+    </view>
+</view>

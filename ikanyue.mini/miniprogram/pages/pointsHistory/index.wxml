@@ -1,0 +1,48 @@
+<view class="page-chrome history-page">
+    <points-pass balance="{{balance}}" caption="{{caption}}" compact="{{true}}" />
+
+    <ticket-section subtitle="按时间倒序展示" title="积分明细">
+        <async-state wx:if="{{loading}}" state="loading" title="正在加载积分记录" />
+
+        <async-state
+            wx:elif="{{errorMessage}}"
+            action-label="重新加载"
+            description="{{errorMessage}}"
+            kind="network"
+            state="error"
+            title="积分记录暂时无法加载"
+            bind:action="refreshEvents"
+        />
+
+        <async-state
+            wx:elif="{{events.length === 0}}"
+            description="参加活动或由老师添加积分后，记录会显示在这里。"
+            kind="points"
+            state="empty"
+            title="暂无积分记录"
+        />
+
+        <view wx:else class="point-events">
+            <point-event-row
+                wx:for="{{eventRows}}" wx:for-item="event"
+                wx:key="id"
+                balance="{{event.balance}}"
+                delta="{{event.delta}}"
+                meta="{{event.meta}}"
+                reason="{{event.reason}}"
+                remark="{{event.remark}}"
+                spending="{{event.spending}}"
+                title="{{event.title}}"
+            />
+        </view>
+
+        <pagination-state
+            complete-label="已显示全部记录"
+            has-more="{{hasMore}}"
+            loaded="{{events.length}}"
+            loading="{{loadingMore}}"
+            total="{{pagination.totalItems}}"
+            visible="{{events.length > 0}}"
+        />
+    </ticket-section>
+</view>

@@ -8,6 +8,12 @@ module.exports = {
         SERVICE_URL: JSON.stringify(serviceUrl),
         STAGE: JSON.stringify('TEST'),
     },
-    mini: {},
+    mini: {
+        // Watch builds are otherwise unminified (~3.9 MB) and trip the 2 MB package warning in DevTools.
+        // Only the bundle is minified; NODE_ENV stays "development" and source maps are kept.
+        webpackChain(chain) {
+            chain.mode('production');
+        },
+    },
     h5: {},
 };

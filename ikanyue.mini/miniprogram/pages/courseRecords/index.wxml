@@ -1,0 +1,20 @@
+<view class="page-chrome courses-page">
+    <view class="courses-content">
+        <view wx:if="{{state !== 'ready'}}" class="courses-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{state === 'error' ? errorMessage : '完成课程或调整课程安排后，记录会显示在这里。'}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'empty' ? '暂无课时记录' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <view class="courses-list">
+                <lesson-record-row wx:for="{{records}}" wx:for-item="record" wx:key="recordId" record="{{record}}" />
+            </view>
+            <pagination-state has-more="{{hasMore}}" loaded="{{records.length}}" loading="{{loadingMore}}" total="{{pagination.totalItems}}" />
+        </block>
+    </view>
+</view>

@@ -15,7 +15,7 @@ test('public venues list only public fields', async () => {
   assert.equal(body.code, 10000);
   assert.equal(body.message, null);
   for (const venue of body.data.items) {
-    assert.deepEqual(Object.keys(venue).sort(), ['address', 'bookable', 'id', 'intro', 'name', 'openingHours', 'phone']);
+    assert.deepEqual(Object.keys(venue).sort(), ['address', 'bookable', 'coverUrl', 'id', 'intro', 'name', 'openingHours', 'phone']);
   }
 });
 

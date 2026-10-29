@@ -17,7 +17,7 @@ test('Go services compile single-threaded into the binaries their definitions ru
 });
 
 test('up compiles only what it starts; restart and init recompile every selected Go service', () => {
-  const all = ['gateway', 'server', 'pay', 'stages', 'miniapp'];
+  const all = ['gateway', 'server', 'pay', 'stages'];
   const running = (name) => name === 'server';
   assert.deepEqual(buildTargets('up', all, running), ['gateway', 'pay']);
   assert.deepEqual(buildTargets('up', ['server'], running), []);
@@ -61,7 +61,7 @@ test('PID reuse and malformed process identities never establish ownership', () 
 });
 test('native definitions do not run Docker or initialization during startup', () => {
   const config = { PORT: '1437', PAY_PORT: '1440', PAY_GATEWAY_URL: 'http://127.0.0.1:1440', GATEWAY_PORT: '1460', GATEWAY_ADMIN_PORT: '1461' };
-  for (const name of ['gateway', 'server', 'pay', 'stages', 'miniapp']) {
+  for (const name of ['gateway', 'server', 'pay', 'stages']) {
     const service = definition(name, config);
     assert.doesNotMatch(service.command.join(' '), /docker|migrate|seed|superuser|upsert/);
   }

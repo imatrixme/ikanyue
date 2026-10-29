@@ -1,0 +1,33 @@
+@import '../../styles/tokens';
+
+.segmented-control {
+    background: $ky-muted-surface;
+    border-radius: $ky-radius-pill;
+    display: flex;
+    padding: 4rpx;
+}
+
+.segmented-control__item {
+    align-items: center;
+    border-radius: $ky-radius-pill;
+    color: $ky-text-secondary;
+    display: flex;
+    flex: 1;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-regular;
+    height: $ky-control-height-compact;
+    justify-content: center;
+    min-width: 0;
+    transition: background-color $ky-motion-fast ease, color $ky-motion-fast ease;
+}
+
+.segmented-control__item + .segmented-control__item {
+    margin-left: 4rpx;
+}
+
+.segmented-control__item--active {
+    background: $ky-surface;
+    box-shadow: $ky-shadow-card;
+    color: $ky-primary;
+    font-weight: $ky-font-weight-medium;
+}

@@ -1,0 +1,70 @@
+<view class="page-chrome activity-page">
+    <view class="activity-upcoming">
+        <upcoming-lessons id="upcomingLessons" />
+    </view>
+
+    <view class="activity-calendar">
+        <view class="activity-calendar__month">{{calendarMonth}}</view>
+        <view class="activity-calendar__days">
+            <view
+                wx:for="{{dayRows}}" wx:for-item="group" wx:for-index="index"
+                wx:key="dateKey"
+                class="activity-day {{group.active ? 'activity-day--active' : ''}}"
+                aria-role="button"
+                aria-label="{{group.ariaLabel}}"
+                data-index="{{index}}"
+                bindtap="selectDay">
+                <text class="activity-day__weekday">{{group.title}}</text>
+                <text class="activity-day__number">{{group.day}}</text>
+                <view class="activity-day__marker {{group.marked ? 'activity-day__marker--on' : ''}}" />
+            </view>
+        </view>
+    </view>
+
+    <view class="activity-content">
+        <async-state wx:if="{{loading}}" compact="{{true}}" state="loading" title="正在加载活动" />
+
+        <view wx:elif="{{networkError}}" class="activity-state">
+            <async-state
+                action-label="重新加载"
+                compact="{{true}}"
+                description="请检查网络连接后重试。"
+                kind="network"
+                state="error"
+                title="活动暂时无法加载"
+                bind:action="retry"
+            />
+        </view>
+
+        <view wx:elif="{{!activities.length}}" class="activity-state">
+            <async-state
+                action-label="{{emptyActionLabel}}"
+                compact="{{true}}"
+                description="{{emptyDescription}}"
+                kind="activities"
+                state="empty"
+                title="{{emptyTitle}}"
+                bind:action="showNextDay"
+            />
+        </view>
+
+        <view wx:else class="activity-list">
+            <activity-ticket
+                wx:for="{{ticketRows}}" wx:for-item="ticket"
+                wx:key="id"
+                cover-url="{{ticket.coverUrl}}"
+                date-text="{{ticket.dateText}}"
+                featured="{{ticket.featured}}"
+                location="{{ticket.location}}"
+                price-label="{{ticket.priceLabel}}"
+                show-image="{{ticket.showImage}}"
+                tags="{{ticket.tags}}"
+                time-text="{{ticket.timeText}}"
+                title="{{ticket.title}}"
+                item-id="{{ticket.id}}"
+                bind:imageerror="markCoverFailed"
+                bind:select="goToDetail"
+            />
+        </view>
+    </view>
+</view>

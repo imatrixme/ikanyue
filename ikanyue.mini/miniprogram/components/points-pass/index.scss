@@ -1,0 +1,79 @@
+@import '../../styles/tokens';
+
+.points-pass {
+    background: $ky-hero-wash;
+    border: 1px solid $ky-primary-line;
+    border-radius: $ky-radius-xl;
+    box-sizing: border-box;
+    color: $ky-ink-strong;
+    min-height: 272rpx;
+    overflow: hidden;
+    padding: 40rpx;
+    position: relative;
+}
+
+.points-pass__content {
+    position: relative;
+    z-index: 2;
+}
+
+.points-pass__label,
+.points-pass__caption {
+    display: block;
+}
+
+.points-pass__label {
+    font-size: $ky-font-size-body-sm;
+    color: $ky-text-secondary;
+    font-weight: $ky-font-weight-semibold;
+}
+
+.points-pass__balance {
+    align-items: baseline;
+    display: flex;
+    margin-top: $ky-space-2;
+}
+
+.points-pass__value {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-balance;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-none;
+}
+
+.points-pass__unit {
+    color: $ky-primary;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-bold;
+    margin-left: $ky-space-2;
+}
+
+.points-pass__caption {
+    font-size: $ky-font-size-xs;
+    color: $ky-text-secondary;
+    margin-top: $ky-space-3;
+}
+
+.points-pass__staff {
+    bottom: 36rpx;
+    left: 42%;
+    opacity: 0.35;
+    position: absolute;
+    right: -20rpx;
+    transform: rotate(-4deg);
+    z-index: 1;
+}
+
+.points-pass__staff-line {
+    border-top: 1px solid $ky-primary-line;
+    margin-top: 10rpx;
+}
+
+.points-pass--compact {
+    min-height: 224rpx;
+    padding: 32rpx;
+}
+
+.points-pass--compact .points-pass__value {
+    font-size: $ky-font-size-balance-sm;
+}

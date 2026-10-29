@@ -1,0 +1,76 @@
+<view class="page-chrome activity-detail">
+    <async-state wx:if="{{loading}}" state="loading" title="正在准备活动内容" />
+
+    <view wx:elif="{{errorMessage}}" class="detail-empty">
+        <async-state
+            action-label="返回活动"
+            description="{{errorMessage}}"
+            kind="error"
+            state="error"
+            title="活动暂时无法显示"
+            bind:action="goBack"
+        />
+    </view>
+
+    <block wx:else>
+    <view class="detail-content">
+        <activity-ticket
+            cover-url="{{activity.coverImage}}"
+            date-text="{{ticket.dateText}}"
+            featured="{{true}}"
+            location="{{activity.location}}"
+            price-label="{{ticket.priceLabel}}"
+            show-image="{{canShowCover}}"
+            tags="{{ticket.tags}}"
+            time-text="{{ticket.timeText}}"
+            title="{{activity.title}}"
+            bind:imageerror="markCoverFailed"
+        />
+
+        <ticket-section wx:if="{{activity.maxParticipants}}" subtitle="报名信息实时更新" title="参与名额">
+            <view class="detail-seat-row">
+                <text>{{activity.maxParticipants}} 人</text>
+                <text wx:if="{{activity.currentParticipants}}">已报名 {{activity.currentParticipants}} 人</text>
+                <text wx:if="{{hasLimitedSeats}}" class="remaining-few">仅剩 {{remainingSeats}} 个名额</text>
+            </view>
+        </ticket-section>
+
+        <ticket-section title="活动详情">
+            <view class="desc-section">
+                <rich-text class="description" nodes="{{safeHtmlContent}}" user-select></rich-text>
+            </view>
+        </ticket-section>
+
+        <ticket-section wx:if="{{activity.images && activity.images.length}}" title="活动图集">
+            <scroll-view
+                class="image-scroll"
+                scroll-x
+                enhanced
+                bounces
+                enable-passive
+                show-scrollbar="{{false}}">
+                <image
+                    wx:for="{{activity.images}}" wx:for-item="img"
+                    wx:key="*this"
+                    src="{{img}}"
+                    class="activity-image"
+                    mode="aspectFill"
+                    data-src="{{img}}" bindtap="previewImage"
+                />
+            </scroll-view>
+        </ticket-section>
+
+        <view class="disclaimer-section">
+            <text class="disclaimer-text">
+                活动开始前24小时可申请全额退款；活动开始前12小时可申请50%退款；活动开始前12小时内不予退款。活动最终解释权归主办方所有。
+            </text>
+        </view>
+    </view>
+
+    <!-- 底部操作栏 -->
+    <view class="sticky-action-bar bottom-bar">
+        <button wx:if="{{activity.externalLink}}" class="k-button" bindtap="register">立即报名</button>
+        <button wx:else class="k-button" disabled>暂未开放报名</button>
+    </view>
+    </block>
+</view>

@@ -1,0 +1,8 @@
+<view class="venue-handoff">
+    <text class="venue-handoff__title">{{venue.name}}暂未开放在线约课</text>
+    <text class="venue-handoff__description">可以电话咨询上课时间，或切换到其他场馆。</text>
+    <button wx:if="{{venue.phone}}" class="k-button venue-handoff__call" bindtap="call">电话咨询</button>
+    <view class="venue-handoff__links">
+        <account-row icon="location-muted" interactive="{{true}}" title="切换场馆" bind:select="switchVenue" />
+    </view>
+</view>

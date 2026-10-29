@@ -1,0 +1,35 @@
+@import '../../styles/tokens';
+
+.entry-grid {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    display: grid;
+    padding: $ky-space-4 $ky-space-2;
+}
+
+.entry-grid__item {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: $ky-space-2;
+    min-height: 88rpx;
+}
+
+.entry-grid__item:active { opacity: 0.76; }
+
+.entry-grid__icon {
+    align-items: center;
+    background: $ky-primary-wash;
+    border-radius: $ky-radius-lg;
+    display: flex;
+    height: 88rpx;
+    justify-content: center;
+    width: 88rpx;
+}
+
+.entry-grid__label {
+    color: $ky-ink;
+    font-size: $ky-font-size-xs;
+    text-align: center;
+}

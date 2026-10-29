@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "课时记录",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 120,
+  "backgroundColor": "#f4f4f2",
+  "backgroundColorBottom": "#f4f4f2",
+  "backgroundColorTop": "#f4f4f2",
+  "backgroundTextStyle": "dark"
+}

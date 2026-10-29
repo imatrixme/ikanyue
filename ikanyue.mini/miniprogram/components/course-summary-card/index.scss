@@ -1,0 +1,29 @@
+@import '../../styles/tokens';
+
+.course-summary-card {
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-subtle;
+    padding: $ky-space-4;
+}
+
+.course-summary-card:active { background: $ky-primary-wash; }
+.course-summary-card + .course-summary-card { margin-top: $ky-space-3; }
+.course-summary-card__head { align-items: center; display: flex; justify-content: space-between; }
+.course-summary-card__identity { align-items: center; display: flex; min-width: 0; }
+.course-summary-card__icon { align-items: center; background: $ky-secondary-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-md; display: flex; flex: 0 0 80rpx; height: 80rpx; justify-content: center; margin-right: $ky-space-3; width: 80rpx; }
+.course-summary-card__copy { min-width: 0; }
+.course-summary-card__eyebrow,
+.course-summary-card__title,
+.course-summary-card__value,
+.course-summary-card__label,
+.course-summary-card__validity { display: block; }
+.course-summary-card__eyebrow { color: $ky-primary-strong; font-size: $ky-font-size-xs; font-weight: $ky-font-weight-bold; }
+.course-summary-card__title { color: $ky-ink-strong; font-size: $ky-font-size-section; font-weight: $ky-font-weight-black; margin-top: $ky-space-1; }
+.course-summary-card__metrics { border-bottom: 1px solid $ky-line-tinted; border-top: 1px solid $ky-line-tinted; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: $ky-space-4; padding: $ky-space-3 0; }
+.course-summary-card__metric + .course-summary-card__metric { border-left: 1px solid $ky-line-tinted; padding-left: $ky-space-3; }
+.course-summary-card__value { color: $ky-ink-strong; font-size: $ky-font-size-display-sm; font-weight: $ky-font-weight-black; }
+.course-summary-card__label { color: $ky-text-muted; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+.course-summary-card__validity { color: $ky-text-secondary; font-size: $ky-font-size-xs; margin-top: $ky-space-3; }
+.course-summary-card__validity--warning { color: $ky-danger; font-weight: $ky-font-weight-semibold; }

@@ -1,0 +1,11 @@
+<view class="segmented-control {{extClass}}">
+    <view
+        wx:for="{{options}}"
+        wx:for-item="option"
+        wx:key="value"
+        class="segmented-control__item {{value === option.value ? 'segmented-control__item--active' : ''}}"
+        data-value="{{option.value}}"
+        bindtap="onSelect">
+        {{option.label}}
+    </view>
+</view>

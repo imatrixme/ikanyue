@@ -1,0 +1,128 @@
+<view class="page-chrome availability-page">
+    <view class="availability-summary">
+        <view class="availability-summary__icon"><app-icon name="booking-availability" size="xl" /></view>
+        <view class="availability-summary__copy">
+            <text class="availability-summary__title">{{availability.offering.course.name}}</text>
+            <text class="availability-summary__meta">{{availability.offering.location || '授课地点待定'}}</text>
+            <text class="availability-summary__meta">机构开放 {{policyWindowLabel}}</text>
+        </view>
+    </view>
+
+    <view wx:if="{{state !== 'ready'}}" class="availability-state">
+        <async-state
+            action-label="{{state === 'error' ? '重新加载' : ''}}"
+            description="{{errorMessage || '正在读取当前可预约时间。'}}"
+            kind="{{state === 'error' ? 'network' : 'default'}}"
+            state="{{state}}"
+            title="{{state === 'error' ? '时间设置加载失败' : ''}}"
+            bind:action="retry"
+        />
+    </view>
+
+    <block wx:else>
+        <view class="availability-section">
+            <view class="availability-section__heading">
+                <view>
+                    <text class="availability-section__title">每周可预约时间</text>
+                    <text class="availability-section__subtitle">未自定义时使用机构默认开放时段</text>
+                </view>
+                <view class="availability-mode">
+                    <view class="availability-mode__item {{mode === 'default' ? 'availability-mode__item--active' : ''}}" data-mode="default" bindtap="setMode">默认</view>
+                    <view class="availability-mode__item {{mode === 'custom' ? 'availability-mode__item--active' : ''}}" data-mode="custom" bindtap="setMode">自定义</view>
+                </view>
+            </view>
+
+            <view wx:if="{{mode === 'default'}}" class="availability-default">
+                <app-icon name="booking-confirm" size="xl" />
+                <view>
+                    <text class="availability-default__title">使用机构开放时间</text>
+                    <text class="availability-default__meta">每天 {{policyWindowLabel}}，已有课程会自动排除。</text>
+                </view>
+            </view>
+
+            <view wx:else class="availability-rules">
+                <view wx:for="{{ruleRows}}" wx:for-item="rule" wx:for-index="index" wx:key="localId" class="availability-rule">
+                    <picker mode="selector" range="{{weekdays}}" value="{{rule.weekdayIndex}}" data-index="{{index}}" bindchange="updateWeekday">
+                        <view class="availability-rule__control">{{rule.weekdayLabel}}</view>
+                    </picker>
+                    <picker mode="time" value="{{rule.startLabel}}" data-index="{{index}}" data-field="startMinute" bindchange="updateRuleTime">
+                        <view class="availability-rule__control">{{rule.startLabel}}</view>
+                    </picker>
+                    <text class="availability-rule__dash">至</text>
+                    <picker mode="time" value="{{rule.endLabel}}" data-index="{{index}}" data-field="endMinute" bindchange="updateRuleTime">
+                        <view class="availability-rule__control">{{rule.endLabel}}</view>
+                    </picker>
+                    <view class="availability-rule__remove" aria-role="button" aria-label="移除时段" data-index="{{index}}" bindtap="removeRule">×</view>
+                </view>
+                <view class="availability-add" aria-role="button" bindtap="addRule">添加每周时段</view>
+            </view>
+
+            <view class="availability-save {{saving ? 'availability-save--disabled' : ''}}" aria-role="button" bindtap="saveWeekly">
+                {{saving ? '正在保存' : '保存每周时间'}}
+            </view>
+        </view>
+
+        <view class="availability-section">
+            <view class="availability-section__heading">
+                <view>
+                    <text class="availability-section__title">临时调整</text>
+                    <text class="availability-section__subtitle">为特定日期临时开放或关闭一段时间</text>
+                </view>
+                <view class="availability-add-small" aria-role="button" aria-label="新增临时调整" bindtap="openOverride">新增</view>
+            </view>
+            <view wx:if="{{overrideRows.length}}" class="availability-overrides">
+                <view wx:for="{{overrideRows}}" wx:for-item="item" wx:key="id" class="availability-override">
+                    <view class="availability-override__icon">
+                        <app-icon name="{{item.icon}}" size="xl" />
+                    </view>
+                    <view class="availability-override__copy">
+                        <text class="availability-override__title">{{item.title}}</text>
+                        <text class="availability-override__meta">{{item.meta}}</text>
+                        <text wx:if="{{item.reason}}" class="availability-override__reason">{{item.reason}}</text>
+                    </view>
+                    <view class="availability-override__cancel" aria-role="button" aria-label="撤销临时调整" data-id="{{item.id}}" bindtap="cancelOverride">撤销</view>
+                </view>
+            </view>
+            <view wx:else class="availability-default">
+                <app-icon name="booking-availability" size="xl" />
+                <view>
+                    <text class="availability-default__title">暂无临时调整</text>
+                    <text class="availability-default__meta">请假或临时加开时间时可在这里设置。</text>
+                </view>
+            </view>
+        </view>
+    </block>
+
+    <k-popup visible="{{showOverride}}" panel-class="availability-popup-shell" bind:close="closeOverride">
+        <view class="availability-popup">
+            <view class="availability-popup__bar" />
+            <text class="availability-popup__title">新增临时调整</text>
+            <view class="availability-popup__segment">
+                <view class="{{overrideForm.type === 'unavailable' ? 'active' : ''}}" data-key="type" data-value="unavailable" bindtap="updateOverride">临时关闭</view>
+                <view class="{{overrideForm.type === 'available' ? 'active' : ''}}" data-key="type" data-value="available" bindtap="updateOverride">临时开放</view>
+            </view>
+            <view class="availability-popup__field">
+                <text>日期</text>
+                <picker mode="date" start="{{today}}" value="{{overrideForm.date}}" data-key="date" bindchange="updateOverride">
+                    <view>{{overrideForm.date}}</view>
+                </picker>
+            </view>
+            <view class="availability-popup__field">
+                <text>开始</text>
+                <picker mode="time" value="{{overrideForm.startTime}}" data-key="startTime" bindchange="updateOverride">
+                    <view>{{overrideForm.startTime}}</view>
+                </picker>
+            </view>
+            <view class="availability-popup__field">
+                <text>结束</text>
+                <picker mode="time" value="{{overrideForm.endTime}}" data-key="endTime" bindchange="updateOverride">
+                    <view>{{overrideForm.endTime}}</view>
+                </picker>
+            </view>
+            <input value="{{overrideForm.reason}}" data-key="reason" bindinput="updateOverride" class="availability-popup__input" maxlength="120" placeholder="原因（选填）" />
+            <view class="availability-popup__submit {{overrideSaving ? 'disabled' : ''}}" bindtap="submitOverride">
+                {{overrideSaving ? '正在保存' : '保存临时调整'}}
+            </view>
+        </view>
+    </k-popup>
+</view>

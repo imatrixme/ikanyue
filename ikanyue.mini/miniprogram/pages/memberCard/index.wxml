@@ -1,0 +1,44 @@
+<view class="page-chrome card-page">
+    <view wx:if="{{loading}}" class="card-state">
+        <async-state compact="{{true}}" state="loading" title="正在打开会员卡" />
+    </view>
+    <view wx:elif="{{!card}}" class="card-state">
+        <async-state compact="{{true}}" description="这张会员卡暂时无法查看。" kind="default" state="empty" title="没有找到会员卡" />
+    </view>
+    <block wx:else>
+        <member-card card="{{card}}" large="{{true}}" />
+
+        <view wx:if="{{role !== 'teacher'}}" class="card-booking" aria-role="button" bindtap="goBooking">去约课</view>
+
+        <ticket-section wx:if="{{venueRows.length}}" title="门店">
+            <view class="card-venues">
+                <view wx:for="{{venueRows}}" wx:for-item="venue" wx:key="id" class="card-venue">
+                    <view class="card-venue__copy">
+                        <text class="card-venue__name">{{venue.name}}</text>
+                        <view wx:for="{{venue.facts}}" wx:for-item="row" wx:key="key" class="card-venue__fact">
+                            <app-icon name="{{row.icon}}" size="sm" />
+                            <text>{{row.text}}</text>
+                        </view>
+                    </view>
+                    <view wx:if="{{venue.phone}}" class="card-venue__call" aria-role="button" aria-label="拨打{{venue.name}}电话" data-id="{{venue.id}}" bindtap="callVenue">
+                        <app-icon name="account-phone" size="md" />
+                    </view>
+                </view>
+            </view>
+        </ticket-section>
+
+        <ticket-section wx:if="{{infoLinks.length}}" title="了解{{card.name}}">
+            <view class="card-links">
+                <account-row
+                    wx:for="{{infoLinks}}" wx:for-item="link" wx:key="id"
+                    description="{{link.description}}"
+                    icon="{{link.icon}}"
+                    interactive="{{true}}"
+                    item-id="{{link.id}}"
+                    title="{{link.title}}"
+                    bind:select="openInfo"
+                />
+            </view>
+        </ticket-section>
+    </block>
+</view>

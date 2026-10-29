@@ -1,0 +1,75 @@
+@import '../../styles/tokens';
+
+.account-row {
+    align-items: center;
+    background: $ky-surface;
+    box-sizing: border-box;
+    display: flex;
+    min-height: 108rpx;
+    padding: $ky-space-3 $ky-space-4;
+}
+
+.account-row + .account-row {
+    border-top: 1px solid $ky-muted-surface;
+}
+
+.account-row--interactive:active {
+    background: $ky-primary-wash;
+}
+
+.account-row__leading {
+    align-items: center;
+    background: $ky-primary-wash;
+    border-radius: $ky-radius-lg;
+    color: $ky-primary-strong;
+    display: flex;
+    flex: 0 0 72rpx;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-black;
+    height: 72rpx;
+    justify-content: center;
+    width: 72rpx;
+}
+
+.account-row__leading .app-icon {
+    transform: scale(1.25);
+}
+
+.account-row__copy {
+    flex: 1;
+    min-width: 0;
+    padding-left: $ky-space-3;
+}
+
+.account-row__title,
+.account-row__description {
+    display: block;
+}
+
+.account-row__title {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-regular;
+}
+
+.account-row__description {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: $ky-space-1;
+}
+
+.account-row__value {
+    color: $ky-text-secondary;
+    flex-shrink: 0;
+    font-size: $ky-font-size-body-sm;
+    margin-left: $ky-space-3;
+    max-width: 42%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-row__arrow {
+    flex-shrink: 0;
+    margin-left: $ky-space-2;
+}

@@ -111,31 +111,6 @@ services:
       - "${BIND_ADDR:-127.0.0.1}:${GATEWAY_STANDBY_PORT:-1470}:1460"
       - "127.0.0.1:${GATEWAY_STANDBY_ADMIN_PORT:-1471}:1461"
 
-  miniapp:
-    profiles: ["test"]
-    build:
-      context: ./ikanyue.taro3
-      dockerfile: Dockerfile.local
-    restart: unless-stopped
-    working_dir: /app
-    environment:
-      CI: "true"
-      NODE_ENV: development
-      KANYUE_LOCAL_API_URL: "${KANYUE_LOCAL_API_URL:-http://127.0.0.1:1337}"
-      CHOKIDAR_USEPOLLING: "true"
-    command: /bin/sh -c "pnpm install --store-dir /pnpm/store --frozen-lockfile && exec pnpm run dev:weapp"
-    volumes:
-      - ./ikanyue.taro3:/app
-      - miniapp_node_modules:/app/node_modules
-      - miniapp_pnpm_store:/pnpm/store
-    healthcheck:
-      test: ["CMD-SHELL", "test -f /app/dist/app.json"]
-      interval: 3s
-      timeout: 2s
-      retries: 40
-
 volumes:
   pocketbase_data:
   gateway_data:
-  miniapp_node_modules:
-  miniapp_pnpm_store:

@@ -6,7 +6,7 @@
 
 | Path | Description | Runtime |
 | --- | --- | --- |
-| `ikanyue.taro3` | 微信小程序 | Taro / Vue |
+| `ikanyue.mini` | 微信小程序（学员与教师），原生小程序 + 自有薄封装 `kit/`，无构建步骤 | WeChat 原生 / Sass（开发者工具编译） |
 | `kanyue.server` | 业务服务单体：API + 内嵌 PocketBase（数据面板 `/_/`）+ 内嵌运营后台 | Go / PocketBase v0.39.11 |
 | `kanyue.pay` | 独立支付网关单体（当前仅 mock） | Go / 独立内嵌 PocketBase v0.39.11 |
 | `ikanyue.admin` | 运营后台（静态 SPA，构建后嵌入 `kanyue.server`） | React / Vite |
@@ -19,9 +19,10 @@
 这个仓库没有根 `package.json`，也没有根 workspace 配置。进入具体子项目后按该项目自己的 README、锁文件和脚本操作。
 
 ```bash
-cd ikanyue.taro3
+cd ikanyue.mini
 pnpm install
-pnpm dev:weapp
+pnpm lint
+TZ=Asia/Shanghai pnpm test
 ```
 
 ```bash
@@ -33,7 +34,7 @@ GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...
 
 只有一个仓库、一条主线 `master`。跨子项目的改动（例如 API、后台、小程序同时改）放在同一次提交里，不再分仓库提交、也不再维护子模块指针。
 
-原独立仓库（`imatrixme/ikanyue.taro3`、`ikanyue.mapi.hono`（已由 `kanyue.server` 取代并删除）、`ikanyue.admin`、`ikanyue.website`、`ikanyue.pay`）的历史已按目录并入，可用 `git log -- <目录>` 查看；这些旧仓库只作归档，不再提交。
+原独立仓库（`imatrixme/ikanyue.taro3`（已由 `ikanyue.mini` 取代）、`ikanyue.mapi.hono`（已由 `kanyue.server` 取代并删除）、`ikanyue.admin`、`ikanyue.website`、`ikanyue.pay`）的历史已按目录并入，可用 `git log -- <目录>` 查看；这些旧仓库只作归档，不再提交。
 ## Course credit system documents
 
 - Product requirements: [`docs/product/course-credit-system-prd.md`](docs/product/course-credit-system-prd.md)
@@ -53,7 +54,7 @@ node scripts/native-stack.mjs init
 # 运营后台嵌入 server 二进制：首次和改动后端前先构建
 (cd ikanyue.admin && npm run build:server)
 
-# 日常启动：API 网关、kanyue.server、kanyue.pay、TEST/PRE 中继（stages）、小程序 watcher
+# 日常启动：API 网关、kanyue.server、kanyue.pay、TEST/PRE 中继（stages）
 # up/restart 先编译要启动的 Go 服务（编译失败时不停旧进程），再直接运行二进制；--no-build 复用上次编译结果
 node scripts/native-stack.mjs up
 
@@ -73,13 +74,15 @@ node scripts/native-stack.mjs restart pay
 node scripts/commerce-smoke.mjs --tiered
 ```
 
-在微信开发者工具中打开 `ikanyue.taro3` 项目目录，其 `project.config.json` 指向 `dist/` 构建产物。本地模拟支付不会扣真实款；`commerce-smoke` 会留下带联调标识的订单记录，不清空数据。真机不能访问 Mac 的 `127.0.0.1`，LAN 暴露需要另行显式配置。发布边界见 [支付架构决策](docs/architecture/payment-gateway.md)。
+在微信开发者工具中打开 `ikanyue.mini` 项目目录（`miniprogramRoot` 是 `miniprogram/`，源码即代码包，由开发者工具编译 Sass，无需 watcher）。开发版请求本地 server `127.0.0.1:1437` 并带 `X-Ca-Stage: TEST`，体验版和正式版请求 `https://mapi.ikanyue.com` 的 RELEASE。本地模拟支付不会扣真实款；`commerce-smoke` 会留下带联调标识的订单记录，不清空数据。真机不能访问 Mac 的 `127.0.0.1`，LAN 暴露需要另行显式配置。发布边界见 [支付架构决策](docs/architecture/payment-gateway.md)。
 
 支付运营入口是后台的「收款与退款」：订单管理、课程商品、待处理异常、账单与到账。支持按姓名查订单、按原实付规则退款、发布分时间点取消政策、异常重试和账单核对。`node scripts/commerce-smoke.mjs --tiered` 验证分时点现金退费、失败重试和网关重启恢复。真实微信通道代码有显式上线门禁，本地仍为响应 mock；商户号、真机收银台和真实账单验收未完成前不要开启真实收款。
 
 当前本地支付模式为 `wechatpay-mock`：微信 API v3 请求签名、应答验签、通知解密实际执行，仅渠道 HTTP 响应和收银结果模拟，不访问真实微信支付。支付 schema 升级需显式执行 `kanyue-pay migrate up`，不随普通启动迁移。接口与验收边界见 [支付网关说明](kanyue.pay/README.md)。
 
 ## 1Panel / OpenResty deploy
+
+各服务的部署、升级与回滚见 [docs/deployment](docs/deployment/README.md)。
 
 线上只有一个业务容器 `server`（`kanyue.server` 镜像，构建时把 `ikanyue.admin` 作为 `console` 构建上下文打进二进制）。1Panel 导入 `compose.yaml` 构建并运行；OpenResty 把后台域名反代到 `ADMIN_PORT`、API 域名反代到 `API_PORT`、数据域名反代到 `POCKETBASE_PORT`，三个端口进入同一个进程。支付网关单独用 `compose.pay.release.yaml` 发布。
 

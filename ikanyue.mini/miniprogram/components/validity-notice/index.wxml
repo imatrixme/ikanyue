@@ -1,0 +1,9 @@
+<view class="validity-notice validity-notice--{{tone}}">
+    <view class="validity-notice__icon">
+        <app-icon name="{{iconName}}" size="lg" />
+    </view>
+    <view class="validity-notice__copy">
+        <text class="validity-notice__title">{{title}}</text>
+        <text wx:if="{{description}}" class="validity-notice__description">{{description}}</text>
+    </view>
+</view>

@@ -1,0 +1,8 @@
+<view class="entry-grid" style="grid-template-columns: repeat({{entries.length < 4 ? 4 : entries.length}}, minmax(0, 1fr));">
+    <view wx:for="{{entries}}" wx:for-item="entry" wx:key="key" class="entry-grid__item" aria-role="button" aria-label="{{entry.label}}" data-key="{{entry.key}}" bindtap="onTap">
+        <view class="entry-grid__icon">
+            <app-icon name="{{entry.icon}}" size="xl" />
+        </view>
+        <text class="entry-grid__label">{{entry.label}}</text>
+    </view>
+</view>

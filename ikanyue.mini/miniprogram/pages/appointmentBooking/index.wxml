@@ -1,0 +1,48 @@
+<teacher-calendar-home wx:if="{{role === 'teacher'}}" id="teacherCalendar" />
+<view wx:else class="page-chrome booking-page">
+
+    <view class="booking-content">
+        <!-- The current venue takes no online bookings: hand off to phone instead of listing options. -->
+        <venue-handoff wx:if="{{closed}}" venue="{{venue}}" />
+        <view wx:elif="{{pageState !== 'ready'}}" class="booking-state">
+            <async-state
+                action-label="{{stateAction}}"
+                description="{{stateDescription}}"
+                kind="{{pageState === 'error' ? 'network' : 'account'}}"
+                state="{{pageState}}"
+                title="{{stateTitle}}"
+                bind:action="handleStateAction"
+            />
+        </view>
+        <block wx:else>
+            <ticket-section wx:if="{{options.length}}" subtitle="只显示当前有剩余课时且已开放预约的课程" title="选择课程与教师">
+                <view class="booking-options">
+                    <booking-option-card
+                        wx:for="{{options}}" wx:for-item="option"
+                        wx:key="offeringId"
+                        option="{{option}}"
+                        bind:select="goSlots"
+                    />
+                </view>
+            </ticket-section>
+
+            <ticket-section action-label="全部预约" subtitle="最近的申请与已确认课程" title="我的预约" bind:action="goAppointments">
+                <view wx:if="{{recentAppointments.length}}" class="booking-recent-list">
+                    <appointment-row
+                        wx:for="{{recentAppointments}}" wx:for-item="appointment"
+                        wx:key="appointmentId"
+                        appointment="{{appointment}}"
+                        bind:select="goAppointment"
+                    />
+                </view>
+                <view wx:else class="booking-empty-row">
+                    <app-icon name="course-history" size="xl" />
+                    <view class="booking-empty-row__copy">
+                        <text class="booking-empty-row__title">还没有预约记录</text>
+                        <text class="booking-empty-row__description">从上方选择课程后即可查看可预约时间。</text>
+                    </view>
+                </view>
+            </ticket-section>
+        </block>
+    </view>
+</view>

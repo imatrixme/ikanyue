@@ -1,0 +1,25 @@
+{
+  "name": "ikanyue-mini",
+  "version": "1.0.0",
+  "private": true,
+  "description": "看乐艺术 WeChat mini program (native, no build step)",
+  "type": "module",
+  "packageManager": "pnpm@10.19.0",
+  "engines": {
+    "node": ">=22.15 <23"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:tz": "TZ=America/New_York vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:live": "TZ=Asia/Shanghai vitest run --config vitest.live.config.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.3.0",
+    "globals": "^17.6.0",
+    "vitest": "^4.1.10"
+  }
+}

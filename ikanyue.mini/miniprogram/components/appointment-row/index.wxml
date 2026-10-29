@@ -1,0 +1,14 @@
+<view class="appointment-row" bindtap="onTap">
+    <view class="appointment-row__icon">
+        <app-icon name="{{statusIcon}}" size="xl" />
+    </view>
+    <view class="appointment-row__body">
+        <view class="appointment-row__heading">
+            <text class="appointment-row__title">{{title}}</text>
+            <booking-status-badge status="{{appointment.status}}" />
+        </view>
+        <text class="appointment-row__time">{{timeText}}</text>
+        <text class="appointment-row__meta">{{meta}}</text>
+    </view>
+    <app-icon ext-class="appointment-row__arrow" name="chevron-primary" size="sm" />
+</view>

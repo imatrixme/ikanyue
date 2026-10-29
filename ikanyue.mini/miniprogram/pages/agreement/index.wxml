@@ -1,0 +1,6 @@
+<view class="page-chrome agreement-page">
+    <view wx:for="{{agreement.sections}}" wx:for-item="section" wx:key="heading" class="agreement-section">
+        <text class="agreement-section__heading">{{section.heading}}</text>
+        <text class="agreement-section__body" user-select>{{section.body}}</text>
+    </view>
+</view>

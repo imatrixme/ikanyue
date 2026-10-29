@@ -102,7 +102,7 @@ DAO impact:
 
 | 子项目 | 常用验证 |
 |---|---|
-| `ikanyue.taro3` | `pnpm lint`、`TZ=Asia/Shanghai pnpm test`、`pnpm build:weapp` 后 `pnpm test:e2e` |
+| `ikanyue.mini` | `pnpm lint`、`TZ=Asia/Shanghai pnpm test`（含模板、源码边界与契约静态检查）；编译与包体积在微信开发者工具中确认 |
 | `ikanyue.admin` | `npm run lint`、`TZ=Asia/Shanghai npm test`、`npm run build:server`（产物嵌入 server） |
 | `ikanyue.website` | `npm run lint`、`npm test`、`npm run build`、`npm run test:e2e` |
 | `kanyue.pay` | `gofmt -l .`、`GOMAXPROCS=1 go vet -p 1 ./...`、`GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`；联调 `node scripts/commerce-smoke.mjs --tiered` |
@@ -137,7 +137,7 @@ DAO impact:
 
 | Path | 角色 | 技术栈 | 局部规则 |
 |---|---|---|---|
-| `ikanyue.taro3` | 微信小程序（学员与教师） | Taro 4 / Vue 3 / NutUI | `ikanyue.taro3/AGENTS.md` |
+| `ikanyue.mini` | 微信小程序（学员与教师），无构建步骤，开发者工具直接打开 | 原生小程序 + 自有薄封装 `kit/`（只有 `kit/host.js` 触达 `wx`） | `openspec/changes/replace-taro-with-native-miniapp/design.md` |
 | `ikanyue.admin` | 运营后台（静态 SPA，`npm run build:server` 后由 kanyue.server 同源提供） | React / Vite | — |
 | `ikanyue.website` | 声乐官网与公开课程目录 | Nuxt 4 | — |
 | `kanyue.pay` | 独立支付网关单体（当前仅 mock 渠道；PocketBase 面板 `/_/` 只读查看） | Go / 独立内嵌 PocketBase v0.39.11 | `kanyue.pay/README.md` |

@@ -1,0 +1,28 @@
+<view class="page-chrome courses-page">
+    <page-header subtitle="{{lesson.course.name}}" title="{{lesson.title}}" />
+    <view class="courses-content">
+        <view wx:if="{{state !== 'ready'}}" class="courses-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'empty' ? '暂无课堂信息' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <validity-notice wx:if="{{lesson.attention}}" description="{{lesson.attention}}" title="课程安排提醒" tone="warning" />
+            <ticket-section subtitle="正式课程安排" title="课堂信息">
+                <view class="courses-detail-facts">
+                    <view class="courses-detail-fact"><text class="courses-detail-label">课程</text><text class="courses-detail-value">{{lesson.course.name}}</text></view>
+                    <view class="courses-detail-fact"><text class="courses-detail-label">时间</text><text class="courses-detail-value">{{timeLabel}}</text></view>
+                    <view class="courses-detail-fact"><text class="courses-detail-label">地点</text><text class="courses-detail-value">{{lesson.location || '待通知'}}</text></view>
+                    <view class="courses-detail-fact"><text class="courses-detail-label">状态</text><text class="courses-detail-value">{{statusLabel}}</text></view>
+                    <view wx:if="{{lesson.classSummary.label}}" class="courses-detail-fact"><text class="courses-detail-label">班级</text><text class="courses-detail-value">{{lesson.classSummary.label}}</text></view>
+                    <view wx:if="{{lesson.participantSummary.label}}" class="courses-detail-fact"><text class="courses-detail-label">学员</text><text class="courses-detail-value">{{lesson.participantSummary.label}}</text></view>
+                </view>
+            </ticket-section>
+        </block>
+    </view>
+</view>

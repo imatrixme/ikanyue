@@ -1,0 +1,34 @@
+<view class="activity-ticket {{featured ? 'activity-ticket--featured' : ''}}" bindtap="onTap">
+    <media-thumb
+        wx:if="{{featured}}"
+        ext-class="activity-ticket__media"
+        fallback="{{fallbackLabel}}"
+        show-image="{{showImage}}"
+        size="lg"
+        src="{{coverUrl}}"
+        bind:error="onImageError"
+    />
+    <view class="activity-ticket__body">
+        <text class="activity-ticket__title">{{title}}</text>
+        <view class="activity-ticket__meta">
+            <text>{{dateText}}</text>
+            <text wx:if="{{timeText}}">{{timeText}}</text>
+        </view>
+        <view wx:if="{{location}}" class="activity-ticket__location">
+            <app-icon name="location-muted" size="sm" />
+            <text>{{location}}</text>
+        </view>
+        <view class="activity-ticket__footer">
+            <view class="activity-ticket__tags">
+                <text wx:for="{{visibleTags}}" wx:for-item="tag" wx:key="*this" class="activity-ticket__tag">{{tag}}</text>
+            </view>
+            <text wx:if="{{priceLabel}}" class="activity-ticket__price">{{priceLabel}}</text>
+        </view>
+    </view>
+    <view class="activity-ticket__stub">
+        <text>ADMIT ONE</text>
+        <view class="activity-ticket__barcode" aria-hidden="true">
+            <view wx:for="{{barcodeLines}}" wx:key="*this" class="activity-ticket__barcode-line" />
+        </view>
+    </view>
+</view>

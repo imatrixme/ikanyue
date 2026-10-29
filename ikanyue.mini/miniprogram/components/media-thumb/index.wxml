@@ -1,0 +1,5 @@
+<view class="media-thumb media-thumb--{{size}} {{extClass}}">
+    <image wx:if="{{showImage && src}}" class="media-thumb__image" src="{{src}}" mode="aspectFill" binderror="onError" />
+    <app-icon wx:elif="{{fallbackIcon}}" name="{{fallbackIcon}}" size="xl" />
+    <text wx:else class="media-thumb__fallback">{{fallback}}</text>
+</view>

@@ -1,0 +1,157 @@
+@import '../../styles/tokens';
+
+// Each studio card wears one of four themes: a three-stop wash, two light orbs and a diagonal sheen.
+// A studio cover, when set, shows through a soft veil instead of the wash.
+.member-card {
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-raised;
+    box-sizing: border-box;
+    color: $ky-ink;
+    height: 280rpx;
+    overflow: hidden;
+    position: relative;
+}
+
+.member-card:active { opacity: 0.94; }
+.member-card--large:active { opacity: 1; }
+
+.member-card--mint { background: linear-gradient(135deg, $ky-primary-wash 0%, $ky-primary-soft 48%, $ky-primary-line 100%); }
+.member-card--apricot { background: linear-gradient(135deg, $ky-gold-wash 0%, $ky-yellow-soft 48%, $ky-gold-line 100%); }
+.member-card--sky { background: linear-gradient(135deg, $ky-blue-wash 0%, $ky-blue-soft 48%, $ky-blue-line 100%); }
+.member-card--sage { background: linear-gradient(135deg, $ky-success-wash 0%, $ky-success-soft 48%, $ky-success-line 100%); }
+
+.member-card__cover,
+.member-card__veil,
+.member-card__sheen {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.member-card__veil--cover {
+    background: linear-gradient(100deg, $ky-surface 16%, $ky-primary-surface-overlay 100%);
+}
+
+.member-card__orb {
+    background: $ky-primary-surface-overlay;
+    border-radius: 50%;
+    position: absolute;
+}
+
+.member-card__orb--large {
+    height: 320rpx;
+    right: -96rpx;
+    top: -136rpx;
+    width: 320rpx;
+}
+
+.member-card__orb--small {
+    bottom: -84rpx;
+    height: 180rpx;
+    left: 42%;
+    width: 180rpx;
+}
+
+.member-card__sheen {
+    background: linear-gradient(115deg, transparent 34%, $ky-primary-surface-overlay 46%, transparent 58%);
+}
+
+.member-card__body {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    padding: $ky-space-4;
+    position: relative;
+}
+
+.member-card__head {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-3;
+}
+
+.member-card__badge {
+    align-items: center;
+    background: $ky-surface;
+    border-radius: 50%;
+    box-shadow: $ky-shadow-card;
+    display: flex;
+    flex-shrink: 0;
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
+    height: 72rpx;
+    justify-content: center;
+    width: 72rpx;
+}
+
+.member-card__copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-card__name,
+.member-card__tagline {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-card__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-title;
+    font-weight: $ky-font-weight-medium;
+}
+
+.member-card__tagline {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-xs;
+    margin-top: 4rpx;
+}
+
+.member-card__chip {
+    align-self: flex-start;
+    background: $ky-primary-surface-overlay;
+    border: 1px solid $ky-primary-surface-overlay;
+    border-radius: $ky-radius-pill;
+    color: $ky-ink;
+    flex-shrink: 0;
+    font-size: $ky-font-size-2xs;
+    letter-spacing: 2rpx;
+    padding: 4rpx $ky-space-2;
+}
+
+.member-card__foot {
+    align-items: flex-end;
+    display: flex;
+    justify-content: space-between;
+}
+
+.member-card__summary {
+    font-size: $ky-font-size-body;
+    font-weight: $ky-font-weight-medium;
+}
+
+.member-card__enter {
+    background: $ky-surface;
+    border-radius: $ky-radius-pill;
+    box-shadow: $ky-shadow-card;
+    font-size: $ky-font-size-xs;
+    padding: 8rpx $ky-space-4;
+}
+
+// Theme accents: badge initial, summary and the enter pill share the card's hue.
+.member-card--mint { .member-card__badge, .member-card__summary, .member-card__enter { color: $ky-primary; } }
+.member-card--apricot { .member-card__badge, .member-card__summary, .member-card__enter { color: $ky-gold; } }
+.member-card--sky { .member-card__badge, .member-card__summary, .member-card__enter { color: $ky-info-text; } }
+.member-card--sage { .member-card__badge, .member-card__summary, .member-card__enter { color: $ky-success; } }
+
+.member-card--large {
+    height: 300rpx;
+
+    .member-card__badge { height: 84rpx; width: 84rpx; }
+}

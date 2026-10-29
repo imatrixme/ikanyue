@@ -1,0 +1,123 @@
+<teacher-calendar-home wx:if="{{role === 'teacher'}}" id="teacherCalendar" />
+<view wx:else class="page-chrome points-page">
+    <points-pass
+        wx:if="{{isLogin}}"
+        balance="{{balance}}"
+        caption="{{passCaption}}"
+    />
+
+    <view wx:if="{{loading}}" class="points-loading" aria-label="积分和实物加载中">
+        <view class="skeleton-card" wx:for="{{skeletons}}" wx:key="*this">
+            <view class="skeleton-card__media" />
+            <view class="skeleton-card__body">
+                <view class="skeleton-line skeleton-line--title" />
+                <view class="skeleton-line" />
+                <view class="skeleton-line skeleton-line--short" />
+            </view>
+        </view>
+    </view>
+
+    <view wx:elif="{{!isLogin}}" class="points-page__state">
+        <async-state
+            action-label="登录 / 注册"
+            description="登录后可以查看积分、活动和当前可领取实物。"
+            kind="account"
+            state="empty"
+            title="登录后查看积分账户"
+            bind:action="goProfile"
+        />
+    </view>
+
+    <view wx:elif="{{errorMessage}}" class="points-page__state">
+        <async-state
+            action-label="重新加载"
+            description="{{errorMessage}}"
+            kind="network"
+            state="error"
+            title="积分暂时无法加载"
+            bind:action="loadPointsLiteData"
+        />
+    </view>
+
+    <block wx:else>
+        <ticket-section
+            action-label="全部实物"
+            subtitle="到前台领取时由老师确认扣分"
+            title="现在可领取"
+            bind:action="goRedeemable">
+            <view wx:if="{{redeemableRewards.length > 0}}" class="reward-voucher-list">
+                <reward-voucher
+                    wx:for="{{voucherRows}}" wx:for-item="row"
+                    wx:key="id"
+                    description="线下领取 · 管理员确认扣分"
+                    item="{{row.item}}"
+                    redeemable="{{true}}"
+                    show-image="{{row.showImage}}"
+                    bind:imageerror="markImageFailed"
+                    bind:select="goRedeemable"
+                />
+                <view
+                    wx:if="{{redeemableHiddenCount > 0}}"
+                    class="reward-voucher-more"
+                    bindtap="goRedeemable">
+                    <text>查看更多 · 另有 {{redeemableHiddenCount}} 件可领取实物</text>
+                    <app-icon name="chevron-primary" size="sm" />
+                </view>
+            </view>
+            <view wx:else class="points-empty-row points-empty-row--ready">
+                <view class="points-empty-row__icon">
+                    <app-icon name="account-rewards" size="xl" />
+                </view>
+                <view class="points-empty-row__copy">
+                    <text class="points-empty-row__title">暂无可领取实物</text>
+                    <text class="points-empty-row__description">继续积累积分，达到所需积分后即可线下领取。</text>
+                </view>
+            </view>
+        </ticket-section>
+
+        <ticket-section
+            action-label="查看目录"
+            subtitle="{{catalogSubtitle}}"
+            title="全部实物"
+            bind:action="goCatalog">
+            <account-row
+                description="浏览所有实物及所需积分"
+                icon="account-rewards"
+                interactive="{{true}}"
+                title="{{catalogTitle}}"
+                value="{{balanceLabel}}"
+                bind:select="goCatalog"
+            />
+        </ticket-section>
+
+        <ticket-section
+            action-label="{{historyActionLabel}}"
+            title="积分记录"
+            bind:action="goPointHistory">
+
+            <view wx:if="{{pointEvents.length > 0}}" class="point-events">
+                <point-event-row
+                    wx:for="{{eventRows}}" wx:for-item="event"
+                    wx:key="id"
+                    balance="{{event.balance}}"
+                    delta="{{event.delta}}"
+                    meta="{{event.meta}}"
+                    reason="{{event.reason}}"
+                    remark="{{event.remark}}"
+                    spending="{{event.spending}}"
+                    title="{{event.title}}"
+                />
+            </view>
+            <view wx:else class="points-empty-row points-empty-row--events">
+                <view class="points-empty-row__icon">
+                    <app-icon name="account-points" size="xl" />
+                </view>
+                <view class="points-empty-row__copy">
+                    <text class="points-empty-row__title">暂无积分记录</text>
+                    <text class="points-empty-row__description">参加活动或由老师添加积分后，记录会显示在这里。</text>
+                </view>
+            </view>
+
+        </ticket-section>
+    </block>
+</view>

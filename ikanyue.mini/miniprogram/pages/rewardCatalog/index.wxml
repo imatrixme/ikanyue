@@ -1,0 +1,44 @@
+<view class="page-chrome catalog-page">
+    <points-pass
+        balance="{{balance}}"
+        caption="{{caption}}"
+        compact="{{true}}"
+    />
+
+    <segmented-control value="{{activeView}}" ext-class="catalog-tabs" options="{{catalogOptions}}" bind:change="setActiveView" />
+
+    <ticket-section subtitle="{{activeViewSubtitle}}" title="{{activeViewTitle}}">
+        <async-state wx:if="{{loading}}" state="loading" title="正在加载实物列表" />
+
+        <async-state
+            wx:elif="{{errorMessage}}"
+            action-label="重新加载"
+            description="{{errorMessage}}"
+            kind="network"
+            state="error"
+            title="实物列表暂时无法加载"
+            bind:action="loadRewards"
+        />
+
+        <async-state
+            wx:elif="{{activeItems.length === 0}}"
+            description="{{emptyStateDescription}}"
+            kind="rewards"
+            state="empty"
+            title="{{emptyStateTitle}}"
+        />
+
+        <view wx:else class="catalog-list">
+            <reward-voucher
+                wx:for="{{voucherRows}}" wx:for-item="row"
+                wx:key="id"
+                description="{{row.description}}"
+                item="{{row.item}}"
+                locked-label="{{row.lockedLabel}}"
+                redeemable="{{row.redeemable}}"
+                show-image="{{row.showImage}}"
+                bind:imageerror="markImageFailed"
+            />
+        </view>
+    </ticket-section>
+</view>

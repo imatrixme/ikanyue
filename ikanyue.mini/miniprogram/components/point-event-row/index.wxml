@@ -1,0 +1,13 @@
+<view class="point-event-row {{spending ? 'point-event-row--spend' : ''}}">
+    <view class="point-event-row__rail"><view class="point-event-row__dot" /></view>
+    <view class="point-event-row__body">
+        <text class="point-event-row__title">{{title}}</text>
+        <text class="point-event-row__reason">{{reason}}</text>
+        <text wx:if="{{remark && remark !== reason}}" class="point-event-row__remark">{{remark}}</text>
+        <text class="point-event-row__meta">{{meta}}</text>
+    </view>
+    <view class="point-event-row__amount">
+        <text class="point-event-row__delta">{{delta}}</text>
+        <text class="point-event-row__balance">余额 {{balance}}</text>
+    </view>
+</view>

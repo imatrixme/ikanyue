@@ -1,0 +1,63 @@
+<view class="page-chrome teacher-workbench">
+    <view class="teacher-workbench__content">
+        <upcoming-lessons id="upcoming" />
+        <view wx:if="{{state !== 'ready'}}" class="teacher-workbench__state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage || '开放课程预约后，学员申请会显示在这里。'}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '工作台加载失败' : '暂无预约任务'}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <ticket-section action-label="全部申请" subtitle="请在响应期限前完成确认或拒绝" title="待你确认" bind:action="goPending">
+                <view wx:if="{{dashboard.pending.length}}" class="teacher-workbench__list">
+                    <appointment-row
+                        wx:for="{{dashboard.pending}}"
+                        wx:for-item="appointment"
+                        wx:key="appointmentId"
+                        appointment="{{appointment}}"
+                        perspective="teacher"
+                        bind:select="goDetail"
+                    />
+                </view>
+                <view wx:else class="teacher-workbench__empty">
+                    <app-icon name="booking-confirm" size="xl" />
+                    <text>当前没有待确认申请</text>
+                </view>
+            </ticket-section>
+
+            <ticket-section subtitle="按机构开放时间设置每周与临时时段" title="可预约时间">
+                <view class="teacher-workbench__offerings">
+                    <account-row
+                        wx:for="{{offerings}}"
+                        wx:for-item="offering"
+                        wx:key="offeringId"
+                        item-id="{{offering.offeringId}}"
+                        description="{{offering.description}}"
+                        icon="booking-availability"
+                        interactive="{{true}}"
+                        title="{{offering.course.name}}"
+                        value="设置"
+                        bind:select="goAvailability"
+                    />
+                </view>
+            </ticket-section>
+        </block>
+        <ticket-section wx:if="{{renewalRows.length}}" subtitle="教务会提醒学员查看课包，无需你沟通续费" title="待续费学员">
+            <view class="teacher-workbench__list">
+                <account-row
+                    wx:for="{{renewalRows}}"
+                    wx:for-item="row"
+                    wx:key="key"
+                    description="{{row.description}}"
+                    icon-text="{{row.initial}}"
+                    title="{{row.title}}"
+                    value="{{row.value}}"
+                />
+            </view>
+        </ticket-section>
+    </view>
+</view>

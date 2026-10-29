@@ -1,0 +1,129 @@
+@import '../../styles/tokens';
+
+.reward-voucher {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    box-sizing: border-box;
+    display: flex;
+    min-height: 164rpx;
+    overflow: hidden;
+    padding: $ky-space-2 $ky-space-3 $ky-space-2 $ky-space-2;
+    position: relative;
+}
+
+.reward-voucher + .reward-voucher {
+    margin-top: $ky-space-2;
+}
+
+.reward-voucher::after {
+    border-left: 1px dashed $ky-primary-line;
+    bottom: $ky-space-2;
+    content: '';
+    position: absolute;
+    right: 172rpx;
+    top: $ky-space-2;
+}
+
+.reward-voucher--ready {
+    border-color: $ky-success-line;
+}
+
+.reward-voucher__media {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    color: $ky-primary-strong;
+    display: flex;
+    flex: 0 0 136rpx;
+    font-size: $ky-font-size-display-sm;
+    font-weight: $ky-font-weight-black;
+    height: 124rpx;
+    justify-content: center;
+    overflow: hidden;
+    width: 136rpx;
+}
+
+.reward-voucher__body {
+    flex: 1;
+    min-width: 0;
+    padding: 0 192rpx 0 $ky-space-3;
+}
+
+.reward-voucher__name,
+.reward-voucher__description {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reward-voucher__name {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-black;
+}
+
+.reward-voucher__description {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: $ky-space-1;
+}
+
+.reward-voucher__price {
+    color: $ky-gold;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-black;
+    margin-top: $ky-space-1;
+}
+
+.reward-voucher__unit {
+    font-size: $ky-font-size-2xs;
+    margin-left: 6rpx;
+}
+
+.reward-voucher__status {
+    align-items: center;
+    border: 1px solid $ky-primary-line;
+    border-radius: $ky-radius-sm;
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    font-weight: $ky-font-weight-bold;
+    height: 56rpx;
+    justify-content: center;
+    position: absolute;
+    right: $ky-space-3;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 128rpx;
+}
+
+.reward-voucher__status--ready {
+    background: $ky-primary;
+    border-color: $ky-primary-strong;
+    color: $ky-on-primary;
+}
+
+@media (max-width: 350px) {
+    .reward-voucher__media {
+        flex-basis: 120rpx;
+        height: 116rpx;
+        width: 120rpx;
+    }
+
+    .reward-voucher__body {
+        padding-left: $ky-space-2;
+        padding-right: 168rpx;
+    }
+
+    .reward-voucher__status {
+        right: $ky-space-2;
+        width: 116rpx;
+    }
+
+    .reward-voucher::after {
+        right: 148rpx;
+    }
+}

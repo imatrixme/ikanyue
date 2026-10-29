@@ -1,0 +1,26 @@
+@import '../../styles/tokens';
+
+.media-thumb {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    color: $ky-primary-strong;
+    display: flex;
+    flex-shrink: 0;
+    font-weight: $ky-font-weight-black;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.media-thumb--sm { height: 96rpx; width: 96rpx; }
+.media-thumb--md { height: 124rpx; width: 136rpx; }
+.media-thumb--lg { height: 100%; min-height: 288rpx; width: 208rpx; }
+
+.media-thumb__image {
+    height: 100%;
+    width: 100%;
+}
+
+.media-thumb__fallback {
+    font-size: $ky-font-size-display-sm;
+}

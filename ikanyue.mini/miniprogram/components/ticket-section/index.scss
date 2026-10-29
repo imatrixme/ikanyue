@@ -1,0 +1,15 @@
+@import '../../styles/tokens';
+
+.ticket-section {
+    margin-top: $ky-space-6;
+}
+
+.ticket-section__header {
+    margin-bottom: $ky-space-3;
+}
+
+@media (max-width: 350px) {
+    .ticket-section .section-header__subtitle {
+        max-width: 420rpx;
+    }
+}

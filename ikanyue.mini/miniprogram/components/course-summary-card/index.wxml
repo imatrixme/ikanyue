@@ -1,0 +1,31 @@
+<view class="course-summary-card" bindtap="onTap">
+    <view class="course-summary-card__head">
+        <view class="course-summary-card__identity">
+            <view class="course-summary-card__icon">
+                <app-icon name="course-book" size="xl" />
+            </view>
+            <view class="course-summary-card__copy">
+                <text class="course-summary-card__eyebrow">{{deliveryText}}</text>
+                <text class="course-summary-card__title">{{course.courseName}}</text>
+            </view>
+        </view>
+        <app-icon name="chevron-primary" size="sm" />
+    </view>
+    <view class="course-summary-card__metrics">
+        <view class="course-summary-card__metric">
+            <text class="course-summary-card__value">{{course.remainingLessons}}</text>
+            <text class="course-summary-card__label">剩余课时</text>
+        </view>
+        <view class="course-summary-card__metric">
+            <text class="course-summary-card__value">{{course.scheduledLessons}}</text>
+            <text class="course-summary-card__label">已安排</text>
+        </view>
+        <view class="course-summary-card__metric">
+            <text class="course-summary-card__value">{{course.completedLessons}}</text>
+            <text class="course-summary-card__label">已完成</text>
+        </view>
+    </view>
+    <text class="course-summary-card__validity {{course.expiringSoon ? 'course-summary-card__validity--warning' : ''}}">
+        {{validityText}}
+    </text>
+</view>

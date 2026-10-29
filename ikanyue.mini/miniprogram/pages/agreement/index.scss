@@ -1,0 +1,37 @@
+@import '../../styles/tokens';
+
+.agreement-page {
+    background: $ky-canvas;
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: $ky-space-4 $ky-space-4 $ky-space-8;
+}
+
+.agreement-section {
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    padding: $ky-space-4;
+}
+
+.agreement-section + .agreement-section {
+    margin-top: $ky-space-3;
+}
+
+.agreement-section__heading,
+.agreement-section__body {
+    display: block;
+}
+
+.agreement-section__heading {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-bold;
+}
+
+.agreement-section__body {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body;
+    line-height: $ky-leading-readable;
+    margin-top: $ky-space-2;
+}

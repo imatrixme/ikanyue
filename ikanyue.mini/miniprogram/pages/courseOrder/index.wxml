@@ -1,0 +1,36 @@
+<view class="page-chrome commerce-page commerce-order-page">
+<view class="commerce-content">
+  <view wx:if="{{error || !order}}" class="commerce-state">
+    <async-state state="{{error ? 'error' : 'loading'}}" kind="{{error ? 'network' : 'default'}}" description="{{error}}" action-label="{{error ? '重新加载' : ''}}" bind:action="load" />
+  </view>
+  <block wx:else>
+    <view wx:if="{{order.mockPayment}}" class="commerce-notice">模拟支付环境，不会扣除真实款项</view>
+    <view class="commerce-summary">
+      <text class="commerce-summary__status">{{view.status}}</text>
+      <text class="commerce-summary__name">{{order.name}}</text>
+      <text class="commerce-summary__label">{{view.amountTitle}}</text>
+      <text class="commerce-summary__amount">{{view.amount}}</text>
+      <view wx:if="{{order.refunded || order.cancellationFees}}" class="commerce-summary__facts">
+        <view wx:if="{{order.refunded}}" class="commerce-fact"><text>已退款</text><text>{{view.refunded}}</text></view>
+        <view wx:if="{{order.cancellationFees}}" class="commerce-fact"><text>取消预约扣费</text><text>{{view.cancellationFees}}</text></view>
+      </view>
+    </view>
+    <view class="commerce-policy-card">
+      <text class="commerce-policy-card__title">退费规则</text>
+      <text class="commerce-policy">{{view.policy}}</text>
+    </view>
+    <view class="commerce-actions">
+      <block wx:if="{{order.status === 'pending'}}">
+        <button wx:if="{{order.mockPayment}}" disabled="{{busy}}" class="commerce-primary" bindtap="pay">模拟付款</button>
+        <button wx:else disabled="{{busy}}" class="commerce-primary" bindtap="wechatPay">微信支付</button>
+      </block>
+      <button wx:if="{{bookable}}" disabled="{{busy}}" class="commerce-primary" bindtap="book">选择时间预约</button>
+      <button wx:if="{{order.status === 'failed'}}" disabled="{{busy}}" class="commerce-primary" bindtap="shop">重新选购</button>
+      <button wx:if="{{settling}}" disabled="{{busy}}" class="commerce-secondary" bindtap="refresh">查询最新状态</button>
+      <button wx:if="{{bookable}}" disabled="{{busy}}" class="commerce-link" bindtap="refund">申请退还剩余课时</button>
+    </view>
+    <text wx:if="{{order.status === 'pending'}}" class="commerce-policy">{{pendingNotice}}</text>
+    <text wx:if="{{order.refundPending}}" class="commerce-policy">退款结果确认期间，待退款的剩余课时暂停使用。</text>
+  </block>
+</view>
+  </view>

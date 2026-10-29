@@ -1,0 +1,17 @@
+@import '../../styles/tokens';
+
+.webview-container {
+    background: $ky-canvas;
+    height: 100vh;
+    width: 100vw;
+}
+
+.webview-error {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 36rpx;
+    background: $ky-canvas;
+}

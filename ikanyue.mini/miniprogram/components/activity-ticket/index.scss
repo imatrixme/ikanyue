@@ -1,0 +1,148 @@
+@import '../../styles/tokens';
+
+.activity-ticket {
+    background: $ky-surface;
+    border: 1px solid $ky-primary-line;
+    border-radius: $ky-radius-lg;
+    box-sizing: border-box;
+    display: flex;
+    min-height: 240rpx;
+    overflow: hidden;
+    position: relative;
+}
+
+.activity-ticket + .activity-ticket {
+    margin-top: $ky-space-3;
+}
+
+.activity-ticket:active {
+    background: $ky-primary-wash;
+}
+
+.activity-ticket__media {
+    background: $ky-secondary-surface;
+    flex: 0 0 208rpx;
+    min-height: 288rpx;
+    overflow: hidden;
+    width: 208rpx;
+}
+
+.activity-ticket__body {
+    flex: 1;
+    min-width: 0;
+    padding: $ky-space-3 104rpx $ky-space-3 $ky-space-4;
+}
+
+.activity-ticket__title {
+    color: $ky-ink-strong;
+    display: -webkit-box;
+    font-size: $ky-font-size-title-sm;
+    font-weight: $ky-font-weight-black;
+    line-height: $ky-leading-compact;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.activity-ticket__meta {
+    color: $ky-text-secondary;
+    display: flex;
+    font-size: $ky-font-size-body-sm;
+    gap: $ky-space-2;
+    margin-top: $ky-space-2;
+}
+
+.activity-ticket__location {
+    align-items: center;
+    color: $ky-text-muted;
+    display: flex;
+    font-size: $ky-font-size-xs;
+    gap: $ky-space-1;
+    margin-top: $ky-space-2;
+    min-width: 0;
+}
+
+.activity-ticket__location text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-ticket__footer {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: $ky-space-3;
+}
+
+.activity-ticket__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $ky-space-1;
+    min-width: 0;
+}
+
+.activity-ticket__tag {
+    background: $ky-primary-soft;
+    border-radius: $ky-radius-sm;
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-2xs;
+    font-weight: $ky-font-weight-semibold;
+    padding: 6rpx 12rpx;
+}
+
+.activity-ticket__price {
+    color: $ky-primary-strong;
+    flex-shrink: 0;
+    font-size: $ky-font-size-sm;
+    font-weight: $ky-font-weight-black;
+    margin-left: $ky-space-2;
+}
+
+.activity-ticket__stub {
+    align-items: center;
+    background: $ky-primary;
+    border-left: 1px dashed $ky-on-primary-divider;
+    bottom: 0;
+    color: $ky-on-primary;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: $ky-space-2 $ky-space-1;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 68rpx;
+}
+
+.activity-ticket__stub > text {
+    font-size: $ky-font-size-2xs;
+    font-weight: $ky-font-weight-bold;
+    transform: rotate(90deg);
+    white-space: nowrap;
+}
+
+.activity-ticket__barcode {
+    display: flex;
+    gap: 4rpx;
+    height: 56rpx;
+}
+
+.activity-ticket__barcode-line {
+    border-left: 1px solid $ky-on-primary;
+}
+
+.activity-ticket--featured {
+    min-height: 288rpx;
+}
+
+@media (max-width: 350px) {
+    .activity-ticket__media {
+        flex-basis: 176rpx;
+        width: 176rpx;
+    }
+
+    .activity-ticket__body {
+        padding-left: $ky-space-3;
+    }
+}

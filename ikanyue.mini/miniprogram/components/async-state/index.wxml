@@ -1,0 +1,15 @@
+<view class="async-state async-state--{{state}}">
+    <view wx:if="{{state === 'loading'}}" class="async-state__loading">
+        <view class="async-state__spinner" />
+        <text>{{title || '正在加载'}}</text>
+    </view>
+    <empty-state
+        wx:else
+        action-label="{{actionLabel}}"
+        compact="{{compact}}"
+        description="{{description}}"
+        kind="{{kind}}"
+        title="{{title}}"
+        bind:action="onAction"
+    />
+</view>

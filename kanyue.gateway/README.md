@@ -65,7 +65,7 @@
   - 控制台里对这些 API 的接口、方法、路径的手工修改，会在下次应用时被覆盖。
   - server 当前没提供的接口（例如 `COURSE_COMMERCE_ENABLED` 未开时的下单接口）会被列出并跳过；开启后再应用一次即可。
 - 守卫：
-  - `node --test scripts/gateway-exposure.test.mjs` 要求清单与 `ikanyue.taro3/utils` 里的 `iNet` 调用一致。只有 `mock-pay` 例外，它只在开发环境注册。
+  - `node --test scripts/gateway-exposure.test.mjs` 要求清单与 `ikanyue.mini/miniprogram/services` 里的 `iNet` 调用一致（页面和组件不得直接调用 `iNet` 或 `kit` 的 `request`）。只有 `mock-pay` 例外，它只在开发环境注册。
   - kanyue.server 的清单测试要求清单里每个接口都由 server 提供，且不是 `ops` 或 `service` 接口。
   - 小程序新增接口时，同一次改动里更新清单。
 
@@ -76,7 +76,7 @@
 1. `node scripts/native-stack.mjs init`：
    - 创建 `.local/native/gateway-data`、执行迁移、建控制台超管；
    - 注册令牌和加密密钥随机生成，只存在被忽略的 `.local/native/environment.json`。
-2. `node scripts/native-stack.mjs up`：按网关 → server → pay → stages → 小程序的顺序启动。
+2. `node scripts/native-stack.mjs up`：按网关 → server → pay → stages 的顺序启动（小程序无构建步骤，开发者工具直接打开 `ikanyue.mini`）。
    - server 与 pay 自己注册为 RELEASE 实例。
    - `stages` 用回环中继端口（server `14371`/`14372`，pay `14401`/`14402`）把同一组进程注册为 TEST/PRE 实例，三个环境都能本地联调；它不另起 PocketBase，不会重复跑定时任务。
 

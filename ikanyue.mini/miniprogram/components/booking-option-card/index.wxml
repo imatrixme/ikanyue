@@ -1,0 +1,14 @@
+<view class="booking-option" bindtap="onTap">
+    <view class="booking-option__icon">
+        <app-icon name="course-book" size="xl" />
+    </view>
+    <view class="booking-option__copy">
+        <text class="booking-option__course">{{option.course.name}}</text>
+        <text class="booking-option__teacher">{{option.teacher.name}}</text>
+        <text class="booking-option__meta">{{detail}}</text>
+    </view>
+    <view class="booking-option__action">
+        <text>选时间</text>
+        <app-icon name="chevron-primary" size="sm" />
+    </view>
+</view>

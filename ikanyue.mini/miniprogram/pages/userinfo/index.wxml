@@ -1,0 +1,83 @@
+<view class="page-chrome userinfo-page">
+    <page-header centered="{{true}}" ext-class="userinfo-hero">
+        <view slot="leading">
+            <view class="userinfo-avatar">
+                <image wx:if="{{avatarUrl}}" class="userinfo-avatar__image" src="{{avatarUrl}}" mode="aspectFill" />
+                <text wx:else>{{displayInitial}}</text>
+            </view>
+        </view>
+    </page-header>
+
+    <view class="userinfo-content">
+        <ticket-section subtitle="用于学员识别" title="基本资料">
+            <view class="userinfo-form-sheet">
+
+            <form-row label="昵称">
+                <input
+                    value="{{form.nickName}}" data-field="form.nickName" bindinput="onField"
+                    class="userinfo-field__input"
+                    maxlength="24"
+                    placeholder="请输入昵称"
+                    type="nickname"
+                    bindblur="onField"
+                />
+            </form-row>
+
+            <form-row label="姓名">
+                <input
+                    value="{{form.realName}}" data-field="form.realName" bindinput="onField"
+                    class="userinfo-field__input"
+                    maxlength="24"
+                    placeholder="请输入姓名"
+                    type="text"
+                />
+            </form-row>
+
+            <form-row label="性别">
+                <segmented-control value="{{form.gender}}" ext-class="userinfo-segmented" options="{{genderOptions}}" bind:change="changeGender" />
+            </form-row>
+
+            <form-row label="年龄">
+                <input
+                    value="{{form.age}}" data-field="form.age" bindinput="onField"
+                    class="userinfo-field__input"
+                    maxlength="3"
+                    placeholder="请输入年龄"
+                    type="number"
+                />
+            </form-row>
+
+            <form-row label="省份">
+                <picker
+                    class="userinfo-picker"
+                    mode="selector"
+                    range="{{provinceOptions}}"
+                    value="{{provinceIndex}}"
+                    bindchange="handleProvinceChange">
+                    <view class="userinfo-picker__value">
+                        <text>{{form.province || '请选择省份'}}</text>
+                        <app-icon ext-class="userinfo-picker__arrow" name="chevron-primary" size="sm" />
+                    </view>
+                </picker>
+            </form-row>
+            </view>
+        </ticket-section>
+
+        <ticket-section subtitle="微信登录凭证不可在这里修改" title="登录账号">
+            <view class="userinfo-form-sheet">
+                <account-row icon="account-phone" title="绑定手机" value="{{maskedPhone}}" />
+            </view>
+        </ticket-section>
+
+        <view class="userinfo-note">
+            <app-icon ext-class="userinfo-note__marker" name="info-blue" size="sm" />
+            <text>档案资料仅用于学员身份识别、活动联系和线下服务，不会对其他学员公开。</text>
+        </view>
+
+        <button class="userinfo-save" loading="{{saving}}" disabled="{{saving}}" bindtap="saveInfo">保存资料</button>
+
+        <view class="userinfo-account-actions">
+            <text class="userinfo-logout" aria-role="button" bindtap="confirmLogout">退出登录</text>
+        </view>
+    </view>
+</view>

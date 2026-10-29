@@ -1,0 +1,12 @@
+<view class="section-header {{extClass}}">
+    <view class="section-header__identity">
+        <view class="section-header__copy">
+            <text class="section-header__title">{{title}}</text>
+            <text wx:if="{{subtitle}}" class="section-header__subtitle">{{subtitle}}</text>
+        </view>
+    </view>
+    <view wx:if="{{actionLabel}}" class="section-header__action" aria-role="button" bindtap="onAction">
+        <text>{{actionLabel}}</text>
+        <app-icon name="chevron-primary" size="sm" />
+    </view>
+</view>

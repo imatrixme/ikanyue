@@ -1,0 +1,10 @@
+<view class="ticket-section {{extClass}}">
+    <section-header
+        ext-class="ticket-section__header"
+        action-label="{{actionLabel}}"
+        subtitle="{{subtitle}}"
+        title="{{title}}"
+        bind:action="onAction"
+    />
+    <slot></slot>
+</view>

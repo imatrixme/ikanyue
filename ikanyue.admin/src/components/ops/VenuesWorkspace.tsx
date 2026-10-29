@@ -1,8 +1,9 @@
-import { Pencil, Plus, RefreshCw } from 'lucide-react'
+import { ImagePlus, Pencil, Plus, RefreshCw, Upload } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import type { OpsApi } from '../../app/api'
-import type { Venue, VenueInput } from '../../app/venueApi'
+import type { UploadProgressHandler } from '../../app/types'
+import { maxVenueCoverSize, venueCoverTypes, type Venue, type VenueInput } from '../../app/venueApi'
 import { PageHeader, WorkspacePanel } from '../layout/Workspace'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
@@ -11,6 +12,7 @@ import { IconButton, Switch } from '../ui/Controls'
 import { AsyncState, DataTable, EmptyState, ResponsiveDataRegion } from '../ui/DataDisplay'
 import { DrawerShell } from '../ui/DrawerShell'
 import { Field, Input } from '../ui/Input'
+import { FileUploader, ImagePreview } from '../ui/Media'
 import { useNotify } from '../ui/notifyContext'
 
 const emptyVenue: VenueInput = { address: '', bookable: true, intro: '', name: '', openingHours: '', phone: '', sortOrder: 0, status: 'active' }
@@ -42,6 +44,14 @@ export function VenuesWorkspace({ api, token }: { api: OpsApi; token: string }) 
     } catch (saveError) { setError(message(saveError, '保存场馆失败')); setLoading(false); return false }
   }
 
+  // Errors surface next to the uploader in the drawer.
+  async function uploadCover(id: string, file: File, onProgress: UploadProgressHandler) {
+    const updated = await api.uploadVenueCover(token, id, file, onProgress)
+    setVenues((current) => current.map((venue) => (venue.id === id ? updated : venue)))
+    notify('封面已更新')
+    return updated
+  }
+
   async function toggleStatus(venue: Venue) {
     setStatusTarget(null)
     const status = venue.status === 'active' ? 'inactive' : 'active'
@@ -66,7 +76,7 @@ export function VenuesWorkspace({ api, token }: { api: OpsApi; token: string }) 
           mobile={venues.map((venue) => <article className="grid gap-2 px-4 py-4" key={venue.id}><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{venue.name}</h3><StatusBadge venue={venue} /></div><p className="text-xs text-[var(--muted-foreground)]">{venue.address || '未填写地址'} · {venue.bookable ? '可约课' : '仅电话咨询'}</p>{actions(venue)}</article>)}
         />
       </AsyncState>
-      {editor ? <DrawerShell description="保存后小程序下次打开即可看到" onRequestClose={() => setEditor(null)} title={editor.venue ? `编辑${editor.venue.name}` : '新增场馆'}><VenueEditor key={editor.venue?.id || 'new-venue'} loading={loading} onCancel={() => setEditor(null)} onSave={save} venue={editor.venue} /></DrawerShell> : null}
+      {editor ? <DrawerShell description="保存后小程序下次打开即可看到" onRequestClose={() => setEditor(null)} title={editor.venue ? `编辑${editor.venue.name}` : '新增场馆'}><VenueEditor key={editor.venue?.id || 'new-venue'} loading={loading} onCancel={() => setEditor(null)} onSave={save} onUploadCover={uploadCover} venue={editor.venue} /></DrawerShell> : null}
       {statusTarget ? <ConfirmDialog confirmLabel="确认停用" description={`停用后小程序不再展示「${statusTarget.name}」，已选择它的学员会回到第一个场馆。之后可以随时恢复。`} destructive onCancel={() => setStatusTarget(null)} onConfirm={() => void toggleStatus(statusTarget)} title="停用场馆" /> : null}
     </WorkspacePanel>
   )
@@ -76,13 +86,16 @@ function StatusBadge({ venue }: { venue: Venue }) {
   return <Badge tone={venue.status === 'active' ? 'green' : 'neutral'}>{venue.status === 'active' ? '启用' : '已停用'}</Badge>
 }
 
-function VenueEditor({ loading, onCancel, onSave, venue }: { loading: boolean; onCancel: () => void; onSave: (id: string | null, data: VenueInput) => Promise<boolean>; venue: Venue | null }) {
+type CoverUploader = (id: string, file: File, onProgress: UploadProgressHandler) => Promise<Venue>
+
+function VenueEditor({ loading, onCancel, onSave, onUploadCover, venue }: { loading: boolean; onCancel: () => void; onSave: (id: string | null, data: VenueInput) => Promise<boolean>; onUploadCover: CoverUploader; venue: Venue | null }) {
   const [form, setForm] = useState<VenueInput>(() => (venue ? { ...venue } : emptyVenue))
   const update = <K extends keyof VenueInput>(key: K, value: VenueInput[K]) => setForm((current) => ({ ...current, [key]: value }))
 
   return (
     <form className="flex min-h-full flex-col" onSubmit={(event) => { event.preventDefault(); void onSave(venue?.id || null, { ...form, sortOrder: Number(form.sortOrder) || 0 }) }}>
       <div className="grid gap-4 p-5">
+        {venue ? <VenueCover onUpload={onUploadCover} venue={venue} /> : <p className="rounded-md bg-[var(--muted)] px-3 py-2 text-xs text-[var(--muted-foreground)]">先创建场馆，再上传封面。</p>}
         <Field label="场馆名称" htmlFor="venue-name"><Input data-autofocus id="venue-name" maxLength={40} value={form.name} onChange={(event) => update('name', event.target.value)} /></Field>
         <Field label="简介" htmlFor="venue-intro" hint="显示在场馆名称下方，例如“声乐课程与预约”。"><Input id="venue-intro" maxLength={120} value={form.intro} onChange={(event) => update('intro', event.target.value)} /></Field>
         <Field label="地址" htmlFor="venue-address"><Input id="venue-address" maxLength={120} value={form.address} onChange={(event) => update('address', event.target.value)} /></Field>
@@ -93,6 +106,47 @@ function VenueEditor({ loading, onCancel, onSave, venue }: { loading: boolean; o
       </div>
       <div className="sticky bottom-0 mt-auto flex justify-end gap-2 border-t border-[var(--border)] bg-[var(--card)] px-5 py-4"><Button onClick={onCancel} type="button" variant="secondary">取消</Button><Button disabled={loading || !form.name.trim()}>{venue ? '保存场馆' : '创建场馆'}</Button></div>
     </form>
+  )
+}
+
+// The mini program home shows the cover full width above the venue card; uploads apply immediately.
+function VenueCover({ onUpload, venue }: { onUpload: CoverUploader; venue: Venue }) {
+  const [savedUrl, setSavedUrl] = useState(venue.coverUrl)
+  const [previewUrl, setPreviewUrl] = useState(venue.coverUrl)
+  const [file, setFile] = useState<File | null>(null)
+  const [fileError, setFileError] = useState('')
+  const [inputKey, setInputKey] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [uploading, setUploading] = useState(false)
+
+  function select(next: File | null) {
+    setFileError(''); setFile(null); setProgress(0)
+    if (!next) return
+    if (!venueCoverTypes.includes(next.type)) { setFileError('仅支持 JPG、PNG 或 WebP 图片'); return }
+    if (next.size <= 0 || next.size > maxVenueCoverSize) { setFileError(next.size <= 0 ? '封面图片不能为空' : '封面图片不能超过 5MB'); return }
+    setFile(next)
+    const reader = new FileReader()
+    reader.onload = () => setPreviewUrl(typeof reader.result === 'string' ? reader.result : '')
+    reader.readAsDataURL(next)
+  }
+
+  async function upload() {
+    if (!file) return
+    setUploading(true); setFileError('')
+    try {
+      const updated = await onUpload(venue.id, file, setProgress)
+      setSavedUrl(updated.coverUrl); setPreviewUrl(updated.coverUrl); setFile(null); setInputKey((value) => value + 1)
+    } catch (uploadError) { setFileError(message(uploadError, '封面上传失败')); setPreviewUrl(savedUrl) }
+    finally { setUploading(false) }
+  }
+
+  return (
+    <section className="grid gap-3">
+      <div className="flex items-center gap-2 text-sm font-semibold"><ImagePlus aria-hidden="true" className="h-4 w-4" />封面</div>
+      <ImagePreview alt="场馆封面预览" className="aspect-[16/9] w-full" fallback={<span className="text-xs">未上传封面，小程序首页显示浅色背景</span>} name={venue.name} src={previewUrl} />
+      <FileUploader accept={venueCoverTypes.join(',')} error={fileError} fileName={file?.name} hint="小程序首页头部的横图，建议 16:9、浅色调；JPG、PNG 或 WebP，最大 5MB" id="venue-cover-file" inputKey={inputKey} label="选择封面" onChange={select} progress={progress} uploading={uploading} />
+      <Button disabled={uploading || !file} icon={<Upload className="h-4 w-4" />} onClick={() => void upload()} type="button" variant="secondary">{uploading ? '上传中' : savedUrl ? '替换封面' : '上传封面'}</Button>
+    </section>
   )
 }
 

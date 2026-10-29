@@ -1,0 +1,23 @@
+<ticket-section
+    wx:if="{{visible}}"
+    action-label="{{items.length ? actionLabel : ''}}"
+    subtitle="{{subtitle}}"
+    title="近期课程"
+    bind:action="goFullSchedule">
+    <view wx:if="{{items.length}}" class="upcoming-lessons__list">
+        <lesson-row
+            wx:for="{{items}}"
+            wx:for-item="lesson"
+            wx:key="lessonId"
+            compact="{{index > 0}}"
+            lesson="{{lesson}}"
+            perspective="{{role}}"
+            prominent="{{index === 0}}"
+            bind:select="goLesson"
+        />
+    </view>
+    <view wx:else class="upcoming-lessons__error" bindtap="retry">
+        <text class="upcoming-lessons__error-title">课程安排未加载</text>
+        <text class="upcoming-lessons__error-action">点击重试</text>
+    </view>
+</ticket-section>

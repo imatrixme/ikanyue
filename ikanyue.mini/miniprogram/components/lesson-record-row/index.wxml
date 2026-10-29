@@ -1,0 +1,8 @@
+<view class="lesson-record-row">
+    <view class="lesson-record-row__mark lesson-record-row__mark--{{record.impact}}" />
+    <view class="lesson-record-row__copy">
+        <text class="lesson-record-row__title">{{record.title}}</text>
+        <text class="lesson-record-row__meta">{{record.course.name}} · {{occurredText}}</text>
+    </view>
+    <text class="lesson-record-row__quantity lesson-record-row__quantity--{{record.impact}}">{{quantityText}}</text>
+</view>

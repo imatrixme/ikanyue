@@ -53,6 +53,37 @@ describe('venues workspace', () => {
     expect(within(screen.getByRole('dialog', { name: '新增场馆' })).getByLabelText('场馆名称')).toHaveValue('新场馆')
   })
 
+  it('uploads a venue cover from the drawer and rejects unsupported files', async () => {
+    const user = userEvent.setup({ applyAccept: false })
+    const api = createMockOpsApi()
+    render(<VenuesWorkspace api={api} token="token" />)
+
+    await user.click((await screen.findAllByRole('button', { name: '编辑看乐艺术' }))[0])
+    const drawer = screen.getByRole('dialog', { name: '编辑看乐艺术' })
+    expect(within(drawer).getByText('未上传封面，小程序首页显示浅色背景')).toBeInTheDocument()
+    const input = within(drawer).getByLabelText('选择封面')
+    await user.upload(input, new File(['gif'], 'cover.gif', { type: 'image/gif' }))
+    expect(within(drawer).getByText('仅支持 JPG、PNG 或 WebP 图片')).toBeInTheDocument()
+    expect(within(drawer).getByRole('button', { name: '上传封面' })).toBeDisabled()
+
+    await user.upload(input, new File(['png'], 'cover.png', { type: 'image/png' }))
+    await user.click(within(drawer).getByRole('button', { name: '上传封面' }))
+    await waitFor(async () => expect((await api.listVenues('token')).items[0].coverUrl).toBe('https://mock-assets.test/venues/venue_1/cover.png'))
+    expect(await within(drawer).findByRole('button', { name: '替换封面' })).toBeDisabled()
+
+    vi.spyOn(api, 'uploadVenueCover').mockRejectedValueOnce(new Error('封面图片不能超过 5MB'))
+    await user.upload(within(drawer).getByLabelText('选择封面'), new File(['jpg'], 'big.jpg', { type: 'image/jpeg' }))
+    await user.click(within(drawer).getByRole('button', { name: '替换封面' }))
+    expect(await within(drawer).findByText('封面图片不能超过 5MB')).toBeInTheDocument()
+  })
+
+  it('offers the cover only after the venue exists', async () => {
+    const user = userEvent.setup()
+    render(<VenuesWorkspace api={createMockOpsApi()} token="token" />)
+    await user.click(await screen.findByRole('button', { name: '新增场馆' }))
+    expect(within(screen.getByRole('dialog', { name: '新增场馆' })).getByText('先创建场馆，再上传封面。')).toBeInTheDocument()
+  })
+
   it('calls the ops venue endpoints over HTTP', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ code: 10000, data: { items: [] } }), { headers: { 'content-type': 'application/json' } }))
     vi.stubGlobal('fetch', fetchMock)

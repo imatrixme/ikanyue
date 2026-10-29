@@ -1,0 +1,1 @@
+<text class="booking-status booking-status--{{meta.tone}}">{{meta.label}}</text>

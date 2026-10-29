@@ -1,0 +1,78 @@
+@import '../../styles/tokens';
+
+.appointment-row {
+    align-items: center;
+    background: $ky-surface;
+    display: flex;
+    min-height: 168rpx;
+    padding: $ky-space-3 $ky-space-4;
+}
+
+.appointment-row + .appointment-row {
+    border-top: 1px solid $ky-line;
+}
+
+.appointment-row:active {
+    background: $ky-primary-wash;
+}
+
+.appointment-row__icon {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    display: flex;
+    flex: 0 0 88rpx;
+    height: 88rpx;
+    justify-content: center;
+    width: 88rpx;
+}
+
+.appointment-row__icon .app-icon {
+    transform: scale(1.32);
+}
+
+.appointment-row__body {
+    flex: 1;
+    min-width: 0;
+    padding-left: $ky-space-3;
+}
+
+.appointment-row__heading {
+    align-items: center;
+    display: flex;
+    gap: $ky-space-2;
+    justify-content: space-between;
+}
+
+.appointment-row__title,
+.appointment-row__time,
+.appointment-row__meta {
+    display: block;
+}
+
+.appointment-row__title {
+    color: $ky-ink-strong;
+    flex: 1;
+    font-size: $ky-font-size-body-lg;
+    font-weight: $ky-font-weight-bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.appointment-row__time {
+    color: $ky-text-secondary;
+    font-size: $ky-font-size-body-sm;
+    margin-top: 10rpx;
+}
+
+.appointment-row__meta {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 6rpx;
+}
+
+.appointment-row__arrow {
+    flex-shrink: 0;
+    margin-left: $ky-space-2;
+}

@@ -1,0 +1,15 @@
+<view
+    class="account-row {{interactive ? 'account-row--interactive' : ''}}"
+    aria-role="{{interactive ? 'button' : ''}}"
+    bindtap="onTap">
+    <view wx:if="{{icon || iconText}}" class="account-row__leading">
+        <app-icon wx:if="{{icon}}" name="{{icon}}" size="xl" />
+        <text wx:else>{{iconText}}</text>
+    </view>
+    <view class="account-row__copy">
+        <text class="account-row__title">{{title}}</text>
+        <text wx:if="{{description}}" class="account-row__description">{{description}}</text>
+    </view>
+    <text wx:if="{{value || value === 0}}" class="account-row__value">{{value}}</text>
+    <app-icon wx:if="{{interactive}}" ext-class="account-row__arrow" name="chevron-primary" size="sm" />
+</view>

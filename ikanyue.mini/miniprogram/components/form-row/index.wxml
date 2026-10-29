@@ -1,0 +1,4 @@
+<view class="form-row">
+    <text class="form-row__label">{{label}}</text>
+    <view class="form-row__control"><slot></slot></view>
+</view>

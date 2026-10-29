@@ -65,20 +65,20 @@
         "bodySm": 13,
         "body": 14,
         "bodyLg": 15,
-        "subtitle": 16,
-        "titleSm": 16,
-        "title": 17,
-        "section": 18,
-        "page": 19,
-        "heading": 20,
-        "headingLg": 21,
-        "displaySm": 22,
-        "displayMd": 24,
-        "illustration": 28,
-        "balanceSm": 36,
-        "balance": 40,
-        "calendarDisplay": 42,
-        "heroDisplay": 48
+        "subtitle": 15,
+        "titleSm": 15,
+        "title": 15,
+        "section": 15,
+        "page": 16,
+        "heading": 17,
+        "headingLg": 17,
+        "displaySm": 18,
+        "displayMd": 19,
+        "illustration": 22,
+        "balanceSm": 24,
+        "balance": 28,
+        "calendarDisplay": 30,
+        "heroDisplay": 32
       },
       "admin": {
         "caption": "0.75rem",
@@ -108,6 +108,13 @@
         "titleLine": 1.3,
         "displayLine": 1.08,
         "proseMeasure": "70ch"
+      },
+      "miniappWeight": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 500,
+        "bold": 500,
+        "black": 500
       }
     },
     "spacingPx": {
@@ -132,11 +139,11 @@
     },
     "shadow": {
       "miniapp": {
-        "card": "0 3px 0 rgba(30, 57, 50, 0.08)",
-        "subtle": "0 2px 0 rgba(30, 57, 50, 0.06)",
-        "raised": "0 8px 20px rgba(30, 57, 50, 0.1)",
-        "button": "0 2px 0 #004f3d",
-        "buttonPressed": "0 1px 0 #004f3d"
+        "card": "0 2px 10px rgba(30, 57, 50, 0.04)",
+        "subtle": "0 1px 4px rgba(30, 57, 50, 0.03)",
+        "raised": "0 6px 20px rgba(30, 57, 50, 0.06)",
+        "button": "0 4px 12px rgba(0, 117, 74, 0.16)",
+        "buttonPressed": "0 1px 4px rgba(0, 117, 74, 0.14)"
       },
       "web": {
         "sm": "0 1px 2px rgb(30 57 50 / 8%)",
@@ -171,6 +178,13 @@
       "reading": 720,
       "content": 1180,
       "wide": 1440
+    },
+    "miniappRadiusPx": {
+      "sm": 6,
+      "md": 10,
+      "lg": 14,
+      "xl": 18,
+      "pill": 999
     }
   },
   "semantic": {
@@ -235,6 +249,10 @@
       "miniappProseSpacingToken": "space-4",
       "adminSpacingRem": "0.75rem",
       "websiteSpacingRem": "1rem"
+    },
+    "miniappColor": {
+      "ink": "#3d4844",
+      "inkStrong": "#28332f"
     }
   },
   "component": {

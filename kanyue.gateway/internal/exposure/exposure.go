@@ -2,7 +2,7 @@
 // names a group, its domains and the operations exposed as its APIs. A plan is
 // applied as drafts; nothing goes live until its APIs are released to an
 // environment from the console. mapi.json is what the mini program calls, kept
-// equal to ikanyue.taro3 by scripts/gateway-exposure.test.mjs and to
+// equal to ikanyue.mini by scripts/gateway-exposure.test.mjs and to
 // kanyue.server's routes by its manifest test.
 package exposure
 

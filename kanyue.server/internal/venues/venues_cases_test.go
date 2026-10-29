@@ -58,7 +58,7 @@ func TestPublicVenueList(t *testing.T) {
 	if len(items) != 2 || items[0]["id"] != "venuea000000000" || items[1]["id"] != "venueb000000000" {
 		t.Fatalf("items = %v", items)
 	}
-	if !reflect.DeepEqual(items[0], map[string]any{"address": "", "bookable": true, "id": "venuea000000000", "intro": "声乐课程与预约",
+	if !reflect.DeepEqual(items[0], map[string]any{"address": "", "bookable": true, "coverUrl": "", "id": "venuea000000000", "intro": "声乐课程与预约",
 		"name": "看乐艺术", "openingHours": "", "phone": "13800000000"}) || items[1]["bookable"] != false {
 		t.Fatalf("projection = %v", items)
 	}

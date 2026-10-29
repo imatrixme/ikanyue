@@ -1,0 +1,8 @@
+<view class="page-header {{centered ? 'page-header--center' : ''}} {{extClass}}">
+    <slot name="leading"></slot>
+    <view wx:if="{{title || subtitle}}" class="page-header__copy">
+        <text wx:if="{{title}}" class="page-header__title">{{title}}</text>
+        <text wx:if="{{subtitle}}" class="page-header__subtitle">{{subtitle}}</text>
+    </view>
+    <slot></slot>
+</view>

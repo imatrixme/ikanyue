@@ -21,6 +21,7 @@ func init() {
 	list.Register(ensureBaseline, nil, "kanyue_0003_baseline")
 	list.Register(allowAuditActorRoles, nil, "kanyue_0004_audit_actor_roles")
 	list.Register(EnsureRenewalReminders, nil, "kanyue_0005_renewal_reminders")
+	list.Register(addVenueCover, nil, "kanyue_0006_venue_cover")
 }
 
 // Up applies pending migrations in one transaction and returns their names.

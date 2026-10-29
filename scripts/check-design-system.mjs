@@ -10,9 +10,9 @@ const tokenPath = path.join(ROOT, 'design-system/brand-tokens.json');
 const tokens = JSON.parse(await readFile(tokenPath, 'utf8'));
 
 const scanRoots = [
-    'ikanyue.taro3/src/components',
-    'ikanyue.taro3/src/pages',
-    'ikanyue.taro3/src/styles',
+    'ikanyue.mini/miniprogram/components',
+    'ikanyue.mini/miniprogram/pages',
+    'ikanyue.mini/miniprogram/styles',
     'ikanyue.admin/src/components',
     'kanyue.gateway/console/src',
     'ikanyue.website/app/components',
@@ -20,15 +20,15 @@ const scanRoots = [
     'ikanyue.website/app/assets/css',
 ];
 
-const sourcePattern = /\.(?:css|js|mjs|scss|ts|tsx|vue)$/;
-const generatedPattern = /(?:^|\/)_?brand\.generated\.(?:css|scss|ts)$|(?:^|\/)theme\.mjs$/;
+const sourcePattern = /\.(?:css|js|mjs|scss|ts|tsx|vue|wxml)$/;
+const generatedPattern = /(?:^|\/)_?brand\.generated\.(?:css|scss|ts)$|(?:^|\/)theme\.js$/;
 
-async function collectFiles(directory) {
+async function collectFiles(directory, pattern = sourcePattern) {
     const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
     const nested = await Promise.all(entries.map(async (entry) => {
         const target = path.join(directory, entry.name);
-        if (entry.isDirectory()) return collectFiles(target);
-        if (!sourcePattern.test(entry.name) || generatedPattern.test(target) || /\.(?:test|spec)\./.test(entry.name)) return [];
+        if (entry.isDirectory()) return collectFiles(target, pattern);
+        if (!pattern.test(entry.name) || generatedPattern.test(target) || /\.(?:test|spec)\./.test(entry.name)) return [];
         return [target];
     }));
     return nested.flat();
@@ -65,6 +65,19 @@ for (const relativeRoot of scanRoots) {
             for (const match of matches) violations.push(`${path.relative(ROOT, file)} contains ${label}: ${match}`);
         }
     }
+}
+
+// Native page and app JSON cannot import tokens, so their colors are literals that must be token values.
+const miniappJson = await collectFiles(path.join(ROOT, 'ikanyue.mini/miniprogram'), /\.json$/);
+for (const file of miniappJson) {
+    const walk = (value, key = '') => {
+        if (Array.isArray(value)) value.forEach((item) => walk(item));
+        else if (value && typeof value === 'object') Object.entries(value).forEach(([name, item]) => walk(item, name));
+        else if (/color$/i.test(key) && !brandValues.has(value)) {
+            violations.push(`${path.relative(ROOT, file)} uses ${key} ${value}, which is not a design token`);
+        }
+    };
+    walk(JSON.parse(await readFile(file, 'utf8')));
 }
 
 if (violations.length) {

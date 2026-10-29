@@ -1,0 +1,7 @@
+@import './brand.generated';
+
+// Mini program only: the pale wash behind hero cards and covers.
+$ky-hero-wash: linear-gradient(160deg, $ky-primary-soft 0%, $ky-primary-wash 72%);
+
+// Card outlines stay barely visible; cards separate from the canvas by colour and soft shadow.
+$ky-hairline: $ky-muted-surface;

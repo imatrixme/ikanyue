@@ -1,0 +1,30 @@
+<view class="page-chrome commerce-page commerce-shop-page">
+<view class="commerce-content">
+  <segmented-control value="{{mode}}" options="{{modeOptions}}" bind:change="changeMode" />
+  <view wx:if="{{error || !loaded}}" class="commerce-state">
+    <async-state state="{{error ? 'error' : 'loading'}}" kind="{{error ? 'network' : 'default'}}" description="{{error}}" action-label="{{error ? '重新加载' : ''}}" bind:action="load" />
+  </view>
+  <block wx:elif="{{mode === 'catalog'}}">
+    <view wx:if="{{!offers.length}}" class="commerce-state"><async-state state="empty" kind="default" title="暂无可购买课程" /></view>
+    <ticket-section wx:else title="课程课包">
+      <view wx:for="{{offerRows}}" wx:for-item="offer" wx:for-index="index" wx:key="id" class="commerce-item">
+        <text class="commerce-title">{{offer.name}}</text>
+        <text class="commerce-muted">{{offer.quantity}}课时 · {{offer.validityText}}</text>
+        <view class="commerce-buy">
+          <text class="commerce-price">¥{{offer.price}}</text>
+          <button disabled="{{busy}}" class="commerce-primary commerce-buy__button" data-index="{{index}}" bindtap="buy">购买</button>
+        </view>
+        <text class="commerce-policy-link" aria-role="button" data-index="{{index}}" bindtap="showPolicy">退费规则</text>
+      </view>
+    </ticket-section>
+  </block>
+  <block wx:else>
+    <view wx:if="{{!orders.length}}" class="commerce-state"><async-state state="empty" kind="default" title="暂无购买订单" action-label="去选课" bind:action="showCatalog" /></view>
+    <ticket-section wx:else title="购买记录">
+      <view class="commerce-order-list">
+        <account-row wx:for="{{orderRows}}" wx:for-item="order" wx:key="id" icon="course-history" interactive="{{true}}" title="{{order.name}}" description="{{order.status}}" value="{{order.price}}" item-id="{{order.id}}" bind:select="selectOrder" />
+      </view>
+    </ticket-section>
+  </block>
+</view>
+  </view>

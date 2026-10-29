@@ -5,7 +5,7 @@ import { createHttpCourseCalendarApi, createMockCourseCalendarApi, type CourseCa
 import { createHttpMigrationOpsApi, createMockMigrationOpsApi, type MigrationOpsApi } from './migrationApi'
 import { createHttpVenueOpsApi, createMockVenueOpsApi, type VenueOpsApi } from './venueApi'
 import type { CoursePage } from './courseTypes'
-import { request, toQuery } from './http'
+import { request, toQuery, uploadRequest } from './http'
 import type {
   AddPointsInput,
   ListResult,
@@ -333,40 +333,6 @@ function validateStudent(data: StudentInput, students: StudentRecord[], ignoredI
   if (!data.realName.trim()) throw new Error('学员姓名不能为空')
   if (requirePassword && !data.password?.trim()) throw new Error('初始密码不能为空')
   if (students.some((student) => student.id !== ignoredId && student.cellphone === data.cellphone.trim())) throw new Error('手机号已注册')
-}
-
-function uploadRequest<T>(url: string, token: string, file: File, onProgress?: UploadProgressHandler): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', url)
-    xhr.setRequestHeader('authorization', `Bearer ${token}`)
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        onProgress?.(Math.round((event.loaded / event.total) * 100))
-      }
-    }
-    xhr.onerror = () => reject(new Error('图片上传失败，请检查网络后重试'))
-    xhr.onload = () => {
-      let payload: { code?: number; data?: T; message?: string }
-      try {
-        payload = JSON.parse(xhr.responseText) as { code?: number; data?: T; message?: string }
-      } catch {
-        reject(new Error('图片上传返回了无效响应'))
-        return
-      }
-      if (xhr.status < 200 || xhr.status >= 300 || payload.code !== 10000 || payload.data === undefined) {
-        reject(new Error(payload.message || '图片上传失败'))
-        return
-      }
-      onProgress?.(100)
-      resolve(payload.data)
-    }
-
-    const body = new FormData()
-    body.set('imageFile', file)
-    onProgress?.(0)
-    xhr.send(body)
-  })
 }
 
 function findStudent(students: StudentPointsRow[], studentId: string) {

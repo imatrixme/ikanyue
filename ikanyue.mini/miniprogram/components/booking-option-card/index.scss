@@ -1,0 +1,78 @@
+@import '../../styles/tokens';
+
+.booking-option {
+    align-items: center;
+    background: $ky-surface;
+    border: 1px solid $ky-hairline;
+    border-radius: $ky-radius-lg;
+    box-shadow: $ky-shadow-card;
+    display: flex;
+    min-height: 176rpx;
+    padding: $ky-space-4;
+}
+
+.booking-option + .booking-option {
+    margin-top: $ky-space-3;
+}
+
+.booking-option:active {
+    background: $ky-primary-wash;
+    border-color: $ky-primary-line;
+}
+
+.booking-option__icon {
+    align-items: center;
+    background: $ky-secondary-surface;
+    border-radius: $ky-radius-md;
+    display: flex;
+    flex: 0 0 96rpx;
+    height: 96rpx;
+    justify-content: center;
+    width: 96rpx;
+}
+
+.booking-option__icon .app-icon {
+    transform: scale(1.42);
+}
+
+.booking-option__copy {
+    flex: 1;
+    min-width: 0;
+    padding-left: $ky-space-3;
+}
+
+.booking-option__course,
+.booking-option__teacher,
+.booking-option__meta {
+    display: block;
+}
+
+.booking-option__course {
+    color: $ky-ink-strong;
+    font-size: $ky-font-size-subtitle;
+    font-weight: $ky-font-weight-black;
+}
+
+.booking-option__teacher {
+    color: $ky-primary-strong;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-bold;
+    margin-top: 8rpx;
+}
+
+.booking-option__meta {
+    color: $ky-text-muted;
+    font-size: $ky-font-size-xs;
+    margin-top: 6rpx;
+}
+
+.booking-option__action {
+    align-items: center;
+    color: $ky-primary-strong;
+    display: flex;
+    flex-shrink: 0;
+    font-size: $ky-font-size-body-sm;
+    font-weight: $ky-font-weight-bold;
+    gap: 6rpx;
+    margin-left: $ky-space-2;
+}

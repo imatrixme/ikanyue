@@ -1,0 +1,22 @@
+<view
+    class="lesson-row {{compact ? 'lesson-row--compact' : ''}} {{prominent ? 'lesson-row--prominent' : ''}}"
+    bindtap="onTap">
+    <view class="lesson-row__date">
+        <text class="lesson-row__day">{{day}}</text>
+        <text class="lesson-row__month">{{month}}</text>
+    </view>
+    <view class="lesson-row__copy">
+        <view class="lesson-row__head">
+            <text class="lesson-row__title">{{lesson.title}}</text>
+            <text class="lesson-row__status">{{statusText}}</text>
+        </view>
+        <text wx:if="{{!hideCourse}}" class="lesson-row__course">{{lesson.course.name}}</text>
+        <text wx:if="{{contextLabel}}" class="lesson-row__context">{{contextLabel}}</text>
+        <view class="lesson-row__meta">
+            <text>{{timeText}}</text>
+            <text wx:if="{{lesson.location}}">{{lesson.location}}</text>
+        </view>
+        <text wx:if="{{lesson.notice}}" class="lesson-row__notice">{{lesson.notice}}</text>
+    </view>
+    <app-icon name="chevron-primary" size="sm" />
+</view>
