@@ -40,6 +40,9 @@
         "GET /v1/workbench/students",
         "GET /v1/workbench/students/{studentId}/ledger",
         "GET /v1/workbench/summary",
+        "GET /v1/workbench/teachers",
+        "GET /v1/workbench/teachers/{teacherId}/handover",
+        "GET /v1/workbench/teachers/{teacherId}/lessons",
         "POST /v1/student/appointments",
         "POST /v1/student/appointments/{appointmentId}/cancel",
         "POST /v1/student/appointments/{appointmentId}/withdraw",
@@ -61,8 +64,10 @@
         "POST /v1/user/wechat-role-login",
         "POST /v1/workbench/lessons/{sessionId}/confirm",
         "POST /v1/workbench/lessons/{sessionId}/reverse",
+        "POST /v1/workbench/lessons/{sessionId}/substitute",
         "POST /v1/workbench/students",
         "POST /v1/workbench/students/{studentId}/grants",
+        "POST /v1/workbench/teachers/{teacherId}/handover",
         "PUT /v1/teacher/offerings/{offeringId}/availability"
       ]
     },

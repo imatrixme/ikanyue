@@ -227,6 +227,20 @@ const grantWorkbenchLessons = (id, payload, idempotencyKey) => iNet.post(
     `/v1/workbench/students/${id}/grants`, payload, true, commandHeaders(idempotencyKey)
 );
 
+const listWorkbenchTeachers = () => iNet.get('/v1/workbench/teachers');
+
+const listWorkbenchTeacherLessons = (id) => iNet.get(`/v1/workbench/teachers/${id}/lessons`);
+
+const substituteWorkbenchTeacher = (sessionId, payload, idempotencyKey) => iNet.post(
+    `/v1/workbench/lessons/${sessionId}/substitute`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const previewWorkbenchHandover = (id, toTeacherId) => iNet.get(`/v1/workbench/teachers/${id}/handover`, { toTeacherId });
+
+const handoverWorkbenchTeacher = (id, payload, idempotencyKey) => iNet.post(
+    `/v1/workbench/teachers/${id}/handover`, payload, true, commandHeaders(idempotencyKey)
+);
+
 function commandHeaders(idempotencyKey) {
     return { 'Idempotency-Key': idempotencyKey };
 }
@@ -283,6 +297,11 @@ const Api = {
     getWorkbenchStudentLedger,
     listWorkbenchPackages,
     grantWorkbenchLessons,
+    listWorkbenchTeachers,
+    listWorkbenchTeacherLessons,
+    substituteWorkbenchTeacher,
+    previewWorkbenchHandover,
+    handoverWorkbenchTeacher,
 };
 
 export { Api };

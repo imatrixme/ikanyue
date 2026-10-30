@@ -239,6 +239,51 @@ describe.sequential('live mini program flows', () => {
         expect(log.toasts.at(-1)).toBe('已确认上课');
     });
 
+    // Teacher substitution (add-teacher-substitution): the owner covers a waiting lesson of the hired teacher.
+    // Needs a second started lesson waiting locally; without one the step is skipped.
+    it('owner takes over a waiting lesson and confirms it', async () => {
+        await login('owner');
+        const home = await mount('components/teacher-booking-home');
+        expect(home.data.sections).toMatchObject({ teachers: true });
+        const lesson = home.data.lessons.find((item) => item.sessionId !== state.waiting?.sessionId && !item.reconfirm);
+        if (!lesson) {
+            console.error('live: no second started lesson waits locally; substitution is skipped');
+            return;
+        }
+        const sheet = await mount('components/substitute-teacher');
+        const events = [];
+        sheet.triggerEvent = (name, detail) => events.push([name, detail]);
+        await act(sheet.set({ lesson }));
+        await act(sheet.open());
+        expect(sheet.data.options).toHaveLength(1);
+        expect(sheet.data.selected).toBeTruthy();
+        await act(sheet.submit());
+        expect(log.toasts.at(-1)).toBe('已换老师');
+        expect(events).toEqual([['done', { sessionId: lesson.sessionId }]]);
+
+        await act(home.loadWorkbench());
+        const moved = home.data.lessons.find((item) => item.sessionId === lesson.sessionId);
+        expect(moved.leadTeacherId).toBe(sheet.data.selected);
+        await act(home.openConfirm(tap({ id: lesson.sessionId })));
+        await act(home.submitConfirm());
+        expect(log.toasts.at(-1)).toBe('已确认上课');
+    });
+
+    // The handover itself blocks the account and closes its booking, so the live run only previews it;
+    // the Go cases cover performing it.
+    it('owner previews handing the hired teacher over', async () => {
+        const teachers = await smoke('pages/workbenchTeachers');
+        const hired = teachers.data.teachers.find((teacher) => !teacher.isAdmin);
+        expect(hired, 'a hired teacher').toBeTruthy();
+        const page = await smoke('pages/workbenchTeacher', { id: hired.teacherId });
+        expect(page.data.teacher.isAdmin).toBe(false);
+        await act(page.openHandover());
+        expect(page.data.receiverId).toBeTruthy();
+        expect(page.data.preview).toMatchObject({ canSubmit: true });
+        expect(page.data.preview.lessonCount).toBe(page.data.lessons.length);
+        await act(page.closeHandover());
+    });
+
     it('signs out cleanly', async () => {
         await act((await open('pages/userinfo')).confirmLogout());
         const profile = await open('pages/profile');

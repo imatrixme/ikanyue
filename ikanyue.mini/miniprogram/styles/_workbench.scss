@@ -19,6 +19,7 @@
 .workbench-button { align-items: center; background: $ky-primary; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; flex-shrink: 0; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; height: 72rpx; justify-content: center; padding: 0 $ky-space-4; }
 .workbench-button--quiet { background: transparent; border: 1px solid $ky-primary-line; color: $ky-primary-strong; }
 .workbench-button.disabled { opacity: $ky-disabled-opacity; }
+.workbench-actions { display: flex; flex-direction: column; flex-shrink: 0; gap: $ky-space-2; }
 
 .workbench-filter { align-items: center; color: $ky-text-secondary; display: flex; font-size: $ky-font-size-body-sm; justify-content: space-between; padding: 0 0 $ky-space-3; }
 .workbench-filter picker { color: $ky-primary-strong; font-weight: $ky-font-weight-semibold; }
@@ -35,12 +36,14 @@
 
 .workbench-submit { align-items: center; background: $ky-primary; border-radius: $ky-radius-md; color: $ky-on-primary; display: flex; font-size: $ky-font-size-body-lg; font-weight: $ky-font-weight-black; height: 96rpx; justify-content: center; margin-top: $ky-space-5; }
 .workbench-submit.disabled { opacity: $ky-disabled-opacity; }
+.workbench-submit--quiet { background: transparent; border: 1px solid $ky-danger-line; color: $ky-danger; }
 
 .workbench-sheet-shell { border-radius: $ky-radius-lg $ky-radius-lg 0 0; }
 .workbench-sheet { box-sizing: border-box; padding: $ky-space-5 $ky-space-5 calc(env(safe-area-inset-bottom) + 64rpx); }
 .workbench-sheet__bar { background: $ky-primary; height: 10rpx; margin-bottom: $ky-space-4; width: 88rpx; }
 .workbench-sheet__title { color: $ky-ink-strong; display: block; font-size: $ky-font-size-heading; font-weight: $ky-font-weight-black; }
 .workbench-sheet__description { color: $ky-text-secondary; display: block; font-size: $ky-font-size-body-sm; line-height: $ky-leading-readable; margin-top: $ky-space-2; }
+.workbench-sheet__description--warning { color: $ky-danger; }
 .workbench-sheet__option { align-items: center; border-bottom: 1px solid $ky-line; display: flex; font-size: $ky-font-size-body; justify-content: space-between; min-height: 96rpx; }
 .workbench-sheet__option > text + text { color: $ky-text-secondary; font-size: $ky-font-size-body-sm; }
 .workbench-sheet__option.selected > text + text { color: $ky-primary-strong; font-weight: $ky-font-weight-bold; }

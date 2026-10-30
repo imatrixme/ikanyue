@@ -1,5 +1,5 @@
-// Owner workbench (OpenSpec add-owner-workbench): the mini program teacher
-// workbench whose sections follow the teacher's permissions.
+// Owner workbench (OpenSpec add-owner-workbench, add-teacher-substitution): the mini
+// program teacher workbench whose sections follow the teacher's permissions.
 // Only reads and commands rejected before any write run here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,9 +9,11 @@ const TRACE = { 'X-Trace-Id': 'contract-trace' };
 const failure = (code, message, errorCode, details = {}) => ({
   code, message, data: null, errorCode, details, operationId: null, traceId: TRACE['X-Trace-Id'],
 });
-const READS = ['/v1/workbench/summary', '/v1/workbench/lessons/pending', '/v1/workbench/students', '/v1/workbench/packages'];
+const READS = ['/v1/workbench/summary', '/v1/workbench/lessons/pending', '/v1/workbench/students', '/v1/workbench/packages',
+  '/v1/workbench/teachers', '/v1/workbench/teachers/__missing__/lessons', '/v1/workbench/teachers/__missing__/handover'];
 const COMMANDS = ['/v1/workbench/lessons/__missing__/confirm', '/v1/workbench/lessons/__missing__/reverse',
-  '/v1/workbench/students', '/v1/workbench/students/__missing__/grants'];
+  '/v1/workbench/students', '/v1/workbench/students/__missing__/grants', '/v1/workbench/lessons/__missing__/substitute',
+  '/v1/workbench/teachers/__missing__/handover'];
 
 test('workbench routes require a session', async () => {
   const invalid = { code: 403, errorCode: 'AUTH_SESSION_INVALID', message: '未授权，请登录后操作', data: null };
@@ -72,4 +74,21 @@ test('owner workbench reads', { skip: !admin && 'CONTRACT_OPS_* not set' }, asyn
     failure(400, 'Settlement reversal requires a meaningful reason', 'REVERSAL_REASON_REQUIRED'));
   assert.deepEqual((await command('/v1/workbench/students/__missing__/grants', {})).body,
     failure(400, 'packageId不能为空', 'PACKAGE_ID_REQUIRED'));
+
+  const { items: teachers } = await read('/v1/workbench/teachers');
+  assert.ok(teachers.length >= 1);
+  for (const item of teachers) {
+    assert.deepEqual(Object.keys(item).sort(), ['isAdmin', 'lessonCount', 'name', 'pendingRequestCount', 'teacherId']);
+  }
+  const lessons = await read(`/v1/workbench/teachers/${teachers[0].teacherId}/lessons`);
+  assert.deepEqual(Object.keys(lessons).sort(), ['items', 'teacher']);
+  const adminTeacher = teachers.find((item) => item.isAdmin);
+  if (adminTeacher) {
+    const { body } = await call(`/v1/workbench/teachers/${adminTeacher.teacherId}/handover?toTeacherId=__missing__`, { token });
+    assert.ok(['HANDOVER_SELF_FORBIDDEN', 'HANDOVER_ADMIN_FORBIDDEN'].includes(body.errorCode), body.errorCode);
+  }
+  assert.deepEqual((await command('/v1/workbench/lessons/__missing__/substitute', {})).body,
+    failure(400, '请选择代课老师', 'TEACHER_ID_REQUIRED'));
+  assert.deepEqual((await command('/v1/workbench/teachers/__missing__/handover', { toTeacherId: 'x', reason: '走' })).body,
+    failure(400, '请填写交接原因（至少 4 个字）', 'HANDOVER_REASON_REQUIRED'));
 });

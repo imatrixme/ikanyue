@@ -645,6 +645,10 @@ func loadLessonContexts(app core.App, rows []map[string]any) (map[string]*lesson
 		contexts[id] = &lessonContext{teachers: []map[string]any{}, classes: []map[string]any{}}
 	}
 	for _, row := range teachers {
+		// A replaced teacher keeps a cancelled row for the record; students see who teaches.
+		if row["actualStatus"] == "cancelled" {
+			continue
+		}
 		if context, ok := contexts[relationID(row["sessionId"])]; ok {
 			context.teachers = append(context.teachers, row)
 		}

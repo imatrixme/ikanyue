@@ -42,18 +42,26 @@
   - `settled` 返回 `SESSION_ALREADY_SETTLED`，提示先撤销确认；
   - `cancelled` / `draft` 返回 `SESSION_NOT_EDITABLE`；
   - 迁移来的课（`originType: migration`）不换。
-- 当前主讲 = 这节课 `role=lead` 且 `actualStatus` 不是 `cancelled` 的行，必须恰好一行；没有时返回 `SESSION_LEAD_REQUIRED`。
-- 新老师必须在职（`verified=true && blocked=false`），且不是当前主讲（`SUBSTITUTE_SAME_TEACHER`）。
+- 当前主讲 = 这节课 `role=lead` 且 `actualStatus` 为 `planned` / `confirmed` 的行（实现时确定）：
+  - 这些行全部改为 `cancelled`；
+  - `absent`（已记缺席）的主讲行保留原状，作为出勤记录；
+  - 没有当前主讲（例如原主讲已缺席）时，直接加上新老师，不再要求恰好一行（原设计的 `SESSION_LEAD_REQUIRED` 取消）。
+- 新老师必须在职（`verified=true && blocked=false`，否则 `TEACHER_INACTIVE`）：
+  - 已是当前主讲时返回 `SUBSTITUTE_SAME_TEACHER`；
+  - 已以其他角色在这节课上时返回 `SUBSTITUTE_TEACHER_ASSIGNED`。
 - 冲突检查：
-  - 新老师在这节课的时间段内，已有别的未取消课节（`session_teachers` 中非 `cancelled` 的行，时间重叠），返回 `SUBSTITUTE_TEACHER_BUSY`，`details` 带冲突课的时间；
-  - 已开课的课（补记代课）同样检查，避免一个人同时上两节课。
+  - 新老师在这节课的时间段内，已有别的未取消课节（`session_teachers` 中 planned / confirmed 的行，时间重叠）或占用中的日历格，返回 `SUBSTITUTE_TEACHER_BUSY`，`details` 带冲突课的时间；
+  - 已开课的课（补记代课）同样检查，避免一个人同时上两节课；
+  - 提交时撞上日历格唯一索引也映射为 `SUBSTITUTE_TEACHER_BUSY`。
 - 写入（一个事务，`prepareTeaching` 幂等）：
-  1. 原主讲行 `actualStatus → cancelled`；
+  1. 当前主讲行 `actualStatus → cancelled`；
   2. 新老师：
      - 这节课里已有他的 lead 行（以前被换下过）时，把那一行改回 `planned` 并把 `assignmentSource` 设为 `substitute`；
-     - 否则新建一行 lead，`assignmentSource: substitute`、`actualStatus: planned`，`creditStatus` 沿用原主讲行的初始值；
-  3. 课节审计 `actual_teacher`，记录原老师、新老师、原因；
-  4. outbox `course-session.teacher-substituted`。
+     - 否则新建一行 lead，`assignmentSource: substitute`、`actualStatus: planned`，`creditStatus` 沿用原主讲行的初始值（已确认/已冲正的重置为 `pending`）；
+  3. 其他主讲（含缺席的）在这节课上的老师日历格（`schedule_claims`）释放，同样的格子改记到新老师名下；
+  4. 课节版本号 +1，与其他课节命令串行；
+  5. 课节审计 `substitute_teacher`，记录原老师、新老师、原因；
+  6. outbox `course-session.teacher-substituted`。
 - 只换主讲。助教等其他角色不在小程序里管理。
 - 学员名单、出勤、课时预留都不动，所以已开课但还没确认的课换完老师，代课老师可以直接「确认上课」。
 
@@ -67,9 +75,12 @@
 - 预约已经生成课节时，学员和老师看到的「老师」取课节的当前主讲：
   - 学员的预约详情、课程列表与课程详情；
   - 学员课程视图过滤掉 `cancelled` 的老师行。
-- 老师改期或取消预约：预约已有课节时，要求执行者是课节当前主讲，否则返回 `APPOINTMENT_TEACHER_FORBIDDEN`；管理员不受限。
+- 老师取消预约：预约已有课节时，要求执行者是课节当前主讲，否则返回 `APPOINTMENT_TEACHER_FORBIDDEN`；管理员不受限。
   - 结果：被换下的原老师不能再动这节课；
-  - 代课老师也不能通过预约改期或取消（预约不在他名下），改由老板处理。这一点在弹窗文案里说明。
+  - 代课老师也不能通过预约取消（预约不在他名下），改由老板处理。
+- 改期（实现时收紧）：已换老师的课（当前主讲 ≠ 预约老师）任何人都不能直接改期，返回 `APPOINTMENT_TEACHER_SUBSTITUTED`。
+  - 原因：可约时段和日历格属于预约老师的开放预约，直接改期会重新占用原老师的时间；
+  - 老板先把课换回原老师再改期，或取消后让学员重新预约。
 
 ### 3. 离职交接 = 批量换老师 + 收尾
 
@@ -82,7 +93,7 @@
 - 预览返回：
   - `lessons`：离职老师作为主讲、未结算、未取消的课（含已开课待确认的），每节带时间、课程、学员；
   - `conflicts`：其中与接手老师已有课时间重叠的课；
-  - `assistantLessons`：离职老师作为其他角色的课的数量；
+  - `otherRoleCount`：离职老师作为其他角色的课的数量；
   - `pendingRequests`：离职老师待处理的约课申请（学员、时间）；
   - `offerings`：离职老师开放预约的课程，并标出接手老师还没有开放预约的课程；
   - `students`：涉及的学员（去重）。
@@ -93,7 +104,8 @@
   4. 每条待处理约课申请按管理员身份 `declineAppointment`，原因「老师已调整，请重新预约」；
   5. 离职老师的 `teacher_course_offerings` 设为 `inactive`，生效中的 `teacher_availability_rules` 结束；
   6. 教师账号 `blocked=true`；
-  7. 审计一条 `teacher.handover`，带各项数量和原因；outbox `teacher.handed-over`。
+  7. 审计一条 `teacher.handover`（`course_operations`），带各项数量和原因；outbox `teacher.handed-over`。
+  - 婉拒约课申请的幂等子键为 `key:decline:<appointmentId>`。
 - 预览和执行之间数据变了（例如又来了一条约课申请）没关系，执行时重新计算。返回值带实际处理的数量。
 - 规模：小工作室一位老师未来的课通常是几十节，一个事务完成。超过 500 节返回 `HANDOVER_TOO_LARGE`，提示联系管理员在网页后台处理。
 
@@ -122,24 +134,24 @@
 ### 6. 小程序
 
 - 工作台：
-  - `sections.students && teacherCount > 1` 时出现「老师」模块，进入老师列表；
+  - `sections.students && teacherCount > 1` 时出现「老师」模块，进入老师列表（实现为 `sections.teachers`）；
   - 一人工作室看不到任何换老师入口。
 - 老师列表页：每位老师显示姓名、未确认的课数、待处理约课数。
 - 老师详情页：
   - 他作为主讲的未确认课，每节有「换老师」；
   - 不是管理员、不是自己时，底部有「离职交接」。
-- 换老师弹窗：
+- 换老师弹窗（可复用组件 `components/substitute-teacher`，工作台和老师详情页共用）：
   - 选择其他在职老师；只有两位老师时直接默认另一位；
   - 原因选填；
   - 冲突时显示「这位老师在这个时间已有课」。
 - 离职交接：
   - 选接手老师 → 显示预览（几节课、几条约课申请会被婉拒、涉及哪些学员、接手老师还没开放预约的课程、冲突的课）→ 填原因 → `ui.confirm` 二次确认 → 完成后回到老师列表；
-  - 有冲突时不能提交，冲突的课可以直接点进去单独换老师。
+  - 有冲突时不能提交，冲突的课在同一页的课列表里单独换老师，换完后预览自动刷新。
 - 待确认上课列表：老板（`allLessons`）在多老师时，每节课多一个「换老师」，用同一个弹窗。
 
 ## Risks / Trade-offs
 
-- **代课老师不能改期或取消预约**：预约仍在原老师名下，改期和取消由老板处理。小工作室里老板就在旁边，可以接受；以后如果需要，再把预约的处理权也转给代课老师。
+- **代课老师不能改期或取消预约**：预约仍在原老师名下，取消由老板处理；已换老师的课谁都不能直接改期，要先换回或取消重约。小工作室里老板就在旁边，可以接受；以后如果需要，再把预约的处理权也转给代课老师。
 - **交接停用账号后不能一键撤回**：逐节再换回和在网页后台重新启用账号都可以做到，预览和二次确认用来避免误操作。
 - **离职老师的会话**：教学类接口看会话快照，停用后到会话过期前他仍能打开工作台。但他名下已经没有课，确认不了任何课。
 - **课酬**：已结算的课的课酬仍归原老师；未结算课换人后课酬归代课老师。离职老师未确认的课酬不在本期处理。

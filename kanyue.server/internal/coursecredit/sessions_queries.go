@@ -367,6 +367,9 @@ func projectSessions(app core.App, sessions []map[string]any, audience string) (
 	if err != nil {
 		return nil, err
 	}
+	for id, rows := range teachers {
+		teachers[id] = slices.DeleteFunc(rows, func(row map[string]any) bool { return row["actualStatus"] == "cancelled" })
+	}
 	students, err := sessionRelations(app, "session_students", ids, "studentId")
 	if err != nil {
 		return nil, err

@@ -21,7 +21,7 @@ const sources = collect('.', ['.js', '.wxml', '.scss']);
 const generated = ['styles/_brand.generated.scss', 'styles/theme.js', 'styles/_tokens.scss'];
 
 describe('app shell', () => {
-    it('publishes the 29 pages and three tabs', () => {
+    it('publishes the 31 pages and three tabs', () => {
         expect(app.pages).toEqual([
             'pages/home/index', 'pages/activity/index', 'pages/courses/index', 'pages/points/index', 'pages/profile/index',
             'pages/courseDetail/index', 'pages/courseShop/index', 'pages/courseOrder/index', 'pages/courseLessons/index',
@@ -31,6 +31,7 @@ describe('app shell', () => {
             'pages/pointsHistory/index', 'pages/rewardCatalog/index', 'pages/userinfo/index', 'pages/activityDetail/index',
             'pages/imageDetail/index', 'pages/webview/index', 'pages/agreement/index', 'pages/memberCard/index',
             'pages/workbenchStudents/index', 'pages/workbenchStudent/index', 'pages/workbenchGrant/index',
+            'pages/workbenchTeachers/index', 'pages/workbenchTeacher/index',
         ]);
         expect(app.tabBar.list.map((item) => [item.pagePath, item.text])).toEqual([
             ['pages/home/index', '首页'], ['pages/appointmentBooking/index', '约课'], ['pages/profile/index', '我的'],

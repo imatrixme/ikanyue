@@ -1,0 +1,25 @@
+<k-popup visible="{{visible}}" panel-class="workbench-sheet-shell" bind:close="close">
+    <view class="workbench-sheet">
+        <view class="workbench-sheet__bar" />
+        <text class="workbench-sheet__title">换老师</text>
+        <text class="workbench-sheet__description">{{lesson.title}} · {{lesson.timeLabel}}</text>
+        <text class="workbench-sheet__description">只换这节课的老师，学员和课时不变；由新老师确认上课，课酬记给新老师。</text>
+        <view
+            wx:for="{{options}}"
+            wx:for-item="option"
+            wx:key="value"
+            class="workbench-sheet__option {{option.picked ? 'selected' : ''}}"
+            aria-role="button"
+            data-id="{{option.value}}"
+            bindtap="pick"
+        >
+            <text>{{option.label}}</text>
+            <text>{{option.picked ? '代课' : '选择'}}</text>
+        </view>
+        <text wx:if="{{loaded && !options.length}}" class="workbench-sheet__description">没有其他在职老师。</text>
+        <input class="workbench-sheet__input" data-field="reason" maxlength="200" placeholder="原因（选填），如：王老师请假" value="{{reason}}" bindinput="onField" />
+        <view class="workbench-submit {{ready ? '' : 'disabled'}}" aria-role="button" bindtap="submit">
+            {{actionLoading ? '正在提交' : '确认换老师'}}
+        </view>
+    </view>
+</k-popup>

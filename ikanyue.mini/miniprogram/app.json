@@ -28,7 +28,9 @@
     "pages/memberCard/index",
     "pages/workbenchStudents/index",
     "pages/workbenchStudent/index",
-    "pages/workbenchGrant/index"
+    "pages/workbenchGrant/index",
+    "pages/workbenchTeachers/index",
+    "pages/workbenchTeacher/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -90,6 +92,7 @@
     "reward-voucher": "/components/reward-voucher/index",
     "section-header": "/components/section-header/index",
     "segmented-control": "/components/segmented-control/index",
+    "substitute-teacher": "/components/substitute-teacher/index",
     "teacher-booking-home": "/components/teacher-booking-home/index",
     "teacher-calendar-home": "/components/teacher-calendar-home/index",
     "ticket-section": "/components/ticket-section/index",

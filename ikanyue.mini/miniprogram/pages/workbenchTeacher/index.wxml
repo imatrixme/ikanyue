@@ -1,0 +1,73 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="{{teacher.isAdmin ? '管理员' : '老师请假时可以逐节换人代课'}}" title="{{teacher.name || '老师'}}" />
+    <view class="workbench-content">
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '老师的课加载失败' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <ticket-section subtitle="还没确认上课的课，开课前后都可以换老师" title="未确认的课">
+                <view wx:if="{{lessons.length}}" class="workbench-list">
+                    <view wx:for="{{lessons}}" wx:for-item="lesson" wx:key="sessionId" class="workbench-lesson">
+                        <view class="workbench-lesson__row">
+                            <view class="workbench-lesson__body">
+                                <text class="workbench-lesson__title">{{lesson.title}}</text>
+                                <text class="workbench-lesson__meta">{{lesson.timeLabel}} · {{lesson.stateLabel}}</text>
+                                <text class="workbench-lesson__meta">学员：{{lesson.studentLabel}}</text>
+                            </view>
+                            <view class="workbench-button workbench-button--quiet" aria-role="button" data-id="{{lesson.sessionId}}" bindtap="openSubstitute">换老师</view>
+                        </view>
+                    </view>
+                </view>
+                <view wx:else class="workbench-empty">
+                    <app-icon name="booking-confirm" size="xl" />
+                    <text>没有未确认的课</text>
+                </view>
+            </ticket-section>
+            <view wx:if="{{!teacher.isAdmin}}" class="workbench-submit workbench-submit--quiet" aria-role="button" bindtap="openHandover">离职交接</view>
+            <text wx:if="{{!teacher.isAdmin}}" class="workbench-hint">把这位老师的课交给另一位老师，婉拒待处理的约课，并停用账号；学员课时不变。</text>
+        </block>
+    </view>
+
+    <substitute-teacher lesson="{{substituting}}" visible="{{showSubstitute}}" bind:close="closeSubstitute" bind:done="substituted" />
+
+    <k-popup visible="{{showHandover}}" panel-class="workbench-sheet-shell" bind:close="closeHandover">
+        <view class="workbench-sheet">
+            <view class="workbench-sheet__bar" />
+            <text class="workbench-sheet__title">{{teacher.name}}离职交接</text>
+            <text class="workbench-sheet__description">选择接手老师，先看会改动什么，再确认。</text>
+            <view
+                wx:for="{{receivers}}"
+                wx:for-item="option"
+                wx:key="value"
+                class="workbench-sheet__option {{option.picked ? 'selected' : ''}}"
+                aria-role="button"
+                data-id="{{option.value}}"
+                bindtap="pickReceiver"
+            >
+                <text>{{option.label}}</text>
+                <text>{{option.picked ? '接手' : '选择'}}</text>
+            </view>
+            <text wx:if="{{previewLoading}}" class="workbench-sheet__description">正在计算交接内容…</text>
+            <block wx:if="{{preview}}">
+                <text class="workbench-sheet__description">{{preview.lessonCount}} 节课改由{{receiverName}}上；涉及学员：{{preview.studentLabel}}。</text>
+                <text wx:if="{{preview.requests.length}}" class="workbench-sheet__description">{{preview.requests.length}} 条约课申请会被婉拒，学员可以重新预约。</text>
+                <text wx:if="{{preview.unopenedLabel}}" class="workbench-sheet__description">{{receiverName}}还没开放这些课程的预约：{{preview.unopenedLabel}}，开放前学员约不到。</text>
+                <block wx:if="{{preview.conflicts.length}}">
+                    <text class="workbench-sheet__description workbench-sheet__description--warning">{{receiverName}}在这些时间已有课，请先把它们单独换给其他老师：</text>
+                    <text wx:for="{{preview.conflicts}}" wx:for-item="lesson" wx:key="sessionId" class="workbench-sheet__description">{{lesson.title}} · {{lesson.timeLabel}}</text>
+                </block>
+                <input class="workbench-sheet__input" data-field="reason" maxlength="200" placeholder="交接原因（至少 4 个字）" value="{{reason}}" bindinput="onField" />
+            </block>
+            <view class="workbench-submit {{handoverReady ? '' : 'disabled'}}" aria-role="button" bindtap="submitHandover">
+                {{actionLoading ? '正在交接' : '确认交接'}}
+            </view>
+        </view>
+    </k-popup>
+</view>

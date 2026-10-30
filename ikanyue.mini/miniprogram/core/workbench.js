@@ -1,10 +1,11 @@
 import { formatAppointmentTime } from './appointments.js';
 
 // Owner workbench: one teacher workbench whose sections follow the signed-in teacher's
-// permissions (OpenSpec add-owner-workbench). The server checks every call again.
+// permissions (OpenSpec add-owner-workbench, add-teacher-substitution). The server checks every call again.
 
 const NO_SECTIONS = Object.freeze({
     available: false, teach: false, students: false, grant: false, undo: false, allLessons: false, showTeachers: false,
+    teachers: false,
 });
 
 const ATTENDANCE_LABELS = Object.freeze({
@@ -47,6 +48,8 @@ function workbenchSections(summary) {
         undo: permissions.undo,
         allLessons: permissions.allLessons,
         showTeachers: teacherCount > 1,
+        // Changing teachers only makes sense with a second teacher, and only the owner may do it.
+        teachers: permissions.manageStudents && teacherCount > 1,
     };
 }
 
@@ -63,6 +66,8 @@ function normalizePendingLesson(item = {}, { showTeachers = false } = {}) {
         timeLabel: formatAppointmentTime(item.startAt, item.endAt),
         location: item.location || '',
         reconfirm: Boolean(item.reconfirm),
+        started: Boolean(item.started),
+        leadTeacherId: item.leadTeacherId || '',
         teachers,
         teacherLabel: showTeachers ? teachers.join('、') : '',
         students,
@@ -212,14 +217,89 @@ function workbenchErrorMessage(error, fallback = '工作台暂时无法使用') 
         SESSION_ROSTER_REQUIRED: '这节课没有学员，无需确认。',
         SESSION_STUDENT_CREDIT_UNRESOLVED: '有学员课时未就绪，请在后台处理后再确认。',
         SESSION_TEACHER_FORBIDDEN: '只能确认自己任课的课。',
+        SESSION_NOT_EDITABLE: '这节课当前不能换老师。',
+        SUBSTITUTE_SAME_TEACHER: '这节课已经由这位老师上。',
+        SUBSTITUTE_TEACHER_ASSIGNED: '这位老师已在这节课上。',
+        SUBSTITUTE_TEACHER_BUSY: '这位老师在这个时间已有课。',
+        TEACHER_INACTIVE: '这位老师的账号未启用。',
+        HANDOVER_ADMIN_FORBIDDEN: '管理员账号不能交接。',
+        HANDOVER_CONFLICTS: '接手老师有课时间冲突，请先单独调整这些课。',
+        HANDOVER_REASON_REQUIRED: '请填写至少 4 个字的交接原因。',
+        HANDOVER_SELF_FORBIDDEN: '不能交接自己的账号。',
+        HANDOVER_TOO_LARGE: '要交接的课太多，请在网页后台处理。',
     };
     if (messages[error?.errorCode]) return messages[error.errorCode];
     if (Number(error?.code) === 403) return messages.COURSE_CREDIT_CAPABILITY_REQUIRED;
     return error?.message || fallback;
 }
 
+function normalizeTeachers(payload = {}) {
+    return array(payload.items).map((item) => {
+        const name = item.name || '老师';
+        const lessons = count(item.lessonCount);
+        const requests = count(item.pendingRequestCount);
+        return {
+            teacherId: item.teacherId || '',
+            name,
+            initial: name.slice(0, 1),
+            isAdmin: Boolean(item.isAdmin),
+            description: [`${lessons} 节课未确认`, requests ? `${requests} 条约课待处理` : ''].filter(Boolean).join(' · '),
+        };
+    }).filter((item) => item.teacherId);
+}
+
+// Who can take a lesson: every other teacher; with exactly one the choice is made for the owner.
+function substituteOptions(teachers, leadTeacherId) {
+    return array(teachers).filter((teacher) => teacher.teacherId !== leadTeacherId)
+        .map((teacher) => ({ label: teacher.name, value: teacher.teacherId }));
+}
+
+function normalizeTeacherLessons(payload = {}) {
+    const name = payload.teacher?.name || '老师';
+    return {
+        teacher: { teacherId: payload.teacher?.teacherId || '', name, isAdmin: Boolean(payload.teacher?.isAdmin) },
+        lessons: normalizePendingLessons(payload).map((lesson) => ({
+            ...lesson, stateLabel: lesson.started ? '已开课，待确认' : '未开始',
+        })),
+    };
+}
+
+function normalizeHandoverPreview(payload = {}) {
+    const lessons = normalizePendingLessons({ items: payload.lessons });
+    const conflicts = normalizePendingLessons({ items: payload.conflicts });
+    const requests = array(payload.pendingRequests).map((request) => ({
+        appointmentId: request.appointmentId || '',
+        label: `${request.student || '学员'} · ${formatAppointmentTime(request.startAt, request.endAt)}`,
+    }));
+    const students = array(payload.students).map(String).filter(Boolean);
+    const unopened = array(payload.offerings).filter((offering) => !offering.receiverOffers)
+        .map((offering) => offering.courseName || '课程');
+    return {
+        lessonCount: lessons.length,
+        conflicts,
+        requests,
+        studentLabel: students.length ? students.join('、') : '没有学员',
+        unopenedLabel: unopened.join('、'),
+        canSubmit: conflicts.length === 0,
+    };
+}
+
+// The last confirmation before an irreversible handover.
+function handoverSummary(preview, from, to) {
+    return [
+        `${preview.lessonCount} 节课改由${to}上`,
+        preview.requests.length ? `婉拒 ${preview.requests.length} 条约课申请` : '',
+        `关闭${from}的开放预约并停用账号`,
+        '学员课时不变',
+    ].filter(Boolean).join('，');
+}
+
 function studentLedgerUrl(studentId) {
     return `/pages/workbenchStudent/index?id=${encodeURIComponent(studentId || '')}`;
+}
+
+function teacherUrl(teacherId) {
+    return `/pages/workbenchTeacher/index?id=${encodeURIComponent(teacherId || '')}`;
 }
 
 function grantUrl(student = {}) {
@@ -227,7 +307,8 @@ function grantUrl(student = {}) {
 }
 
 export {
-    buildGrantPayload, confirmLessonPayload, filterLessonsByTeacher, grantUrl, normalizeLedger, normalizePackages,
-    normalizePendingLessons, normalizeStudentPage, normalizeWorkbenchSummary, studentLedgerUrl, teacherFilterOptions,
+    buildGrantPayload, confirmLessonPayload, filterLessonsByTeacher, grantUrl, handoverSummary, normalizeHandoverPreview,
+    normalizeLedger, normalizePackages, normalizePendingLessons, normalizeStudentPage, normalizeTeacherLessons,
+    normalizeTeachers, normalizeWorkbenchSummary, studentLedgerUrl, substituteOptions, teacherFilterOptions, teacherUrl,
     validateNewStudent, workbenchErrorMessage, workbenchMissing, workbenchSections,
 };

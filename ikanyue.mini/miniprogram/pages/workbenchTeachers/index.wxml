@@ -1,0 +1,31 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="老师请假时换人代课，老师离职时一次交接" title="老师" />
+    <view class="workbench-content">
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage || '在网页后台添加老师后会显示在这里。'}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '老师列表加载失败' : '还没有其他老师'}}"
+                bind:action="retry"
+            />
+        </view>
+        <ticket-section wx:else subtitle="点选老师查看未确认的课" title="在职老师">
+            <view class="workbench-list">
+                <account-row
+                    wx:for="{{teachers}}"
+                    wx:for-item="teacher"
+                    wx:key="teacherId"
+                    item-id="{{teacher.teacherId}}"
+                    description="{{teacher.description}}"
+                    icon-text="{{teacher.initial}}"
+                    interactive="{{true}}"
+                    title="{{teacher.name}}"
+                    value="{{teacher.isAdmin ? '管理员' : '查看'}}"
+                    bind:select="goTeacher"
+                />
+            </view>
+        </ticket-section>
+    </view>
+</view>

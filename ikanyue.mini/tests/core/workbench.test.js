@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-    buildGrantPayload, confirmLessonPayload, filterLessonsByTeacher, normalizeLedger, normalizePackages,
+    buildGrantPayload, confirmLessonPayload, handoverSummary, normalizeHandoverPreview, normalizeTeacherLessons, normalizeTeachers,
+    substituteOptions, teacherUrl, filterLessonsByTeacher, normalizeLedger, normalizePackages,
     normalizePendingLessons, normalizeStudentPage, teacherFilterOptions, validateNewStudent, workbenchErrorMessage,
     workbenchMissing, workbenchSections,
 } from '../../miniprogram/core/workbench.js';
@@ -14,12 +15,17 @@ describe('workbench sections follow permissions', () => {
     it('shows every section to a solo owner without teacher names', () => {
         expect(workbenchSections(owner)).toEqual({
             available: true, teach: true, students: true, grant: true, undo: true, allLessons: true, showTeachers: false,
+            teachers: false,
         });
     });
 
     it('shows only teaching to a hired teacher and teacher names once there are two teachers', () => {
         const hired = { permissions: { teach: true }, teacherCount: 2 };
-        expect(workbenchSections(hired)).toMatchObject({ teach: true, students: false, grant: false, undo: false, showTeachers: true });
+        expect(workbenchSections(hired)).toMatchObject({ teach: true, students: false, grant: false, undo: false, showTeachers: true, teachers: false });
+    });
+
+    it('offers teacher management only to an owner with a second teacher', () => {
+        expect(workbenchSections({ ...owner, teacherCount: 2 })).toMatchObject({ students: true, teachers: true });
     });
 
     it('keeps the original workbench when the summary is missing', () => {
@@ -120,5 +126,53 @@ describe('student ledger', () => {
         expect(workbenchErrorMessage({ errorCode: 'LESSON_NOT_STARTED' })).toBe('课程开始后才能确认上课。');
         expect(workbenchErrorMessage({ code: 403, errorCode: 'OTHER' })).toBe('当前账号没有这项权限。');
         expect(workbenchErrorMessage({}, '稍后再试')).toBe('稍后再试');
+    });
+});
+
+describe('substitution and handover', () => {
+    const teachers = normalizeTeachers({ items: [
+        { teacherId: 't1', name: '王老师', lessonCount: 3, pendingRequestCount: 1 },
+        { teacherId: 't2', name: '李老师', lessonCount: 0, isAdmin: true },
+        { name: '没有编号' },
+    ] });
+
+    it('lists teachers with what they still have', () => {
+        expect(teachers).toEqual([
+            { teacherId: 't1', name: '王老师', initial: '王', isAdmin: false, description: '3 节课未确认 · 1 条约课待处理' },
+            { teacherId: 't2', name: '李老师', initial: '李', isAdmin: true, description: '0 节课未确认' },
+        ]);
+        expect(teacherUrl('t1')).toBe('/pages/workbenchTeacher/index?id=t1');
+    });
+
+    it('offers every other teacher as a substitute', () => {
+        expect(substituteOptions(teachers, 't1')).toEqual([{ label: '李老师', value: 't2' }]);
+        expect(substituteOptions(teachers, '')).toHaveLength(2);
+    });
+
+    it('labels a teacher\'s lessons as started or not', () => {
+        const { teacher, lessons } = normalizeTeacherLessons({ teacher: { teacherId: 't1', name: '王老师' },
+            items: [{ sessionId: 's1', started: true, leadTeacherId: 't1' }, { sessionId: 's2' }] });
+        expect(teacher).toEqual({ teacherId: 't1', name: '王老师', isAdmin: false });
+        expect(lessons.map((lesson) => [lesson.sessionId, lesson.stateLabel, lesson.leadTeacherId]))
+            .toEqual([['s1', '已开课，待确认', 't1'], ['s2', '未开始', '']]);
+    });
+
+    it('summarizes a handover and blocks it on conflicts', () => {
+        const preview = normalizeHandoverPreview({
+            lessons: [{ sessionId: 's1' }, { sessionId: 's2' }], conflicts: [],
+            pendingRequests: [{ appointmentId: 'a1', student: '小林', startAt: '2026-10-30T02:00:00.000Z', endAt: '2026-10-30T03:00:00.000Z' }],
+            offerings: [{ courseName: '声乐', receiverOffers: false }, { courseName: '钢琴', receiverOffers: true }],
+            students: ['小林'],
+        });
+        expect(preview).toMatchObject({ lessonCount: 2, studentLabel: '小林', unopenedLabel: '声乐', canSubmit: true });
+        expect(preview.requests[0].label).toBe('小林 · 10月30日 周五 10:00-11:00');
+        expect(handoverSummary(preview, '王老师', '李老师'))
+            .toBe('2 节课改由李老师上，婉拒 1 条约课申请，关闭王老师的开放预约并停用账号，学员课时不变');
+        expect(normalizeHandoverPreview({ conflicts: [{ sessionId: 's1' }] }).canSubmit).toBe(false);
+    });
+
+    it('explains substitution refusals', () => {
+        expect(workbenchErrorMessage({ errorCode: 'SUBSTITUTE_TEACHER_BUSY' })).toBe('这位老师在这个时间已有课。');
+        expect(workbenchErrorMessage({ errorCode: 'HANDOVER_CONFLICTS' })).toBe('接手老师有课时间冲突，请先单独调整这些课。');
     });
 });

@@ -601,6 +601,25 @@ func previewCancellation(app core.App, studentID, appointmentID string) (any, er
 
 // cancelAppointment is AppointmentCancellationService.cancel: release claims, return or refund
 // the frozen credit and cancel the session.
+// appointmentLead is the current lead teacher of the appointment's lesson; once a
+// lesson was substituted only that teacher (or an administrator) may change it.
+func appointmentLead(app core.App, appointment, input map[string]any) (string, error) {
+	lead := relationID(appointment["teacherId"])
+	if sessionID := relationID(appointment["sessionId"]); sessionID != "" {
+		row, err := findFirst(app, "session_teachers", `sessionId="`+escape(sessionID)+`" && role="lead" && `+teachingRow)
+		if err != nil {
+			return "", err
+		}
+		if row != nil {
+			lead = relationID(row["teacherId"])
+		}
+	}
+	if input["actorRole"] == "teacher" && lead != text(input, "teacherId") {
+		return "", Fail("APPOINTMENT_TEACHER_FORBIDDEN", "这节课已由其他老师负责", nil)
+	}
+	return lead, nil
+}
+
 func cancelAppointment(app core.App, input map[string]any) (map[string]any, error) {
 	if text(input, "appointmentId") == "" {
 		return nil, Fail("APPOINTMENT_ID_REQUIRED", "预约编号不能为空", nil)
@@ -620,6 +639,9 @@ func cancelAppointment(app core.App, input map[string]any) (map[string]any, erro
 		return nil, err
 	}
 	if err := authorizeCancellation(appointment, input, t.at, true); err != nil {
+		return nil, err
+	}
+	if _, err := appointmentLead(app, appointment, input); err != nil {
 		return nil, err
 	}
 	session, err := get(app, "sessions", relationID(appointment["sessionId"]))
@@ -730,6 +752,13 @@ func rescheduleAppointment(app core.App, input map[string]any) (map[string]any, 
 		}
 	} else if input["actorRole"] != "admin" {
 		return nil, Fail("APPOINTMENT_RESCHEDULE_FORBIDDEN", "无权修改预约时间", nil)
+	}
+	// Slots and calendar cells belong to the booked teacher's offering, so a substituted
+	// lesson is cancelled and rebooked (or switched back) rather than moved.
+	if lead, err := appointmentLead(app, appointment, input); err != nil {
+		return nil, err
+	} else if lead != relationID(appointment["teacherId"]) {
+		return nil, Fail("APPOINTMENT_TEACHER_SUBSTITUTED", "这节课已换老师，不能直接改期，请换回原老师或取消后重新预约", nil)
 	}
 	session, err := get(app, "sessions", relationID(appointment["sessionId"]))
 	if err != nil {

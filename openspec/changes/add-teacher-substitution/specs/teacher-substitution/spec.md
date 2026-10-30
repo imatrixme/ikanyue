@@ -23,6 +23,10 @@ An administrator teacher SHALL be able to replace the lead teacher of an unsettl
 - **WHEN** the owner substitutes a lesson back to the teacher who was replaced earlier
 - **THEN** that teacher's existing row becomes the planned lead again without a duplicate row
 
+#### Scenario: Lead was marked absent
+- **WHEN** the owner substitutes a lesson whose lead teacher is already marked absent
+- **THEN** the absent row stays as attendance history, the new teacher becomes the planned lead, and the lesson's calendar cells move to the new teacher
+
 #### Scenario: Hired teacher tries to substitute
 - **WHEN** a teacher without administrator status calls the substitute endpoint
 - **THEN** the request is refused with 403 and nothing changes
@@ -47,7 +51,7 @@ An administrator teacher SHALL be able to preview and then perform a handover fr
 - **THEN** the request is refused and nothing changes
 
 ### Requirement: Views Follow the Teacher Who Actually Teaches
-Once a lesson exists for an appointment, the student's and teacher's views of that lesson and appointment SHALL name the lesson's current lead teacher, and SHALL NOT show replaced teachers. The original appointment teacher SHALL be kept as history. A replaced teacher SHALL NOT reschedule or cancel that appointment; administrators still can.
+Once a lesson exists for an appointment, the student's and teacher's views of that lesson and appointment SHALL name the lesson's current lead teacher, and SHALL NOT show replaced teachers. The original appointment teacher SHALL be kept as history. A replaced teacher SHALL NOT cancel that appointment; administrators still can. A substituted appointment SHALL NOT be rescheduled by anyone until the lesson is switched back to the booked teacher, because its bookable slots belong to the booked teacher.
 
 #### Scenario: Student sees the substitute
 - **WHEN** a student opens a lesson whose teacher was substituted from A to B
@@ -56,6 +60,10 @@ Once a lesson exists for an appointment, the student's and teacher's views of th
 #### Scenario: Replaced teacher tries to cancel
 - **WHEN** teacher A cancels the appointment of a lesson now taught by B
 - **THEN** the request is refused with `APPOINTMENT_TEACHER_FORBIDDEN` and the lesson is unchanged
+
+#### Scenario: Substituted lesson is rescheduled
+- **WHEN** anyone reschedules an appointment whose lesson is now taught by a substitute
+- **THEN** the request is refused with `APPOINTMENT_TEACHER_SUBSTITUTED`, and the owner can switch the lesson back or cancel it so the student books again
 
 ### Requirement: Teacher Management Only Appears With Several Teachers
 The owner's workbench SHALL show a teachers section only to administrator teachers when the studio has more than one active teacher. From it the owner SHALL reach each teacher's unsettled lessons with a substitute action and, for non-administrator teachers other than themselves, the handover. Waiting lessons in the workbench SHALL offer the substitute action to the owner when there is more than one teacher. Hired teachers and one-teacher studios SHALL see no substitution entry.

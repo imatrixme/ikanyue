@@ -301,4 +301,25 @@ describe('Api page-facing request wrappers', () => {
             ['/v1/workbench/students/student/grants', { packageId: 'p', priceVersionId: 'v' }, true, { 'Idempotency-Key': 'grant-key' }],
         ]);
     });
+
+    it('wraps teacher substitution and handover', async () => {
+        iNetMock.get.mockResolvedValue({ items: [] });
+        iNetMock.post.mockResolvedValue({ status: 'ok' });
+
+        await Api.listWorkbenchTeachers();
+        await Api.listWorkbenchTeacherLessons('teacher');
+        await Api.previewWorkbenchHandover('teacher', 'other');
+        await Api.substituteWorkbenchTeacher('lesson', { teacherId: 'other' }, 'substitute-key');
+        await Api.handoverWorkbenchTeacher('teacher', { toTeacherId: 'other', reason: '老师离职' }, 'handover-key');
+
+        expect(iNetMock.get.mock.calls.slice(-3)).toEqual([
+            ['/v1/workbench/teachers'],
+            ['/v1/workbench/teachers/teacher/lessons'],
+            ['/v1/workbench/teachers/teacher/handover', { toTeacherId: 'other' }],
+        ]);
+        expect(iNetMock.post.mock.calls.slice(-2)).toEqual([
+            ['/v1/workbench/lessons/lesson/substitute', { teacherId: 'other' }, true, { 'Idempotency-Key': 'substitute-key' }],
+            ['/v1/workbench/teachers/teacher/handover', { toTeacherId: 'other', reason: '老师离职' }, true, { 'Idempotency-Key': 'handover-key' }],
+        ]);
+    });
 });

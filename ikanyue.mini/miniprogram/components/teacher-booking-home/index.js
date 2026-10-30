@@ -25,6 +25,7 @@ defineComponent({
         dashboard: normalizeTeacherDashboard(), errorMessage: '', loading: false, renewals: [],
         sections: workbenchSections(null), lessons: [], teacherFilter: '',
         confirming: null, absentIds: [], showConfirm: false, actionLoading: false,
+        substituting: null, showSubstitute: false,
     }),
     computed: {
         state: (d) => {
@@ -63,6 +64,20 @@ defineComponent({
         },
         goStudents() {
             nav.to('/pages/workbenchStudents/index');
+        },
+        goTeachers() {
+            nav.to('/pages/workbenchTeachers/index');
+        },
+        openSubstitute(event) {
+            const lesson = this.data.lessons.find((item) => item.sessionId === event.currentTarget.dataset.id);
+            if (lesson) this.set({ substituting: lesson, showSubstitute: true });
+        },
+        closeSubstitute() {
+            this.set({ showSubstitute: false });
+        },
+        async substituted() {
+            await this.set({ showSubstitute: false });
+            await this.loadWorkbench();
         },
         retry() {
             return this.refresh(true);

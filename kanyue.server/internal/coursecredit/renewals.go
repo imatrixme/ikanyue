@@ -442,7 +442,7 @@ func opsRenewals(app core.App, now time.Time) (any, error) {
 func teacherRenewals(app core.App, teacherID string, now time.Time) (any, error) {
 	since := filterTime(iso(now.Add(-renewalTeacherDays * 24 * time.Hour)))
 	assignments, err := list(app, "session_teachers",
-		`teacherId="`+escape(teacherID)+`" && sessionId.startAt>="`+since+`"`, "")
+		`teacherId="`+escape(teacherID)+`" && actualStatus!="cancelled" && sessionId.startAt>="`+since+`"`, "")
 	if err != nil {
 		return nil, err
 	}

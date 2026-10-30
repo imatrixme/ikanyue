@@ -172,6 +172,43 @@ func (m WorkbenchModule) Register(se *core.ServeEvent) {
 			return enroll(e.App, Body{Values: values, Keys: keys}, actorOf(e), clock())
 		})
 	}))
+
+	router.GET("/v1/workbench/teachers", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
+		return workbenchTeachers(e.App)
+	}))
+	router.GET("/v1/workbench/teachers/{teacherId}/lessons", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
+		return teacherLessons(e.App, path(e, "teacherId"), clock())
+	}))
+	router.POST("/v1/workbench/lessons/{sessionId}/substitute", session(func(e *core.RequestEvent) error {
+		return Command(e, "substituteTeacher", func() (map[string]any, error) {
+			if err := managing(e, administrator); err != nil {
+				return nil, err
+			}
+			body, err := ReadJSONBody(e)
+			if err != nil {
+				return nil, err
+			}
+			return substituteTeacher(e.App, bookingInput(Body{Values: map[string]any{}}, actorOf(e), map[string]any{
+				"sessionId": path(e, "sessionId"), "teacherId": body.Get("teacherId"), "reason": body.Get("reason")}))
+		})
+	}))
+	router.GET("/v1/workbench/teachers/{teacherId}/handover", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
+		return handoverPreview(e.App, map[string]any{"teacherId": path(e, "teacherId"),
+			"toTeacherId": e.Request.URL.Query().Get("toTeacherId"), "actorId": actorOf(e).ID}, clock())
+	}))
+	router.POST("/v1/workbench/teachers/{teacherId}/handover", session(func(e *core.RequestEvent) error {
+		return Command(e, "handoverTeacher", func() (map[string]any, error) {
+			if err := managing(e, administrator); err != nil {
+				return nil, err
+			}
+			body, err := ReadJSONBody(e)
+			if err != nil {
+				return nil, err
+			}
+			return handoverTeacher(e.App, bookingInput(Body{Values: map[string]any{}}, actorOf(e), map[string]any{
+				"teacherId": path(e, "teacherId"), "toTeacherId": body.Get("toTeacherId"), "reason": body.Get("reason")}))
+		})
+	}))
 }
 
 func workbenchTeacher(user auth.Claims) (string, error) {
@@ -353,6 +390,15 @@ func pendingLessons(app core.App, teacherID string, global bool, now time.Time) 
 	if err != nil {
 		return nil, err
 	}
+	items, err := lessonItems(app, sessions, now)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"items": items}, nil
+}
+
+// lessonItems shapes sessions for the workbench: time, students and the teachers still on them.
+func lessonItems(app core.App, sessions []map[string]any, now time.Time) ([]any, error) {
 	items := make([]any, 0, len(sessions))
 	for _, item := range sessions {
 		filter := `sessionId="` + escape(jsx.String(item["id"])) + `"`
@@ -369,18 +415,23 @@ func pendingLessons(app core.App, teacherID string, global bool, now time.Time) 
 			learners[i] = map[string]any{"sessionStudentId": row["id"], "name": personName(expanded(row, "studentId"), "学员"),
 				"attendanceStatus": lookup(attendanceResults, row["attendanceStatus"], "pending")}
 		}
-		names := []any{}
+		names, leadTeacherID := []any{}, ""
 		for _, row := range teachers {
 			names = append(names, personName(expanded(row, "teacherId"), "教师"))
+			if row["role"] == "lead" && leadTeacherID == "" {
+				leadTeacherID = relationID(row["teacherId"])
+			}
 		}
 		creditType := expanded(item, "requiredCreditTypeId")
+		start, _ := millis(item["startAt"])
 		items = append(items, map[string]any{
 			"sessionId": item["id"], "title": or(item["title"], or(creditType["name"], "课程")),
 			"startAt": item["startAt"], "endAt": item["endAt"], "location": or(item["location"], ""),
-			"reconfirm": item["status"] == "correction_pending", "teachers": names, "students": learners,
+			"reconfirm": item["status"] == "correction_pending", "started": start <= now.UnixMilli(),
+			"teachers": names, "leadTeacherId": leadTeacherID, "students": learners,
 		})
 	}
-	return map[string]any{"items": items}, nil
+	return items, nil
 }
 
 func workbenchSummary(app core.App, user auth.Claims, settlementEnabled bool, now time.Time) (map[string]any, error) {
