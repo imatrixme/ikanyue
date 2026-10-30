@@ -5,6 +5,7 @@ import (
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/ids"
+	"kanyue.server/internal/tenancy"
 )
 
 // BookingModule serves one-to-one course booking: student requests, the
@@ -348,7 +349,7 @@ func (m BookingModule) createOpsAppointment(e *core.RequestEvent, body Body, met
 // schedule registers the in-process appointment workers. A tick with nothing
 // to transition is skipped so idle periods do not write empty operations.
 func (m BookingModule) schedule(app core.App) {
-	run := func(name, filter string, worker func(core.App, map[string]any) (map[string]any, error)) {
+	run := func(app core.App, name, filter string, worker func(core.App, map[string]any) (map[string]any, error)) {
 		due, err := findFirst(app, "appointment_requests", filter)
 		if err != nil {
 			app.Logger().Error("course-booking worker check failed", "worker", name, "error", err.Error())
@@ -363,10 +364,10 @@ func (m BookingModule) schedule(app core.App) {
 			app.Logger().Error("course-booking worker failed", "worker", name, "error", err.Error())
 		}
 	}
-	app.Cron().MustAdd("courseBookingExpiry", bookingExpirySchedule, func() {
-		run("expire", expireFilter(iso(clock())), expireAppointments)
-	})
-	app.Cron().MustAdd("courseBookingFulfillment", bookingFulfillmentSchedule, func() {
-		run("fulfill", fulfillFilter, fulfillAppointments)
-	})
+	app.Cron().MustAdd("courseBookingExpiry", bookingExpirySchedule, tenancy.Job(app, "courseBookingExpiry", func(app core.App) {
+		run(app, "expire", expireFilter(iso(clock())), expireAppointments)
+	}))
+	app.Cron().MustAdd("courseBookingFulfillment", bookingFulfillmentSchedule, tenancy.Job(app, "courseBookingFulfillment", func(app core.App) {
+		run(app, "fulfill", fulfillFilter, fulfillAppointments)
+	}))
 }

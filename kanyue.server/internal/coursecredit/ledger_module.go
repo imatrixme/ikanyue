@@ -9,6 +9,7 @@ import (
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/ids"
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/tenancy"
 )
 
 // LedgerModule serves the course-credit ledger: order grants, enrollment and
@@ -214,15 +215,15 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 // schedule registers the in-process expiry, reconciliation and outbox jobs.
 func (m LedgerModule) schedule(app core.App, outboxes *outboxRunner) {
 	if m.Dispatcher != nil {
-		app.Cron().MustAdd("courseCreditOutbox", outboxSchedule, func() { outboxes.tick(app) })
+		app.Cron().MustAdd("courseCreditOutbox", outboxSchedule, tenancy.Job(app, "courseCreditOutbox", outboxes.tick))
 	}
-	app.Cron().MustAdd("courseCreditExpiry", expirySchedule, func() {
+	app.Cron().MustAdd("courseCreditExpiry", expirySchedule, tenancy.Job(app, "courseCreditExpiry", func(app core.App) {
 		actor := Actor{Role: "system", TraceID: "cron-expiry-" + ids.Record()}
 		if _, err := expireDue(app, actor, jsx.Undefined{}, clock()); err != nil {
 			app.Logger().Error("course-credit expiry run failed", "error", err.Error())
 		}
-	})
-	app.Cron().MustAdd("courseCreditReconciliation", reconciliationSchedule, func() {
+	}))
+	app.Cron().MustAdd("courseCreditReconciliation", reconciliationSchedule, tenancy.Job(app, "courseCreditReconciliation", func(app core.App) {
 		since := iso(clock().Add(-reconciliationWindow))
 		result, err := runReconciliation(app, "incremental", since, clock)
 		if err != nil {
@@ -233,7 +234,7 @@ func (m LedgerModule) schedule(app core.App, outboxes *outboxRunner) {
 			app.Logger().Warn("course-credit reconciliation found differences",
 				"runId", result["runId"], "differenceCount", result["differenceCount"])
 		}
-	})
+	}))
 }
 
 // readOptionalJSONBody is Hono's readOptionalJsonBody: only JSON requests are parsed.

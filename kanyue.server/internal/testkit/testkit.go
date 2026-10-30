@@ -15,6 +15,8 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+
+	"kanyue.server/internal/tenancy"
 )
 
 // Secret signs tokens in tests only.
@@ -125,7 +127,26 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addAutodates(prices)
 	save(t, app, prices)
 	importLedger(t, app)
+	// Business collections stay without the tenant field here; WithTenants adds it.
+	if err := tenancy.EnsurePlatform(app); err != nil {
+		t.Fatal(err)
+	}
 	return app
+}
+
+// WithTenants gives every business collection of app its tenant field, as the
+// tenant migration does, so tests can prove isolation between tenants.
+func WithTenants(t *testing.T, app core.App) {
+	t.Helper()
+	if err := tenancy.EnsureSchema(app); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// AddTenant creates another active tenant and returns its id.
+func AddTenant(t *testing.T, app core.App, name string) string {
+	t.Helper()
+	return Create(t, app, "tenants", map[string]any{"name": name, "kind": "studio", "status": "active"}).Id
 }
 
 // ledgerCollections and bookingCollections are the ledger, teaching and booking
@@ -185,6 +206,9 @@ func Create(t *testing.T, app core.App, collection string, fields map[string]any
 		t.Fatal(err)
 	}
 	record := core.NewRecord(target)
+	if target.Fields.GetByName(tenancy.Field) != nil && tenancy.ID(app) == "" {
+		record.Set(tenancy.Field, tenancy.DefaultID)
+	}
 	for key, value := range fields {
 		if key == "password" && target.IsAuth() {
 			record.SetPassword(value.(string))
@@ -205,6 +229,11 @@ func Serve(t *testing.T, app core.App, registers ...func(*core.ServeEvent)) http
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Scope requests the way server.Register does; without WithTenants this is a pass-through.
+	router.BindFunc(func(e *core.RequestEvent) error {
+		e.App = tenancy.Scope(e.App, tenancy.Resolve(e))
+		return e.Next()
+	})
 	event := &core.ServeEvent{App: app, Router: router}
 	for _, register := range registers {
 		register(event)

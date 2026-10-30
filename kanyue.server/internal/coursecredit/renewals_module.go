@@ -4,6 +4,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.server/internal/auth"
+	"kanyue.server/internal/tenancy"
 )
 
 // RenewalsModule serves renewal reminders: the ops list and sends, the teachers'
@@ -79,12 +80,12 @@ func (m RenewalsModule) Register(se *core.ServeEvent) {
 	}))
 
 	app := se.App
-	app.Cron().MustAdd("renewalReminders", renewalSchedule, func() {
+	app.Cron().MustAdd("renewalReminders", renewalSchedule, tenancy.Job(app, "renewalReminders", func(app core.App) {
 		created, err := scanRenewals(app, m.Wechat, clock())
 		if err != nil {
 			app.Logger().Error("renewal reminder scan failed", "error", err.Error())
 			return
 		}
 		app.Logger().Info("renewal reminder scan finished", "created", created)
-	})
+	}))
 }

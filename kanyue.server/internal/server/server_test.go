@@ -7,9 +7,11 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
+	"kanyue.server/internal/tenancy"
 	"kanyue.server/internal/testkit"
 )
 
@@ -155,5 +157,57 @@ func TestRegisterHidesStorageFromPublicRequests(t *testing.T) {
 	}
 	if page := send(http.MethodGet, "/students", public, map[string]string{"Accept": "text/html"}); page.Code != http.StatusOK || !strings.Contains(page.Body.String(), "root") {
 		t.Fatalf("console page = %d %s", page.Code, page.Body.String())
+	}
+}
+
+// Plugin routes answer like missing routes unless the request tenant enabled the
+// plugin; core routes keep working, and handlers get the tenant-scoped app.
+func TestPluginRoutesNeedTheTenantPlugin(t *testing.T) {
+	app := testkit.NewApp(t)
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantOf := func(e *core.RequestEvent) error {
+		return e.JSON(http.StatusOK, map[string]any{"tenant": tenancy.ID(e.App)})
+	}
+	Register(app, Config{Modules: []Module{
+		{Name: "core", Register: func(se *core.ServeEvent) { se.Router.GET("/v1/core", tenantOf) }},
+		{Name: "pay", Plugin: tenancy.Payment, Register: func(se *core.ServeEvent) { se.Router.POST("/v1/pay/{id}", tenantOf) }},
+	}})
+	if err := app.OnServe().Trigger(&core.ServeEvent{App: app, Router: router}, func(*core.ServeEvent) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	handler, err := router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	send := func(method, path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(method, path, nil))
+		return recorder
+	}
+	for _, path := range []string{"/v1/core", "/v1/pay/x"} {
+		method := http.MethodGet
+		if path != "/v1/core" {
+			method = http.MethodPost
+		}
+		if got := send(method, path); got.Code != http.StatusOK || !strings.Contains(got.Body.String(), tenancy.DefaultID) {
+			t.Fatalf("%s with payment = %d %s", path, got.Code, got.Body.String())
+		}
+	}
+	plugin, err := app.FindFirstRecordByFilter("tenant_plugins", "plugin={:plugin}", dbx.Params{"plugin": tenancy.Payment})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plugin.Set("status", "disabled")
+	if err := app.Save(plugin); err != nil {
+		t.Fatal(err)
+	}
+	if got := send(http.MethodPost, "/v1/pay/x"); got.Code != http.StatusNotFound || !strings.Contains(got.Body.String(), "接口不存在") {
+		t.Fatalf("pay without the plugin = %d %s", got.Code, got.Body.String())
+	}
+	if got := send(http.MethodGet, "/v1/core"); got.Code != http.StatusOK {
+		t.Fatalf("core without the plugin = %d", got.Code)
 	}
 }

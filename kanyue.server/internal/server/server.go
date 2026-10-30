@@ -14,11 +14,14 @@ import (
 	"github.com/pocketbase/pocketbase/tools/hook"
 
 	"kanyue.server/internal/gatewaylink"
+	"kanyue.server/internal/tenancy"
 )
 
-// Module is one business area's routes.
+// Module is one business area's routes. A module with a Plugin answers 404 for
+// tenants that have not enabled it.
 type Module struct {
 	Name     string
+	Plugin   string
 	Register func(se *core.ServeEvent)
 }
 
@@ -33,6 +36,9 @@ type Config struct {
 // Runs before PocketBase's own middlewares so storage routes never reach a handler.
 const internalOnlyPriority = -99998
 
+// Scopes module routes right after the storage guard.
+const tenantPriority = internalOnlyPriority + 1
+
 func Register(app core.App, cfg Config) {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		se.Router.Bind(&hook.Handler[*core.RequestEvent]{
@@ -40,9 +46,23 @@ func Register(app core.App, cfg Config) {
 			Priority: internalOnlyPriority,
 			Func:     internalOnly,
 		})
+		// plugins maps a plugin module's route pattern to its plugin; filled below, before serving.
+		plugins := map[string]string{}
+		se.Router.Bind(&hook.Handler[*core.RequestEvent]{
+			Id:       "kanyueTenant",
+			Priority: tenantPriority,
+			Func:     func(e *core.RequestEvent) error { return scopeTenant(e, plugins) },
+		})
 		ops, err := registerModules(se, cfg.Modules)
 		if err != nil {
 			return err
+		}
+		for _, module := range cfg.Modules {
+			for _, op := range ops {
+				if module.Plugin != "" && op.Module == module.Name {
+					plugins[op.Route.Pattern()] = module.Plugin
+				}
+			}
 		}
 		// More specific routes registered above win over this catch-all.
 		se.Router.Any("/{path...}", pages(cfg.Console))
@@ -106,6 +126,22 @@ func internalOnly(e *core.RequestEvent) error {
 		return e.Next()
 	}
 	return notFound(e)
+}
+
+// scopeTenant hands module routes an App limited to the request's tenant and
+// hides plugin routes the tenant has not enabled. PocketBase's own API and
+// dashboard stay unscoped for platform operations.
+func scopeTenant(e *core.RequestEvent, plugins map[string]string) error {
+	path := e.Request.URL.Path
+	if strings.HasPrefix(path, "/api/") || path == "/_" || strings.HasPrefix(path, "/_/") {
+		return e.Next()
+	}
+	tenant := tenancy.Resolve(e)
+	e.App = tenancy.Scope(e.App, tenant)
+	if plugin := plugins[e.Request.Pattern]; plugin != "" && !tenancy.PluginEnabled(e.App, tenant, plugin) {
+		return notFound(e)
+	}
+	return e.Next()
 }
 
 func IsInternalRequest(r *http.Request) bool {

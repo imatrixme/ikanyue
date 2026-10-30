@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"kanyue.server/internal/tenancy"
 	"kanyue.server/internal/testkit"
 )
 
@@ -156,5 +158,52 @@ func TestUpAddsAnOptionalVenueCover(t *testing.T) {
 	}
 	if err := addVenueCover(app); err != nil {
 		t.Fatalf("re-running must be a no-op: %v", err)
+	}
+}
+
+func TestUpGivesEveryBusinessCollectionATenant(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	if _, err := Up(app); err != nil {
+		t.Fatal(err)
+	}
+	owned := append(baselineNames(t), "venues", "renewal_reminders", "renewal_subscriptions")
+	for _, name := range owned {
+		if !slices.Contains(tenancy.Collections, name) {
+			t.Errorf("%s is missing from tenancy.Collections", name)
+		}
+		collection, err := app.FindCollectionByNameOrId(name)
+		if err != nil || collection.Fields.GetByName(tenancy.Field) == nil || !collection.Fields.GetByName(tenancy.Field).(*core.RelationField).Required {
+			t.Errorf("%s has no required tenant: %v", name, err)
+		}
+	}
+	venues, err := app.FindAllRecords("venues")
+	if err != nil || len(venues) != 1 || venues[0].GetString(tenancy.Field) != tenancy.DefaultID {
+		t.Fatalf("seeded venue = %v, %v", venues, err)
+	}
+	if !tenancy.PluginEnabled(app, tenancy.DefaultID, tenancy.Payment) {
+		t.Fatal("the default tenant keeps payment")
+	}
+
+	// Cellphones are unique per tenant; idempotency keys stay global.
+	shared := strings.Repeat("1", 11)
+	other := testkit.AddTenant(t, app, "另一家工作室")
+	for _, tenant := range []string{tenancy.DefaultID, other} {
+		testkit.Create(t, tenancy.Scope(app, tenant), "students", map[string]any{"cellphone": shared})
+	}
+	students, _ := app.FindCollectionByNameOrId("students")
+	duplicate := core.NewRecord(students)
+	duplicate.Set("cellphone", shared)
+	if err := tenancy.Scope(app, other).Save(duplicate); err == nil {
+		t.Fatal("a second student with the same cellphone in one tenant must be rejected")
+	}
+	operations, _ := app.FindCollectionByNameOrId("credit_operations")
+	for _, raw := range operations.Indexes {
+		if strings.Contains(raw, "idx_credit_operations_idempotency") && strings.Contains(raw, tenancy.Field) {
+			t.Fatalf("idempotency keys must stay global: %s", raw)
+		}
 	}
 }

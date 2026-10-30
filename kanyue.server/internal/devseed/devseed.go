@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/tenancy"
 )
 
 const lessonQuantity = 10
@@ -102,10 +103,12 @@ func Command(app core.App, env func(string) string) *cobra.Command {
 }
 
 // Local writes every fixture; run it inside one transaction.
+// Fixtures belong to the default tenant.
 func Local(app core.App, options Options) error {
 	if options.Production {
 		return errors.New("seed local refuses production")
 	}
+	app = tenancy.Scope(app, tenancy.DefaultID)
 	if err := seedAdmin(app, options); err != nil {
 		return err
 	}

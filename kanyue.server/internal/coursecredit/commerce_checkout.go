@@ -35,6 +35,13 @@ type commerce struct {
 	wechatAppID string
 }
 
+// scoped is c reading and writing through app, a request's or a job's tenant scope.
+func (c *commerce) scoped(app core.App) *commerce {
+	bound := *c
+	bound.app = app
+	return &bound
+}
+
 var commerceKey = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,100}$`)
 
 // recordID is how the JS SDK puts a value into a record URL; empty values fail as a missing id.

@@ -11,6 +11,8 @@ import (
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/spf13/cobra"
+
+	"kanyue.server/internal/tenancy"
 )
 
 var list core.MigrationsList
@@ -22,6 +24,7 @@ func init() {
 	list.Register(allowAuditActorRoles, nil, "kanyue_0004_audit_actor_roles")
 	list.Register(EnsureRenewalReminders, nil, "kanyue_0005_renewal_reminders")
 	list.Register(addVenueCover, nil, "kanyue_0006_venue_cover")
+	list.Register(tenancy.EnsureSchema, nil, "kanyue_0007_tenants")
 }
 
 // Up applies pending migrations in one transaction and returns their names.

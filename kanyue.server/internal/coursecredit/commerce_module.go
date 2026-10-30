@@ -13,6 +13,7 @@ import (
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/tenancy"
 )
 
 // CommerceModule serves online course purchase: the student catalog, orders,
@@ -45,10 +46,11 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 		return
 	}
 	router := se.Router
-	c := &commerce{app: se.App, gateway: newGateway(m.Config), wechatAppID: m.Config.WechatAppID}
+	// base holds the shared gateway and no app: requests and jobs use a copy bound to their tenant scope.
+	base := &commerce{gateway: newGateway(m.Config), wechatAppID: m.Config.WechatAppID}
 	path := func(e *core.RequestEvent, name string) string { return e.Request.PathValue(name) }
 
-	student := func(fn func(e *core.RequestEvent, studentID string) (any, error)) func(*core.RequestEvent) error {
+	student := func(fn func(e *core.RequestEvent, c *commerce, studentID string) (any, error)) func(*core.RequestEvent) error {
 		return m.Signer.RequireSession(func(e *core.RequestEvent) error {
 			return Query(e, func() (any, error) {
 				user := auth.User(e)
@@ -56,39 +58,39 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 				if id == "" || user["role"] != "student" {
 					return nil, Fail("STUDENT_LEARNING_STUDENT_REQUIRED", "仅学员可以购买课程", nil)
 				}
-				return fn(e, id)
+				return fn(e, base.scoped(e.App), id)
 			})
 		})
 	}
-	finance := func(fn func(e *core.RequestEvent, actorID string) (any, error)) func(*core.RequestEvent) error {
+	finance := func(fn func(e *core.RequestEvent, c *commerce, actorID string) (any, error)) func(*core.RequestEvent) error {
 		return m.Signer.RequireOps(false, func(e *core.RequestEvent) error {
 			return Query(e, func() (any, error) {
 				user := auth.User(e)
 				if err := RequireCapability(user, Finance); err != nil {
 					return nil, err
 				}
-				return fn(e, auth.ClaimString(user, "id"))
+				return fn(e, base.scoped(e.App), auth.ClaimString(user, "id"))
 			})
 		})
 	}
 	// withBody reads the JSON body before running a finance command.
-	withBody := func(fn func(e *core.RequestEvent, body Body, actorID string) (any, error)) func(*core.RequestEvent) error {
-		return finance(func(e *core.RequestEvent, actorID string) (any, error) {
+	withBody := func(fn func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error)) func(*core.RequestEvent) error {
+		return finance(func(e *core.RequestEvent, c *commerce, actorID string) (any, error) {
 			body, err := readJSONBody(e)
 			if err != nil {
 				return nil, err
 			}
-			return fn(e, body, actorID)
+			return fn(e, c, body, actorID)
 		})
 	}
 	// passthrough forwards a statement or recovery-work call to the gateway.
 	passthrough := func(method string, target func(e *core.RequestEvent) string, input func(body Body, actorID string) (any, error)) func(*core.RequestEvent) error {
 		if input == nil {
-			return finance(func(e *core.RequestEvent, _ string) (any, error) {
+			return finance(func(e *core.RequestEvent, c *commerce, _ string) (any, error) {
 				return c.gateway.request(method, target(e), nil, "", false)
 			})
 		}
-		return withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+		return withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 			payload, err := input(body, actorID)
 			if err != nil {
 				return nil, err
@@ -106,22 +108,22 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 		return pick(map[string]any{"actorId": actorID}, body.Values, keys...)
 	}
 
-	router.GET("/v1/student/commerce/catalog", student(func(*core.RequestEvent, string) (any, error) { return c.catalog() }))
-	router.GET("/v1/student/commerce/orders", student(func(_ *core.RequestEvent, studentID string) (any, error) { return c.list(studentID) }))
-	router.POST("/v1/student/commerce/orders", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.GET("/v1/student/commerce/catalog", student(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) { return c.catalog() }))
+	router.GET("/v1/student/commerce/orders", student(func(_ *core.RequestEvent, c *commerce, studentID string) (any, error) { return c.list(studentID) }))
+	router.POST("/v1/student/commerce/orders", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		body, err := readJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
 		return c.checkout(studentID, body, auth.User(e))
 	}))
-	router.POST("/v1/student/commerce/orders/{id}/cashier", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.POST("/v1/student/commerce/orders/{id}/cashier", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		return c.cashier(studentID, path(e, "id"), auth.User(e))
 	}))
-	router.GET("/v1/student/commerce/orders/{id}", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.GET("/v1/student/commerce/orders/{id}", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		return c.detail(studentID, path(e, "id"))
 	}))
-	router.POST("/v1/student/commerce/orders/{id}/refresh", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.POST("/v1/student/commerce/orders/{id}/refresh", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		if _, err := c.owned(studentID, path(e, "id")); err != nil {
 			return nil, err
 		}
@@ -131,33 +133,33 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 		return c.detail(studentID, path(e, "id"))
 	}))
 	if m.Config.Mock {
-		router.POST("/v1/student/commerce/orders/{id}/mock-pay", student(func(e *core.RequestEvent, studentID string) (any, error) {
+		router.POST("/v1/student/commerce/orders/{id}/mock-pay", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 			return c.mockPay(studentID, path(e, "id"))
 		}))
 	}
-	router.GET("/v1/student/commerce/orders/{id}/refund-preview", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.GET("/v1/student/commerce/orders/{id}/refund-preview", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		quote, err := c.refundPreview(studentID, path(e, "id"))
 		if err != nil {
 			return nil, err
 		}
 		return quote.public(), nil
 	}))
-	router.POST("/v1/student/commerce/orders/{id}/refunds", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.POST("/v1/student/commerce/orders/{id}/refunds", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		body, err := readJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
 		return c.requestRefund(studentID, path(e, "id"), body.Get("key"), body.Get("expectedAmount"), nil)
 	}))
-	router.GET("/v1/student/commerce/refunds/{id}", student(func(e *core.RequestEvent, studentID string) (any, error) {
+	router.GET("/v1/student/commerce/refunds/{id}", student(func(e *core.RequestEvent, c *commerce, studentID string) (any, error) {
 		return c.refundDetail(studentID, path(e, "id"))
 	}))
 
-	router.GET("/ops/commerce/finance", finance(func(*core.RequestEvent, string) (any, error) { return c.financeView() }))
-	router.POST("/ops/commerce/reconcile", finance(func(*core.RequestEvent, string) (any, error) {
+	router.GET("/ops/commerce/finance", finance(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) { return c.financeView() }))
+	router.POST("/ops/commerce/reconcile", finance(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) {
 		return c.gateway.request(http.MethodPost, "/v1/reconciliation", map[string]any{}, "", false)
 	}))
-	router.POST("/ops/commerce/recover", finance(func(*core.RequestEvent, string) (any, error) {
+	router.POST("/ops/commerce/recover", finance(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) {
 		orders, err := c.recover()
 		if err != nil {
 			return nil, err
@@ -169,7 +171,7 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 		return map[string]any{"orders": orders, "refunds": refunds}, nil
 	}))
 	if m.Config.Mock {
-		router.POST("/ops/commerce/refunds/{id}/mock-success", finance(func(e *core.RequestEvent, _ string) (any, error) {
+		router.POST("/ops/commerce/refunds/{id}/mock-success", finance(func(e *core.RequestEvent, c *commerce, _ string) (any, error) {
 			row, err := get(c.app, "commerce_refunds", path(e, "id"))
 			if err != nil {
 				return nil, err
@@ -188,32 +190,32 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 		}))
 	}
 
-	router.GET("/ops/commerce/orders", finance(func(e *core.RequestEvent, _ string) (any, error) {
+	router.GET("/ops/commerce/orders", finance(func(e *core.RequestEvent, c *commerce, _ string) (any, error) {
 		return c.opsOrders(queryParams(e, "page", "perPage", "search", "status", "from", "to"))
 	}))
-	router.GET("/ops/commerce/orders/{id}", finance(func(e *core.RequestEvent, _ string) (any, error) { return c.opsDetail(path(e, "id")) }))
-	router.POST("/ops/commerce/orders/{id}/refunds", withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.GET("/ops/commerce/orders/{id}", finance(func(e *core.RequestEvent, c *commerce, _ string) (any, error) { return c.opsDetail(path(e, "id")) }))
+	router.POST("/ops/commerce/orders/{id}/refunds", withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		return c.opsRefund(path(e, "id"), body, actorID)
 	}))
-	router.POST("/ops/commerce/orders/{id}/recover", withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.POST("/ops/commerce/orders/{id}/recover", withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		return c.recoverOrder(path(e, "id"), body, actorID)
 	}))
-	router.POST("/ops/commerce/refunds/{id}/retry", withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.POST("/ops/commerce/refunds/{id}/retry", withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		reason, err := validateReason(body.Get("reason"))
 		if err != nil {
 			return nil, err
 		}
 		return c.retryLiability(path(e, "id"), map[string]any{"id": actorID, "reason": reason})
 	}))
-	router.GET("/ops/commerce/offers", finance(func(*core.RequestEvent, string) (any, error) { return c.offers() }))
-	router.POST("/ops/commerce/offers", withBody(func(_ *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.GET("/ops/commerce/offers", finance(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) { return c.offers() }))
+	router.POST("/ops/commerce/offers", withBody(func(_ *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		return c.saveOffer(body, actorID)
 	}))
-	router.POST("/ops/commerce/offers/{id}/status", withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.POST("/ops/commerce/offers/{id}/status", withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		return c.transitionOffer(path(e, "id"), body, actorID)
 	}))
-	router.GET("/ops/commerce/cases", finance(func(*core.RequestEvent, string) (any, error) { return c.cases() }))
-	router.POST("/ops/commerce/cases/{id}", withBody(func(e *core.RequestEvent, body Body, actorID string) (any, error) {
+	router.GET("/ops/commerce/cases", finance(func(_ *core.RequestEvent, c *commerce, _ string) (any, error) { return c.cases() }))
+	router.POST("/ops/commerce/cases/{id}", withBody(func(e *core.RequestEvent, c *commerce, body Body, actorID string) (any, error) {
 		return c.updateCase(path(e, "id"), body, actorID)
 	}))
 
@@ -242,10 +244,10 @@ func (m CommerceModule) Register(se *core.ServeEvent) {
 
 	if len(m.Config.EventToken) >= 32 {
 		router.POST("/internal/commerce/payment-events", func(e *core.RequestEvent) error {
-			return m.paymentEvent(e, c)
+			return m.paymentEvent(e, base.scoped(e.App))
 		})
 	}
-	m.startRecovery(se.App, c)
+	m.startRecovery(se.App, base)
 }
 
 // paymentEvent is the gateway's push: it answers raw JSON, not the API envelope,
@@ -322,17 +324,27 @@ func (m CommerceModule) startRecovery(app core.App, c *commerce) {
 			return
 		}
 		defer running.Unlock()
-		orders, err := c.recover()
-		if err == nil {
-			var refunds map[string]any
-			if refunds, err = c.recoverRefunds(); err == nil {
-				if orders["unresolved"] != 0 || refunds["unresolved"] != 0 {
-					app.Logger().Error("Commerce recovery has unresolved work.")
-				}
-				return
+		err := tenancy.Each(app, func(scoped core.App) error {
+			if !tenancy.PluginEnabled(scoped, tenancy.ID(scoped), tenancy.Payment) {
+				return nil
 			}
+			tenant := c.scoped(scoped)
+			orders, err := tenant.recover()
+			if err != nil {
+				return err
+			}
+			refunds, err := tenant.recoverRefunds()
+			if err != nil {
+				return err
+			}
+			if orders["unresolved"] != 0 || refunds["unresolved"] != 0 {
+				app.Logger().Error("Commerce recovery has unresolved work.", "tenant", tenancy.ID(scoped))
+			}
+			return nil
+		})
+		if err != nil {
+			app.Logger().Error("Commerce worker temporarily unavailable; pending records retained.")
 		}
-		app.Logger().Error("Commerce worker temporarily unavailable; pending records retained.")
 	}
 	ticker := time.NewTicker(m.RecoveryInterval)
 	done := make(chan struct{})

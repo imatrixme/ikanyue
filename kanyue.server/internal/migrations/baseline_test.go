@@ -6,6 +6,8 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+
+	"kanyue.server/internal/tenancy"
 )
 
 func baselineNames(t *testing.T) []string {
@@ -46,10 +48,14 @@ func TestBaselineBuildsAnEmptyDatabase(t *testing.T) {
 		t.Fatalf("teachers = %+v", teachers)
 	}
 
-	// Records written through the new schema keep working end to end.
+	// Records written through the new schema keep working end to end, but only inside a tenant.
+	orphan := core.NewRecord(students)
+	if err := app.Save(orphan); err == nil {
+		t.Fatal("a business record without a tenant must be rejected")
+	}
 	student := core.NewRecord(students)
 	student.Set("cellphone", "13900000000")
-	if err := app.Save(student); err != nil {
+	if err := tenancy.Scope(app, tenancy.DefaultID).Save(student); err != nil {
 		t.Fatal(err)
 	}
 	if again, err := Up(app); err != nil || len(again) != 0 {
