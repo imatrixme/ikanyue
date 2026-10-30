@@ -19,5 +19,5 @@
 
 - [x] 3.1 `testkit` builds two tenants; isolation tests cover the scoped app (list, detail, write, delete, transactions), the renewal scan and routes across two tenants, and a tenant without `payment` getting 404 from plugin routes while core routes work.
 - [x] 3.2 `gofmt -l .`, `GOMAXPROCS=1 go vet -p 1 ./...`, `GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`.
-- [ ] 3.3 Contract tests through the local gateway (TEST/PRE/RELEASE) and the commerce smoke pass unchanged (done); the mini program live flows remain to be run in WeChat DevTools.
+- [ ] 3.3 Contract tests through the local gateway (TEST/PRE/RELEASE) and the commerce smoke pass unchanged (done); the mini program live flows remain to be run in WeChat DevTools. (2026-10-29: `pnpm test:live` passes 11/11 through the local gateway in TEST after the order/payment split; in the DevTools simulator the course shop renders both with selling on and with the platform payment pause on (paused notice, orders still listed), and an order opens while paused. The other flows in DevTools and on a phone are still open.)
 - [ ] 3.4 Rehearse the migration and the backup restore on a copy of production `pb_data` before the release (timing agreed with the founder).
