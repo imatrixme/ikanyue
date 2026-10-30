@@ -30,7 +30,7 @@ The mini program SHALL present role-specific navigation on three shared tab slot
 - **THEN** the TabBar displays 工作台、日历、我的, the first tab shows the teacher workbench, the second shows the teacher calendar, and student financial or reward data remains inaccessible
 
 ### Requirement: Teacher Appointment Workbench
-The teacher mini-program SHALL provide a scene-oriented workbench for pending decisions, today's teaching schedule, confirmed appointments, and conflict outcomes.
+The teacher mini-program SHALL provide a scene-oriented workbench for pending decisions, today's teaching schedule, lessons waiting to be confirmed as taught, confirmed appointments, and conflict outcomes.
 
 #### Scenario: Teacher reviews a pending request
 - **WHEN** a teacher opens a request assigned to them
@@ -39,6 +39,10 @@ The teacher mini-program SHALL provide a scene-oriented workbench for pending de
 #### Scenario: Teacher confirms a request that just became unavailable
 - **WHEN** confirmation loses a concurrent slot or eligibility race
 - **THEN** the interface shows a stable conflict state, refreshes the queue, and does not display raw backend errors
+
+#### Scenario: Teacher sees lessons waiting for confirmation
+- **WHEN** a teacher opens the workbench after one of their lessons has started and is not yet settled
+- **THEN** the lesson appears under lessons waiting for confirmation with its students and a "确认上课" action
 
 ### Requirement: Teacher Availability Editor
 The teacher mini-program SHALL let a teacher maintain weekly availability and date-specific exceptions within the institution policy.
