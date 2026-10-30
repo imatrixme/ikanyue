@@ -25,7 +25,10 @@
     "pages/imageDetail/index",
     "pages/webview/index",
     "pages/agreement/index",
-    "pages/memberCard/index"
+    "pages/memberCard/index",
+    "pages/workbenchStudents/index",
+    "pages/workbenchStudent/index",
+    "pages/workbenchGrant/index"
   ],
   "window": {
     "backgroundTextStyle": "light",

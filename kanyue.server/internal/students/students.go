@@ -64,6 +64,12 @@ func (m Module) Register(se *core.ServeEvent) {
 	}))
 }
 
+// List and Create serve the mini program owner workbench under the same rules
+// as /ops/students; the caller refreshes the session's administrator claim.
+func List(e *core.RequestEvent) (any, error) { return list(e) }
+
+func Create(e *core.RequestEvent, input httpx.Body) (any, error) { return create(e, input) }
+
 func list(e *core.RequestEvent) (listResult, error) {
 	if err := assertAdmin(e); err != nil {
 		return listResult{}, err

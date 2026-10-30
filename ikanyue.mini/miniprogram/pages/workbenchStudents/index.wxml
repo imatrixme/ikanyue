@@ -1,0 +1,54 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="添加学员后，可以给学员发课时" title="学员" />
+    <view class="workbench-content">
+        <input
+            class="workbench-search"
+            confirm-type="search"
+            data-field="keyword"
+            placeholder="搜索姓名或手机号"
+            value="{{keyword}}"
+            bindconfirm="search"
+            bindinput="onField"
+        />
+        <view class="workbench-submit" aria-role="button" bindtap="openAdd">添加学员</view>
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage || (keyword ? '换个关键词试试。' : '添加第一位学员后，就可以给学员发课时。')}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '学员列表加载失败' : (keyword ? '没有找到学员' : '还没有学员')}}"
+                bind:action="retry"
+            />
+        </view>
+        <ticket-section wx:else subtitle="点选学员查看课时、发课时" title="全部学员">
+            <view class="workbench-list">
+                <account-row
+                    wx:for="{{students}}"
+                    wx:for-item="student"
+                    wx:key="studentId"
+                    item-id="{{student.studentId}}"
+                    description="{{student.cellphone}}"
+                    icon-text="{{student.initial}}"
+                    interactive="{{true}}"
+                    title="{{student.name}}"
+                    value="{{student.blocked ? '已停用' : '查看'}}"
+                    bind:select="goStudent"
+                />
+            </view>
+        </ticket-section>
+    </view>
+
+    <k-popup visible="{{showAdd}}" panel-class="workbench-sheet-shell" bind:close="closeAdd">
+        <view class="workbench-sheet">
+            <view class="workbench-sheet__bar" />
+            <text class="workbench-sheet__title">添加学员</text>
+            <text class="workbench-sheet__description">学员之后用这个手机号通过微信登录小程序。</text>
+            <input class="workbench-sheet__input" data-field="draft.realName" maxlength="40" placeholder="学员姓名" value="{{draft.realName}}" bindinput="onField" />
+            <input class="workbench-sheet__input" data-field="draft.cellphone" maxlength="11" placeholder="手机号" type="number" value="{{draft.cellphone}}" bindinput="onField" />
+            <view class="workbench-submit {{addReady ? '' : 'disabled'}}" aria-role="button" bindtap="submitAdd">
+                {{actionLoading ? '正在提交' : '添加'}}
+            </view>
+        </view>
+    </k-popup>
+</view>

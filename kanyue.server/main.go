@@ -90,6 +90,7 @@ func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dis
 			Dispatcher: dispatcher}.Register},
 		{Name: "booking", Register: coursecredit.BookingModule{Signer: signer, ReservationEnabled: cfg.CourseCreditReservation}.Register},
 		{Name: "sessions", Register: coursecredit.SessionsModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
+		{Name: "workbench", Register: coursecredit.WorkbenchModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
 		{Name: "migration", Register: coursecredit.MigrationModule{Signer: signer, Enabled: cfg.CourseCreditMigration}.Register},
 		{Name: "orders", Register: coursecredit.OrdersModule{Signer: signer, Enabled: cfg.CourseCommerce,
 			WechatAppID: cfg.WechatAppID, MockPayment: cfg.PayMockEnabled}.Register},

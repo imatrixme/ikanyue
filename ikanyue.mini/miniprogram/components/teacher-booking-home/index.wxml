@@ -1,6 +1,45 @@
 <view class="page-chrome teacher-workbench">
     <view class="teacher-workbench__content">
         <upcoming-lessons id="upcoming" />
+        <ticket-section wx:if="{{sections.teach}}" subtitle="开课后确认上课，按出勤扣除课时" title="待确认上课">
+            <view wx:if="{{showTeacherFilter}}" class="workbench-filter">
+                <text>按老师查看</text>
+                <picker range="{{teacherOptions}}" range-key="label" value="{{teacherIndex}}" bindchange="changeTeacherFilter">
+                    <view>{{teacherOptions[teacherIndex].label}}</view>
+                </picker>
+            </view>
+            <view wx:if="{{visibleLessons.length}}" class="workbench-list">
+                <view wx:for="{{visibleLessons}}" wx:for-item="lesson" wx:key="sessionId" class="workbench-lesson">
+                    <view class="workbench-lesson__row">
+                        <view class="workbench-lesson__body">
+                            <text class="workbench-lesson__title">{{lesson.title}}</text>
+                            <text class="workbench-lesson__meta">{{lesson.timeLabel}}{{lesson.location ? ' · ' + lesson.location : ''}}</text>
+                            <text wx:if="{{lesson.teacherLabel}}" class="workbench-lesson__meta">老师：{{lesson.teacherLabel}}</text>
+                            <text class="workbench-lesson__meta">学员：{{lesson.studentLabel}}</text>
+                        </view>
+                        <view class="workbench-button" aria-role="button" data-id="{{lesson.sessionId}}" bindtap="openConfirm">
+                            {{lesson.reconfirm ? '重新确认' : '确认上课'}}
+                        </view>
+                    </view>
+                </view>
+            </view>
+            <view wx:else class="workbench-empty">
+                <app-icon name="booking-confirm" size="xl" />
+                <text>没有待确认的课</text>
+            </view>
+        </ticket-section>
+        <ticket-section wx:if="{{sections.students}}" subtitle="添加学员、发课时、查看和撤销核销" title="学员与课时">
+            <view class="workbench-list">
+                <account-row
+                    description="{{sections.grant ? '选择学员后可以发课时' : '查看学员剩余课时'}}"
+                    icon="account-teaching"
+                    interactive="{{true}}"
+                    title="学员"
+                    value="管理"
+                    bind:select="goStudents"
+                />
+            </view>
+        </ticket-section>
         <view wx:if="{{state !== 'ready'}}" class="teacher-workbench__state">
             <async-state
                 action-label="{{state === 'error' ? '重新加载' : ''}}"
@@ -60,4 +99,27 @@
             </view>
         </ticket-section>
     </view>
+    <k-popup visible="{{showConfirm}}" panel-class="workbench-sheet-shell" bind:close="closeConfirm">
+        <view class="workbench-sheet">
+            <view class="workbench-sheet__bar" />
+            <text class="workbench-sheet__title">确认上课</text>
+            <text class="workbench-sheet__description">{{confirming.title}} · {{confirming.timeLabel}}</text>
+            <text class="workbench-sheet__description">默认全部到课；点选没来的学员标记为缺席，确认后按出勤扣除课时。</text>
+            <view
+                wx:for="{{confirmRows}}"
+                wx:for-item="student"
+                wx:key="sessionStudentId"
+                class="workbench-sheet__option {{student.absent ? 'selected' : ''}}"
+                aria-role="button"
+                data-id="{{student.sessionStudentId}}"
+                bindtap="toggleAbsent"
+            >
+                <text>{{student.name}}</text>
+                <text>{{student.absent ? '缺席' : '到课'}}</text>
+            </view>
+            <view class="workbench-submit {{actionLoading ? 'disabled' : ''}}" aria-role="button" bindtap="submitConfirm">
+                {{actionLoading ? '正在提交' : '确认上课'}}
+            </view>
+        </view>
+    </k-popup>
 </view>

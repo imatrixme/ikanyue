@@ -21,7 +21,7 @@ const sources = collect('.', ['.js', '.wxml', '.scss']);
 const generated = ['styles/_brand.generated.scss', 'styles/theme.js', 'styles/_tokens.scss'];
 
 describe('app shell', () => {
-    it('publishes the 26 pages and three tabs', () => {
+    it('publishes the 29 pages and three tabs', () => {
         expect(app.pages).toEqual([
             'pages/home/index', 'pages/activity/index', 'pages/courses/index', 'pages/points/index', 'pages/profile/index',
             'pages/courseDetail/index', 'pages/courseShop/index', 'pages/courseOrder/index', 'pages/courseLessons/index',
@@ -30,6 +30,7 @@ describe('app shell', () => {
             'pages/appointmentDetail/index', 'pages/venues/index', 'pages/teacherAvailability/index',
             'pages/pointsHistory/index', 'pages/rewardCatalog/index', 'pages/userinfo/index', 'pages/activityDetail/index',
             'pages/imageDetail/index', 'pages/webview/index', 'pages/agreement/index', 'pages/memberCard/index',
+            'pages/workbenchStudents/index', 'pages/workbenchStudent/index', 'pages/workbenchGrant/index',
         ]);
         expect(app.tabBar.list.map((item) => [item.pagePath, item.text])).toEqual([
             ['pages/home/index', '首页'], ['pages/appointmentBooking/index', '约课'], ['pages/profile/index', '我的'],
@@ -88,7 +89,7 @@ describe('student course and booking boundary', () => {
     it('keeps course pages read-only and booking mutations to the approved set', () => {
         const allowed = new Set([
             'cancelStudentAppointment', 'cancelTeacherAppointment', 'cancelTeacherAvailabilityOverride',
-            'confirmTeacherAppointment', 'createStudentAppointment', 'createTeacherAvailabilityOverride',
+            'confirmTeacherAppointment', 'confirmWorkbenchLesson', 'createStudentAppointment', 'createTeacherAvailabilityOverride',
             'declineTeacherAppointment', 'rescheduleTeacherAppointment', 'saveTeacherAvailability', 'withdrawStudentAppointment',
         ]);
         for (const file of courseFiles) expect(read(file), file).not.toMatch(/Api\.[A-Za-z]*(create|update|convert|reserve|enroll|purchase)/i);

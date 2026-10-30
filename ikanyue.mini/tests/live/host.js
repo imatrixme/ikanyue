@@ -90,9 +90,10 @@ globalThis.wx = {
 };
 
 const registered = [];
+const components = [];
 globalThis.App = () => {};
 globalThis.Page = (options) => { registered.push(options); };
-globalThis.Component = () => {};
+globalThis.Component = (options) => { components.push(options); };
 globalThis.getCurrentPages = () => [];
 
 // Waits until no request is in flight and the page has stopped scheduling work.
@@ -123,6 +124,24 @@ export async function open(path, query = {}) {
     return page;
 }
 open.cache = new Map();
+
+// Mounts a component on its own, like open(): created then attached; child components are absent.
+export async function mount(path) {
+    const before = components.length;
+    await import(`${root}${path}/index.js`);
+    const options = components.length > before ? components.at(-1) : mount.cache.get(path);
+    mount.cache.set(path, options);
+    const instance = { ...options.methods, data: structuredClone(options.data), selectComponent: () => null };
+    instance.setData = function setData(patch, callback) {
+        Object.assign(this.data, structuredClone(patch));
+        callback?.();
+    };
+    options.lifetimes?.created?.call(instance);
+    await options.lifetimes?.attached?.call(instance);
+    await settle();
+    return instance;
+}
+mount.cache = new Map();
 
 export const tap = (dataset = {}, detail = {}) => ({ currentTarget: { dataset }, detail });
 

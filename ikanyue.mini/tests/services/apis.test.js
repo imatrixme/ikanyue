@@ -272,4 +272,33 @@ describe('Api page-facing request wrappers', () => {
             '/v1/teacher/availability-overrides/override/cancel',
         ]);
     });
+
+    it('wraps the owner workbench reads and keyed commands', async () => {
+        iNetMock.get.mockResolvedValue({ items: [] });
+        iNetMock.post.mockResolvedValue({ status: 'ok' });
+
+        await Api.getWorkbenchSummary();
+        await Api.listWorkbenchPendingLessons();
+        await Api.listWorkbenchStudents({ q: '林' });
+        await Api.getWorkbenchStudentLedger('student');
+        await Api.listWorkbenchPackages();
+        await Api.confirmWorkbenchLesson('lesson', { absentSessionStudentIds: ['row'] }, 'confirm-key');
+        await Api.undoWorkbenchLesson('lesson', { reason: '学员实际缺席' }, 'undo-key');
+        await Api.addWorkbenchStudent({ realName: '林', cellphone: 'phone' });
+        await Api.grantWorkbenchLessons('student', { packageId: 'p', priceVersionId: 'v' }, 'grant-key');
+
+        expect(iNetMock.get.mock.calls.slice(-5)).toEqual([
+            ['/v1/workbench/summary'],
+            ['/v1/workbench/lessons/pending'],
+            ['/v1/workbench/students', { q: '林' }],
+            ['/v1/workbench/students/student/ledger'],
+            ['/v1/workbench/packages'],
+        ]);
+        expect(iNetMock.post.mock.calls.slice(-4)).toEqual([
+            ['/v1/workbench/lessons/lesson/confirm', { absentSessionStudentIds: ['row'] }, true, { 'Idempotency-Key': 'confirm-key' }],
+            ['/v1/workbench/lessons/lesson/reverse', { reason: '学员实际缺席' }, true, { 'Idempotency-Key': 'undo-key' }],
+            ['/v1/workbench/students', { realName: '林', cellphone: 'phone' }],
+            ['/v1/workbench/students/student/grants', { packageId: 'p', priceVersionId: 'v' }, true, { 'Idempotency-Key': 'grant-key' }],
+        ]);
+    });
 });

@@ -61,6 +61,7 @@ var authScopes = []struct{ rule, auth string }{
 	{"/v1/points/", "student"},
 	{"/v1/reward-items", "student"},
 	{"/v1/teacher/", "teacher"},
+	{"/v1/workbench/", "teacher"},
 	{"/ops/", "ops"},
 	{"/internal/", "service"},
 }

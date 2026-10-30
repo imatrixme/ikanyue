@@ -1,0 +1,47 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="线下收款后在这里记录，不经过在线支付" title="给{{studentName}}发课时" />
+    <view class="workbench-content">
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage || '请先在网页后台创建课包和价格，再回来发课时。'}}"
+                kind="{{state === 'error' ? 'network' : 'default'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '课包加载失败' : '还没有可发的课包'}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <view class="workbench-facts">
+                <view class="workbench-fact">
+                    <text>课包</text>
+                    <picker range="{{packages}}" range-key="name" value="{{packageIndex}}" bindchange="changePackage">
+                        <view>{{chosen.name}}</view>
+                    </picker>
+                </view>
+                <view class="workbench-fact">
+                    <text>包含</text>
+                    <text>{{chosen.grantLabel}}</text>
+                </view>
+                <view wx:if="{{chosen.validityLabel}}" class="workbench-fact">
+                    <text>有效期</text>
+                    <text>{{chosen.validityLabel}}</text>
+                </view>
+                <view class="workbench-fact">
+                    <text>价格</text>
+                    <picker range="{{priceOptions}}" range-key="label" value="{{priceIndex}}" bindchange="changePrice">
+                        <view>{{priceOptions[priceIndex].label}}</view>
+                    </picker>
+                </view>
+                <view class="workbench-fact">
+                    <text>实收金额（元）</text>
+                    <input data-field="paidAmount" placeholder="不填按售价" type="digit" value="{{paidAmount}}" bindinput="onField" />
+                </view>
+            </view>
+            <text class="workbench-hint">实收低于售价就是你给学员的优惠，订单会同时记下标价和实收。</text>
+            <view class="workbench-submit {{submitReady ? '' : 'disabled'}}" aria-role="button" bindtap="submit">
+                {{actionLoading ? '正在提交' : '发课时'}}
+            </view>
+        </block>
+    </view>
+</view>

@@ -202,6 +202,31 @@ const cancelTeacherAvailabilityOverride = (overrideId, idempotencyKey) => iNet.p
     `/v1/teacher/availability-overrides/${overrideId}/cancel`, {}, true, commandHeaders(idempotencyKey)
 );
 
+// Owner workbench: sections follow the teacher's permissions; the server re-checks every call.
+const getWorkbenchSummary = () => iNet.get('/v1/workbench/summary');
+
+const listWorkbenchPendingLessons = () => iNet.get('/v1/workbench/lessons/pending');
+
+const confirmWorkbenchLesson = (sessionId, payload, idempotencyKey) => iNet.post(
+    `/v1/workbench/lessons/${sessionId}/confirm`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const undoWorkbenchLesson = (sessionId, payload, idempotencyKey) => iNet.post(
+    `/v1/workbench/lessons/${sessionId}/reverse`, payload, true, commandHeaders(idempotencyKey)
+);
+
+const listWorkbenchStudents = (params = {}) => iNet.get('/v1/workbench/students', params);
+
+const addWorkbenchStudent = (payload) => iNet.post('/v1/workbench/students', payload);
+
+const getWorkbenchStudentLedger = (id) => iNet.get(`/v1/workbench/students/${id}/ledger`);
+
+const listWorkbenchPackages = () => iNet.get('/v1/workbench/packages');
+
+const grantWorkbenchLessons = (id, payload, idempotencyKey) => iNet.post(
+    `/v1/workbench/students/${id}/grants`, payload, true, commandHeaders(idempotencyKey)
+);
+
 function commandHeaders(idempotencyKey) {
     return { 'Idempotency-Key': idempotencyKey };
 }
@@ -249,6 +274,15 @@ const Api = {
     saveTeacherAvailability,
     createTeacherAvailabilityOverride,
     cancelTeacherAvailabilityOverride,
+    getWorkbenchSummary,
+    listWorkbenchPendingLessons,
+    confirmWorkbenchLesson,
+    undoWorkbenchLesson,
+    listWorkbenchStudents,
+    addWorkbenchStudent,
+    getWorkbenchStudentLedger,
+    listWorkbenchPackages,
+    grantWorkbenchLessons,
 };
 
 export { Api };

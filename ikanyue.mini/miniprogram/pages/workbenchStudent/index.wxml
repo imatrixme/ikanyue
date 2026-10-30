@@ -1,0 +1,67 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="{{ledger.student.cellphone}}" title="{{ledger.student.name}}" />
+    <view class="workbench-content">
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '学员课时加载失败' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <view wx:if="{{sections.grant}}" class="workbench-submit" aria-role="button" bindtap="goGrant">发课时</view>
+
+            <ticket-section subtitle="剩余、已约和已上的课时" title="课时">
+                <view wx:if="{{ledger.courses.length}}" class="workbench-facts">
+                    <view wx:for="{{ledger.courses}}" wx:for-item="course" wx:key="courseId" class="workbench-fact">
+                        <text>{{course.name}}</text>
+                        <text>剩余 {{course.remaining}} · 已约 {{course.scheduled}} · 已上 {{course.completed}}</text>
+                    </view>
+                </view>
+                <view wx:else class="workbench-empty">
+                    <app-icon name="course-book" size="xl" />
+                    <text>还没有课时{{sections.grant ? '，点上方“发课时”' : ''}}</text>
+                </view>
+            </ticket-section>
+
+            <ticket-section wx:if="{{ledger.confirmedLessons.length}}" subtitle="{{sections.undo ? '出勤记错时可以撤销，课时会退回' : '最近确认上课的记录'}}" title="已确认的课">
+                <view class="workbench-list">
+                    <view wx:for="{{ledger.confirmedLessons}}" wx:for-item="lesson" wx:key="sessionId" class="workbench-lesson">
+                        <view class="workbench-lesson__row">
+                            <view class="workbench-lesson__body">
+                                <text class="workbench-lesson__title">{{lesson.title}}</text>
+                                <text class="workbench-lesson__meta">{{lesson.timeLabel}} · {{lesson.attendance}}</text>
+                            </view>
+                            <view wx:if="{{sections.undo}}" class="workbench-button workbench-button--quiet" aria-role="button" data-id="{{lesson.sessionId}}" bindtap="openUndo">撤销</view>
+                        </view>
+                    </view>
+                </view>
+            </ticket-section>
+
+            <ticket-section wx:if="{{ledger.records.length}}" subtitle="发课时与上课扣除" title="课时记录">
+                <view class="workbench-facts">
+                    <view wx:for="{{ledger.records}}" wx:for-item="record" wx:key="recordId" class="workbench-fact">
+                        <text>{{record.title}} · {{record.course}}</text>
+                        <text>{{record.change}}</text>
+                    </view>
+                </view>
+            </ticket-section>
+        </block>
+    </view>
+
+    <k-popup visible="{{showUndo}}" panel-class="workbench-sheet-shell" bind:close="closeUndo">
+        <view class="workbench-sheet">
+            <view class="workbench-sheet__bar" />
+            <text class="workbench-sheet__title">撤销确认上课</text>
+            <text class="workbench-sheet__description">{{undoing.title}} · {{undoing.timeLabel}}</text>
+            <text class="workbench-sheet__description">撤销后这节课扣除的课时会退回，课程回到待确认，可以重新确认出勤。</text>
+            <input class="workbench-sheet__input" data-field="reason" maxlength="200" placeholder="撤销原因（至少 4 个字）" value="{{reason}}" bindinput="onField" />
+            <view class="workbench-submit {{undoReady ? '' : 'disabled'}}" aria-role="button" bindtap="submitUndo">
+                {{actionLoading ? '正在提交' : '确认撤销'}}
+            </view>
+        </view>
+    </k-popup>
+</view>

@@ -1,5 +1,5 @@
 // The host stand-in must load before any mini program module binds `wx`.
-import { act, log, open, settle, tap } from './host.js';
+import { act, log, mount, open, settle, tap } from './host.js';
 import { describe, expect, it } from 'vitest';
 
 // Device-regression stand-in: drives the real pages against the local stack through the API gateway.
@@ -8,8 +8,10 @@ import { describe, expect, it } from 'vitest';
 const accounts = {
     student: { cellphone: process.env.LIVE_STUDENT_CELLPHONE, password: process.env.LIVE_STUDENT_PASSWORD },
     teacher: { cellphone: process.env.LIVE_TEACHER_CELLPHONE, password: process.env.LIVE_TEACHER_PASSWORD },
+    // The owner is an administrator teacher: same workbench, more sections.
+    owner: { cellphone: process.env.LIVE_OWNER_CELLPHONE, password: process.env.LIVE_OWNER_PASSWORD },
 };
-const state = { offering: null, slots: [], appointments: {} };
+const state = { offering: null, slots: [], appointments: {}, waiting: null };
 
 async function login(role) {
     const profile = await open('pages/profile');
@@ -25,7 +27,7 @@ async function login(role) {
     await act(profile.onField(tap({ field: 'passwordValue' }, { value: password })));
     await act(profile.handlePasswordLogin());
     expect(log.toasts.at(-1)).toBe('登录成功');
-    expect(profile.data).toMatchObject({ isLogin: true, role, passwordValue: '' });
+    expect(profile.data).toMatchObject({ isLogin: true, role: role === 'owner' ? 'teacher' : role, passwordValue: '' });
 }
 
 // Every request a page makes goes through the gateway (except dev-only mock payment) and succeeds.
@@ -173,6 +175,68 @@ describe.sequential('live mini program flows', () => {
         await act(order.refund());
         expect(log.modals.at(-1)).toMatch(/^预计退款 ¥/);
         expect(order.data.order.refundPending || order.data.order.refunded > 0).toBeTruthy();
+    });
+
+    // Owner workbench (add-owner-workbench). Confirming needs a started lesson waiting locally, e.g. a confirmed
+    // appointment moved into the past; without one the confirm and undo steps are skipped.
+    it('hired teacher sees only teaching sections and confirms a started lesson', async () => {
+        await login('teacher');
+        const home = await mount('components/teacher-booking-home');
+        expect(home.data.sections).toMatchObject({ available: true, teach: true, students: false, grant: false, undo: false });
+        state.waiting = home.data.lessons[0] || null;
+        if (!state.waiting) {
+            console.error('live: no started lesson waits for confirmation locally; confirm and undo are skipped');
+            return;
+        }
+        await act(home.openConfirm(tap({ id: state.waiting.sessionId })));
+        await act(home.submitConfirm());
+        expect(log.toasts.at(-1)).toBe('已确认上课');
+        expect(home.data.lessons.map((lesson) => lesson.sessionId)).not.toContain(state.waiting.sessionId);
+    });
+
+    it('owner adds a student and grants a discounted package', async () => {
+        await login('owner');
+        const home = await mount('components/teacher-booking-home');
+        expect(home.data.sections).toMatchObject({ teach: true, students: true, grant: true, undo: true });
+        const students = await smoke('pages/workbenchStudents');
+        await act(students.openAdd());
+        await act(students.onField(tap({ field: 'draft.realName' }, { value: '工作台联调' })));
+        await act(students.onField(tap({ field: 'draft.cellphone' }, { value: `199${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}` })));
+        const navigations = log.navigations.length;
+        await act(students.submitAdd());
+        expect(log.toasts.at(-1)).toBe('学员已添加');
+        const opened = log.navigations.slice(navigations).find((entry) => entry.url?.startsWith('/pages/workbenchStudent/index'));
+        const id = new URL(opened.url, 'https://mini.local').searchParams.get('id');
+        expect((await smoke('pages/workbenchStudent', { id })).data.ledger.courses).toEqual([]);
+
+        const grant = await smoke('pages/workbenchGrant', { id, name: '工作台联调' });
+        expect(grant.data.packages.length, 'seeded packages').toBeGreaterThan(0);
+        const [price] = grant.data.chosen.prices;
+        await act(grant.onField(tap({ field: 'paidAmount' }, { value: String(Math.max(0, price.saleAmount - 1)) })));
+        await act(grant.submit());
+        expect(log.toasts.at(-1)).toBe('课时已发放');
+        expect((await smoke('pages/workbenchStudent', { id })).data.ledger.courses[0].remaining).toBeGreaterThan(0);
+    });
+
+    it('owner undoes the confirmation and confirms the lesson again', async () => {
+        if (!state.waiting) return;
+        const students = await smoke('pages/workbenchStudents');
+        await act(students.onField(tap({ field: 'keyword' }, { value: accounts.student.cellphone })));
+        await act(students.search());
+        const ledger = await smoke('pages/workbenchStudent', { id: students.data.students[0].studentId });
+        expect(ledger.data.ledger.confirmedLessons.map((lesson) => lesson.sessionId)).toContain(state.waiting.sessionId);
+        await act(ledger.openUndo(tap({ id: state.waiting.sessionId })));
+        await act(ledger.onField(tap({ field: 'reason' }, { value: '学员实际缺席' })));
+        await act(ledger.submitUndo());
+        expect(log.toasts.at(-1)).toBe('已撤销，课时已退回');
+
+        const home = await mount('components/teacher-booking-home');
+        const lesson = home.data.lessons.find((item) => item.sessionId === state.waiting.sessionId);
+        expect(lesson?.reconfirm).toBe(true);
+        await act(home.openConfirm(tap({ id: lesson.sessionId })));
+        await act(home.toggleAbsent(tap({ id: lesson.students[0].sessionStudentId })));
+        await act(home.submitConfirm());
+        expect(log.toasts.at(-1)).toBe('已确认上课');
     });
 
     it('signs out cleanly', async () => {
