@@ -25,7 +25,7 @@
 ## 5. Plugin lifecycle
 
 - [x] 5.1 `tenancy`: effective plugin state from `status` and `expiresAt`; route middleware `tenancy.Needs` hides routes whose declared capability the current state lacks; payment jobs run while active or winding down.
-- [x] 5.2 Disabling the payment plugin turns the tenant's pending online refund requests into offline ones.
+- [x] 5.2 Disabling the payment plugin is refused while online refunds are processing (they may be at the gateway); otherwise failed online reservation refunds, still owed, turn offline.
 
 ## 6. Platform pause and gateway
 

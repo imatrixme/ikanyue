@@ -276,12 +276,29 @@ func TestOrderCenterSurvivesThePaymentPlugin(t *testing.T) {
 		t.Fatal("a winding-down plugin still settles refunds online")
 	}
 
-	f.setPlugin(t, map[string]any{"status": tenancy.Disabled})
-	if f.record(t, "order_refunds", refund["id"].(string)).GetString("settlement") != "offline" {
-		t.Fatal("disabling must hand owed refunds to the studio")
+	// The refund may already be at the gateway: disabling now could pay it twice.
+	plugin, err := f.app.FindFirstRecordByFilter("tenant_plugins", "tenant={:tenant} && plugin={:plugin}",
+		dbx.Params{"tenant": tenancy.DefaultID, "plugin": tenancy.Payment})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if due, err := OnlineRefunds(f.app, "processing"); err != nil || len(due) != 0 {
-		t.Fatalf("online refunds after disabling = %v, %v", due, err)
+	plugin.Set("status", tenancy.Disabled)
+	failsWith(t, f.app.Save(plugin), "PAYMENT_REFUNDS_IN_FLIGHT")
+	if tenancy.PluginState(f.app, tenancy.DefaultID, tenancy.Payment) != tenancy.WindingDown {
+		t.Fatal("a refused disable leaves the plugin winding down")
+	}
+	if err := RefundFailed(f.app, refund["id"].(string), "ref1"); err != nil {
+		t.Fatal(err)
+	}
+	owed := testkit.Create(t, f.app, "order_refunds", map[string]any{"orderId": second, "studentId": f.studentID, "kind": "reservation",
+		"status": "failed", "settlement": "online", "amountMinor": 10000, "held": []any{}, "version": 1})
+
+	f.setPlugin(t, map[string]any{"status": tenancy.Disabled})
+	if row := f.record(t, "order_refunds", owed.Id); row.GetString("settlement") != "offline" || row.GetString("status") != "processing" {
+		t.Fatalf("a failed reservation refund is still owed; the studio takes it over: %v", row.FieldsData())
+	}
+	if f.record(t, "order_refunds", refund["id"].(string)).GetString("settlement") != "online" {
+		t.Fatal("settled refunds keep their history")
 	}
 	later := ok(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders/"+second+"/refunds",
 		map[string]any{"key": "r2", "expectedAmount": 80000}), "refund after disabling")
@@ -289,7 +306,7 @@ func TestOrderCenterSurvivesThePaymentPlugin(t *testing.T) {
 		t.Fatal("refunds requested without the plugin are settled offline")
 	}
 	detail := ok(t, f.call(t, f.student, http.MethodGet, "/v1/student/commerce/orders/"+first, nil), "order without plugin")
-	if detail["status"] != "completed" || detail["refundPending"] != true {
+	if detail["status"] != "completed" || detail["refundPending"] != false {
 		t.Fatalf("detail = %v", detail)
 	}
 }

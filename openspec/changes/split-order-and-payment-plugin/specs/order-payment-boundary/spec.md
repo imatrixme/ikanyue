@@ -30,15 +30,19 @@ The payment plugin SHALL handle only money: payment transactions, refund transac
 
 ### Requirement: Plugin Lifecycle
 
-A tenant plugin SHALL be active, winding down or disabled. A plugin past its expiry time SHALL be treated as winding down. Routes SHALL declare the plugin capability they need. Routes that start a payment SHALL be available only while the plugin is active. Routes that query results, receive callbacks, execute refunds, recover or reconcile SHALL also be available while winding down. Order center routes that need no capability SHALL work in every state. Disabling a plugin SHALL turn the tenant's pending online refund requests into offline ones. Orders and credit SHALL stay in the core in every state.
+A tenant plugin SHALL be active, winding down or disabled. A plugin past its expiry time SHALL be treated as winding down. Routes SHALL declare the plugin capability they need. Routes that start a payment SHALL be available only while the plugin is active. Routes that query results, receive callbacks, execute refunds, recover or reconcile SHALL also be available while winding down. Order center routes that need no capability SHALL work in every state. Disabling a plugin SHALL be refused while an online refund request is still processing, because it may already be at the gateway. Disabling SHALL turn the tenant's failed online reservation refunds, which are still owed, into offline ones. Orders and credit SHALL stay in the core in every state.
 
 #### Scenario: Plugin expired
 - **WHEN** a tenant's payment plugin has passed its expiry time
 - **THEN** placing an order and starting a payment answer as not found, while the student can still see the order and request a refund that the plugin executes
 
-#### Scenario: Plugin disabled with a refund pending
-- **WHEN** the payment plugin is disabled while an online refund request is pending
-- **THEN** the refund request becomes an offline one and the student's order and credit stay unchanged
+#### Scenario: Disabling with a refund in flight
+- **WHEN** the payment plugin is disabled while an online refund request is processing
+- **THEN** the switch is refused and the plugin stays winding down, so the plugin finishes the refund and it is never paid twice
+
+#### Scenario: Disabling with a failed reservation refund
+- **WHEN** the payment plugin is disabled while a failed online reservation refund is still owed
+- **THEN** the refund request becomes an offline one still processing and the student's order and credit stay unchanged
 
 ### Requirement: Platform Payment Pause
 

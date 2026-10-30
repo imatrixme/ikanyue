@@ -78,15 +78,21 @@ func Needs(plugin, capability string) func(e *core.RequestEvent) error {
 	}
 }
 
-// OnPluginDisabled runs fn in the tenant's scope whenever a tenant's plugin
-// record is saved as disabled.
+// OnPluginDisabled runs fn in the tenant's scope when a tenant's plugin is
+// switched to disabled, in the same transaction as the switch: an error from
+// fn refuses the switch, so the plugin stays as it was.
 func OnPluginDisabled(app core.App, plugin string, fn func(scoped core.App) error) {
-	app.OnRecordAfterUpdateSuccess("tenant_plugins").BindFunc(func(e *core.RecordEvent) error {
-		if e.Record.GetString("plugin") == plugin && e.Record.GetString("status") == Disabled {
-			if err := fn(Scope(e.App, e.Record.GetString(Field))); err != nil {
+	app.OnRecordUpdate("tenant_plugins").BindFunc(func(e *core.RecordEvent) error {
+		if e.Record.GetString("plugin") != plugin || e.Record.GetString("status") != Disabled ||
+			e.Record.Original().GetString("status") == Disabled {
+			return e.Next()
+		}
+		return e.App.RunInTransaction(func(tx core.App) error {
+			e.App = tx
+			if err := fn(Scope(tx, e.Record.GetString(Field))); err != nil {
 				return err
 			}
-		}
-		return e.Next()
+			return e.Next()
+		})
 	})
 }

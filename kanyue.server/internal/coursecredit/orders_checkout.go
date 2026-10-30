@@ -436,14 +436,26 @@ func (c *orderCenter) list(studentID string) (any, error) {
 	return result, nil
 }
 
-// settleRefundsOffline hands refunds still owed online to the studio once payment is disabled.
+// settleRefundsOffline runs as payment is disabled. A processing online refund
+// may already be at the gateway, and settling it offline as well would pay it
+// twice, so disabling waits for them: winding down still executes them. Failed
+// reservation refunds are still owed and nobody could retry them online, so the
+// studio takes them over.
 func settleRefundsOffline(app core.App) error {
-	rows, err := list(app, "order_refunds", `status="processing" && settlement="online"`, "")
+	inFlight, err := list(app, "order_refunds", `status="processing" && settlement="online"`, "")
 	if err != nil {
 		return err
 	}
-	for _, row := range rows {
-		if err := send(app, claimedUpdate("order_refunds", row, map[string]any{"settlement": "offline"})); err != nil {
+	if len(inFlight) > 0 {
+		return Fail("PAYMENT_REFUNDS_IN_FLIGHT", "还有线上退款在处理中，请先把支付插件设为收尾，等退款完成后再停用",
+			map[string]any{"refunds": len(inFlight)})
+	}
+	owed, err := list(app, "order_refunds", `status="failed" && settlement="online" && kind="reservation"`, "")
+	if err != nil {
+		return err
+	}
+	for _, row := range owed {
+		if err := send(app, claimedUpdate("order_refunds", row, map[string]any{"settlement": "offline", "status": "processing"})); err != nil {
 			return err
 		}
 	}
