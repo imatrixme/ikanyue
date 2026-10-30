@@ -40,5 +40,5 @@
 
 - [x] 7.1 `gofmt -l .`, `GOMAXPROCS=1 go vet -p 1 ./...`, `GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`.
 - [x] 7.2 Contract tests against the local server (29 pass, 6 skipped without `COMPARE_URL`), `node scripts/commerce-smoke.mjs` and `--tiered` (reading the new collections) and `node --test scripts/gateway-exposure.test.mjs` pass.
-- [ ] 7.3 Run the contract tests through gateway TEST/PRE/RELEASE after creating the `payment` policy set and applying the exposure plan.
+- [x] 7.3 Run the contract tests through gateway TEST/PRE/RELEASE after creating the `payment` policy set and applying the exposure plan. (Local gateway, Host `mapi.ikanyue.com`: each stage 8 pass, 6 skipped (need `COMPARE_URL`), and 21 fail only with the gateway's 404 on `/ops/*` and `/v1/public/*`, which `mapi` does not expose; catalog, cashier and refresh reach the server in every stage. Production still needs the same steps in its console.)
 - [ ] 7.4 Rehearse the migration on a copy of production `pb_data` before the release (timing agreed with the founder).
