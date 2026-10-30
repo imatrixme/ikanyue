@@ -11,18 +11,18 @@
             </view>
             <app-icon name="chevron-primary" size="sm" />
         </view>
-        <view wx:else class="profile-user" aria-role="button" aria-label="登录或注册" bindtap="showLoginPopup">
+        <view wx:else class="profile-user" aria-role="button" aria-label="登录或注册" bindtap="openLogin">
             <view class="profile-user__avatar">
                 <app-icon name="empty-account" size="lg" />
             </view>
             <view class="profile-user__copy">
-                <text class="profile-user__name">登录 / 注册</text>
-                <text class="profile-user__meta">登录后查看课时、预约和会员卡</text>
+                <text class="profile-user__name">点击登录</text>
+                <text class="profile-user__meta">{{greetingText}}，欢迎来到看乐</text>
             </view>
             <app-icon name="chevron-primary" size="sm" />
         </view>
 
-        <view wx:if="{{isLogin && role === 'student'}}" class="profile-stats">
+        <view wx:if="{{role === 'student'}}" class="profile-stats">
             <view
                 wx:for="{{stats}}" wx:for-item="stat" wx:key="key"
                 class="profile-stat"
@@ -37,101 +37,19 @@
     </view>
 
     <view class="profile-content">
-        <block wx:if="{{isLogin}}">
-            <ticket-section title="我的会员卡">
-                <member-card-deck id="cardDeck" cards="{{cards}}" bind:select="openCard" />
-            </ticket-section>
+        <!-- Guests see the same page; the dashes and the card fill in once they sign in. -->
+        <ticket-section title="我的会员卡">
+            <member-card-deck id="cardDeck" cards="{{cards}}" bind:select="openCard" />
+        </ticket-section>
 
-            <ticket-section title="常用">
-                <entry-grid entries="{{entries}}" bind:select="openEntry" />
-            </ticket-section>
-        </block>
-
-        <view wx:else class="profile-note">
-            <view class="profile-note__dot" />
-            <text>账号仅用于身份识别、课程服务与必要的联系。</text>
-        </view>
+        <ticket-section title="常用">
+            <entry-grid entries="{{entries}}" bind:select="openEntry" />
+        </ticket-section>
     </view>
 
-    <k-popup visible="{{showLogin}}" panel-class="login-popup-shell" bind:close="handleLoginPopupClose">
-        <view class="login-popup">
-            <view class="login-popup__close" aria-role="button" aria-label="关闭登录弹窗" bindtap="handleLoginPopupClose">
-                <text>×</text>
-            </view>
-            <view class="login-popup__bar" />
-            <view class="login-title">欢迎登录</view>
-            <segmented-control
-                value="{{loginMode}}"
-                ext-class="login-mode-switch"
-                options="{{loginModeOptions}}"
-                bind:change="changeLoginMode"
-            />
-            <view class="login-desc">
-                <text wx:if="{{loginMode === 'wechat'}}">使用微信绑定的手机号登录，用于同步课程与账户信息。</text>
-                <text wx:else>使用手机号和密码进入课程与预约服务。</text>
-            </view>
-            <block wx:if="{{loginMode === 'wechat'}}">
-                <button
-                    wx:if="{{agreed}}"
-                    class="wechat-login-btn"
-                    open-type="getPhoneNumber"
-                    loading="{{wechatLoginLoading}}"
-                    disabled="{{wechatLoginLoading}}"
-                    bindgetphonenumber="handleWechatPhone">
-                    使用微信手机号一键登录
-                </button>
-                <button wx:else class="wechat-login-btn" bindtap="requireAgreement">使用微信手机号一键登录</button>
-            </block>
-            <view wx:else class="password-login-form">
-                <view class="password-login-field">
-                    <text class="password-login-field__label">手机号</text>
-                    <input
-                        class="password-login-field__input password-login-cellphone"
-                        type="number"
-                        maxlength="11"
-                        placeholder="请输入手机号"
-                        value="{{passwordCellphone}}"
-                        bindinput="handlePasswordCellphoneInput"
-                    />
-                </view>
-                <view class="password-login-field">
-                    <text class="password-login-field__label">密码</text>
-                    <input
-                        value="{{passwordValue}}" data-field="passwordValue" bindinput="onField"
-                        class="password-login-field__input password-login-password"
-                        password="{{true}}"
-                        maxlength="64"
-                        placeholder="请输入密码"
-                    />
-                </view>
-                <button
-                    class="password-login-btn"
-                    loading="{{passwordLoginLoading}}"
-                    disabled="{{passwordLoginLoading}}"
-                    bindtap="handlePasswordLogin">
-                    手机号密码登录
-                </button>
-            </view>
-            <view class="login-consent">
-                <view
-                    class="login-consent__toggle"
-                    aria-role="checkbox"
-                    aria-checked="{{agreed}}"
-                    aria-label="同意用户协议和隐私政策"
-                    bindtap="toggleAgreed">
-                    <view class="login-consent__check {{agreed ? 'login-consent__check--on' : ''}}">
-                        <text wx:if="{{agreed}}">✓</text>
-                    </view>
-                    <text class="login-consent__text">我已阅读并同意</text>
-                </view>
-                <text class="login-consent__link" aria-role="link" data-type="user" bindtap="openAgreement">《用户协议》</text>
-                <text class="login-consent__text">和</text>
-                <text class="login-consent__link" aria-role="link" data-type="privacy" bindtap="openAgreement">《隐私政策》</text>
-            </view>
-        </view>
-    </k-popup>
+    <login-sheet visible="{{showLogin}}" bind:close="closeLogin" bind:success="handleLoginSuccess" />
 
-    <k-popup visible="{{showRolePopup}}" close-on-overlay="{{!roleChallenge}}" panel-class="role-popup-shell" bind:close="closeRoleSwitcher">
+    <k-popup visible="{{showRolePopup}}" panel-class="role-popup-shell" bind:close="closeRoleSwitcher">
         <view class="role-popup">
             <view class="login-popup__bar" />
             <view class="login-title">选择使用身份</view>

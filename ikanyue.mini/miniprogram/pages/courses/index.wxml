@@ -3,12 +3,12 @@
     <view class="courses-content">
         <view wx:if="{{!isLogin}}" class="courses-state">
             <async-state
-                action-label="前往登录"
-                description="登录后可以查看当前课程、课时和上课记录。"
+                action-label="查看我的课程"
+                description="剩余课时、课程安排和上课记录都在这里。"
                 kind="account"
                 state="empty"
-                title="登录后查看课程"
-                bind:action="goProfile"
+                title="我的课程"
+                bind:action="openMine"
             />
         </view>
         <block wx:elif="{{state !== 'ready'}}">
@@ -65,4 +65,6 @@
             </ticket-section>
         </block>
     </view>
+
+    <login-sheet visible="{{showLogin}}" bind:close="closeLogin" bind:success="handleLoginSuccess" />
 </view>

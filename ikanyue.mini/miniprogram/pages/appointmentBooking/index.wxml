@@ -45,4 +45,6 @@
             </ticket-section>
         </block>
     </view>
+
+    <login-sheet visible="{{showLogin}}" bind:close="closeLogin" bind:success="handleLoginSuccess" />
 </view>

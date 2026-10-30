@@ -32,6 +32,10 @@
     </view>
 
     <view class="home-content">
+        <view class="home-shortcuts">
+            <entry-grid entries="{{shortcuts}}" bind:select="openShortcut" />
+        </view>
+
         <view wx:if="{{isLogin && reminder}}" class="home-notice" aria-role="button" aria-label="查看教务提醒的课包" bindtap="openReminder">
             <view class="home-notice__header">
                 <text class="home-notice__sender">{{reminder.sender}}</text>
@@ -44,19 +48,7 @@
             </view>
         </view>
 
-        <view wx:if="{{state === 'signedOut'}}" class="home-state">
-            <async-state
-                action-label="去登录"
-                compact="{{true}}"
-                description="登录后可以查看剩余课时，并在线预约上课时间。"
-                kind="account"
-                state="empty"
-                title="登录后查看课时与预约"
-                bind:action="goProfile"
-            />
-        </view>
-
-        <view wx:elif="{{state === 'loading'}}" class="home-state">
+        <view wx:if="{{state === 'loading'}}" class="home-state">
             <async-state compact="{{true}}" state="loading" title="正在加载课时" />
         </view>
 
@@ -72,7 +64,8 @@
             />
         </view>
 
-        <ticket-section wx:elif="{{state === 'noCourse'}}" title="开始学习">
+        <!-- Guests and students without lessons see the same start; signing in only happens once they act. -->
+        <ticket-section wx:elif="{{state === 'guest' || state === 'noCourse'}}" title="开始学习">
             <view class="home-enroll">
                 <text class="home-enroll__title">报课后即可在线约课</text>
                 <text class="home-enroll__description">报课完成后，剩余课时和可预约时间会显示在这里。</text>
@@ -118,6 +111,29 @@
             <button wx:else class="k-button home-primary-button" bindtap="goBooking">去约课</button>
         </ticket-section>
 
-        <upcoming-lessons wx:if="{{isLogin}}" id="upcoming" />
+        <!-- Bookings sit under the lesson card, not behind a tab: both stay visible at a glance. -->
+        <ticket-section
+            wx:if="{{isLogin}}"
+            action-label="{{appointments.length ? '全部约课' : ''}}"
+            title="我的约课"
+            bind:action="goAppointments">
+            <view wx:if="{{appointments.length}}" class="home-appointments">
+                <appointment-row
+                    wx:for="{{appointments}}" wx:for-item="appointment"
+                    wx:key="appointmentId"
+                    appointment="{{appointment}}"
+                    bind:select="goAppointment"
+                />
+            </view>
+            <view wx:elif="{{appointmentsFailed}}" class="home-quiet" aria-role="button" bindtap="retry">
+                <text>约课记录暂时无法加载</text>
+                <text class="home-quiet__action">点击重试</text>
+            </view>
+            <view wx:else class="home-quiet">
+                <text>还没有约课，选好老师开放的时间就能预约上课。</text>
+            </view>
+        </ticket-section>
     </view>
+
+    <login-sheet visible="{{showLogin}}" bind:close="closeLogin" bind:success="handleLoginSuccess" />
 </view>

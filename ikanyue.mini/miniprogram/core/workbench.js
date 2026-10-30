@@ -1,4 +1,5 @@
 import { formatAppointmentTime } from './appointments.js';
+import { formatDate } from './courses.js';
 
 // Owner workbench: one teacher workbench whose sections follow the signed-in teacher's
 // permissions (OpenSpec add-owner-workbench, add-teacher-substitution). The server checks every call again.
@@ -294,6 +295,86 @@ function handoverSummary(preview, from, to) {
     ].filter(Boolean).join('，');
 }
 
+// Owner dashboard (OpenSpec add-owner-dashboard): a few numbers per period, lessons by teacher
+// for reconciling with them, and students who need a word. No money, no teacher pay.
+const DASHBOARD_PERIODS = Object.freeze([
+    { value: 'today', label: '今天' }, { value: 'week', label: '本周' }, { value: 'month', label: '按月' },
+]);
+
+// Lesson credits can be fractional; show at most one decimal.
+const credits = (value) => String(Math.round(count(value) * 10) / 10);
+
+const person = (name) => {
+    const label = name || '学员';
+    return { name: label, initial: label.slice(0, 1) };
+};
+
+function renewalDescription(item) {
+    const course = item.courseName || '课程';
+    if (item.reason === 'expiring') {
+        return `${course} 剩 ${credits(item.remaining)} 课时，${formatDate(item.expiresAt)} 到期`;
+    }
+    return count(item.remaining) ? `${course} 只剩 ${credits(item.remaining)} 课时` : `${course} 课时已用完`;
+}
+
+// A month range ("YYYY-MM") steps back without limit and forward up to the current month (next is '').
+const monthSteps = (range = {}) => ({
+    month: range.month || '', previousMonth: range.previous || '', nextMonth: range.next || '',
+});
+
+function normalizeDashboard(payload = {}) {
+    const lessons = payload.lessons || {};
+    const bookings = payload.bookings || {};
+    return {
+        rangeLabel: payload.range?.label || '',
+        ...monthSteps(payload.range),
+        cards: [
+            { key: 'lessons', label: '上课', value: `${count(lessons.count)} 节`, note: `扣 ${credits(lessons.credits)} 课时` },
+            { key: 'grants', label: '发课时', value: `${credits(payload.grants?.credits)} 课时`, note: '老板发放的课时' },
+            {
+                key: 'bookings', label: '约课', value: `${count(bookings.requested)} 次`,
+                note: count(bookings.cancelled) ? `取消 ${count(bookings.cancelled)} 次` : '没有取消',
+            },
+            { key: 'students', label: '新学员', value: `${count(payload.students?.joined)} 人`, note: '这段时间加入' },
+        ],
+        teachers: array(payload.teachers).filter((item) => item.teacherId).map((item) => ({
+            teacherId: item.teacherId, ...person(item.name || '老师'),
+            description: `${count(item.lessons)} 节 · 扣 ${credits(item.credits)} 课时`,
+        })),
+        renewals: array(payload.renewals).filter((item) => item.studentId).map((item) => ({
+            studentId: item.studentId, ...person(item.name), description: renewalDescription(item),
+        })),
+        inactive: array(payload.inactive).filter((item) => item.studentId).map((item) => ({
+            studentId: item.studentId, ...person(item.name),
+            description: `${item.lastLessonAt ? `${count(item.days)} 天没来上课` : `领课时 ${count(item.days)} 天还没来过`}`
+                + ` · 剩 ${credits(item.remaining)} 课时`,
+        })),
+    };
+}
+
+// One teacher's confirmed lessons of the period, to settle up with them.
+function normalizeReconciliation(payload = {}) {
+    return {
+        teacher: { teacherId: payload.teacher?.teacherId || '', name: payload.teacher?.name || '老师' },
+        rangeLabel: payload.range?.label || '',
+        ...monthSteps(payload.range),
+        totalLabel: `${count(payload.count)} 节 · 扣 ${credits(payload.credits)} 课时`,
+        truncated: Boolean(payload.truncated),
+        lessons: array(payload.items).filter((item) => item.sessionId).map((item) => ({
+            sessionId: item.sessionId,
+            title: item.title || '课程',
+            timeLabel: formatAppointmentTime(item.startAt, item.endAt),
+            studentLabel: array(item.students).map(String).filter(Boolean).join('、') || '学员',
+            creditLabel: `${credits(item.credits)} 课时`,
+        })),
+    };
+}
+
+function dashboardTeacherUrl(teacherId, period, month) {
+    const url = `/pages/workbenchTeacherLessons/index?id=${encodeURIComponent(teacherId || '')}&period=${encodeURIComponent(period || 'today')}`;
+    return period === 'month' && month ? `${url}&month=${encodeURIComponent(month)}` : url;
+}
+
 function studentLedgerUrl(studentId) {
     return `/pages/workbenchStudent/index?id=${encodeURIComponent(studentId || '')}`;
 }
@@ -307,8 +388,9 @@ function grantUrl(student = {}) {
 }
 
 export {
-    buildGrantPayload, confirmLessonPayload, filterLessonsByTeacher, grantUrl, handoverSummary, normalizeHandoverPreview,
-    normalizeLedger, normalizePackages, normalizePendingLessons, normalizeStudentPage, normalizeTeacherLessons,
+    DASHBOARD_PERIODS, buildGrantPayload, confirmLessonPayload, dashboardTeacherUrl, filterLessonsByTeacher, grantUrl,
+    handoverSummary, normalizeDashboard, normalizeHandoverPreview, normalizeLedger, normalizePackages, normalizePendingLessons,
+    normalizeReconciliation, normalizeStudentPage, normalizeTeacherLessons,
     normalizeTeachers, normalizeWorkbenchSummary, studentLedgerUrl, substituteOptions, teacherFilterOptions, teacherUrl,
     validateNewStudent, workbenchErrorMessage, workbenchMissing, workbenchSections,
 };

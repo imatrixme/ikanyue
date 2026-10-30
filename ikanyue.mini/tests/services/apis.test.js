@@ -322,4 +322,18 @@ describe('Api page-facing request wrappers', () => {
             ['/v1/workbench/teachers/teacher/handover', { toTeacherId: 'other', reason: '老师离职' }, true, { 'Idempotency-Key': 'handover-key' }],
         ]);
     });
+
+    it('reads the owner dashboard and a teacher lesson list by period', async () => {
+        iNetMock.get.mockResolvedValue({});
+
+        await Api.getWorkbenchDashboard('week');
+        await Api.getWorkbenchTeacherReconciliation('teacher', 'month');
+        await Api.getWorkbenchDashboard('month', '2026-09');
+
+        expect(iNetMock.get.mock.calls.slice(-3)).toEqual([
+            ['/v1/workbench/dashboard', { period: 'week' }],
+            ['/v1/workbench/dashboard/teachers/teacher', { period: 'month' }],
+            ['/v1/workbench/dashboard', { period: 'month', month: '2026-09' }],
+        ]);
+    });
 });

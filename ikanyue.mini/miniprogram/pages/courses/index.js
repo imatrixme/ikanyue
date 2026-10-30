@@ -4,13 +4,14 @@ import {
     courseDetailUrl, courseListUrl, learningErrorMessage, lessonDetailUrl, normalizeOverview, pageState,
 } from '../../core/courses.js';
 import { Api } from '../../services/apis.js';
+import { loginGate } from '../../services/loginGate.js';
 import { RoleManager } from '../../services/rolemanager.js';
 import { UserManager } from '../../services/usermanager.js';
 
 const sum = (courses, field) => courses.reduce((total, course) => total + course[field], 0);
 
 definePage({
-    data: () => ({ errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(), role: 'student' }),
+    data: () => ({ errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(), role: 'student', showLogin: false }),
     computed: {
         remainingLessons: (d) => sum(d.overview.courses, 'remainingLessons'),
         scheduledLessons: (d) => sum(d.overview.courses, 'scheduledLessons'),
@@ -33,6 +34,7 @@ definePage({
         return this.loadData(true);
     },
     methods: {
+        ...loginGate,
         retry() {
             return this.loadData(true);
         },
@@ -57,8 +59,9 @@ definePage({
         goRecords() {
             nav.to(courseListUrl('courseRecords'));
         },
-        goProfile() {
-            nav.tab('/pages/profile/index');
+        // Signing in reloads this page with the student's courses.
+        openMine() {
+            this.withAccount();
         },
         async loadData(force = false) {
             if (this.data.loading && !force) return;

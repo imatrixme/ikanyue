@@ -68,6 +68,9 @@ defineComponent({
         goTeachers() {
             nav.to('/pages/workbenchTeachers/index');
         },
+        goDashboard() {
+            nav.to('/pages/workbenchDashboard/index');
+        },
         openSubstitute(event) {
             const lesson = this.data.lessons.find((item) => item.sessionId === event.currentTarget.dataset.id);
             if (lesson) this.set({ substituting: lesson, showSubstitute: true });

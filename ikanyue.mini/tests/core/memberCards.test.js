@@ -47,7 +47,7 @@ describe('profile stats and entries', () => {
     });
 
     it('keeps logout out of the shortcuts and the role switch only when it applies', () => {
-        expect(profileEntries().map((entry) => entry.key)).toEqual(['orders', 'profile']);
-        expect(profileEntries({ role: 'teacher', canSwitchRole: true }).map((entry) => entry.key)).toEqual(['profile', 'role']);
+        expect(profileEntries().map((entry) => entry.key)).toEqual(['orders', 'records', 'profile', 'agreement']);
+        expect(profileEntries({ role: 'teacher', canSwitchRole: true }).map((entry) => entry.key)).toEqual(['profile', 'agreement', 'role']);
     });
 });

@@ -2,6 +2,7 @@ import { definePage } from '../../kit/page.js';
 import { nav, page } from '../../kit/api.js';
 import { normalizePointSummary, normalizeRewardAvailability, pointEventRow } from '../../core/points.js';
 import { Api } from '../../services/apis.js';
+import { loginGate } from '../../services/loginGate.js';
 import { RoleManager } from '../../services/rolemanager.js';
 import { UserManager } from '../../services/usermanager.js';
 
@@ -12,7 +13,7 @@ definePage({
     data: () => ({
         balance: 0, errorMessage: '', failedImages: {}, isLogin: false, loading: false, lockedRewards: [],
         pointEvents: [], pointEventsPagination: { ...EMPTY_PAGINATION }, redeemableRewards: [], role: 'student',
-        skeletons: [0, 1, 2],
+        showLogin: false, skeletons: [0, 1, 2],
     }),
     computed: {
         rewardCount: (d) => d.redeemableRewards.length + d.lockedRewards.length,
@@ -41,11 +42,13 @@ definePage({
         return this.loadPointsLiteData();
     },
     methods: {
+        ...loginGate,
         markImageFailed(event) {
             this.set({ failedImages: { ...this.data.failedImages, [event.detail]: true } });
         },
-        goProfile() {
-            nav.tab('/pages/profile/index');
+        // Signing in reloads this page with the student's points.
+        openMine() {
+            this.withAccount();
         },
         goPointHistory() {
             nav.to('/pages/pointsHistory/index');

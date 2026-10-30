@@ -1,0 +1,102 @@
+<k-popup visible="{{visible && !roleChallenge}}" panel-class="login-popup-shell" bind:close="close">
+    <view class="login-popup">
+        <view class="login-popup__close" aria-role="button" aria-label="关闭登录弹窗" bindtap="close">
+            <text>×</text>
+        </view>
+        <view class="login-popup__bar" />
+        <view class="login-title">欢迎登录</view>
+        <view class="login-desc">
+            <text wx:if="{{loginMode === 'wechat'}}">使用微信绑定的手机号登录，用于同步课程与账户信息。</text>
+            <text wx:else>使用手机号和密码进入课程与预约服务。</text>
+        </view>
+        <block wx:if="{{loginMode === 'wechat'}}">
+            <button
+                wx:if="{{agreed}}"
+                class="wechat-login-btn"
+                open-type="getPhoneNumber"
+                loading="{{wechatLoginLoading}}"
+                disabled="{{wechatLoginLoading}}"
+                bindgetphonenumber="handleWechatPhone">
+                使用微信手机号一键登录
+            </button>
+            <button wx:else class="wechat-login-btn" bindtap="requireAgreement">使用微信手机号一键登录</button>
+        </block>
+        <view wx:else class="password-login-form">
+            <view class="password-login-field">
+                <text class="password-login-field__label">手机号</text>
+                <input
+                    class="password-login-field__input password-login-cellphone"
+                    type="number"
+                    maxlength="11"
+                    placeholder="请输入手机号"
+                    value="{{passwordCellphone}}"
+                    bindinput="handlePasswordCellphoneInput"
+                />
+            </view>
+            <view class="password-login-field">
+                <text class="password-login-field__label">密码</text>
+                <input
+                    value="{{passwordValue}}" data-field="passwordValue" bindinput="onField"
+                    class="password-login-field__input password-login-password"
+                    password="{{true}}"
+                    maxlength="64"
+                    placeholder="请输入密码"
+                />
+            </view>
+            <button
+                class="password-login-btn"
+                loading="{{passwordLoginLoading}}"
+                disabled="{{passwordLoginLoading}}"
+                bindtap="handlePasswordLogin">
+                手机号密码登录
+            </button>
+        </view>
+        <!-- WeChat is the usual way in; the password form is one quiet link away instead of a tab. -->
+        <text class="login-mode-link" aria-role="button" bindtap="switchLoginMode">{{loginMode === 'wechat' ? '使用手机号密码登录' : '使用微信手机号登录'}}</text>
+        <view class="login-consent">
+            <view
+                class="login-consent__toggle"
+                aria-role="checkbox"
+                aria-checked="{{agreed}}"
+                aria-label="同意用户协议和隐私政策"
+                bindtap="toggleAgreed">
+                <view class="login-consent__check {{agreed ? 'login-consent__check--on' : ''}}">
+                    <text wx:if="{{agreed}}">✓</text>
+                </view>
+                <text class="login-consent__text">我已阅读并同意</text>
+            </view>
+            <text class="login-consent__link" aria-role="link" data-type="user" bindtap="openAgreement">《用户协议》</text>
+            <text class="login-consent__text">和</text>
+            <text class="login-consent__link" aria-role="link" data-type="privacy" bindtap="openAgreement">《隐私政策》</text>
+        </view>
+    </view>
+</k-popup>
+
+<!-- A WeChat phone with both identities picks one before the login completes; the choice cannot be dismissed. -->
+<k-popup visible="{{visible && !!roleChallenge}}" close-on-overlay="{{false}}" panel-class="role-popup-shell">
+    <view class="role-popup">
+        <view class="login-popup__bar" />
+        <view class="login-title">选择使用身份</view>
+        <view class="login-desc">
+            <text>学员身份用于查看课程与发起预约，教师身份用于确认预约和设置可预约时间。</text>
+        </view>
+        <view class="role-options">
+            <view
+                wx:for="{{roleRows}}" wx:for-item="option"
+                wx:key="key"
+                class="role-option"
+                aria-role="button"
+                data-role="{{option.role}}"
+                bindtap="selectRole">
+                <view class="role-option__icon">
+                    <app-icon name="{{option.icon}}" size="xl" />
+                </view>
+                <view class="role-option__copy">
+                    <text class="role-option__title">{{option.title}}</text>
+                    <text class="role-option__name">{{option.name}}</text>
+                </view>
+            </view>
+        </view>
+        <view wx:if="{{roleSelecting}}" class="role-popup__loading">正在登录</view>
+    </view>
+</k-popup>

@@ -1,6 +1,18 @@
 <view class="page-chrome teacher-workbench">
     <view class="teacher-workbench__content">
         <upcoming-lessons id="upcoming" />
+        <ticket-section wx:if="{{sections.students}}" subtitle="今天、本周、本月上了多少课，哪些学员需要关注" title="经营概览">
+            <view class="workbench-list">
+                <account-row
+                    description="上课、发课时、约课与新学员"
+                    icon="course-history"
+                    interactive="{{true}}"
+                    title="数据看板"
+                    value="查看"
+                    bind:select="goDashboard"
+                />
+            </view>
+        </ticket-section>
         <ticket-section wx:if="{{sections.teach}}" subtitle="开课后确认上课，按出勤扣除课时" title="待确认上课">
             <view wx:if="{{showTeacherFilter}}" class="workbench-filter">
                 <text>按老师查看</text>

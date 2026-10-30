@@ -1,17 +1,20 @@
 import { definePage } from '../../kit/page.js';
 import { nav, notify, page, system, ui } from '../../kit/api.js';
+import { appointmentDetailUrl, normalizeAppointmentPage } from '../../core/appointments.js';
 import { learningErrorMessage, normalizeOverview } from '../../core/courses.js';
-import { homeCourseRows, homeState, normalizeReminders } from '../../core/home.js';
+import { HOME_SHORTCUTS, homeCourseRows, homeState, normalizeReminders } from '../../core/home.js';
 import { venueFacts } from '../../core/venues.js';
 import { Api } from '../../services/apis.js';
+import { loginGate } from '../../services/loginGate.js';
 import { RoleManager } from '../../services/rolemanager.js';
 import { UserManager } from '../../services/usermanager.js';
 import { VenueManager } from '../../services/venuemanager.js';
 
 definePage({
     data: () => ({
-        coverFailed: false, errorMessage: '', isLogin: false, loading: false, overview: normalizeOverview(), reminder: null,
-        navBar: system.navBar(), role: 'student', subscribeTemplateId: '', venue: null,
+        appointments: [], appointmentsFailed: false, coverFailed: false, errorMessage: '', isLogin: false, loading: false,
+        overview: normalizeOverview(), reminder: null, navBar: system.navBar(), role: 'student', shortcuts: HOME_SHORTCUTS,
+        showLogin: false, subscribeTemplateId: '', venue: null,
     }),
     computed: {
         courseRows: (d) => homeCourseRows(d.overview.courses),
@@ -40,20 +43,31 @@ definePage({
         return Promise.all([this.loadVenue(), this.loadData(true)]);
     },
     methods: {
+        ...loginGate,
         callVenue() {
             VenueManager.callVenue(this.data.venue);
         },
         goBooking() {
             nav.tab('/pages/appointmentBooking/index');
         },
+        goAppointment(event) {
+            nav.to(appointmentDetailUrl(event.detail.appointmentId));
+        },
+        goAppointments() {
+            nav.to('/pages/appointments/index');
+        },
+        // Personal shortcuts sign a guest in on the spot first; the others open at once.
+        openShortcut(event) {
+            const { account, tab, url } = event.detail;
+            const open = () => (tab ? nav.tab(url) : nav.to(url));
+            if (account) this.withAccount(open);
+            else open();
+        },
         goCourses() {
             nav.to('/pages/courses/index');
         },
-        goProfile() {
-            nav.tab('/pages/profile/index');
-        },
         goShop() {
-            nav.to('/pages/courseShop/index');
+            this.withAccount(() => nav.to('/pages/courseShop/index'));
         },
         goVenues() {
             nav.to('/pages/venues/index');
@@ -64,6 +78,15 @@ definePage({
         },
         retry() {
             return this.loadData(true);
+        },
+        // The latest few bookings; a failure shows a retry instead of an empty list.
+        async loadAppointments() {
+            try {
+                const page = normalizeAppointmentPage(await Api.listStudentAppointments({ page: 1, perPage: 3 }));
+                await this.set({ appointments: page.items, appointmentsFailed: false });
+            } catch {
+                await this.set({ appointmentsFailed: !this.data.appointments.length });
+            }
         },
         // Reminders are a side note: a failed load never blocks the lesson balance.
         async loadReminders() {
@@ -101,12 +124,13 @@ definePage({
             if (!isLogin) {
                 this.requestSerial += 1;
                 await this.set({
-                    isLogin, loading: false, errorMessage: '', overview: normalizeOverview(), reminder: null, subscribeTemplateId: '',
+                    appointments: [], appointmentsFailed: false, isLogin, loading: false, errorMessage: '',
+                    overview: normalizeOverview(), reminder: null, subscribeTemplateId: '',
                 });
                 return;
             }
             await this.set({ isLogin });
-            this.selectComponent('#upcoming')?.refresh(force);
+            this.loadAppointments();
             this.loadReminders();
             if (this.data.loading && !force) return;
             const requestId = this.requestSerial + 1;

@@ -192,6 +192,14 @@ func (m WorkbenchModule) Register(se *core.ServeEvent) {
 				"sessionId": path(e, "sessionId"), "teacherId": body.Get("teacherId"), "reason": body.Get("reason")}))
 		})
 	}))
+	router.GET("/v1/workbench/dashboard", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
+		query := e.Request.URL.Query()
+		return ownerDashboard(e.App, query.Get("period"), query.Get("month"), clock())
+	}))
+	router.GET("/v1/workbench/dashboard/teachers/{teacherId}", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
+		query := e.Request.URL.Query()
+		return teacherReconciliation(e.App, path(e, "teacherId"), query.Get("period"), query.Get("month"), clock())
+	}))
 	router.GET("/v1/workbench/teachers/{teacherId}/handover", manageQuery(administrator, func(e *core.RequestEvent) (any, error) {
 		return handoverPreview(e.App, map[string]any{"teacherId": path(e, "teacherId"),
 			"toTeacherId": e.Request.URL.Query().Get("toTeacherId"), "actorId": actorOf(e).ID}, clock())

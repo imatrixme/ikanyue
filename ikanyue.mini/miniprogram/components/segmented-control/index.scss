@@ -1,10 +1,15 @@
 @import '../../styles/tokens';
 
+// Sized to its options, not stretched across the page: a filter should leave room for what it filters.
 .segmented-control {
     background: $ky-muted-surface;
     border-radius: $ky-radius-pill;
-    display: flex;
+    box-sizing: border-box;
+    display: inline-flex;
+    max-width: 100%;
+    overflow-x: auto;
     padding: 4rpx;
+    vertical-align: middle;
 }
 
 .segmented-control__item {
@@ -12,12 +17,12 @@
     border-radius: $ky-radius-pill;
     color: $ky-text-secondary;
     display: flex;
-    flex: 1;
+    flex: none;
     font-size: $ky-font-size-sm;
     font-weight: $ky-font-weight-regular;
     height: $ky-control-height-compact;
     justify-content: center;
-    min-width: 0;
+    padding: 0 $ky-space-4;
     transition: background-color $ky-motion-fast ease, color $ky-motion-fast ease;
 }
 

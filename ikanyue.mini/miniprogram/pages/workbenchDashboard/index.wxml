@@ -1,0 +1,100 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="上了多少课、谁要续课、谁很久没来" title="数据看板" />
+    <view class="workbench-content">
+        <!-- Period chips and the range share one row, so the numbers start right below. -->
+        <view class="workbench-period">
+            <segmented-control value="{{period}}" options="{{periods}}" bind:change="selectPeriod" />
+            <view wx:if="{{view.month}}" class="workbench-month">
+                <view class="workbench-month__step" aria-label="上一月" aria-role="button" data-month="{{view.previousMonth}}" bindtap="stepMonth">‹</view>
+                <text class="workbench-month__label">{{view.rangeLabel}}</text>
+                <view
+                    class="workbench-month__step {{view.nextMonth ? '' : 'disabled'}}"
+                    aria-disabled="{{!view.nextMonth}}"
+                    aria-label="下一月"
+                    aria-role="button"
+                    data-month="{{view.nextMonth}}"
+                    bindtap="stepMonth"
+                >›</view>
+            </view>
+            <text wx:elif="{{view}}" class="workbench-range">{{view.rangeLabel}}</text>
+        </view>
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '数据看板加载失败' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <view class="workbench-stats">
+                <view wx:for="{{view.cards}}" wx:for-item="card" wx:key="key" class="workbench-stat">
+                    <text class="workbench-stat__label">{{card.label}}</text>
+                    <text class="workbench-stat__value">{{card.value}}</text>
+                    <text class="workbench-stat__note">{{card.note}}</text>
+                </view>
+            </view>
+
+            <ticket-section wx:if="{{view.teachers.length}}" subtitle="点老师查看每节课，方便对账" title="按老师">
+                <view class="workbench-list">
+                    <account-row
+                        wx:for="{{view.teachers}}"
+                        wx:for-item="teacher"
+                        wx:key="teacherId"
+                        item-id="{{teacher.teacherId}}"
+                        description="{{teacher.description}}"
+                        icon-text="{{teacher.initial}}"
+                        interactive="{{true}}"
+                        title="{{teacher.name}}"
+                        value="明细"
+                        bind:select="goTeacher"
+                    />
+                </view>
+            </ticket-section>
+
+            <ticket-section subtitle="课时快用完或快到期" title="需要续课">
+                <view wx:if="{{view.renewals.length}}" class="workbench-list">
+                    <account-row
+                        wx:for="{{view.renewals}}"
+                        wx:for-item="student"
+                        wx:key="studentId"
+                        item-id="{{student.studentId}}"
+                        description="{{student.description}}"
+                        icon-text="{{student.initial}}"
+                        interactive="{{true}}"
+                        title="{{student.name}}"
+                        value="查看"
+                        bind:select="goStudent"
+                    />
+                </view>
+                <view wx:else class="workbench-empty">
+                    <app-icon name="course-book" size="xl" />
+                    <text>暂时没有需要续课的学员</text>
+                </view>
+            </ticket-section>
+
+            <ticket-section subtitle="还有课时，21 天没上课，也没约下一节" title="很久没来">
+                <view wx:if="{{view.inactive.length}}" class="workbench-list">
+                    <account-row
+                        wx:for="{{view.inactive}}"
+                        wx:for-item="student"
+                        wx:key="studentId"
+                        item-id="{{student.studentId}}"
+                        description="{{student.description}}"
+                        icon-text="{{student.initial}}"
+                        interactive="{{true}}"
+                        title="{{student.name}}"
+                        value="查看"
+                        bind:select="goStudent"
+                    />
+                </view>
+                <view wx:else class="workbench-empty">
+                    <app-icon name="course-calendar" size="xl" />
+                    <text>暂时没有很久没来的学员</text>
+                </view>
+            </ticket-section>
+        </block>
+    </view>
+</view>

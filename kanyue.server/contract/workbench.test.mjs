@@ -10,7 +10,8 @@ const failure = (code, message, errorCode, details = {}) => ({
   code, message, data: null, errorCode, details, operationId: null, traceId: TRACE['X-Trace-Id'],
 });
 const READS = ['/v1/workbench/summary', '/v1/workbench/lessons/pending', '/v1/workbench/students', '/v1/workbench/packages',
-  '/v1/workbench/teachers', '/v1/workbench/teachers/__missing__/lessons', '/v1/workbench/teachers/__missing__/handover'];
+  '/v1/workbench/teachers', '/v1/workbench/teachers/__missing__/lessons', '/v1/workbench/teachers/__missing__/handover',
+  '/v1/workbench/dashboard', '/v1/workbench/dashboard/teachers/__missing__'];
 const COMMANDS = ['/v1/workbench/lessons/__missing__/confirm', '/v1/workbench/lessons/__missing__/reverse',
   '/v1/workbench/students', '/v1/workbench/students/__missing__/grants', '/v1/workbench/lessons/__missing__/substitute',
   '/v1/workbench/teachers/__missing__/handover'];
@@ -87,6 +88,18 @@ test('owner workbench reads', { skip: !admin && 'CONTRACT_OPS_* not set' }, asyn
     const { body } = await call(`/v1/workbench/teachers/${adminTeacher.teacherId}/handover?toTeacherId=__missing__`, { token });
     assert.ok(['HANDOVER_SELF_FORBIDDEN', 'HANDOVER_ADMIN_FORBIDDEN'].includes(body.errorCode), body.errorCode);
   }
+  const dashboard = await read('/v1/workbench/dashboard?period=week');
+  assert.deepEqual(Object.keys(dashboard).sort(),
+    ['bookings', 'grants', 'inactive', 'lessons', 'range', 'renewals', 'students', 'teachers']);
+  assert.deepEqual(Object.keys(dashboard.range).sort(), ['from', 'label', 'month', 'next', 'period', 'previous', 'to']);
+  const reconcile = await read(`/v1/workbench/dashboard/teachers/${teachers[0].teacherId}?period=month`);
+  assert.deepEqual(Object.keys(reconcile).sort(), ['count', 'credits', 'items', 'range', 'teacher', 'truncated']);
+  assert.equal(reconcile.range.next, '');
+  const earlier = await read(`/v1/workbench/dashboard?period=month&month=${reconcile.range.previous}`);
+  assert.equal(earlier.range.next, reconcile.range.month);
+  assert.equal((await call('/v1/workbench/dashboard?period=year', { token })).body.errorCode, 'DASHBOARD_PERIOD_INVALID');
+  assert.equal((await call('/v1/workbench/dashboard?period=month&month=2999-01', { token })).body.errorCode,
+    'DASHBOARD_MONTH_INVALID');
   assert.deepEqual((await command('/v1/workbench/lessons/__missing__/substitute', {})).body,
     failure(400, '请选择代课老师', 'TEACHER_ID_REQUIRED'));
   assert.deepEqual((await command('/v1/workbench/teachers/__missing__/handover', { toTeacherId: 'x', reason: '走' })).body,

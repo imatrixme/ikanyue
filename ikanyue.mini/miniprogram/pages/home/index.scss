@@ -122,7 +122,30 @@
 
 .home-studio__switch:active { opacity: 0.76; }
 
-.home-state { margin-top: $ky-space-6; min-height: 400rpx; }
+// 松果 layout: four shortcuts, then my lessons and my bookings as plain sections.
+.home-shortcuts { margin-bottom: $ky-space-4; }
+
+.home-appointments {
+    background: $ky-surface;
+    border-radius: $ky-radius-xl;
+    box-shadow: $ky-shadow-card;
+    overflow: hidden;
+}
+
+// A one-line note instead of a full empty state, so the section stays short.
+.home-quiet {
+    color: $ky-text-secondary;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: $ky-font-size-body-sm;
+    gap: $ky-space-2;
+    line-height: $ky-leading-readable;
+    padding: $ky-space-3 0;
+}
+
+.home-quiet__action { color: $ky-primary-strong; }
+
+.home-state { margin-top: $ky-space-4; min-height: 320rpx; }
 
 .home-enroll {
     background: $ky-surface;

@@ -241,6 +241,11 @@ const handoverWorkbenchTeacher = (id, payload, idempotencyKey) => iNet.post(
     `/v1/workbench/teachers/${id}/handover`, payload, true, commandHeaders(idempotencyKey)
 );
 
+const getWorkbenchDashboard = (period, month) => iNet.get('/v1/workbench/dashboard', month ? { period, month } : { period });
+
+const getWorkbenchTeacherReconciliation = (id, period, month) =>
+    iNet.get(`/v1/workbench/dashboard/teachers/${id}`, month ? { period, month } : { period });
+
 function commandHeaders(idempotencyKey) {
     return { 'Idempotency-Key': idempotencyKey };
 }
@@ -302,6 +307,8 @@ const Api = {
     substituteWorkbenchTeacher,
     previewWorkbenchHandover,
     handoverWorkbenchTeacher,
+    getWorkbenchDashboard,
+    getWorkbenchTeacherReconciliation,
 };
 
 export { Api };

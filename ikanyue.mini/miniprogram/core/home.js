@@ -4,7 +4,7 @@ import { courseValidityText } from './courses.js';
 const LOW_LESSON_THRESHOLD = 2;
 
 function homeState({ courses = [], error = '', isLogin = false, loading = false } = {}) {
-    if (!isLogin) return 'signedOut';
+    if (!isLogin) return 'guest';
     if (loading && !courses.length) return 'loading';
     if (error && !courses.length) return 'error';
     return courses.length ? 'member' : 'noCourse';
@@ -65,6 +65,15 @@ function teacherRenewalRows(payload = {}) {
     });
 }
 
+// The studio home in the 松果 layout: four shortcuts under the venue card, then my lessons and my bookings.
+// `account` entries need a signed-in student; a guest signs in on the spot when tapping one.
+const HOME_SHORTCUTS = Object.freeze([
+    { key: 'venue', label: '场馆信息', icon: 'account-about', url: '/pages/venues/index', tab: false, account: false },
+    { key: 'shop', label: '课程课包', icon: 'course-book', url: '/pages/courseShop/index', tab: false, account: true },
+    { key: 'booking', label: '去约课', icon: 'booking-request', url: '/pages/appointmentBooking/index', tab: true, account: false },
+    { key: 'lessons', label: '我的课时', icon: 'course-validity', url: '/pages/courses/index', tab: false, account: true },
+]);
+
 export {
-    LOW_LESSON_THRESHOLD, homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
+    HOME_SHORTCUTS, LOW_LESSON_THRESHOLD, homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
 };

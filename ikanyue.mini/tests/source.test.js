@@ -31,7 +31,8 @@ describe('app shell', () => {
             'pages/pointsHistory/index', 'pages/rewardCatalog/index', 'pages/userinfo/index', 'pages/activityDetail/index',
             'pages/imageDetail/index', 'pages/webview/index', 'pages/agreement/index', 'pages/memberCard/index',
             'pages/workbenchStudents/index', 'pages/workbenchStudent/index', 'pages/workbenchGrant/index',
-            'pages/workbenchTeachers/index', 'pages/workbenchTeacher/index',
+            'pages/workbenchTeachers/index', 'pages/workbenchTeacher/index', 'pages/workbenchDashboard/index',
+            'pages/workbenchTeacherLessons/index',
         ]);
         expect(app.tabBar.list.map((item) => [item.pagePath, item.text])).toEqual([
             ['pages/home/index', '首页'], ['pages/appointmentBooking/index', '约课'], ['pages/profile/index', '我的'],

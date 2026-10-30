@@ -13,21 +13,37 @@ const accounts = {
 };
 const state = { offering: null, slots: [], appointments: {}, waiting: null };
 
-async function login(role) {
+async function signOut() {
     const profile = await open('pages/profile');
     if (profile.data.isLogin) {
         await act((await open('pages/userinfo')).confirmLogout());
         await act(profile.refreshUserInfo());
         expect(profile.data.isLogin).toBe(false);
     }
+    return profile;
+}
+
+// Fills in the shared login sheet the way a user would; the page that opened it handles the success.
+async function signInOnSheet(role) {
     const { cellphone, password } = accounts[role];
-    await act(profile.showLoginPopup());
-    await act(profile.toggleAgreed());
-    await act(profile.handlePasswordCellphoneInput(tap({}, { value: cellphone })));
-    await act(profile.onField(tap({ field: 'passwordValue' }, { value: password })));
-    await act(profile.handlePasswordLogin());
+    const sheet = await mount('components/login-sheet');
+    const events = [];
+    sheet.triggerEvent = (name) => events.push(name);
+    await act(sheet.toggleAgreed());
+    await act(sheet.handlePasswordCellphoneInput(tap({}, { value: cellphone })));
+    await act(sheet.onField(tap({ field: 'passwordValue' }, { value: password })));
+    await act(sheet.handlePasswordLogin());
     expect(log.toasts.at(-1)).toBe('登录成功');
-    expect(profile.data).toMatchObject({ isLogin: true, role: role === 'owner' ? 'teacher' : role, passwordValue: '' });
+    expect([events, sheet.data.passwordValue]).toEqual([['success'], '']);
+}
+
+async function login(role) {
+    const profile = await signOut();
+    await act(profile.openLogin());
+    expect(profile.data.showLogin).toBe(true);
+    await signInOnSheet(role);
+    await act(profile.handleLoginSuccess());
+    expect(profile.data).toMatchObject({ isLogin: true, role: role === 'owner' ? 'teacher' : role, showLogin: false });
 }
 
 // Every request a page makes goes through the gateway (except dev-only mock payment) and succeeds.
@@ -72,6 +88,27 @@ async function detail(id) {
 describe.sequential('live mini program flows', () => {
     it('has local credentials', () => {
         for (const [role, account] of Object.entries(accounts)) expect(account.cellphone && account.password, role).toBeTruthy();
+    });
+
+    it('guest sees home without login prompts and signs in on the spot when acting', async () => {
+        const profile = await signOut();
+        // 我的 shows the same layout to a guest: dashes, the studio card and the shortcuts.
+        expect(profile.data.stats.map((stat) => stat.value)).toEqual(['—', '—', '—']);
+        expect(profile.data.cards).toHaveLength(1);
+        const home = await smoke('pages/home');
+        expect([home.data.state, home.data.appointments]).toEqual(['guest', []]);
+        const booking = await smoke('pages/appointmentBooking');
+        expect(booking.data.stateTitle).toBe('在线约课');
+        const navigations = log.navigations.length;
+        await act(home.openShortcut({ detail: home.data.shortcuts.find((entry) => entry.key === 'shop') }));
+        expect([home.data.showLogin, log.navigations.length]).toEqual([true, navigations]);
+        await signInOnSheet('student');
+        await act(home.handleLoginSuccess());
+        // The home reloads with the student's lessons and the tapped action continues.
+        expect(home.data).toMatchObject({ isLogin: true, showLogin: false });
+        expect(home.data.state).not.toBe('guest');
+        expect(home.data.appointmentsFailed).toBe(false);
+        expect(log.navigations.slice(navigations).map((entry) => entry.url)).toEqual(['/pages/courseShop/index']);
     });
 
     it('student signs in with a password and sees home, courses and booking options', async () => {
@@ -282,6 +319,28 @@ describe.sequential('live mini program flows', () => {
         expect(page.data.preview).toMatchObject({ canSubmit: true });
         expect(page.data.preview.lessonCount).toBe(page.data.lessons.length);
         await act(page.closeHandover());
+    });
+
+    it('owner reads the dashboard and reconciles a teacher', async () => {
+        const page = await smoke('pages/workbenchDashboard');
+        expect(page.data.view.cards.map((card) => card.label)).toEqual(['上课', '发课时', '约课', '新学员']);
+        await act(page.selectPeriod({ detail: { value: 'month' } }));
+        expect(page.data.state).toBe('ready');
+        // Lessons confirmed earlier in this run count this month.
+        expect(page.data.view.cards[0].value).not.toBe('0 节');
+        const teacher = page.data.view.teachers.find((row) => !row.description.startsWith('0 节'));
+        expect(teacher, 'a teacher with lessons this month').toBeTruthy();
+        // The month view steps back a month and returns; the current month has no next.
+        const { month, previousMonth, nextMonth } = page.data.view;
+        expect([Boolean(month), Boolean(previousMonth), nextMonth]).toEqual([true, true, '']);
+        await act(page.stepMonth({ currentTarget: { dataset: { month: previousMonth } } }));
+        expect([page.data.view.month, page.data.view.nextMonth]).toEqual([previousMonth, month]);
+        await act(page.stepMonth({ currentTarget: { dataset: { month } } }));
+        expect(page.data.view.month).toBe(month);
+        const lessons = await smoke('pages/workbenchTeacherLessons', { id: teacher.teacherId, period: 'month', month });
+        expect(lessons.data.view.month).toBe(month);
+        expect(lessons.data.view.lessons.length).toBeGreaterThan(0);
+        expect(lessons.data.view.totalLabel.startsWith(`${lessons.data.view.lessons.length} 节`)).toBe(true);
     });
 
     it('signs out cleanly', async () => {

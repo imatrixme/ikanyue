@@ -19,12 +19,12 @@
 
     <view wx:elif="{{!isLogin}}" class="points-page__state">
         <async-state
-            action-label="登录 / 注册"
-            description="登录后可以查看积分、活动和当前可领取实物。"
+            action-label="查看我的积分"
+            description="上课和参加活动积累积分，可以兑换实物。"
             kind="account"
             state="empty"
-            title="登录后查看积分账户"
-            bind:action="goProfile"
+            title="积分与实物"
+            bind:action="openMine"
         />
     </view>
 
@@ -120,4 +120,6 @@
 
         </ticket-section>
     </block>
+
+    <login-sheet visible="{{showLogin}}" bind:close="closeLogin" bind:success="handleLoginSuccess" />
 </view>

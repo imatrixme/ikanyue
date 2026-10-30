@@ -1,10 +1,5 @@
 import { lessonTotals } from './memberCards.js';
 
-const LOGIN_MODE_OPTIONS = Object.freeze([
-    { label: '微信登录', value: 'wechat' },
-    { label: '手机号登录', value: 'password' },
-]);
-
 const normalizeCellphone = (value) => String(value || '').replace(/\D/g, '').slice(0, 11);
 
 const validatePasswordLogin = ({ cellphone, password } = {}) => {
@@ -39,14 +34,27 @@ function profileStats({ courses = null, points = null } = {}) {
 
 // Account shortcuts under the cards; anything the stats already open stays out.
 // The role entry has no url: the page opens the role sheet for it.
+// `account` entries need a signed-in user; a guest signs in on the spot when tapping one.
 function profileEntries({ role = 'student', canSwitchRole = false } = {}) {
+    const student = role === 'student';
     return [
-        role === 'student' && { key: 'orders', label: '选课订单', icon: 'course-book', url: '/pages/courseShop/index', tab: false },
-        { key: 'profile', label: '个人资料', icon: 'account-profile', url: '/pages/userinfo/index', tab: false },
-        canSwitchRole && { key: 'role', label: '切换身份', icon: 'teacher-role', url: '', tab: false },
+        student && { key: 'orders', label: '我的订单', icon: 'course-book', url: '/pages/courseShop/index', tab: false, account: true },
+        student && { key: 'records', label: '课时记录', icon: 'course-history', url: '/pages/courseRecords/index', tab: false, account: true },
+        { key: 'profile', label: '个人资料', icon: 'account-profile', url: '/pages/userinfo/index', tab: false, account: true },
+        { key: 'agreement', label: '用户协议', icon: 'account-about', url: agreementUrl('user'), tab: false, account: false },
+        canSwitchRole && { key: 'role', label: '切换身份', icon: 'teacher-role', url: '', tab: false, account: true },
     ].filter(Boolean);
 }
 
+// The profile header greets by the hour of the day, like a front desk would.
+function greeting(hour) {
+    if (hour < 5) return '晚上好';
+    if (hour < 11) return '早上好';
+    if (hour < 13) return '中午好';
+    if (hour < 18) return '下午好';
+    return '晚上好';
+}
+
 export {
-    AGREEMENT_REQUIRED_MESSAGE, LOGIN_MODE_OPTIONS, agreementUrl, normalizeCellphone, profileEntries, profileStats, validatePasswordLogin,
+    AGREEMENT_REQUIRED_MESSAGE, agreementUrl, greeting, normalizeCellphone, profileEntries, profileStats, validatePasswordLogin,
 };

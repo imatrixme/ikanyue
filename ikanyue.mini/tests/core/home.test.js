@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { profileEntries } from '../../miniprogram/core/profile.js';
+import { greeting, profileEntries } from '../../miniprogram/core/profile.js';
 import {
-    homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
+    HOME_SHORTCUTS, homeCourseRows, homeState, needsRenewal, normalizeReminders, renewalHint, teacherRenewalRows,
 } from '../../miniprogram/core/home.js';
 
 const course = (overrides = {}) => ({
@@ -17,7 +17,7 @@ const course = (overrides = {}) => ({
 
 describe('home page logic', () => {
     it('derives one state per audience', () => {
-        expect(homeState({ isLogin: false, courses: [course()] })).toBe('signedOut');
+        expect(homeState({ isLogin: false, courses: [course()] })).toBe('guest');
         expect(homeState({ isLogin: true, loading: true })).toBe('loading');
         expect(homeState({ isLogin: true, error: '网络异常' })).toBe('error');
         expect(homeState({ isLogin: true })).toBe('noCourse');
@@ -73,13 +73,26 @@ describe('home page logic', () => {
     });
 });
 
-describe('profile entries', () => {
+describe('profile and home entries', () => {
     it('point at published pages, switching tabs only for tab pages', () => {
         const app = JSON.parse(readFileSync(new URL('../../miniprogram/app.json', import.meta.url), 'utf8'));
         const tabs = app.tabBar.list.map((item) => `/${item.pagePath}`);
-        for (const entry of profileEntries({ role: 'student', canSwitchRole: true }).filter((item) => item.url)) {
-            expect(app.pages, entry.key).toContain(entry.url.slice(1));
-            expect(entry.tab, entry.key).toBe(tabs.includes(entry.url));
+        const entries = [...profileEntries({ role: 'student', canSwitchRole: true }), ...HOME_SHORTCUTS].filter((item) => item.url);
+        for (const entry of entries) {
+            const path = entry.url.split('?')[0];
+            expect(app.pages, entry.key).toContain(path.slice(1));
+            expect(entry.tab, entry.key).toBe(tabs.includes(path));
         }
+    });
+
+    it('keeps the 松果 home order and asks for an account only where the data is personal', () => {
+        expect(HOME_SHORTCUTS.map((entry) => [entry.label, entry.account])).toEqual([
+            ['场馆信息', false], ['课程课包', true], ['去约课', false], ['我的课时', true],
+        ]);
+        expect(profileEntries().filter((entry) => !entry.account).map((entry) => entry.key)).toEqual(['agreement']);
+    });
+
+    it('greets by the hour', () => {
+        expect([3, 8, 12, 15, 20].map(greeting)).toEqual(['晚上好', '早上好', '中午好', '下午好', '晚上好']);
     });
 });

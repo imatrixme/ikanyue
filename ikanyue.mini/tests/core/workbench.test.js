@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    DASHBOARD_PERIODS, dashboardTeacherUrl, normalizeDashboard, normalizeReconciliation,
     buildGrantPayload, confirmLessonPayload, handoverSummary, normalizeHandoverPreview, normalizeTeacherLessons, normalizeTeachers,
     substituteOptions, teacherUrl, filterLessonsByTeacher, normalizeLedger, normalizePackages,
     normalizePendingLessons, normalizeStudentPage, teacherFilterOptions, validateNewStudent, workbenchErrorMessage,
@@ -174,5 +175,61 @@ describe('substitution and handover', () => {
     it('explains substitution refusals', () => {
         expect(workbenchErrorMessage({ errorCode: 'SUBSTITUTE_TEACHER_BUSY' })).toBe('这位老师在这个时间已有课。');
         expect(workbenchErrorMessage({ errorCode: 'HANDOVER_CONFLICTS' })).toBe('接手老师有课时间冲突，请先单独调整这些课。');
+    });
+});
+
+describe('owner dashboard', () => {
+    it('shows four numbers, teachers and the students who need a word', () => {
+        const view = normalizeDashboard({
+            range: { period: 'week', label: '10 月 26 日 – 11 月 1 日' },
+            lessons: { count: 12, credits: 12.5 }, grants: { credits: 20 }, bookings: { requested: 9, cancelled: 2 },
+            students: { joined: 3 },
+            teachers: [{ teacherId: 't1', name: '王老师', lessons: 8, credits: 8 }, { name: '没有编号' }],
+            renewals: [
+                { studentId: 's1', name: '林同学', courseName: '声乐', remaining: 0, reason: 'low_balance' },
+                { studentId: 's2', name: '周同学', courseName: '声乐', remaining: 1, reason: 'low_balance' },
+                { studentId: 's3', name: '吴同学', courseName: '钢琴', remaining: 6, reason: 'expiring', expiresAt: '2026-11-10T04:00:00.000Z' },
+            ],
+            inactive: [
+                { studentId: 's4', name: '郑同学', remaining: 5, days: 40, lastLessonAt: '' },
+                { studentId: 's5', remaining: 2, days: 30, lastLessonAt: '2026-09-30T02:00:00.000Z' },
+            ],
+        });
+        expect(view.rangeLabel).toBe('10 月 26 日 – 11 月 1 日');
+        expect([view.month, view.previousMonth, view.nextMonth]).toEqual(['', '', '']);
+        expect(view.cards.map((card) => [card.label, card.value, card.note])).toEqual([
+            ['上课', '12 节', '扣 12.5 课时'], ['发课时', '20 课时', '老板发放的课时'],
+            ['约课', '9 次', '取消 2 次'], ['新学员', '3 人', '这段时间加入'],
+        ]);
+        expect(view.teachers).toEqual([{ teacherId: 't1', name: '王老师', initial: '王', description: '8 节 · 扣 8 课时' }]);
+        expect(view.renewals.map((row) => row.description)).toEqual([
+            '声乐 课时已用完', '声乐 只剩 1 课时', '钢琴 剩 6 课时，2026.11.10 到期',
+        ]);
+        expect(view.inactive.map((row) => [row.name, row.description])).toEqual([
+            ['郑同学', '领课时 40 天还没来过 · 剩 5 课时'], ['学员', '30 天没来上课 · 剩 2 课时'],
+        ]);
+    });
+
+    it('keeps an empty dashboard readable', () => {
+        const view = normalizeDashboard({});
+        expect(view.cards.map((card) => card.value)).toEqual(['0 节', '0 课时', '0 次', '0 人']);
+        expect(view.cards[2].note).toBe('没有取消');
+        expect([view.teachers, view.renewals, view.inactive]).toEqual([[], [], []]);
+    });
+
+    it('lists a teacher\'s confirmed lessons for reconciliation', () => {
+        const view = normalizeReconciliation({
+            teacher: { teacherId: 't1', name: '王老师' }, range: { label: '2026 年 10 月', month: '2026-10', previous: '2026-09', next: '' }, count: 2, credits: 2,
+            items: [{ sessionId: 'a', title: '声乐', students: ['林同学'], credits: 1 }, { sessionId: 'b', students: [] }],
+        });
+        expect(view.totalLabel).toBe('2 节 · 扣 2 课时');
+        expect([view.month, view.previousMonth, view.nextMonth]).toEqual(['2026-10', '2026-09', '']);
+        expect(view.lessons.map((lesson) => [lesson.title, lesson.studentLabel, lesson.creditLabel])).toEqual([
+            ['声乐', '林同学', '1 课时'], ['课程', '学员', '0 课时'],
+        ]);
+        expect(dashboardTeacherUrl('t1', 'week')).toBe('/pages/workbenchTeacherLessons/index?id=t1&period=week');
+        expect(dashboardTeacherUrl('t1', 'week', '2026-09')).toBe('/pages/workbenchTeacherLessons/index?id=t1&period=week');
+        expect(dashboardTeacherUrl('t1', 'month', '2026-09')).toBe('/pages/workbenchTeacherLessons/index?id=t1&period=month&month=2026-09');
+        expect(DASHBOARD_PERIODS.map((item) => item.value)).toEqual(['today', 'week', 'month']);
     });
 });

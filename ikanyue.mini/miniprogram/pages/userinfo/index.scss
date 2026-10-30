@@ -75,7 +75,6 @@ $userinfo-input-height: 84rpx;
 
 .userinfo-segmented {
     margin-left: auto;
-    width: 248rpx;
 }
 
 .userinfo-note {
@@ -145,9 +144,5 @@ $userinfo-input-height: 84rpx;
     .userinfo-hero {
         padding-left: $ky-space-3;
         padding-right: $ky-space-3;
-    }
-
-    .userinfo-segmented {
-        width: 224rpx;
     }
 }

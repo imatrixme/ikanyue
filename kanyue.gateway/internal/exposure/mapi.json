@@ -35,6 +35,8 @@
         "GET /v1/teacher/renewals",
         "GET /v1/teacher/schedule",
         "GET /v1/user/wechat-roles",
+        "GET /v1/workbench/dashboard",
+        "GET /v1/workbench/dashboard/teachers/{teacherId}",
         "GET /v1/workbench/lessons/pending",
         "GET /v1/workbench/packages",
         "GET /v1/workbench/students",

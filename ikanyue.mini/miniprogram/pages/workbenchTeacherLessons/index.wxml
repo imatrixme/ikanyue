@@ -1,0 +1,52 @@
+<view class="page-chrome workbench-page">
+    <page-header subtitle="已确认上课的每一节，用来和老师对账" title="{{view.teacher.name || '老师'}}" />
+    <view class="workbench-content">
+        <!-- Period chips and the range share one row, so the numbers start right below. -->
+        <view class="workbench-period">
+            <segmented-control value="{{period}}" options="{{periods}}" bind:change="selectPeriod" />
+            <view wx:if="{{view.month}}" class="workbench-month">
+                <view class="workbench-month__step" aria-label="上一月" aria-role="button" data-month="{{view.previousMonth}}" bindtap="stepMonth">‹</view>
+                <text class="workbench-month__label">{{view.rangeLabel}}</text>
+                <view
+                    class="workbench-month__step {{view.nextMonth ? '' : 'disabled'}}"
+                    aria-disabled="{{!view.nextMonth}}"
+                    aria-label="下一月"
+                    aria-role="button"
+                    data-month="{{view.nextMonth}}"
+                    bindtap="stepMonth"
+                >›</view>
+            </view>
+            <text wx:elif="{{view}}" class="workbench-range">{{view.rangeLabel}}</text>
+        </view>
+        <view wx:if="{{state !== 'ready'}}" class="workbench-state">
+            <async-state
+                action-label="{{state === 'error' ? '重新加载' : ''}}"
+                description="{{errorMessage}}"
+                kind="{{state === 'error' ? 'network' : 'account'}}"
+                state="{{state}}"
+                title="{{state === 'error' ? '上课明细加载失败' : ''}}"
+                bind:action="retry"
+            />
+        </view>
+        <block wx:else>
+            <text class="workbench-range">共 {{view.totalLabel}}</text>
+            <view wx:if="{{view.lessons.length}}" class="workbench-list">
+                <view wx:for="{{view.lessons}}" wx:for-item="lesson" wx:key="sessionId" class="workbench-lesson">
+                    <view class="workbench-lesson__row">
+                        <view class="workbench-lesson__body">
+                            <text class="workbench-lesson__title">{{lesson.title}}</text>
+                            <text class="workbench-lesson__meta">{{lesson.timeLabel}}</text>
+                            <text class="workbench-lesson__meta">学员：{{lesson.studentLabel}}</text>
+                        </view>
+                        <text class="workbench-lesson__meta">{{lesson.creditLabel}}</text>
+                    </view>
+                </view>
+            </view>
+            <view wx:else class="workbench-empty">
+                <app-icon name="booking-confirm" size="xl" />
+                <text>这段时间还没有确认上课的课</text>
+            </view>
+            <text wx:if="{{view.truncated}}" class="workbench-hint">课太多，只显示前 500 节，完整记录请在网页后台查看。</text>
+        </block>
+    </view>
+</view>

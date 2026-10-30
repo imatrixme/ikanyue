@@ -48,3 +48,19 @@
 .workbench-sheet__option > text + text { color: $ky-text-secondary; font-size: $ky-font-size-body-sm; }
 .workbench-sheet__option.selected > text + text { color: $ky-primary-strong; font-weight: $ky-font-weight-bold; }
 .workbench-sheet__input { background: $ky-primary-wash; border: 1px solid $ky-input-line; border-radius: $ky-radius-md; box-sizing: border-box; font-size: $ky-font-size-body; height: 88rpx; margin-top: $ky-space-4; padding: 0 $ky-space-3; width: 100%; }
+
+// Owner dashboard: period numbers as a two-column grid of cards.
+.workbench-stats { display: flex; flex-wrap: wrap; gap: $ky-space-3; margin-bottom: $ky-space-4; }
+.workbench-stat { background: $ky-surface; border: 1px solid $ky-hairline; border-radius: $ky-radius-lg; box-sizing: border-box; padding: $ky-space-4; width: calc(50% - #{$ky-space-3} / 2); }
+.workbench-stat__label { color: $ky-text-secondary; display: block; font-size: $ky-font-size-body-sm; }
+.workbench-stat__value { color: $ky-ink-strong; display: block; font-size: $ky-font-size-heading; font-weight: $ky-font-weight-bold; margin-top: $ky-space-1; }
+.workbench-stat__note { color: $ky-text-muted; display: block; font-size: $ky-font-size-xs; margin-top: $ky-space-1; }
+.workbench-range { color: $ky-text-secondary; display: block; font-size: $ky-font-size-body-sm; padding: $ky-space-3 0; }
+// Period chips on the left, the range (or the month stepper) on the right of the same row.
+.workbench-period { align-items: center; display: flex; flex-wrap: wrap; gap: $ky-space-2; justify-content: space-between; padding: $ky-space-2 0; }
+.workbench-period .workbench-range { padding: 0; }
+// Month view: step to the previous or next calendar month around the label.
+.workbench-month { align-items: center; display: flex; }
+.workbench-month__label { color: $ky-ink-strong; font-size: $ky-font-size-body-sm; font-weight: $ky-font-weight-bold; }
+.workbench-month__step { align-items: center; color: $ky-primary-strong; display: flex; font-size: $ky-font-size-heading; height: 88rpx; justify-content: center; width: 64rpx; }
+.workbench-month__step.disabled { opacity: $ky-disabled-opacity; }

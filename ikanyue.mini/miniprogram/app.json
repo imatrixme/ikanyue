@@ -30,7 +30,9 @@
     "pages/workbenchStudent/index",
     "pages/workbenchGrant/index",
     "pages/workbenchTeachers/index",
-    "pages/workbenchTeacher/index"
+    "pages/workbenchTeacher/index",
+    "pages/workbenchDashboard/index",
+    "pages/workbenchTeacherLessons/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -101,6 +103,7 @@
     "venue-handoff": "/components/venue-handoff/index",
     "entry-grid": "/components/entry-grid/index",
     "member-card": "/components/member-card/index",
-    "member-card-deck": "/components/member-card-deck/index"
+    "member-card-deck": "/components/member-card-deck/index",
+    "login-sheet": "/components/login-sheet/index"
   }
 }

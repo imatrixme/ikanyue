@@ -4,13 +4,15 @@ import {
     appointmentDetailUrl, bookingErrorMessage, bookingSlotsUrl, normalizeAppointmentPage, normalizeBookingOption,
 } from '../../core/appointments.js';
 import { Api } from '../../services/apis.js';
+import { loginGate } from '../../services/loginGate.js';
 import { RoleManager } from '../../services/rolemanager.js';
 import { UserManager } from '../../services/usermanager.js';
 import { VenueManager } from '../../services/venuemanager.js';
 
 definePage({
     data: () => ({
-        errorMessage: '', isLogin: false, loading: false, options: [], recentAppointments: [], role: 'student', venue: null,
+        errorMessage: '', isLogin: false, loading: false, options: [], recentAppointments: [], role: 'student', showLogin: false,
+        venue: null,
     }),
     computed: {
         closed: (d) => VenueManager.venueClosed(d.venue),
@@ -21,15 +23,15 @@ definePage({
             return d.options.length || d.recentAppointments.length ? 'ready' : 'empty';
         },
         stateAction: (d) => {
-            if (!d.isLogin) return '去登录';
+            if (!d.isLogin) return '开始约课';
             return d.errorMessage ? '重新加载' : '';
         },
         stateDescription: (d) => {
-            if (!d.isLogin) return '登录后可以使用当前课程的剩余课时发起预约。';
+            if (!d.isLogin) return '已报课的学员可以在这里挑选老师开放的上课时间。';
             return d.errorMessage || '报课后，或老师开放可预约时间后，可预约的课程会显示在这里。';
         },
         stateTitle: (d) => {
-            if (!d.isLogin) return '登录后预约课程';
+            if (!d.isLogin) return '在线约课';
             return d.errorMessage ? '预约信息加载失败' : '暂无可预约课程';
         },
     },
@@ -49,6 +51,7 @@ definePage({
         return this.loadVenueAndData(true);
     },
     methods: {
+        ...loginGate,
         goSlots(event) {
             nav.to(bookingSlotsUrl(event.detail));
         },
@@ -60,7 +63,7 @@ definePage({
         },
         handleStateAction() {
             if (!this.data.isLogin) {
-                nav.tab('/pages/profile/index');
+                this.withAccount();
                 return;
             }
             this.loadData(true);
