@@ -15,6 +15,9 @@ const STATUS_META = Object.freeze({
     eligibility_lost: { label: '当前课时不足', tone: 'danger' },
 });
 
+// Bookings still ahead of the student: waiting for the teacher, confirmed or moved.
+const OPEN_APPOINTMENT_STATUSES = 'pending,confirmed,rescheduled';
+
 const WEEKDAY_LABELS = Object.freeze(['', '周一', '周二', '周三', '周四', '周五', '周六', '周日']);
 
 function normalizeBookingOption(option = {}) {
@@ -380,8 +383,8 @@ function minuteOfDay(date) {
 function pad(value) { return String(value).padStart(2, '0'); }
 
 export {
-    REASON_REQUIRED_MESSAGE, appointmentDetailUrl, availabilityUrl, bookingDateRange, bookingErrorMessage,
-    bookingSlotsUrl, buildAvailabilityOverride, buildRescheduleWindow, cancellationCopy, createOverrideDraft,
+    OPEN_APPOINTMENT_STATUSES, REASON_REQUIRED_MESSAGE, appointmentDetailUrl, availabilityUrl, bookingDateRange,
+    bookingErrorMessage, bookingSlotsUrl, buildAvailabilityOverride, buildRescheduleWindow, cancellationCopy, createOverrideDraft,
     createRescheduleDraft, formatAppointmentTime, formatDeadline, groupSlots, hasNextPage,
     mergeAppointmentPage, minutesToTime, normalizeAppointment, normalizeAppointmentPage,
     normalizeAvailability, normalizeBookingOption, normalizeTeacherDashboard, rescheduleEndLabel,

@@ -114,7 +114,7 @@
         <!-- Bookings sit under the lesson card, not behind a tab: both stay visible at a glance. -->
         <ticket-section
             wx:if="{{isLogin}}"
-            action-label="{{appointments.length ? '全部约课' : ''}}"
+            action-label="全部约课"
             title="我的约课"
             bind:action="goAppointments">
             <view wx:if="{{appointments.length}}" class="home-appointments">
@@ -130,7 +130,7 @@
                 <text class="home-quiet__action">点击重试</text>
             </view>
             <view wx:else class="home-quiet">
-                <text>还没有约课，选好老师开放的时间就能预约上课。</text>
+                <text>暂时没有待上的课，选好老师开放的时间就能预约。</text>
             </view>
         </ticket-section>
     </view>

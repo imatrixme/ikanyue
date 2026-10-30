@@ -1,6 +1,6 @@
 import { definePage } from '../../kit/page.js';
 import { nav, notify, page, system, ui } from '../../kit/api.js';
-import { appointmentDetailUrl, normalizeAppointmentPage } from '../../core/appointments.js';
+import { OPEN_APPOINTMENT_STATUSES, appointmentDetailUrl, normalizeAppointmentPage } from '../../core/appointments.js';
 import { learningErrorMessage, normalizeOverview } from '../../core/courses.js';
 import { HOME_SHORTCUTS, homeCourseRows, homeState, normalizeReminders } from '../../core/home.js';
 import { venueFacts } from '../../core/venues.js';
@@ -79,10 +79,13 @@ definePage({
         retry() {
             return this.loadData(true);
         },
-        // The latest few bookings; a failure shows a retry instead of an empty list.
+        // Only bookings still ahead; cancelled or declined ones stay under 全部约课.
+        // A failure shows a retry instead of an empty list.
         async loadAppointments() {
             try {
-                const page = normalizeAppointmentPage(await Api.listStudentAppointments({ page: 1, perPage: 3 }));
+                const page = normalizeAppointmentPage(await Api.listStudentAppointments({
+                    page: 1, perPage: 3, status: OPEN_APPOINTMENT_STATUSES,
+                }));
                 await this.set({ appointments: page.items, appointmentsFailed: false });
             } catch {
                 await this.set({ appointmentsFailed: !this.data.appointments.length });

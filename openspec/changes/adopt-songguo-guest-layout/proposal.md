@@ -16,7 +16,7 @@ The founder finds the signed-out mini program off-putting. 首页, 约课, the c
   - A row of four shortcuts: 场馆信息 / 课程课包 / 去约课 / 我的课时.
   - Two stacked sections, no tabs:
     - **我的课时**: the lesson balance; or for guests and students without lessons, the existing "开始学习" card.
-    - **我的约课** (signed in only): the latest three bookings, or a quiet "还没有约课" line.
+    - **我的约课** (signed in only): up to three bookings still ahead (cancelled or declined ones stay under 全部约课), or a quiet line.
 - **Fewer full-width tabs.** Full-width segmented tabs take space and hide information.
   - The login sheet switches between WeChat and password login with a text link.
   - The shared `segmented-control` sizes to its options. The dashboard puts the period chips and the range or month stepper on one row.
