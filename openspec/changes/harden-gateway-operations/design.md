@@ -35,7 +35,7 @@
 
 ### D4. CI 只覆盖网关半径
 
-- `.github/workflows/gateway.yml`，按路径触发：`kanyue.gateway/**`、`scripts/gateway-*`、`ikanyue.taro3/utils/**`（暴露清单测试的输入）。
+- `.github/workflows/gateway.yml`，按路径触发：`kanyue.gateway/**`、`scripts/gateway-*`、`ikanyue.mini/miniprogram/**`（暴露清单测试的输入）。
 - Go 用 `go.mod` 的版本；控制台用 Node 22；`govulncheck` 失败即阻断。
 - `govulncheck` 只看可达漏洞；`kanyue.gateway/govulncheck-accepted.txt` 逐条登记接受的编号和理由，清单外的可达漏洞阻断，已修复却仍在清单里的给出警告。
 - 首次扫描（2026-10-28）：x/net、x/image、x/text 与 Go 工具链（`toolchain go1.26.10`）直接升级；剩余两条在 PocketBase（GO-2026-5548 OAuth2 自动关联，网关不用 OAuth2；GO-2026-6489 batch/realtime 协程 panic，管理面只在回环地址）。升级 PocketBase 会在数据目录上跑系统迁移，作为单独的变更处理（7.4）。

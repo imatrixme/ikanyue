@@ -34,6 +34,6 @@
 - Affected code:
   - `kanyue.server`：新集合与 Go 迁移、进程内每日扫描任务、ops 接口、学员端提醒查询与订阅授权、教师只读名单、微信订阅消息适配器。
   - `ikanyue.admin`：收款下的“待续费”列表与发送操作。
-  - `ikanyue.taro3`：首页“教务提醒”与订阅授权入口，教师工作台的只读“待续费学员”。
+  - `ikanyue.taro3`：首页“教务提醒”与订阅授权入口，教师工作台的只读“待续费学员”（已随 `replace-taro-with-native-miniapp` 迁到 `ikanyue.mini` 的 `pages/home` 与 `teacher-booking-home`）。
   - `kanyue.gateway`：`mapi` 暴露清单新增小程序调用的 4 个接口。
 - Data：新增 `renewal_reminders`、`renewal_subscriptions` 两个集合（迁移 `kanyue_0005_renewal_reminders`，发布时需先 `migrate up`），不修改已有数据。

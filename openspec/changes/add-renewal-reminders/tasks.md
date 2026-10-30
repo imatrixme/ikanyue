@@ -16,7 +16,7 @@
 - [x] 2.1 Add a "待续费" list with reason, remaining lessons, expiry, and last reminder.
 - [x] 2.2 Add single and batch "发送续费提醒" actions with readable results.
 
-## 3. Mini program (`ikanyue.taro3`)
+## 3. Mini program (`ikanyue.taro3`, carried into `ikanyue.mini` by `replace-taro-with-native-miniapp`)
 
 - [x] 3.1 Show the 教务提醒 on the home page linking to the course package page.
 - [x] 3.2 Subscribe permission entry on the home lesson card when a template is configured.

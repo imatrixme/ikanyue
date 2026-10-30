@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"database/sql"
 	"encoding/pem"
 	"math/big"
 	"os"
@@ -104,4 +105,35 @@ func TestVerifyBackup(t *testing.T) {
 	ok(t, file.Close())
 	_, err := VerifyBackup(unsafe, "payment", "")
 	wantCode(t, err, "BACKUP_UNSAFE_PATH")
+}
+
+// Business backups verify on both sides of kanyue.server's order/payment split.
+func TestVerifyBusinessBackup(t *testing.T) {
+	business := func(tables ...string) string {
+		dir := t.TempDir()
+		db := must(sql.Open("sqlite", filepath.Join(dir, "data.db")))
+		for _, table := range tables {
+			must(db.Exec("CREATE TABLE " + table + " (id TEXT)"))
+			must(db.Exec("INSERT INTO " + table + " VALUES ('a')"))
+		}
+		ok(t, db.Close())
+		archive := filepath.Join(t.TempDir(), "kanyue-business.zip")
+		file := must(os.Create(archive))
+		writer := zip.NewWriter(file)
+		entry := must(writer.Create("data.db"))
+		must(entry.Write(must(os.ReadFile(filepath.Join(dir, "data.db")))))
+		ok(t, writer.Close())
+		ok(t, file.Close())
+		return archive
+	}
+	split := must(VerifyBackup(business("orders", "order_refunds", "order_audit", "credit_batches", "credit_events"), "business", ""))
+	if counts := split["counts"].(map[string]int); counts["orders"] != 1 || counts["order_audit"] != 1 || len(counts) != 5 {
+		t.Fatalf("split counts = %v", counts)
+	}
+	legacy := must(VerifyBackup(business("commerce_orders", "commerce_refunds", "commerce_audit", "credit_batches", "credit_events"), "business", ""))
+	if counts := legacy["counts"].(map[string]int); counts["commerce_orders"] != 1 || len(counts) != 5 {
+		t.Fatalf("legacy counts = %v", counts)
+	}
+	_, err := VerifyBackup(business("orders", "credit_batches"), "business", "")
+	wantCode(t, err, "BACKUP_TABLE_MISSING")
 }

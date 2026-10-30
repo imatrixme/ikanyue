@@ -227,11 +227,15 @@ func createBackup(source, token, filename string) error {
 	return fail("BACKUP_NOT_READY", 503)
 }
 
-func backupTables(scope string) []string {
+// backupTables are the money tables counted in a verified backup. Each entry lists
+// the current name first and then the name before kanyue.server split orders from
+// payment (migration 0008), so backups from either side of that release verify.
+func backupTables(scope string) [][]string {
 	if scope == "payment" {
-		return []string{"pay_entities"}
+		return [][]string{{"pay_entities"}}
 	}
-	return []string{"commerce_orders", "commerce_refunds", "commerce_audit", "credit_batches", "credit_events"}
+	return [][]string{{"orders", "commerce_orders"}, {"order_refunds", "commerce_refunds"}, {"order_audit", "commerce_audit"},
+		{"credit_batches"}, {"credit_events"}}
 }
 
 // VerifyBackup extracts into a fresh directory, checks SQLite integrity and money
@@ -282,7 +286,21 @@ func VerifyBackup(archive, scope, source string) (map[string]any, error) {
 		return nil, fail("BACKUP_INTEGRITY_FAILED", 500)
 	}
 	counts := map[string]int{}
-	for _, table := range backupTables(scope) {
+	for _, names := range backupTables(scope) {
+		table := ""
+		for _, name := range names {
+			var found int
+			if err := db.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", name).Scan(&found); err != nil {
+				return nil, err
+			}
+			if found > 0 {
+				table = name
+				break
+			}
+		}
+		if table == "" {
+			return nil, fail("BACKUP_TABLE_MISSING", 500)
+		}
 		var count int
 		if err := db.QueryRow("SELECT count(*) FROM " + table).Scan(&count); err != nil {
 			return nil, err

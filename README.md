@@ -40,7 +40,7 @@ GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...
 - Product requirements: [`docs/product/course-credit-system-prd.md`](docs/product/course-credit-system-prd.md)
 - Technical design: [`docs/architecture/course-credit-system-technical-design.md`](docs/architecture/course-credit-system-technical-design.md)
 - Data model: [`docs/architecture/course-credit-system-data-model.md`](docs/architecture/course-credit-system-data-model.md)
-- OpenSpec change: [`openspec/changes/add-course-credit-system/`](openspec/changes/add-course-credit-system/)
+- OpenSpec change: [`openspec/changes/archive/2026-10-16-add-course-credit-system/`](openspec/changes/archive/2026-10-16-add-course-credit-system/)
 
 
 ## Unified environment startup

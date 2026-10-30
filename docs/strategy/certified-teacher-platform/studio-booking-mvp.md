@@ -121,7 +121,7 @@
 |---|---|---|
 | 场馆管理 | 名称、地址、经纬度、电话、营业时间、封面与环境图、琴房、状态（启用 / 停用） | **新增** |
 | 学员管理 | 手机号建档、资料、常用场馆、课时资产、上课记录、跟进 | 已有；**加常用场馆** |
-| 课程与课时包 | 课程规格、课时类型、课时包、价格版本、线上商品 | 已有（`course_specs`、`credit_types`、`packages`、`price_versions`、`commerce_offers`） |
+| 课程与课时包 | 课程规格、课时类型、课时包、价格版本、线上商品 | 已有（`course_specs`、`credit_types`、`packages`、`price_versions`、`offers`） |
 | 线下报课登记 | 前台为学员下单并发放课时 | 后端已有发放接口（`/ops/course-credits/orders/:orderId/grant`）；**需确认 Admin 是否有顺手的操作界面** |
 | 老师排班 | 每周可约时间、日期例外、开设课程 | 已有（`teacher_availability_rules`、`teacher_availability_overrides`、`teacher_course_offerings`）；**加场馆维度** |
 | 课表日历 | 按场馆、老师、琴房查看课堂 | 已有课堂（`sessions`），但地点只是文本字段 `location`；**改为关联场馆** |
@@ -145,7 +145,7 @@
 | `teacher_availability_overrides` 加 `venueId`（可选） | 例外也可以指定场馆 |
 | `appointment_requests` 加 `venueId` | 预约发生在哪个场馆；写入后不随场馆资料修改而变化 |
 | `sessions`、`classes` 加 `venueId` | 替代现有的文本 `location`，保留旧字段做过渡 |
-| `commerce_orders` 加 `venueId`（可选） | 用于按场馆统计报课业绩 |
+| `orders` 加 `venueId`（可选） | 用于按场馆统计报课业绩 |
 | `students` 加 `preferredVenueId` | 记住学员的常用场馆 |
 | `schedule_claims` 增加琴房占用方 | 只有管理琴房时才需要 |
 

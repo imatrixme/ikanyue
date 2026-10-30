@@ -8,7 +8,7 @@
 - 覆盖系统：Admin、业务 API（`kanyue.server`）、小程序、官网
 - 不复用对象：实物积分 `student_points` / `point_events`
 - 关联技术设计：`docs/architecture/course-credit-system-technical-design.md`
-- 关联 OpenSpec：`openspec/changes/add-course-credit-system/`
+- 关联 OpenSpec：`openspec/changes/archive/2026-10-16-add-course-credit-system/`
 
 ## 2. 背景与问题
 

@@ -1,6 +1,6 @@
 ## Context
 
-- 现状：小程序请求 `https://mapi.ikanyue.com`，带 `X-Ca-Stage`（生产 `RELEASE`，开发 `TEST`）、`X-Ca-Nonce`（毫秒时间戳）、`X-Ca-Source: wechat_mp`，未使用 AppKey 签名（`ikanyue.taro3/utils/request.js`）。阿里云网关上的完整配置不在仓库，需要用户导出后对照验收。
+- 现状：小程序请求 `https://mapi.ikanyue.com`，带 `X-Ca-Stage`（生产 `RELEASE`，开发 `TEST`）、`X-Ca-Nonce`（毫秒时间戳）、`X-Ca-Source: wechat_mp`，未使用 AppKey 签名（原 `ikanyue.taro3/utils/request.js`，现 `ikanyue.mini/miniprogram/services/request.js`，头部不变）。阿里云网关上的完整配置不在仓库，需要用户导出后对照验收。
 - 后端：`kanyue.server`（业务、后台、PocketBase 面板）与 `kanyue.pay`（支付网关）都是内嵌 SQLite 的单进程服务，不能多实例。
 - `kanyue.server` 用“请求是否带 `X-Forwarded-For`/`X-Real-IP`/`Forwarded`”判断是否经过反代，以此隐藏 PocketBase `/api/*` 与 `/_/`（`internal/server/server.go`）。
 - 资源：起步 1 核 1G，可升级到 2 核 4G、3 Mbps 出口（入口不限）。

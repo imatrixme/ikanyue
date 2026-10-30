@@ -6,14 +6,14 @@ on:
     paths:
       - kanyue.gateway/**
       - scripts/gateway-*
-      - ikanyue.taro3/utils/**
+      - ikanyue.mini/miniprogram/**
       - compose.yaml
       - .github/workflows/gateway.yml
   pull_request:
     paths:
       - kanyue.gateway/**
       - scripts/gateway-*
-      - ikanyue.taro3/utils/**
+      - ikanyue.mini/miniprogram/**
       - compose.yaml
       - .github/workflows/gateway.yml
 
