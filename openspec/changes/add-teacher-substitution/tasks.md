@@ -2,7 +2,7 @@
 
 - [x] 1.1 `substituteTeacher` cases: before and after start, the original row becomes cancelled and a substitute lead is planned; the substitute confirms and the earning goes to them; busy substitute (`SUBSTITUTE_TEACHER_BUSY`); same teacher; settled lesson (`SESSION_ALREADY_SETTLED`) then undo, substitute, confirm; switching back reuses the old row; replay with the same key; hired teacher gets 403.
 - [x] 1.2 `handoverTeacher` cases: preview counts (lessons, conflicts, assistant roles, pending requests, offerings without the receiver, students); handover substitutes lessons, cancels other roles, declines pending requests with the reason, deactivates offerings and availability, blocks the account, leaves credit batches unchanged; conflicts refuse as a whole; administrator, self and missing reason are refused; replay.
-- [x] 1.3 View cases: student lesson and appointment views name the current lead and hide cancelled teachers; the replaced teacher cannot reschedule or cancel (`APPOINTMENT_TEACHER_FORBIDDEN`), an administrator can cancel; a substituted lesson cannot be rescheduled by anyone (`APPOINTMENT_TEACHER_SUBSTITUTED`).
+- [x] 1.3 View cases: student lesson and appointment views name the current lead and hide cancelled teachers; the appointment moves to the substitute (who can view, cancel, and reschedule once they offer the course, else `APPOINTMENT_OFFERING_UNAVAILABLE`); the replaced teacher cannot view or change it (`APPOINTMENT_TEACHER_FORBIDDEN`); a blocked teacher's session is rejected at once.
 
 ## 2. Server (`kanyue.server`)
 

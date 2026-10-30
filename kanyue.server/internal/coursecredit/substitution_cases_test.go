@@ -110,11 +110,14 @@ func TestSubstituteBookedLesson(t *testing.T) {
 		t.Fatalf("audit = %v", audit)
 	}
 
-	// Students and teachers see who actually teaches; the booking keeps the teacher booked.
+	// The appointment follows the teacher who teaches it; the replaced teacher stays in the cancelled row.
 	view := ok(t, testkit.Call(t, f.handler, http.MethodGet, "/v1/student/appointments/"+appointmentID, nil, f.student), "student appointment")
-	if view["teacher"].(map[string]any)["name"] != "李老师" || recordField(t, f.bookingFixture, "appointment_requests", appointmentID, "teacherId") != f.teacherID {
+	if view["teacher"].(map[string]any)["name"] != "李老师" || recordField(t, f.bookingFixture, "appointment_requests", appointmentID, "teacherId") != f.otherID {
 		t.Fatalf("student appointment = %v", view)
 	}
+	ok(t, testkit.Call(t, f.handler, http.MethodGet, "/v1/teacher/appointments/"+appointmentID, nil, f.otherTeacher), "substitute sees the appointment")
+	failed(t, testkit.Call(t, f.handler, http.MethodGet, "/v1/teacher/appointments/"+appointmentID, nil, f.teacher),
+		403, "APPOINTMENT_TEACHER_FORBIDDEN", "replaced teacher views")
 	lesson := ok(t, testkit.Call(t, f.handler, http.MethodGet, "/v1/student/learning/lessons/"+lessonID, nil, f.student), "student lesson")
 	if summary := fmt.Sprint(lesson["teacherSummary"]); !strings.Contains(summary, "李老师") || strings.Contains(summary, "王老师") {
 		t.Fatalf("lesson teachers = %v", summary)
@@ -124,8 +127,8 @@ func TestSubstituteBookedLesson(t *testing.T) {
 		403, "APPOINTMENT_TEACHER_FORBIDDEN", "replaced teacher cancels")
 	_, err := rescheduleAppointment(f.app, f.as("admin", "move", map[string]any{"appointmentId": appointmentID,
 		"newStartAt": iso(time.Now().UTC().Add(72 * time.Hour)), "newEndAt": iso(time.Now().UTC().Add(73 * time.Hour)), "reason": "改期"}))
-	if code := errorCode(err); code != "APPOINTMENT_TEACHER_SUBSTITUTED" {
-		t.Fatalf("owner reschedule = %v", err)
+	if code := errorCode(err); code != "APPOINTMENT_OFFERING_UNAVAILABLE" {
+		t.Fatalf("reschedule without the substitute's offering = %v", err)
 	}
 
 	// The substitute confirms the lesson and is paid for it.
@@ -174,7 +177,7 @@ func TestSubstituteBusyAndAbsentTeacher(t *testing.T) {
 
 func TestHandoverLeavingTeacher(t *testing.T) {
 	f := substitutionSetup(t)
-	_, lessonID := f.confirmed(t, 40, "a1")
+	bookedID, lessonID := f.confirmed(t, 40, "a1")
 	_, startedID := f.confirmed(t, 80, "a2")
 	f.startNow(t, startedID)
 	pendingID := f.pending(t, 120, "a3")
@@ -229,6 +232,8 @@ func TestHandoverLeavingTeacher(t *testing.T) {
 		t.Fatalf("student lessons changed: %v → %v", available, after.GetFloat("availableQuantity"))
 	}
 	ok(t, f.post(t, f.otherTeacher, "/v1/workbench/lessons/"+startedID+"/confirm", map[string]any{}, "k1"), "receiver confirms")
+	ok(t, testkit.Call(t, f.handler, http.MethodGet, "/v1/teacher/appointments/"+bookedID, nil, f.otherTeacher), "receiver sees the booking")
+	failed(t, testkit.Call(t, f.workbench, http.MethodGet, "/v1/workbench/summary", nil, f.teacher), 403, "AUTH_SESSION_INVALID", "leaving teacher signed in")
 }
 
 func TestHandoverRefusesConflicts(t *testing.T) {

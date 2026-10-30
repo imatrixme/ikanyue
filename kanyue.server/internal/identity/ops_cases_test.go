@@ -326,7 +326,7 @@ func TestOpsRegistrationAndPasswordBranches(t *testing.T) {
 		return testkit.Call(t, f.handler, http.MethodPost, "/ops/auth/change-password",
 			map[string]any{"currentPassword": current, "newPassword": next, "confirmPassword": next}, sign(id))
 	}
-	if result := change(f.blocked.Id, "secret-pass", "another-pass"); result.Body["message"] != "教师账号不可用" {
+	if result := change(f.blocked.Id, "secret-pass", "another-pass"); result.Body["message"] != "账号已停用" {
 		t.Fatalf("blocked = %v", result.Body)
 	}
 	if result := change(f.teacher.Id, "secret-pass", "secret-pass"); result.Body["message"] != "新密码不能与当前密码相同" {

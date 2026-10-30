@@ -41,6 +41,9 @@ func (s *Signer) RequireSession(next func(*core.RequestEvent) error) func(*core.
 		if claims == nil {
 			return httpx.SessionInvalid(e, "登录已失效，请重新登录")
 		}
+		if blockedTeacher(e, claims) {
+			return httpx.SessionInvalid(e, "账号已停用")
+		}
 		e.Set(userKey, claims)
 		return next(e)
 	}
@@ -64,9 +67,22 @@ func (s *Signer) RequireOps(allowPasswordChange bool, next func(*core.RequestEve
 		if !allowPasswordChange && claims["passwordChangeRequired"] == true {
 			return httpx.Error(e, 403, "首次登录必须先修改默认密码")
 		}
+		if blockedTeacher(e, claims) {
+			return httpx.Error(e, 403, "账号已停用")
+		}
 		e.Set(userKey, claims)
 		return next(e)
 	}
+}
+
+// blockedTeacher ends a teacher's signed-in session as soon as the account is blocked
+// (for example after a handover), instead of when the token expires.
+func blockedTeacher(e *core.RequestEvent, claims Claims) bool {
+	if claims["role"] != "teacher" {
+		return false
+	}
+	record, err := e.App.FindRecordById("teachers", ClaimString(claims, "id"))
+	return err == nil && record.GetBool("blocked")
 }
 
 func ClaimString(claims Claims, key string) string {

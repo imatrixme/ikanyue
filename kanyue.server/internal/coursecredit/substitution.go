@@ -111,6 +111,10 @@ func substituteTeacher(app core.App, input map[string]any) (map[string]any, erro
 			return nil, err
 		}
 	}
+	appointments, err := list(app, "appointment_requests", `sessionId="`+escape(sessionID)+`"`, "id")
+	if err != nil {
+		return nil, err
+	}
 	result := map[string]any{"operationId": t.operationID, "sessionId": sessionID,
 		"fromTeacherId": fromTeacherID, "toTeacherId": toTeacherID}
 	version := positiveVersion(session["version"])
@@ -150,6 +154,18 @@ func substituteTeacher(app core.App, input map[string]any) (map[string]any, erro
 		copied["id"], copied["ownerId"], copied["status"], copied["releasedAt"], copied["version"] = ids.Record(), toTeacherID, "active", "", 1
 		plan = append(plan, create("schedule_claims", copied))
 	}
+	// The appointment follows the teacher who teaches it, so they see, cancel and reschedule it;
+	// the replaced teacher stays on record in the cancelled row and the audit.
+	for _, appointment := range appointments {
+		changes, err := appointmentTeacher(app, appointment, toTeacherID)
+		if err != nil {
+			return nil, err
+		}
+		id, appointmentVersion := jsx.String(appointment["id"]), positiveVersion(appointment["version"])
+		changes["version"] = appointmentVersion + 1
+		plan = append(plan, versionClaim("appointment", id, appointmentVersion, t.operationID),
+			update("appointment_requests", id, changes))
+	}
 	plan = append(plan,
 		lessonAudit(input, sessionID, "substitute_teacher", map[string]any{
 			"fromTeacherId": fromTeacherID, "toTeacherId": toTeacherID, "reason": normalizeText(input["reason"], 200)}),
@@ -159,6 +175,21 @@ func substituteTeacher(app core.App, input map[string]any) (map[string]any, erro
 		return nil, scheduleConflict(err, "SUBSTITUTE_TEACHER_BUSY")
 	}
 	return committed, nil
+}
+
+// appointmentTeacher moves an appointment to the new teacher, onto their booking of the same
+// course when they offer it; otherwise the old offering stays and rescheduling waits for one.
+func appointmentTeacher(app core.App, appointment map[string]any, teacherID string) (map[string]any, error) {
+	changes := map[string]any{"teacherId": teacherID}
+	offering, err := findFirst(app, "teacher_course_offerings", `teacherId="`+escape(teacherID)+
+		`" && courseSpecId="`+escape(relationID(appointment["courseSpecId"]))+`" && status="active"`)
+	if err != nil {
+		return nil, err
+	}
+	if offering != nil {
+		changes["offeringId"] = offering["id"]
+	}
+	return changes, nil
 }
 
 func activeTeacher(app core.App, teacherID string) error {

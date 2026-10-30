@@ -76,45 +76,7 @@ func appointmentPage(app core.App, query map[string]string, filters []string, so
 	if err != nil {
 		return nil, err
 	}
-	if err := withCurrentLead(app, result.Items...); err != nil {
-		return nil, err
-	}
 	return mappedPage(result, project), nil
-}
-
-// withCurrentLead names the lesson's current lead teacher on appointments that
-// became lessons, so a substituted lesson shows who actually teaches it.
-// appointment.teacherId itself stays the teacher the student booked.
-func withCurrentLead(app core.App, records ...map[string]any) error {
-	sessionIDs := []string{}
-	for _, record := range records {
-		if id := relationID(record["sessionId"]); id != "" {
-			sessionIDs = append(sessionIDs, id)
-		}
-	}
-	sessionIDs = uniqueIDs(sessionIDs)
-	leads := map[string]map[string]any{}
-	for start := 0; start < len(sessionIDs); start += relationChunkSize {
-		chunk := sessionIDs[start:min(start+relationChunkSize, len(sessionIDs))]
-		rows, err := list(app, "session_teachers", anyFilter("sessionId", chunk)+` && role="lead" && `+teachingRow, "", "teacherId")
-		if err != nil {
-			return err
-		}
-		for _, row := range rows {
-			leads[relationID(row["sessionId"])] = row
-		}
-	}
-	for _, record := range records {
-		lead, ok := leads[relationID(record["sessionId"])]
-		if !ok || relationID(lead["teacherId"]) == relationID(record["teacherId"]) {
-			continue
-		}
-		expand, _ := record["expand"].(map[string]any)
-		expand = copyMap(expand)
-		expand["teacherId"] = expanded(lead, "teacherId")
-		record["expand"], record["teacherId"] = expand, lead["teacherId"]
-	}
-	return nil
 }
 
 func pageQuery(status string, perPage int) map[string]string {
@@ -282,9 +244,6 @@ func getStudentAppointment(app core.App, studentID, appointmentID string) (map[s
 	if relationID(record["studentId"]) != studentID {
 		return nil, Fail("APPOINTMENT_STUDENT_FORBIDDEN", "不能查看其他学员的预约", nil)
 	}
-	if err := withCurrentLead(app, record); err != nil {
-		return nil, err
-	}
 	return studentAppointment(record), nil
 }
 
@@ -295,9 +254,6 @@ func getTeacherAppointment(app core.App, teacherID, appointmentID string) (map[s
 	}
 	if relationID(record["teacherId"]) != teacherID {
 		return nil, Fail("APPOINTMENT_TEACHER_FORBIDDEN", "不能查看其他教师的预约", nil)
-	}
-	if err := withCurrentLead(app, record); err != nil {
-		return nil, err
 	}
 	return teacherAppointment(record), nil
 }
