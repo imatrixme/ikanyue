@@ -30,30 +30,37 @@ export interface CommerceCase { id: string; orderId: string; label: string; kind
 export interface Statement { id: string; date: string; source: string; mock: boolean; ready: boolean; fees: number; captured: number; refundRequested: number; count: number }
 export interface StatementDetail extends Statement { hash: string; lines: Array<{ id: string; kind: string; amount: number; fees: number; difference: string; resolution?: { note: string } }>; missingPayments: string[]; missingRefunds?: string[]; settlements: Array<{ id: string; amount: number; date: string; reference: string }> }
 export interface RecoveryWork { id: string; data: { task: string; targetId: string; attempts: number; exhausted: boolean; lastError?: string } }
+export const PAYMENT_OFF = '在线收款未开通或已停用：订单和退款仍可查看，收款同步、对账和异常处理暂不可用'
+// The payment plugin's routes are absent (404) while online payment is off for the studio.
+function payment<T>(url: string, options: Parameters<typeof request>[1]): Promise<T> {
+  return request<T>(url, options).catch((error: unknown) => {
+    throw (error as { status?: number } | null)?.status === 404 ? new Error(PAYMENT_OFF) : error
+  })
+}
 export const commerceApi = {
-  recoveryWork: (token: string) => request<{ items: RecoveryWork[] }>(`${base}/recovery-work`, { token }),
-  resumeWork: (token: string, id: string, reason: string) => request(`${base}/recovery-work/${id}/retry`, { token, method: 'POST', body: { reason } }),
-  statements: (token: string) => request<{ items: Statement[] }>(`${base}/statements`, { token }),
-  statement: (token: string, id: string) => request<StatementDetail>(`${base}/statements/${id}`, { token }),
-  downloadStatement: (token: string, date: string) => request<StatementDetail>(`${base}/statements/download`, { token, method: 'POST', body: { date } }),
-  importStatement: (token: string, date: string, content: string) => request<StatementDetail>(`${base}/statements/import`, { token, method: 'POST', body: { date, content } }),
-  exportStatement: (token: string, id: string) => request<{ content: string }>(`${base}/statements/${id}/export`, { token }),
-  resolveStatementLine: (token: string, id: string, note: string) => request(`${base}/statement-lines/${id}/resolve`, { token, method: 'POST', body: { note } }),
-  recordSettlement: (token: string, id: string, body: { date: string; amount: number; reference: string; evidenceHash: string }) => request(`${base}/statements/${id}/settlement`, { token, method: 'POST', body }),
-  retryRefund: (token: string, id: string, reason: string) => request(`${base}/refunds/${encodeURIComponent(id)}/retry`, { token, method: 'POST', body: { reason } }),
+  recoveryWork: (token: string) => payment<{ items: RecoveryWork[] }>(`${base}/recovery-work`, { token }),
+  resumeWork: (token: string, id: string, reason: string) => payment(`${base}/recovery-work/${id}/retry`, { token, method: 'POST', body: { reason } }),
+  statements: (token: string) => payment<{ items: Statement[] }>(`${base}/statements`, { token }),
+  statement: (token: string, id: string) => payment<StatementDetail>(`${base}/statements/${id}`, { token }),
+  downloadStatement: (token: string, date: string) => payment<StatementDetail>(`${base}/statements/download`, { token, method: 'POST', body: { date } }),
+  importStatement: (token: string, date: string, content: string) => payment<StatementDetail>(`${base}/statements/import`, { token, method: 'POST', body: { date, content } }),
+  exportStatement: (token: string, id: string) => payment<{ content: string }>(`${base}/statements/${id}/export`, { token }),
+  resolveStatementLine: (token: string, id: string, note: string) => payment(`${base}/statement-lines/${id}/resolve`, { token, method: 'POST', body: { note } }),
+  recordSettlement: (token: string, id: string, body: { date: string; amount: number; reference: string; evidenceHash: string }) => payment(`${base}/statements/${id}/settlement`, { token, method: 'POST', body }),
+  retryRefund: (token: string, id: string, reason: string) => payment(`${base}/refunds/${encodeURIComponent(id)}/retry`, { token, method: 'POST', body: { reason } }),
   offers: (token: string) => request<OfferCatalog>(`${base}/offers`, { token }),
   saveOffer: (token: string, body: { key: string; id?: string; version?: number; name: string; packageId: string; priceVersionId: string; policy: OfferPolicy }) => request<Offer>(`${base}/offers`, { token, method: 'POST', body }),
   publishOffer: (token: string, offer: Offer, status: 'active' | 'inactive', reason: string) => request<Offer>(`${base}/offers/${offer.id}/status`, { token, method: 'POST', body: { status, reason, version: offer.version || 0 } }),
-  cases: (token: string) => request<CommerceCase[]>(`${base}/cases`, { token }),
-  reviewCase: (token: string, id: string, status: string, note: string) => request(`${base}/cases/${encodeURIComponent(id)}`, { token, method: 'POST', body: { status, note } }),
+  cases: (token: string) => payment<CommerceCase[]>(`${base}/cases`, { token }),
+  reviewCase: (token: string, id: string, status: string, note: string) => payment(`${base}/cases/${encodeURIComponent(id)}`, { token, method: 'POST', body: { status, note } }),
   orders: (token: string, query: Record<string, string>) => request<OrderPage>(`${base}/orders?${new URLSearchParams(query)}`, { token }),
   order: (token: string, id: string) => request<OrderDetail>(`${base}/orders/${encodeURIComponent(id)}`, { token }),
   refundOrder: (token: string, id: string, body: { key: string; expectedAmount: number; reason: string }) => request(`${base}/orders/${encodeURIComponent(id)}/refunds`, { token, method: 'POST', body }),
-  recoverOrder: (token: string, id: string, reason: string) => request<OrderDetail>(`${base}/orders/${encodeURIComponent(id)}/recover`, { token, method: 'POST', body: { reason, key: crypto.randomUUID() } }),
-  finance: (token: string) => request<FinanceSummary>(`${base}/finance`, { token }),
-  reconcile: (token: string) => request<{ findings: unknown[] }>(`${base}/reconcile`, { token, method: 'POST', body: {} }),
-  recover: (token: string) => request<{ orders: { unresolved: number }; refunds: { unresolved: number } }>(`${base}/recover`, { token, method: 'POST', body: {} }),
-  mockRefund: (token: string, id: string) => request(`${base}/refunds/${encodeURIComponent(id)}/mock-success`, { token, method: 'POST', body: {} }),
+  recoverOrder: (token: string, id: string, reason: string) => payment<OrderDetail>(`${base}/orders/${encodeURIComponent(id)}/recover`, { token, method: 'POST', body: { reason, key: crypto.randomUUID() } }),
+  finance: (token: string) => payment<FinanceSummary>(`${base}/finance`, { token }),
+  reconcile: (token: string) => payment<{ findings: unknown[] }>(`${base}/reconcile`, { token, method: 'POST', body: {} }),
+  recover: (token: string) => payment<{ orders: { unresolved: number }; refunds: { unresolved: number } }>(`${base}/recover`, { token, method: 'POST', body: {} }),
+  mockRefund: (token: string, id: string) => payment(`${base}/refunds/${encodeURIComponent(id)}/mock-success`, { token, method: 'POST', body: {} }),
 }
 export const orderLabel = (order: CommerceOrder) => order.refundPending ? '退款处理中' : ({ pending: '待付款', granting: '已付款，课时待到账', completed: order.refunded >= order.amount ? '已全额退款' : '已完成', failed: '付款未完成' } as Record<string, string>)[order.status] || '待核对'
 export const money = (value: number | null) => value === null ? '尚未提供' : `¥${(value / 100).toFixed(2)}`

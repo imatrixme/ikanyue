@@ -10,7 +10,8 @@ export async function request<T>(url: string, options: { method?: string; body?:
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   })
   const payload = await response.json()
-  if (!response.ok || payload.code !== 10000) throw new Error(payload.message || '运营后台请求失败')
+  // status lets callers tell a route that is absent (404) from a rejected request.
+  if (!response.ok || payload.code !== 10000) throw Object.assign(new Error(payload.message || '运营后台请求失败'), { status: response.status })
   return payload.data as T
 }
 

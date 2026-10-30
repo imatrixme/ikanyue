@@ -34,7 +34,7 @@
 
 - [x] 6.3 Recovery opens the payment of new orders so the gateway window runs from checkout; orders past the window without a payment are closed (recovery, cashier, disabling).
 - [x] 6.4 Refund settlement is checked again when the refund request is written, so it cannot race a disable.
-- [x] 6.5 Mini program: a paused shop still lists orders and refunds; the cashier explains paused payment.
+- [x] 6.5 Mini program: a paused shop still lists orders and refunds; the cashier explains paused payment. Admin: payment pages explain that online payment is off instead of "接口不存在".
 
 ## 7. Verification
 
