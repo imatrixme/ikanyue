@@ -19,15 +19,15 @@ The system SHALL bind a WeChat identity to an existing verified teacher before g
 - **THEN** the system refuses teacher access and does not create a teacher account
 
 ### Requirement: Role-Aware Mini-Program Navigation
-The mini program SHALL present role-specific navigation while preserving the existing student information architecture.
+The mini program SHALL present role-specific navigation on three shared tab slots.
 
 #### Scenario: Student opens the mini program
 - **WHEN** the active identity is a student
-- **THEN** the TabBar displays 活动、课程、积分、我的 and teacher-only routes remain inaccessible
+- **THEN** the TabBar displays 首页、约课、我的 and teacher-only routes remain inaccessible
 
 #### Scenario: Teacher opens the mini program
 - **WHEN** the active identity is a teacher
-- **THEN** the TabBar displays 活动、工作台、预约、我的 and student financial or reward data remains inaccessible
+- **THEN** the TabBar displays 工作台、日历、我的, the first tab shows the teacher workbench, the second shows the teacher calendar, and student financial or reward data remains inaccessible
 
 ### Requirement: Teacher Appointment Workbench
 The teacher mini-program SHALL provide a scene-oriented workbench for pending decisions, today's teaching schedule, confirmed appointments, and conflict outcomes.

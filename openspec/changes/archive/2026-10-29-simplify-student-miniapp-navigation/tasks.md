@@ -16,4 +16,4 @@
 
 - [x] 3.1 Update `scripts/verify-student-course-boundary.mjs` and `tests/e2e/*` to the new tab contract.
 - [x] 3.2 Run `pnpm lint`, `TZ=Asia/Shanghai pnpm test`, `pnpm test:tz`, `pnpm build:weapp`, `pnpm test:e2e`.
-- [ ] 3.3 Preview with an H5 build and capture screenshots; record that WeChat devtools acceptance is still pending.
+- [x] 3.3 Preview with an H5 build and capture screenshots; record that WeChat devtools acceptance is still pending. (The Taro H5 build no longer exists after `replace-taro-with-native-miniapp`. 2026-10-29: accepted in the WeChat DevTools simulator on the native app instead: students see 首页/约课/我的 and teachers 工作台/日历/我的; the student home shows the venue card, lesson balance and one 去约课 action; "我的" entries follow `refresh-miniapp-fresh-visual`, which modifies the navigation requirement.)

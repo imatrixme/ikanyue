@@ -33,9 +33,9 @@ Signed-in users SHALL find "退出登录" on the "我的" tab, and signing out S
 - **THEN** the local session is cleared and the tab shows its signed-out state
 
 ### Requirement: Signed-out points tab
-The points tab SHALL NOT show a balance pass to signed-out users.
+The points page SHALL NOT show a balance pass to signed-out users.
 
 #### Scenario: Signed out
-- **WHEN** a signed-out user opens the points tab
+- **WHEN** a signed-out user opens the points page
 - **THEN** only the sign-in prompt is shown
 

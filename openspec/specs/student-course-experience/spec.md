@@ -3,13 +3,6 @@
 ## Purpose
 TBD - created by archiving change deliver-course-tab-admin-enrollment. Update Purpose after archive.
 ## Requirements
-### Requirement: Independent Course Tab
-The mini program SHALL register a dedicated course tab between activity and points and SHALL preserve the existing activity, points, and profile tabs.
-
-#### Scenario: Student opens the course tab
-- **WHEN** an authenticated student selects the course tab
-- **THEN** the mini program shows the next lesson, enrolled courses, validity warnings, and recent lesson records
-
 ### Requirement: Read-Only Student Course Experience
 The mini program SHALL allow students to view courses, remaining lessons, scheduled lessons, validity, lesson details, and lesson-hour records without exposing enrollment or ledger mutation actions.
 
@@ -37,4 +30,11 @@ Student course pages SHALL consume only `/v1/student/learning/*` projections and
 #### Scenario: Projection response is returned
 - **WHEN** `kanyue.server` returns a student learning overview
 - **THEN** it omits credit type ids, batch ids, frozen quantities, conversion rules, operation numbers, and raw event metadata
+
+### Requirement: Course Overview Page
+The mini program SHALL keep a dedicated course overview page reached from "我的", and SHALL NOT register it as a tab.
+
+#### Scenario: Student opens the course overview
+- **WHEN** an authenticated student opens "我的课程" from "我的"
+- **THEN** the mini program shows the next lesson, enrolled courses, validity warnings, and recent lesson records
 

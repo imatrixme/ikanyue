@@ -46,7 +46,11 @@ The founder finds the native mini program visually heavy next to 松果约课:
 
 ## Impact
 
-- Affected specs: `studio-venues` (cover image), `inclusive-miniapp-visual-system` (icons and empty states).
+- Affected specs:
+  - `studio-venues` (cover image)
+  - `inclusive-miniapp-visual-system` (icons and empty states)
+  - `student-miniapp-home` (profile entries become the stats and shortcuts)
+  - `miniapp-account-access` (sign out moves to the profile editor)
 - Affected code:
   - `kanyue.server`: venues module, new migration, tests.
   - `ikanyue.admin`: venue API and drawer, tests.
