@@ -2,6 +2,7 @@ package coursecredit
 
 import (
 	"math"
+	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 
@@ -22,6 +23,18 @@ type Payable struct {
 	Status string
 	// Amount is what the student pays, in fen.
 	Amount float64
+	// PlacedAt is when the student checked out; the payment window runs from it.
+	PlacedAt time.Time
+}
+
+// PaymentWindow is how long an online order can be paid after checkout. It is
+// kanyue.pay's payment lifetime, so the plugin opens the payment right after
+// checkout and the gateway closes it when the window ends.
+const PaymentWindow = 30 * time.Minute
+
+// Expired reports whether the order's payment window has ended at now.
+func (p Payable) Expired(now time.Time) bool {
+	return !p.PlacedAt.IsZero() && now.Sub(p.PlacedAt) >= PaymentWindow
 }
 
 // PayableOrder is the online order a payment collects.
@@ -30,10 +43,28 @@ func PayableOrder(app core.App, orderID string) (Payable, error) {
 	if err != nil {
 		return Payable{}, err
 	}
+	return payable(order), nil
+}
+
+// UnpaidOrders lists the online orders still waiting for their payment, oldest first.
+func UnpaidOrders(app core.App) ([]Payable, error) {
+	rows, err := list(app, "orders", `settlement="online" && status="pending"`, "created")
+	if err != nil {
+		return nil, err
+	}
+	result := make([]Payable, len(rows))
+	for i, row := range rows {
+		result[i] = payable(row)
+	}
+	return result, nil
+}
+
+func payable(order map[string]any) Payable {
 	product := asMap(order["productSnapshot"])
+	placed, _ := jsx.DateParse(order["created"])
 	return Payable{OrderID: jsx.String(order["id"]), StudentID: jsx.String(order["studentId"]), Name: jsx.String(product["offerName"]),
 		Currency: jsx.String(order["currency"]), PayerOpenID: jsx.String(order["payerOpenId"]), Status: onlineStatus(order),
-		Amount: jsx.Number(product["paidMinor"])}, nil
+		Amount: jsx.Number(product["paidMinor"]), PlacedAt: placed}
 }
 
 // OrderPaid books a received payment of amount fen and grants the order's credit.

@@ -30,7 +30,7 @@ The payment plugin SHALL handle only money: payment transactions, refund transac
 
 ### Requirement: Plugin Lifecycle
 
-A tenant plugin SHALL be active, winding down or disabled. A plugin past its expiry time SHALL be treated as winding down. Routes SHALL declare the plugin capability they need. Routes that start a payment SHALL be available only while the plugin is active. Routes that query results, receive callbacks, execute refunds, recover or reconcile SHALL also be available while winding down. Order center routes that need no capability SHALL work in every state. Disabling a plugin SHALL be refused while an online refund request is still processing, because it may already be at the gateway. Disabling SHALL turn the tenant's failed online reservation refunds, which are still owed, into offline ones. Orders and credit SHALL stay in the core in every state.
+A tenant plugin SHALL be active, winding down or disabled. A plugin past its expiry time SHALL be treated as winding down. Routes SHALL declare the plugin capability they need. Routes that start a payment SHALL be available only while the plugin is active. Routes that query results, receive callbacks, execute refunds, recover or reconcile SHALL also be available while winding down. Order center routes that need no capability SHALL work in every state. Disabling a plugin SHALL be refused while an online refund request is still processing, because it may already be at the gateway, or while an online order is still inside its payment window. Disabling SHALL close unpaid online orders whose window has ended. Disabling SHALL turn the tenant's failed online reservation refunds, which are still owed, into offline ones. Orders and credit SHALL stay in the core in every state.
 
 #### Scenario: Plugin expired
 - **WHEN** a tenant's payment plugin has passed its expiry time
@@ -43,6 +43,18 @@ A tenant plugin SHALL be active, winding down or disabled. A plugin past its exp
 #### Scenario: Disabling with a failed reservation refund
 - **WHEN** the payment plugin is disabled while a failed online reservation refund is still owed
 - **THEN** the refund request becomes an offline one still processing and the student's order and credit stay unchanged
+
+### Requirement: Payment Window From Checkout
+
+An online order SHALL be payable for the payment window from checkout. While the plugin can start payments, it SHALL open the payment of each new order without waiting for the cashier, so the gateway closes it when the window ends. An order whose window ended without a payment SHALL be closed.
+
+#### Scenario: Order never opened at the cashier
+- **WHEN** a student places an order and never opens the cashier
+- **THEN** the plugin opens its payment shortly after checkout and the order is closed when the payment window ends
+
+#### Scenario: Order placed before a pause
+- **WHEN** an order without a payment passes its window while selling is paused
+- **THEN** the order is closed and its cashier answers that the payment time has passed
 
 ### Requirement: Platform Payment Pause
 

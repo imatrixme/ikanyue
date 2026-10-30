@@ -1,6 +1,6 @@
 import { definePage } from '../../kit/page.js';
 import { nav, system, ui } from '../../kit/api.js';
-import { PENDING_ORDER_NOTICE, money, orderStatus, policyText } from '../../core/courseShop.js';
+import { PAYMENT_PAUSED_NOTICE, PENDING_ORDER_NOTICE, money, orderStatus, paymentPaused, policyText } from '../../core/courseShop.js';
 import { launchCashier } from '../../services/cashier.js';
 import { withCommandKey } from '../../services/commandKeys.js';
 import { Commerce } from '../../services/commerce.js';
@@ -40,7 +40,10 @@ definePage({
       if (this.data.busy) return;
       await this.set({ busy: true });
       try { await action(); await this.load(); }
-      catch (error) { ui.toast(error.message || '结果确认中，请稍后重试'); }
+      catch (error) {
+        if (paymentPaused(error)) await ui.confirm({ title: '暂时无法支付', content: PAYMENT_PAUSED_NOTICE, showCancel: false });
+        else ui.toast(error.message || '结果确认中，请稍后重试');
+      }
       finally { await this.set({ busy: false }); }
     },
     refresh() { return this.act(() => Commerce.refresh(this.data.id)); },

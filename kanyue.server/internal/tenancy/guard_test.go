@@ -20,12 +20,13 @@ var platform = map[string]bool{
 }
 
 // unscopedApp lists where business code may hold the ServeEvent's unscoped app:
-// only to register scheduled jobs, which run through tenancy.Job or tenancy.Each.
+// only to register scheduled jobs, which run through tenancy.Job or tenancy.Each,
+// and plugin lifecycle hooks, which read the tenant from the record they guard.
 var unscopedApp = map[string]int{
 	"coursecredit/booking_module.go":  1,
 	"coursecredit/ledger_module.go":   1,
 	"coursecredit/renewals_module.go": 1,
-	"coursecredit/orders_module.go":   1,
+	"coursecredit/orders_module.go":   2,
 	"plugins/payment/module.go":       1,
 }
 

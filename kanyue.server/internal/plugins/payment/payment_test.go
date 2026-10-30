@@ -14,6 +14,7 @@ import (
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/types"
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/coursecredit"
@@ -184,7 +185,10 @@ func missing(t *testing.T, result testkit.Response, what string) {
 
 func paymentSetup(t *testing.T) paymentFixture {
 	t.Helper()
-	app := tenancy.Scope(testkit.NewApp(t), tenancy.DefaultID)
+	// Tenant fields as in production, so the plugin is checked against real tenant scoping.
+	root := testkit.NewApp(t)
+	testkit.WithTenants(t, root)
+	app := tenancy.Scope(root, tenancy.DefaultID)
 	signer, err := auth.NewSigner(testkit.Secret)
 	if err != nil {
 		t.Fatal(err)
@@ -560,6 +564,59 @@ func TestPluginLifecycle(t *testing.T) {
 	}
 	if view := ok(t, f.call(t, f.student, http.MethodGet, "/v1/student/commerce/orders/"+waiting, nil), "order without plugin"); view["status"] != "completed" {
 		t.Fatalf("order without plugin = %v", view)
+	}
+}
+
+// The gateway's payment window starts when the payment is opened, so recovery
+// opens it right after checkout and closes orders whose window ended unpaid.
+func TestRecoveryOpensPaymentsAtCheckout(t *testing.T) {
+	f := paymentSetup(t)
+	opened := f.checkout(t, "k1")
+	if _, err := f.service().recover(); err != nil {
+		t.Fatal(err)
+	}
+	if payment, _ := paymentOf(f.app, opened); payment == nil || payment.GetString("gatewayId") != "pay1" {
+		t.Fatalf("recovery must open the payment of a new order: %v", payment)
+	}
+	f.cashier(t, opened)
+
+	switches, err := f.app.FindCollectionByNameOrId("platform_plugins")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale, late := f.checkout(t, "k2"), f.checkout(t, "k3")
+	pause := core.NewRecord(switches)
+	pause.Load(map[string]any{"plugin": tenancy.Payment, "paused": true})
+	if err := f.app.Save(pause); err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.app.DB().NewQuery("UPDATE orders SET created={:at} WHERE id={:id}").
+		Bind(dbx.Params{"at": clock().Add(-coursecredit.PaymentWindow).Format(types.DefaultDateLayout), "id": stale}).Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.service().recover(); err != nil {
+		t.Fatal(err)
+	}
+	if status := f.record(t, "orders", stale).GetString("status"); status != "failed" {
+		t.Fatalf("an order whose window ended unpaid is closed, got %s", status)
+	}
+	if payment, _ := paymentOf(f.app, late); payment != nil {
+		t.Fatal("no payment is opened while selling is paused")
+	}
+
+	pause.Set("paused", false)
+	if err := f.app.Save(pause); err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.app.DB().NewQuery("UPDATE orders SET created={:at} WHERE id={:id}").
+		Bind(dbx.Params{"at": clock().Add(-coursecredit.PaymentWindow).Format(types.DefaultDateLayout), "id": late}).Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+	failed(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders/"+late+"/cashier", nil), 400, "PAYMENT_WINDOW_CLOSED", "late cashier")
+	if status := f.record(t, "orders", late).GetString("status"); status != "failed" {
+		t.Fatalf("the cashier closes an order past its window, got %s", status)
 	}
 }
 

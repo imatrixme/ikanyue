@@ -10,6 +10,7 @@ import (
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/coursecredit"
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/tenancy"
 )
 
 // Collecting an order's money: the payment is created when the cashier first
@@ -122,6 +123,39 @@ func (s *service) sync(orderID string, open bool) error {
 	return nil
 }
 
+// openUnpaid opens the payment of every order placed since the last run, so the
+// gateway's payment window starts at checkout and closes the order with it. An
+// order whose window ended without a payment (placed while selling was paused)
+// is closed here. It returns how many orders could not be handled.
+func (s *service) openUnpaid() (int, error) {
+	unpaid, err := coursecredit.UnpaidOrders(s.app)
+	if err != nil {
+		return 0, err
+	}
+	selling := tenancy.Allows(s.app, tenancy.ID(s.app), tenancy.Payment, tenancy.StartPayment)
+	failed, now := 0, clock()
+	for _, order := range unpaid {
+		found, err := paymentOf(s.app, order.OrderID)
+		if err != nil {
+			return 0, err
+		}
+		switch {
+		case found != nil:
+			continue
+		case order.Expired(now):
+			err = coursecredit.OrderPaymentFailed(s.app, order.OrderID)
+		case selling:
+			err = s.sync(order.OrderID, true)
+		default:
+			continue
+		}
+		if err != nil {
+			failed++
+		}
+	}
+	return failed, nil
+}
+
 // cashier opens the order's payment and returns the action the client runs to pay.
 func (s *service) cashier(studentID, orderID string, user auth.Claims) (any, error) {
 	order, err := s.owned(studentID, orderID)
@@ -136,6 +170,14 @@ func (s *service) cashier(studentID, orderID string, user auth.Claims) (any, err
 		if openID == "" || openID != order.PayerOpenID {
 			return nil, coursecredit.Fail("PAYMENT_WECHAT_IDENTITY_REQUIRED", "请使用下单时的微信身份支付", nil)
 		}
+	}
+	if found, err := paymentOf(s.app, orderID); err != nil {
+		return nil, err
+	} else if found == nil && order.Expired(clock()) {
+		if err := coursecredit.OrderPaymentFailed(s.app, orderID); err != nil {
+			return nil, err
+		}
+		return nil, coursecredit.Fail("PAYMENT_WINDOW_CLOSED", "订单已超过支付时间，请重新选购", nil)
 	}
 	if err := s.sync(orderID, true); err != nil {
 		return nil, err
@@ -159,8 +201,17 @@ func (s *service) cashier(studentID, orderID string, user auth.Claims) (any, err
 
 // mockPay pays the order on the mock channel.
 func (s *service) mockPay(studentID, orderID string) (any, error) {
-	if _, err := s.owned(studentID, orderID); err != nil {
+	order, err := s.owned(studentID, orderID)
+	if err != nil {
 		return nil, err
+	}
+	if found, err := paymentOf(s.app, orderID); err != nil {
+		return nil, err
+	} else if found == nil && order.Expired(clock()) {
+		if err := coursecredit.OrderPaymentFailed(s.app, orderID); err != nil {
+			return nil, err
+		}
+		return nil, coursecredit.Fail("PAYMENT_WINDOW_CLOSED", "订单已超过支付时间，请重新选购", nil)
 	}
 	if err := s.sync(orderID, true); err != nil {
 		return nil, err
@@ -211,6 +262,11 @@ func (s *service) recover() (map[string]any, error) {
 			failed++
 		}
 	}
+	opened, err := s.openUnpaid()
+	if err != nil {
+		return nil, err
+	}
+	failed += opened
 	events, err := s.gatewayEvents("payment.")
 	if err != nil {
 		return nil, err

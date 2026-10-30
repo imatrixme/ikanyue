@@ -113,9 +113,19 @@ func (m OrdersModule) Register(se *core.ServeEvent) {
 		return c.transitionOffer(path(e, "id"), body, actorID)
 	}, true))
 
-	// Once the platform disables payment for a tenant nobody will refund online,
+	// Once the platform disables payment for a tenant nobody moves money online,
 	// so the studio settles what is still owed offline.
-	tenancy.OnPluginDisabled(se.App, tenancy.Payment, settleRefundsOffline)
+	tenancy.OnPluginDisabled(se.App, tenancy.Payment, settleWithoutPayment)
+	// A refund's settlement is quoted before its transaction; writes are serialized,
+	// so checking again as it is written cannot race a disable.
+	se.App.OnRecordCreate("order_refunds").BindFunc(func(e *core.RecordEvent) error {
+		tenant := e.Record.GetString(tenancy.Field)
+		if tenant != "" && e.Record.GetString("settlement") == "online" &&
+			!tenancy.Allows(e.App, tenant, tenancy.Payment, tenancy.SettleMoney) {
+			e.Record.Set("settlement", "offline")
+		}
+		return e.Next()
+	})
 }
 
 // StudentOf is the signed-in student for student order and payment routes.

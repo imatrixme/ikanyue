@@ -1,12 +1,12 @@
 import { definePage } from '../../kit/page.js';
 import { nav, ui } from '../../kit/api.js';
-import { money, orderStatus, pendingOrderFor, policyText } from '../../core/courseShop.js';
+import { PAYMENT_PAUSED_NOTICE, money, orderStatus, paymentPaused, pendingOrderFor, policyText } from '../../core/courseShop.js';
 import { withCommandKey } from '../../services/commandKeys.js';
 import { Commerce } from '../../services/commerce.js';
 
 definePage({
   data: () => ({
-    mode: 'catalog', offers: [], orders: [], loaded: false, loading: false, busy: false, error: '',
+    mode: 'catalog', offers: [], orders: [], paused: false, pausedNotice: PAYMENT_PAUSED_NOTICE, loaded: false, loading: false, busy: false, error: '',
     modeOptions: [{ label: '选课购买', value: 'catalog' }, { label: '我的订单', value: 'orders' }],
   }),
   computed: {
@@ -29,8 +29,12 @@ definePage({
       if (this.data.loading) return;
       await this.set({ loading: true });
       try {
-        const [offers, orders] = await Promise.all([Commerce.catalog(), Commerce.orders()]);
-        await this.set({ offers, orders, error: '', loaded: true });
+        // A paused shop still shows the student's orders and refunds.
+        const [offers, orders] = await Promise.all([
+          Commerce.catalog().catch((error) => { if (paymentPaused(error)) return null; throw error; }),
+          Commerce.orders(),
+        ]);
+        await this.set({ offers: offers || [], paused: offers === null, orders, error: '', loaded: true });
       } catch (error) {
         if (this.data.loaded) ui.toast('刷新失败，请稍后重试');
         else await this.set({ error: error.message || '课程暂时无法加载' });
@@ -57,7 +61,10 @@ definePage({
       try {
         const order = await withCommandKey(`checkout:${offer.id}`, (key) => Commerce.checkout(offer.id, key));
         this.openOrder(order.id);
-      } catch (error) { ui.toast(error.message || '下单结果正在确认，请重试'); }
+      } catch (error) {
+        if (paymentPaused(error)) { await this.set({ paused: true, offers: [] }); ui.toast('在线购买暂停中'); }
+        else ui.toast(error.message || '下单结果正在确认，请重试');
+      }
       finally { await this.set({ busy: false }); }
     },
   },

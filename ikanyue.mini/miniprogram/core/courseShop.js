@@ -23,6 +23,11 @@ export function policyText(policy) {
 function duration(minutes) { return minutes % 1440 === 0 ? `${minutes / 1440}天` : minutes % 60 === 0 ? `${minutes / 60}小时` : `${minutes}分钟`; }
 
 // Unpaid orders close after the gateway payment window (kanyue.pay PaymentTTL).
+// Selling and starting a payment answer "not found" while the studio's online payment is paused
+// or has expired; orders, refunds and payment results keep working.
+export const PAYMENT_PAUSED_NOTICE = '在线购买暂停中，已购课程和退款不受影响，如需购买请联系老师。';
+export const paymentPaused = (error) => Number(error?.code) === 404;
+
 export const PENDING_ORDER_NOTICE = '请在下单后 30 分钟内完成支付，超时订单会自动关闭。';
 
 const PAYMENT_WINDOW_MS = 30 * 60000;

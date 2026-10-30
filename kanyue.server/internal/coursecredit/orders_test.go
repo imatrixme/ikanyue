@@ -9,6 +9,7 @@ import (
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/types"
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/tenancy"
@@ -39,7 +40,10 @@ var commercePolicy = map[string]any{"version": 1, "packageRefund": "unused_paid_
 
 func orderSetup(t *testing.T) orderFixture {
 	t.Helper()
-	app := tenancy.Scope(testkit.NewApp(t), tenancy.DefaultID)
+	// The order center runs with tenant fields, as in production, so its tenant checks are real.
+	base := testkit.NewApp(t)
+	testkit.WithTenants(t, base)
+	app := tenancy.Scope(base, tenancy.DefaultID)
 	signer, err := auth.NewSigner(testkit.Secret)
 	if err != nil {
 		t.Fatal(err)
@@ -300,6 +304,12 @@ func TestOrderCenterSurvivesThePaymentPlugin(t *testing.T) {
 	if f.record(t, "order_refunds", refund["id"].(string)).GetString("settlement") != "online" {
 		t.Fatal("settled refunds keep their history")
 	}
+	// A refund quoted just before the disable is written after it: it must not wait for a plugin that is gone.
+	stale := testkit.Create(t, f.app, "order_refunds", map[string]any{"orderId": second, "studentId": f.studentID, "kind": "reservation",
+		"status": "processing", "settlement": "online", "amountMinor": 10000, "held": []any{}, "version": 1})
+	if f.record(t, "order_refunds", stale.Id).GetString("settlement") != "offline" {
+		t.Fatal("a refund written after disabling is settled offline")
+	}
 	later := ok(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders/"+second+"/refunds",
 		map[string]any{"key": "r2", "expectedAmount": 80000}), "refund after disabling")
 	if f.record(t, "order_refunds", later["id"].(string)).GetString("settlement") != "offline" {
@@ -308,6 +318,29 @@ func TestOrderCenterSurvivesThePaymentPlugin(t *testing.T) {
 	detail := ok(t, f.call(t, f.student, http.MethodGet, "/v1/student/commerce/orders/"+first, nil), "order without plugin")
 	if detail["status"] != "completed" || detail["refundPending"] != false {
 		t.Fatalf("detail = %v", detail)
+	}
+}
+
+// An order inside its payment window may still be paid; disabling then would leave
+// the money unbooked, so it waits until the window ends and closes the order.
+func TestDisablingWaitsForOpenPaymentWindows(t *testing.T) {
+	f := orderSetup(t)
+	orderID := f.checkout(t, "k1")
+	plugin, err := f.app.FindFirstRecordByFilter("tenant_plugins", "tenant={:tenant} && plugin={:plugin}",
+		dbx.Params{"tenant": tenancy.DefaultID, "plugin": tenancy.Payment})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plugin.Set("status", tenancy.Disabled)
+	failsWith(t, f.app.Save(plugin), "PAYMENT_ORDERS_OPEN")
+	_, err = f.app.DB().NewQuery("UPDATE orders SET created={:at} WHERE id={:id}").
+		Bind(dbx.Params{"at": clock().Add(-PaymentWindow).Format(types.DefaultDateLayout), "id": orderID}).Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.setPlugin(t, map[string]any{"status": tenancy.Disabled})
+	if status := f.record(t, "orders", orderID).GetString("status"); status != "failed" {
+		t.Fatalf("an unpaid order past its window is closed, got %s", status)
 	}
 }
 

@@ -32,6 +32,10 @@
 - [x] 6.1 `platform_plugins` with `paused`: while paused no tenant has the start-payment capability; settling money is unaffected.
 - [x] 6.2 Gateway exposure: cashier and payment result routes in their own batch with policy set `payment`; test and README updated.
 
+- [x] 6.3 Recovery opens the payment of new orders so the gateway window runs from checkout; orders past the window without a payment are closed (recovery, cashier, disabling).
+- [x] 6.4 Refund settlement is checked again when the refund request is written, so it cannot race a disable.
+- [x] 6.5 Mini program: a paused shop still lists orders and refunds; the cashier explains paused payment.
+
 ## 7. Verification
 
 - [x] 7.1 `gofmt -l .`, `GOMAXPROCS=1 go vet -p 1 ./...`, `GOMAXPROCS=1 TZ=Asia/Shanghai go test -p 1 -parallel 1 ./...`.

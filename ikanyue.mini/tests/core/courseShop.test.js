@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PENDING_ORDER_NOTICE, money, orderStatus, pendingOrderFor, policyText } from '../../miniprogram/core/courseShop.js';
+import { PENDING_ORDER_NOTICE, money, orderStatus, paymentPaused, pendingOrderFor, policyText } from '../../miniprogram/core/courseShop.js';
 
 it('discloses each inclusive cash-cancellation threshold before checkout', () => {
   const text = policyText({ packageRefund: 'unused_paid_value', reservationRefund: 'cash', cancellationTiers: [
@@ -41,4 +41,11 @@ describe('pending orders', () => {
     expect(pendingOrderFor(null, 'a', now)).toBeNull();
     expect(PENDING_ORDER_NOTICE).toContain('30 分钟');
   });
+});
+
+it('treats a missing selling or cashier route as paused online payment', () => {
+  expect(paymentPaused({ code: 404, message: '接口不存在' })).toBe(true);
+  expect(paymentPaused({ code: '404' })).toBe(true);
+  expect(paymentPaused({ code: 400, errorCode: 'PAYMENT_WINDOW_CLOSED' })).toBe(false);
+  expect(paymentPaused(new Error('network'))).toBe(false);
 });

@@ -5,7 +5,8 @@
     <async-state state="{{error ? 'error' : 'loading'}}" kind="{{error ? 'network' : 'default'}}" description="{{error}}" action-label="{{error ? '重新加载' : ''}}" bind:action="load" />
   </view>
   <block wx:elif="{{mode === 'catalog'}}">
-    <view wx:if="{{!offers.length}}" class="commerce-state"><async-state state="empty" kind="default" title="暂无可购买课程" /></view>
+    <view wx:if="{{paused}}" class="commerce-state"><async-state state="empty" kind="default" title="在线购买暂停中" description="{{pausedNotice}}" /></view>
+    <view wx:elif="{{!offers.length}}" class="commerce-state"><async-state state="empty" kind="default" title="暂无可购买课程" /></view>
     <ticket-section wx:else title="课程课包">
       <view wx:for="{{offerRows}}" wx:for-item="offer" wx:for-index="index" wx:key="id" class="commerce-item">
         <text class="commerce-title">{{offer.name}}</text>

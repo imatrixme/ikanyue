@@ -436,12 +436,14 @@ func (c *orderCenter) list(studentID string) (any, error) {
 	return result, nil
 }
 
-// settleRefundsOffline runs as payment is disabled. A processing online refund
-// may already be at the gateway, and settling it offline as well would pay it
-// twice, so disabling waits for them: winding down still executes them. Failed
-// reservation refunds are still owed and nobody could retry them online, so the
-// studio takes them over.
-func settleRefundsOffline(app core.App) error {
+// settleWithoutPayment runs as payment is disabled. Money that may still move
+// online blocks it, because nobody would book it afterwards: a processing
+// online refund may already be at the gateway (settling it offline as well would
+// pay it twice), and an order inside its payment window may still be paid.
+// Winding down finishes both. Unpaid orders past their window are closed;
+// failed reservation refunds are still owed and nobody could retry them online,
+// so the studio takes them over.
+func settleWithoutPayment(app core.App) error {
 	inFlight, err := list(app, "order_refunds", `status="processing" && settlement="online"`, "")
 	if err != nil {
 		return err
@@ -449,6 +451,21 @@ func settleRefundsOffline(app core.App) error {
 	if len(inFlight) > 0 {
 		return Fail("PAYMENT_REFUNDS_IN_FLIGHT", "还有线上退款在处理中，请先把支付插件设为收尾，等退款完成后再停用",
 			map[string]any{"refunds": len(inFlight)})
+	}
+	unpaid, err := UnpaidOrders(app)
+	if err != nil {
+		return err
+	}
+	now := clock()
+	for _, order := range unpaid {
+		if !order.Expired(now) {
+			return Fail("PAYMENT_ORDERS_OPEN", "还有订单在支付时间内，学员仍可能付款；请先把支付插件设为收尾，30 分钟后再停用", nil)
+		}
+	}
+	for _, order := range unpaid {
+		if err := OrderPaymentFailed(app, order.OrderID); err != nil {
+			return err
+		}
 	}
 	owed, err := list(app, "order_refunds", `status="failed" && settlement="online" && kind="reservation"`, "")
 	if err != nil {
