@@ -335,6 +335,7 @@ func buildOrder(at string, now time.Time, grantSnapshot map[string]any, body Bod
 		"type":           "package_purchase",
 		"channel":        channel,
 		"status":         "granted",
+		"settlement":     "offline",
 		"currency":       price["currency"],
 		"listAmount":     jsx.Number(price["listAmount"]),
 		"paidAmount":     paidAmount,

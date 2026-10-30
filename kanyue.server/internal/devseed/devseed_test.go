@@ -42,7 +42,7 @@ func TestLocalSeedsAMigratedDatabaseIdempotently(t *testing.T) {
 		t.Fatalf("admin = %v, %v", admin, err)
 	}
 	for collection, want := range map[string]int{"students": 2, "reward_items": 3, "activities": 1, "point_events": 2,
-		"course_specs": 1, "teacher_course_offerings": 1, "credit_batches": 2, "packages": 2, "commerce_offers": 2} {
+		"course_specs": 1, "teacher_course_offerings": 1, "credit_batches": 2, "packages": 2, "offers": 2} {
 		if got := count(t, app, collection, nil); got != want {
 			t.Errorf("%s = %d, want %d", collection, got, want)
 		}

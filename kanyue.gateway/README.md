@@ -59,6 +59,7 @@
 - 清单：`internal/exposure/mapi.json`，内容是分组 `mapi`（域名 `mapi.ikanyue.com`）登记的 `kanyue.server` 接口。
   - 清单内嵌进二进制。
   - 写法与接口清单一致：`METHOD /path/{param}`。
+  - 收银台与支付查询（`cashier`、`refresh`）单独一批，挂策略组 `payment`，可单独限流或停用而不影响其他接口。一个域名只能绑定一个分组，所以没有拆成独立分组。应用前须先在控制台建好策略组 `payment`（可以为空），否则应用会报 `no policy set "payment"` 并整体回滚。
 - 应用：`kanyue-gateway exposure apply mapi --dir=… --encryptionEnv=GATEWAY_ENCRYPTION_KEY`。
   - 分组的域名和 API 草稿会被改成恰好与清单一致，并记审计；清单外的 API 草稿会被删除，但已上线的仍在服务，需手动下线。
   - **不会上线**，在控制台核对后依次上线到 TEST、PRE、RELEASE。

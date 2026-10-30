@@ -39,8 +39,6 @@
         "POST /v1/student/appointments/{appointmentId}/cancel",
         "POST /v1/student/appointments/{appointmentId}/withdraw",
         "POST /v1/student/commerce/orders",
-        "POST /v1/student/commerce/orders/{id}/cashier",
-        "POST /v1/student/commerce/orders/{id}/refresh",
         "POST /v1/student/commerce/orders/{id}/refunds",
         "POST /v1/student/renewal-reminders/read",
         "POST /v1/student/renewal-reminders/subscriptions",
@@ -58,6 +56,14 @@
         "POST /v1/user/wechat-role-login",
         "PUT /v1/teacher/offerings/{offeringId}/availability"
       ]
+    },
+    {
+      "service": "kanyue.server",
+      "operations": [
+        "POST /v1/student/commerce/orders/{id}/cashier",
+        "POST /v1/student/commerce/orders/{id}/refresh"
+      ],
+      "policySet": "payment"
     }
   ]
 }

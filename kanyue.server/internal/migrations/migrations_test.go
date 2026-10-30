@@ -170,7 +170,8 @@ func TestUpGivesEveryBusinessCollectionATenant(t *testing.T) {
 	if _, err := Up(app); err != nil {
 		t.Fatal(err)
 	}
-	owned := append(baselineNames(t), "venues", "renewal_reminders", "renewal_subscriptions")
+	owned := append(baselineNames(t), "venues", "renewal_reminders", "renewal_subscriptions",
+		"order_refunds", "payment_transactions", "refund_transactions", "payment_claims", "payment_audit")
 	for _, name := range owned {
 		if !slices.Contains(tenancy.Collections, name) {
 			t.Errorf("%s is missing from tenancy.Collections", name)
@@ -184,7 +185,7 @@ func TestUpGivesEveryBusinessCollectionATenant(t *testing.T) {
 	if err != nil || len(venues) != 1 || venues[0].GetString(tenancy.Field) != tenancy.DefaultID {
 		t.Fatalf("seeded venue = %v, %v", venues, err)
 	}
-	if !tenancy.PluginEnabled(app, tenancy.DefaultID, tenancy.Payment) {
+	if tenancy.PluginState(app, tenancy.DefaultID, tenancy.Payment) != tenancy.Active {
 		t.Fatal("the default tenant keeps payment")
 	}
 

@@ -43,17 +43,40 @@ async function mockSuccess(id) {
   await gateway('/_test/poll', 'POST', {}, true);
 }
 let superuser;
-async function record(collection, id) {
+async function login() {
   if (!superuser) {
     const response = await fetch(`${base}/api/collections/_superusers/auth-with-password`, { method: 'POST',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identity: config.PB_EMAIL, password: config.PB_PASSWORD }) });
     assert.equal(response.status, 200, 'PocketBase superuser login failed');
     superuser = (await response.json()).token;
   }
+  return superuser;
+}
+async function record(collection, id) {
+  await login();
   const response = await fetch(`${base}/api/collections/${collection}/records/${encodeURIComponent(id)}`, { headers: { Authorization: superuser } });
   assert.equal(response.status, 200, `${collection}/${id}: ${response.status}`);
   return response.json();
 }
+// latest reads the newest record matching filter.
+async function latest(collection, filter, sort = '-created') {
+  await login();
+  const query = new URLSearchParams({ filter, sort, perPage: '1' });
+  const response = await fetch(`${base}/api/collections/${collection}/records?${query}`, { headers: { Authorization: superuser } });
+  assert.equal(response.status, 200, `${collection}?${filter}: ${response.status}`);
+  const [item] = (await response.json()).items;
+  assert.ok(item, `${collection}?${filter}: none`);
+  return item;
+}
+// The payment plugin keeps its own transactions; the order center only knows the order and refund.
+const paymentOf = (orderId) => latest('payment_transactions', `orderId="${orderId}"`);
+const refundSent = (refundId) => eventually(async () => {
+  const value = await latest('refund_transactions', `refundId="${refundId}"`, '-attempt');
+  assert.ok(value.gatewayId, 'refund not yet sent');
+  return value;
+});
+const grantOf = async (orderId) =>
+  (await latest('credit_operations', `type="grant" && sourceType="order" && sourceId="${orderId}"`)).resultSnapshot.batches;
 
 async function main() {
   const tiered = process.argv.includes('--tiered');
@@ -73,7 +96,7 @@ async function main() {
   const key = `smoke-${randomUUID()}`;
   let offerId = offers.find((offer) => offer.quantity === 4).id;
   if (tiered) {
-    const original = await record('commerce_offers', offerId);
+    const original = await record('offers', offerId);
     const draft = await api('/ops/commerce/offers', admin.token, { key, name: '分时点退费联调课包',
       packageId: original.packageId, priceVersionId: original.priceVersionId,
       policy: { version: 1, packageRefund: 'unused_paid_value', reservationRefund: 'cash',
@@ -86,19 +109,21 @@ async function main() {
   assert.equal(pending.status, 'pending');
   assert.equal((await api(`${root}/orders`, user.token, input)).id, pending.id);
   if (health.provider === 'wechatpay-mock') {
-    const order = await record('commerce_orders', pending.id);
-    const payment = await gateway(`/v1/payments/${order.data.paymentId}`);
+    // The payment is created when the cashier opens.
+    await api(`${root}/orders/${pending.id}/cashier`, user.token, {});
+    const payment = await gateway(`/v1/payments/${(await paymentOf(pending.id)).gatewayId}`);
     assert.equal(payment.action.type, 'wechatpay');
     assert.equal(payment.action.mock, true);
     assert.equal(payment.action.parameters.signType, 'RSA');
   }
   const paid = await api(`${root}/orders/${pending.id}/mock-pay`, user.token, {});
   assert.equal(paid.status, 'completed');
-  const row = await record('commerce_orders', paid.id);
+  const paymentRef = (await record('orders', paid.id)).paymentRef;
+  assert.equal(paymentRef, (await paymentOf(paid.id)).gatewayId);
   if (health.provider === 'wechatpay-mock') {
-    await gateway(`/_test/wechatpay/notify/${row.data.paymentId}`, 'POST', {}, true);
+    await gateway(`/_test/wechatpay/notify/${paymentRef}`, 'POST', {}, true);
   }
-  const batches = row.data.grantResult.batches;
+  const batches = await grantOf(paid.id);
   assert.ok(batches.length > 0);
   await sync(paid.id);
   const batch = () => record('credit_batches', batches[0].batchId);
@@ -124,21 +149,19 @@ async function main() {
     assert.equal(cancellationQuote.fee, paid.amount / 8);
     const liabilityId = cancellation.refund.refundId;
     await sync(paid.id);
-    const liability = await eventually(async () => {
-      const value = await record('commerce_refunds', liabilityId);
-      assert.ok(value.data.gatewayId, 'liability refund not yet sent');
-      return value;
-    });
-    await gateway(`/_test/observations/${liability.data.gatewayId}`, 'POST', { status: 'failed' }, true);
+    const liability = await refundSent(liabilityId);
+    await gateway(`/_test/observations/${liability.gatewayId}`, 'POST', { status: 'failed' }, true);
     await gateway('/_test/poll', 'POST', {}, true);
     await sync(paid.id);
     assert.equal((await batch()).availableQuantity, 3);
-    assert.equal((await record('commerce_orders', paid.id)).data.refundPending, true);
+    assert.equal((await record('orders', paid.id)).pendingRefundCount, 1);
     await api(`/ops/commerce/refunds/${liabilityId}/retry`, admin.token, { reason: '渠道已确认失败，重试原路退款' });
-    const retry = await record('commerce_refunds', liabilityId);
-    await mockSuccess(retry.data.gatewayId);
     await sync(paid.id);
-    assert.equal((await record('commerce_refunds', liabilityId)).status, 'succeeded');
+    const retry = await refundSent(liabilityId);
+    assert.equal(retry.attempt, 1);
+    await mockSuccess(retry.gatewayId);
+    await sync(paid.id);
+    assert.equal((await record('order_refunds', liabilityId)).status, 'succeeded');
     cancelledRefund = cancellationQuote.amount;
     const search = await api(`/ops/commerce/orders?search=${cellphone}`, admin.token);
     assert.ok(search.items.some((item) => item.id === paid.id));
@@ -149,8 +172,9 @@ async function main() {
   assert.equal(quote.blocked, false);
   await rejected(`${root}/orders/${paid.id}/refunds`, user.token, { key: `stale-${key}`, expectedAmount: 1 }, 'REFUND_QUOTE_CHANGED');
   const failedRefund = await api(`${root}/orders/${paid.id}/refunds`, user.token, { key: `failure-${key}`, expectedAmount: quote.amount });
-  const failedRow = await record('commerce_refunds', failedRefund.id);
-  await gateway(`/_test/observations/${failedRow.data.gatewayId}`, 'POST', { status: 'failed' }, true);
+  await sync(paid.id);
+  const failedRow = await refundSent(failedRefund.id);
+  await gateway(`/_test/observations/${failedRow.gatewayId}`, 'POST', { status: 'failed' }, true);
   await gateway('/_test/poll', 'POST', {}, true);
   await sync(paid.id);
   assert.equal((await batch()).availableQuantity, tiered ? 3 : 4);
@@ -160,30 +184,32 @@ async function main() {
     : await api(`${root}/orders/${paid.id}/refunds`, user.token, { key: `refund-${key}`, expectedAmount: quote.amount });
   assert.equal(pendingRefund.status, 'processing');
   for (const grant of batches) assert.equal((await record('credit_batches', grant.batchId)).availableQuantity, 0);
-  const refund = await record('commerce_refunds', pendingRefund.id);
+  // Refunds are sent by the payment plugin's recovery, not inside the request.
+  await sync(paid.id);
+  const refund = await refundSent(pendingRefund.id);
   const restart = spawnSync(process.execPath, [new URL('./native-stack.mjs', import.meta.url).pathname, 'restart', 'pay'], { stdio: 'pipe' });
   assert.equal(restart.status, 0, 'Gateway restart must preserve pending refund');
-  assert.equal((await eventually(() => gateway(`/v1/refunds/${refund.data.gatewayId}`))).status, 'processing');
-  await mockSuccess(refund.data.gatewayId);
+  assert.equal((await eventually(() => gateway(`/v1/refunds/${refund.gatewayId}`))).status, 'processing');
+  await mockSuccess(refund.gatewayId);
   await sync(paid.id);
-  assert.equal((await api(`${root}/refunds/${refund.id}`, user.token)).status, 'succeeded');
+  assert.equal((await api(`${root}/refunds/${pendingRefund.id}`, user.token)).status, 'succeeded');
   assert.equal((await api(`${root}/orders/${paid.id}`, user.token)).refunded, quote.amount + cancelledRefund);
   if (tiered) {
     const detail = await api(`/ops/commerce/orders/${paid.id}`, admin.token);
     assert.ok(detail.audit.some((entry) => entry.action === 'refund_requested' && entry.actorId));
-    const offer = await record('commerce_offers', offerId);
+    const offer = await record('offers', offerId);
     await api(`/ops/commerce/offers/${offerId}/status`, admin.token, { status: 'inactive', version: offer.version, reason: '联调完成，下架测试版本' });
   }
   await eventually(() => api('/ops/commerce/recover', admin.token, {}));
   const reconciliation = await api('/ops/commerce/reconcile', admin.token, {});
   if (health.provider === 'wechatpay-mock') {
-    await gateway(`/_test/wechatpay/notify/${refund.data.gatewayId}`, 'POST', {}, true);
+    await gateway(`/_test/wechatpay/notify/${refund.gatewayId}`, 'POST', {}, true);
     const bill = await gateway(`/v1/providers/wechatpay/bills/${new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10)}`);
     assert.equal(bill.mock, true);
-    assert.ok(bill.content.includes(row.data.paymentId));
-    assert.ok(bill.content.includes(refund.data.gatewayId));
+    assert.ok(bill.content.includes(paymentRef));
+    assert.ok(bill.content.includes(refund.gatewayId));
   }
-  console.log(JSON.stringify({ result: 'passed', orderId: paid.id, refundId: refund.id,
+  console.log(JSON.stringify({ result: 'passed', orderId: paid.id, refundId: pendingRefund.id,
     appointmentId: appointment.appointmentId, grantedBatches: batches.length, amountMinor: paid.amount,
     tieredCancellation: tiered, failedRefundRestored: true, gatewayRestartRecovered: true, provider: health.provider, reconciliation }, null, 2));
 }

@@ -20,7 +20,7 @@ const (
 	Field = "tenant"
 	// DefaultID is 看乐艺术, the only tenant while multi-tenancy stays hidden.
 	DefaultID = "tenantkanyue001"
-	// Payment is the plugin covering package checkout, orders, refunds and reconciliation.
+	// Payment is the plugin moving money: payments, refunds, their results and reconciliation.
 	Payment = "payment"
 )
 
@@ -85,13 +85,6 @@ func Job(app core.App, name string, fn func(scoped core.App)) func() {
 			app.Logger().Error("scheduled job could not list tenants", "job", name, "error", err.Error())
 		}
 	}
-}
-
-// PluginEnabled reports whether tenant has plugin active.
-func PluginEnabled(app core.App, tenant, plugin string) bool {
-	_, err := app.FindFirstRecordByFilter("tenant_plugins", "tenant={:tenant} && plugin={:plugin} && status='active'",
-		dbx.Params{"tenant": tenant, "plugin": plugin})
-	return err == nil
 }
 
 // owned returns the collection when it carries the tenant field.

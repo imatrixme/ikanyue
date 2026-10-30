@@ -5,6 +5,7 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -107,7 +108,7 @@ func TestSchemaBackfillsExistingRecords(t *testing.T) {
 		!slices.Equal(kanyue.GetStringSlice("joinMethods"), []string{"staff_invite"}) {
 		t.Fatalf("default tenant = %v, %v", kanyue, err)
 	}
-	if plugins, _ := app.FindAllRecords("tenant_plugins"); len(plugins) != 1 || !tenancy.PluginEnabled(app, tenancy.DefaultID, tenancy.Payment) {
+	if plugins, _ := app.FindAllRecords("tenant_plugins"); len(plugins) != 1 || tenancy.PluginState(app, tenancy.DefaultID, tenancy.Payment) != tenancy.Active {
 		t.Fatalf("plugins = %v", plugins)
 	}
 }
@@ -129,21 +130,57 @@ func TestEachRunsOncePerActiveTenant(t *testing.T) {
 	}
 }
 
-func TestPluginNeedsAnActiveRecord(t *testing.T) {
+// A plugin is active, winding down (by hand or past expiresAt) or disabled;
+// winding down only settles money in flight, and the platform pause stops
+// new payments for every tenant without touching settlement.
+func TestPluginStatesGrantCapabilities(t *testing.T) {
 	app := testkit.NewApp(t)
 	other := testkit.AddTenant(t, app, "另一家工作室")
-	if tenancy.PluginEnabled(app, other, tenancy.Payment) {
-		t.Fatal("a new tenant must not have payment")
+	if state := tenancy.PluginState(app, other, tenancy.Payment); state != tenancy.Disabled {
+		t.Fatalf("a new tenant must not have payment, got %s", state)
 	}
 	plugin, err := app.FindFirstRecordByFilter("tenant_plugins", "tenant={:tenant}", dbx.Params{"tenant": tenancy.DefaultID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	plugin.Set("status", "disabled")
-	if err := app.Save(plugin); err != nil {
+	expect := func(state string, start, settle bool) {
+		t.Helper()
+		if got := tenancy.PluginState(app, tenancy.DefaultID, tenancy.Payment); got != state {
+			t.Fatalf("state = %s, want %s", got, state)
+		}
+		if got := tenancy.Allows(app, tenancy.DefaultID, tenancy.Payment, tenancy.StartPayment); got != start {
+			t.Fatalf("%s start = %v", state, got)
+		}
+		if got := tenancy.Allows(app, tenancy.DefaultID, tenancy.Payment, tenancy.SettleMoney); got != settle {
+			t.Fatalf("%s settle = %v", state, got)
+		}
+	}
+	save := func(record *core.Record, values map[string]any) {
+		t.Helper()
+		record.Load(values)
+		if err := app.Save(record); err != nil {
+			t.Fatal(err)
+		}
+	}
+	expect(tenancy.Active, true, true)
+	save(plugin, map[string]any{"expiresAt": time.Now().Add(time.Hour)})
+	expect(tenancy.Active, true, true)
+	save(plugin, map[string]any{"expiresAt": time.Now().Add(-time.Second)})
+	expect(tenancy.WindingDown, false, true)
+	save(plugin, map[string]any{"expiresAt": "", "status": tenancy.WindingDown})
+	expect(tenancy.WindingDown, false, true)
+	save(plugin, map[string]any{"status": tenancy.Active})
+
+	switches, err := app.FindCollectionByNameOrId("platform_plugins")
+	if err != nil {
 		t.Fatal(err)
 	}
-	if tenancy.PluginEnabled(app, tenancy.DefaultID, tenancy.Payment) {
-		t.Fatal("a disabled plugin must not count")
-	}
+	pause := core.NewRecord(switches)
+	save(pause, map[string]any{"plugin": tenancy.Payment, "paused": true})
+	expect(tenancy.Active, false, true)
+	save(pause, map[string]any{"paused": false})
+	expect(tenancy.Active, true, true)
+
+	save(plugin, map[string]any{"status": tenancy.Disabled})
+	expect(tenancy.Disabled, false, false)
 }

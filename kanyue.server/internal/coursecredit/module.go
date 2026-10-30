@@ -129,5 +129,5 @@ func financeBody(e *core.RequestEvent) (Body, error) {
 	if err := RequireCapability(auth.User(e), Finance); err != nil {
 		return Body{}, err
 	}
-	return readJSONBody(e)
+	return ReadJSONBody(e)
 }

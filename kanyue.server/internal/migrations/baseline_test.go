@@ -16,9 +16,18 @@ func baselineNames(t *testing.T) []string {
 	if err := json.Unmarshal(baselineJSON, &items); err != nil {
 		t.Fatal(err)
 	}
+	// kanyue_0008 renames or drops the legacy commerce collections.
+	current := map[string]string{"commerce_offers": "offers", "commerce_claims": "order_claims", "commerce_audit": "order_audit",
+		"commerce_cases": "payment_cases", "commerce_orders": "", "commerce_refunds": ""}
 	names := []string{}
 	for _, item := range items {
-		names = append(names, item.Name)
+		name, moved := current[item.Name]
+		if !moved {
+			name = item.Name
+		}
+		if name != "" {
+			names = append(names, name)
+		}
 	}
 	return names
 }

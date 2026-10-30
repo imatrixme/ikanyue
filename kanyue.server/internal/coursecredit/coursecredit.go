@@ -287,8 +287,8 @@ type Body struct {
 
 func (b Body) Get(key string) any { return jsx.Get(b.Values, key) }
 
-// readJSONBody is Hono's readJsonBody: the body must be a JSON object regardless of content type.
-func readJSONBody(e *core.RequestEvent) (Body, error) {
+// ReadJSONBody is Hono's readJsonBody: the body must be a JSON object regardless of content type.
+func ReadJSONBody(e *core.RequestEvent) (Body, error) {
 	raw, err := io.ReadAll(e.Request.Body)
 	if err != nil {
 		return Body{}, Fail("INVALID_JSON_BODY", "请求体必须是有效的 JSON 对象", nil)

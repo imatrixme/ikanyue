@@ -22,6 +22,12 @@ func TestMapiPlan(t *testing.T) {
 			if !strings.Contains(pattern, " /v1/") {
 				t.Errorf("%s exposes %s", batch.Service, pattern)
 			}
+			// Starting or checking a payment reaches the payment channel; its own
+			// policy set lets ops throttle or stop it without touching the rest.
+			money := strings.Contains(pattern, "/commerce/") && (strings.HasSuffix(pattern, "/cashier") || strings.HasSuffix(pattern, "/refresh"))
+			if money != (batch.PolicySet == "payment") {
+				t.Errorf("%s has policy set %q", pattern, batch.PolicySet)
+			}
 		}
 	}
 }

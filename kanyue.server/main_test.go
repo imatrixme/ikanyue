@@ -114,7 +114,7 @@ func TestManifestClassifiesEveryRoute(t *testing.T) {
 		"POST /v1/user/login":                               {"identity", "public"},
 		"POST /v1/user/refresh":                             {"identity", "session"},
 		"GET /v1/student/appointments":                      {"booking", "student"},
-		"POST /internal/commerce/payment-events":            {"commerce", "service"},
+		"POST /internal/commerce/payment-events":            {"payment", "service"},
 		"GET /api/files/{collection}/{recordId}/{filename}": {"files", "public"},
 		"/{path...}": {"console", "public"},
 	} {

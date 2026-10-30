@@ -106,7 +106,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 			if err := RequireCapability(auth.User(e), Settlement); err != nil {
 				return nil, err
 			}
-			body, err := readJSONBody(e)
+			body, err := ReadJSONBody(e)
 			if err != nil {
 				return nil, err
 			}
@@ -127,7 +127,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		if err := RequireCapability(auth.User(e), Audit); err != nil {
 			return nil, err
 		}
-		body, err := readJSONBody(e)
+		body, err := ReadJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +152,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 	}))
 
 	router.POST("/ops/course-operations/enrollments", command("automaticEnrollment", func(e *core.RequestEvent) (map[string]any, error) {
-		body, err := readJSONBody(e)
+		body, err := ReadJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +174,7 @@ func (m LedgerModule) Register(se *core.ServeEvent) {
 		if err := RequireCapability(auth.User(e), Academic); err != nil {
 			return nil, err
 		}
-		body, err := readJSONBody(e)
+		body, err := ReadJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
@@ -242,5 +242,5 @@ func readOptionalJSONBody(e *core.RequestEvent) (Body, error) {
 	if !strings.Contains(e.Request.Header.Get("Content-Type"), "application/json") {
 		return Body{Values: map[string]any{}}, nil
 	}
-	return readJSONBody(e)
+	return ReadJSONBody(e)
 }

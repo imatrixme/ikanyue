@@ -16,6 +16,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"kanyue.server/internal/migrations/orderpayment"
 	"kanyue.server/internal/tenancy"
 )
 
@@ -127,6 +128,13 @@ func NewApp(t *testing.T) *tests.TestApp {
 	addAutodates(prices)
 	save(t, app, prices)
 	importLedger(t, app)
+	// The exports predate the order/payment split; build it the way the migration does.
+	if err := orderpayment.Schema(app); err != nil {
+		t.Fatal(err)
+	}
+	if err := orderpayment.DropLegacy(app); err != nil {
+		t.Fatal(err)
+	}
 	// Business collections stay without the tenant field here; WithTenants adds it.
 	if err := tenancy.EnsurePlatform(app); err != nil {
 		t.Fatal(err)

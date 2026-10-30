@@ -69,7 +69,7 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 				if err := check(auth.User(e)); err != nil {
 					return nil, err
 				}
-				read := readJSONBody
+				read := ReadJSONBody
 				if optional {
 					read = readOptionalJSONBody
 				}
@@ -194,7 +194,7 @@ func (m SessionsModule) Register(se *core.ServeEvent) {
 			if err := RequireCapability(auth.User(e), Academic); err != nil {
 				return Body{}, err
 			}
-			return readJSONBody(e)
+			return ReadJSONBody(e)
 		}
 		root := "/ops/course-operations/" + resource
 		router.POST(root, ops(func(e *core.RequestEvent) error {

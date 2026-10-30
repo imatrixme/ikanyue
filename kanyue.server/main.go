@@ -18,10 +18,10 @@ import (
 	"kanyue.server/internal/gatewaylink"
 	"kanyue.server/internal/identity"
 	"kanyue.server/internal/migrations"
+	"kanyue.server/internal/plugins/payment"
 	"kanyue.server/internal/points"
 	"kanyue.server/internal/server"
 	"kanyue.server/internal/students"
-	"kanyue.server/internal/tenancy"
 	"kanyue.server/internal/venues"
 )
 
@@ -91,9 +91,11 @@ func modules(cfg config.Config, signer *auth.Signer, dispatcher coursecredit.Dis
 		{Name: "booking", Register: coursecredit.BookingModule{Signer: signer, ReservationEnabled: cfg.CourseCreditReservation}.Register},
 		{Name: "sessions", Register: coursecredit.SessionsModule{Signer: signer, SettlementEnabled: cfg.CourseCreditSettlement}.Register},
 		{Name: "migration", Register: coursecredit.MigrationModule{Signer: signer, Enabled: cfg.CourseCreditMigration}.Register},
-		{Name: "commerce", Plugin: tenancy.Payment, Register: coursecredit.CommerceModule{Signer: signer, Enabled: cfg.CourseCommerce,
-			Config: coursecredit.CommerceConfig{GatewayURL: cfg.PayGatewayURL, ServiceToken: cfg.PayServiceToken,
-				MockToken: cfg.PayMockToken, EventToken: cfg.PayEventToken, WechatAppID: cfg.WechatAppID, Mock: cfg.PayMockEnabled},
+		{Name: "orders", Register: coursecredit.OrdersModule{Signer: signer, Enabled: cfg.CourseCommerce,
+			WechatAppID: cfg.WechatAppID, MockPayment: cfg.PayMockEnabled}.Register},
+		{Name: "payment", Register: payment.Module{Signer: signer, Enabled: cfg.CourseCommerce,
+			Config: payment.Config{GatewayURL: cfg.PayGatewayURL, ServiceToken: cfg.PayServiceToken,
+				MockToken: cfg.PayMockToken, EventToken: cfg.PayEventToken, Mock: cfg.PayMockEnabled},
 			RecoveryInterval: 3 * time.Second}.Register},
 		{Name: "renewals", Register: coursecredit.RenewalsModule{Signer: signer, Wechat: renewalWechat}.Register},
 		{Name: "activities", Register: activities.Module{PublicAssetBaseURL: cfg.PublicAssetBaseURL, PBPublicURL: cfg.PBPublicURL}.Register},

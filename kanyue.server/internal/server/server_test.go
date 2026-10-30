@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
@@ -160,9 +161,11 @@ func TestRegisterHidesStorageFromPublicRequests(t *testing.T) {
 	}
 }
 
-// Plugin routes answer like missing routes unless the request tenant enabled the
-// plugin; core routes keep working, and handlers get the tenant-scoped app.
-func TestPluginRoutesNeedTheTenantPlugin(t *testing.T) {
+// Plugin routes answer like missing routes unless the request tenant's plugin
+// grants the capability they declare: winding down keeps settling money but
+// starts nothing, the platform pause stops new payments only, and core routes
+// keep working throughout with the tenant-scoped app.
+func TestPluginRoutesNeedTheirCapability(t *testing.T) {
 	app := testkit.NewApp(t)
 	router, err := apis.NewRouter(app)
 	if err != nil {
@@ -173,7 +176,10 @@ func TestPluginRoutesNeedTheTenantPlugin(t *testing.T) {
 	}
 	Register(app, Config{Modules: []Module{
 		{Name: "core", Register: func(se *core.ServeEvent) { se.Router.GET("/v1/core", tenantOf) }},
-		{Name: "pay", Plugin: tenancy.Payment, Register: func(se *core.ServeEvent) { se.Router.POST("/v1/pay/{id}", tenantOf) }},
+		{Name: "pay", Register: func(se *core.ServeEvent) {
+			se.Router.POST("/v1/pay/{id}", tenantOf).BindFunc(tenancy.Needs(tenancy.Payment, tenancy.StartPayment))
+			se.Router.POST("/v1/settle/{id}", tenantOf).BindFunc(tenancy.Needs(tenancy.Payment, tenancy.SettleMoney))
+		}},
 	}})
 	if err := app.OnServe().Trigger(&core.ServeEvent{App: app, Router: router}, func(*core.ServeEvent) error { return nil }); err != nil {
 		t.Fatal(err)
@@ -187,27 +193,54 @@ func TestPluginRoutesNeedTheTenantPlugin(t *testing.T) {
 		handler.ServeHTTP(recorder, httptest.NewRequest(method, path, nil))
 		return recorder
 	}
-	for _, path := range []string{"/v1/core", "/v1/pay/x"} {
-		method := http.MethodGet
-		if path != "/v1/core" {
-			method = http.MethodPost
-		}
-		if got := send(method, path); got.Code != http.StatusOK || !strings.Contains(got.Body.String(), tenancy.DefaultID) {
-			t.Fatalf("%s with payment = %d %s", path, got.Code, got.Body.String())
+	expect := func(state string, open, pay, settle int) {
+		t.Helper()
+		for path, want := range map[string]int{"/v1/core": open, "/v1/pay/x": pay, "/v1/settle/x": settle} {
+			method := http.MethodPost
+			if path == "/v1/core" {
+				method = http.MethodGet
+			}
+			got := send(method, path)
+			if got.Code != want {
+				t.Fatalf("%s %s = %d %s", state, path, got.Code, got.Body.String())
+			}
+			if want == http.StatusOK && !strings.Contains(got.Body.String(), tenancy.DefaultID) {
+				t.Fatalf("%s %s tenant = %s", state, path, got.Body.String())
+			}
+			if want == http.StatusNotFound && !strings.Contains(got.Body.String(), "接口不存在") {
+				t.Fatalf("%s %s body = %s", state, path, got.Body.String())
+			}
 		}
 	}
+	expect("active", http.StatusOK, http.StatusOK, http.StatusOK)
+
+	switches, err := app.FindCollectionByNameOrId("platform_plugins")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pause := core.NewRecord(switches)
+	pause.Load(map[string]any{"plugin": tenancy.Payment, "paused": true, "note": "通道故障"})
+	if err := app.Save(pause); err != nil {
+		t.Fatal(err)
+	}
+	expect("paused", http.StatusOK, http.StatusNotFound, http.StatusOK)
+	pause.Set("paused", false)
+	if err := app.Save(pause); err != nil {
+		t.Fatal(err)
+	}
+
 	plugin, err := app.FindFirstRecordByFilter("tenant_plugins", "plugin={:plugin}", dbx.Params{"plugin": tenancy.Payment})
 	if err != nil {
 		t.Fatal(err)
 	}
+	plugin.Set("expiresAt", time.Now().Add(-time.Minute))
+	if err := app.Save(plugin); err != nil {
+		t.Fatal(err)
+	}
+	expect("expired", http.StatusOK, http.StatusNotFound, http.StatusOK)
 	plugin.Set("status", "disabled")
 	if err := app.Save(plugin); err != nil {
 		t.Fatal(err)
 	}
-	if got := send(http.MethodPost, "/v1/pay/x"); got.Code != http.StatusNotFound || !strings.Contains(got.Body.String(), "接口不存在") {
-		t.Fatalf("pay without the plugin = %d %s", got.Code, got.Body.String())
-	}
-	if got := send(http.MethodGet, "/v1/core"); got.Code != http.StatusOK {
-		t.Fatalf("core without the plugin = %d", got.Code)
-	}
+	expect("disabled", http.StatusOK, http.StatusNotFound, http.StatusNotFound)
 }

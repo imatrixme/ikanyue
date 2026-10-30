@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"math"
-	"net/http"
 	"regexp"
 	"slices"
 	"strings"
@@ -13,30 +12,20 @@ import (
 
 	"kanyue.server/internal/auth"
 	"kanyue.server/internal/jsx"
+	"kanyue.server/internal/tenancy"
 )
 
-// Hono's commerce CheckoutService: online orders paid through the gateway
-// become course-credit orders and grants.
+// The order center's selling side: offers become online orders whose credit is
+// granted once the payment plugin reports the money received.
 
-// CommerceConfig is how Hono's GatewayClient and commerce routes read the environment.
-type CommerceConfig struct {
-	GatewayURL   string
-	ServiceToken string
-	MockToken    string
-	EventToken   string
-	WechatAppID  string
-	// Mock is NODE_ENV development/test with PAY_MOCK_ENABLED=true.
-	Mock bool
-}
-
-type commerce struct {
+type orderCenter struct {
 	app         core.App
-	gateway     *gateway
 	wechatAppID string
+	mock        bool
 }
 
-// scoped is c reading and writing through app, a request's or a job's tenant scope.
-func (c *commerce) scoped(app core.App) *commerce {
+// scoped is c reading and writing through app, a request's tenant scope.
+func (c *orderCenter) scoped(app core.App) *orderCenter {
 	bound := *c
 	bound.app = app
 	return &bound
@@ -99,18 +88,18 @@ func isSafeInt(value any) bool {
 	return isInt(value) && math.Abs(value.(float64)) <= maxSafeInteger
 }
 
-// commerceUpdate claims the row's version before bumping it.
-func commerceUpdate(collection string, row map[string]any, data map[string]any) []step {
+// claimedUpdate claims an order center row's version in order_claims before bumping it.
+func claimedUpdate(collection string, row map[string]any, data map[string]any) []step {
 	id, version := jsx.String(row["id"]), jsx.Number(row["version"])
 	next := copyMap(data)
 	next["version"] = version + 1
 	return []step{
-		create("commerce_claims", map[string]any{"id": commerceID(collection, id, version), "key": collection + ":" + id + ":" + jsx.String(version)}),
+		create("order_claims", map[string]any{"id": commerceID(collection, id, version), "key": collection + ":" + id + ":" + jsx.String(version)}),
 		update(collection, id, next),
 	}
 }
 
-// auditOperation records a commerce step on the credit ledger's operation log.
+// auditOperation records an order step on the credit ledger's operation log.
 func auditOperation(operationID string, order map[string]any, reason, at string, actor map[string]any) step {
 	request := map[string]any{"orderId": order["id"]}
 	actorID, actorRole := order["studentId"], any("service")
@@ -173,8 +162,8 @@ type offerDetails struct {
 }
 
 // offer loads a sellable offer and checks everything checkout will rely on.
-func (c *commerce) offer(offerID any, draft bool) (*offerDetails, error) {
-	offer, err := get(c.app, "commerce_offers", recordID(offerID))
+func (c *orderCenter) offer(offerID any, draft bool) (*offerDetails, error) {
+	offer, err := get(c.app, "offers", recordID(offerID))
 	if err != nil {
 		return nil, err
 	}
@@ -241,8 +230,8 @@ func (c *commerce) offer(offerID any, draft bool) (*offerDetails, error) {
 		creditTypes: creditTypes, amount: amount, policy: copyMap(policy)}, nil
 }
 
-func (c *commerce) catalog() (any, error) {
-	offers, err := list(c.app, "commerce_offers", `status="active"`, "name")
+func (c *orderCenter) catalog() (any, error) {
+	offers, err := list(c.app, "offers", `status="active"`, "name")
 	if err != nil {
 		return nil, err
 	}
@@ -267,34 +256,31 @@ func (c *commerce) catalog() (any, error) {
 	return results, nil
 }
 
-func (c *commerce) checkout(studentID string, body Body, user auth.Claims) (any, error) {
+// checkout places an online order; the student pays it at the payment plugin's cashier.
+func (c *orderCenter) checkout(studentID string, body Body, user auth.Claims) (any, error) {
 	key, ok := body.Get("key").(string)
 	if !ok || !commerceKey.MatchString(key) {
 		return nil, Fail("CHECKOUT_KEY_REQUIRED", "请重新提交购买请求", nil)
 	}
 	offerID := body.Get("offerId")
 	orderID := commerceID("checkout", studentID, key)
-	conflict := Fail("CHECKOUT_CONFLICT", "购买请求与原订单不一致", nil)
-	transaction, err := findFirst(c.app, "commerce_orders", `id="`+escape(orderID)+`"`)
+	existing, err := findFirst(c.app, "orders", `id="`+escape(orderID)+`"`)
 	if err != nil {
 		return nil, err
 	}
-	if transaction != nil {
-		if asMap(transaction["data"])["offerId"] != offerID {
-			return nil, conflict
+	if existing != nil {
+		if asMap(existing["productSnapshot"])["offerId"] != offerID {
+			return nil, Fail("CHECKOUT_CONFLICT", "购买请求与原订单不一致", nil)
 		}
 	} else if err := c.createOrder(studentID, orderID, offerID, user); err != nil {
-		return nil, err
-	}
-	if err := c.sync(orderID); err != nil {
 		return nil, err
 	}
 	return c.detail(studentID, orderID)
 }
 
-func (c *commerce) createOrder(studentID, orderID string, offerID any, user auth.Claims) error {
-	var payerID any
-	if !c.gateway.mock {
+func (c *orderCenter) createOrder(studentID, orderID string, offerID any, user auth.Claims) error {
+	payer := ""
+	if !c.mock {
 		openID := auth.ClaimString(user, "wechatOpenId")
 		if openID == "" || c.wechatAppID == "" {
 			return Fail("PAYMENT_WECHAT_IDENTITY_REQUIRED", "请先使用微信登录，再支付课程订单", nil)
@@ -307,7 +293,7 @@ func (c *commerce) createOrder(studentID, orderID string, offerID any, user auth
 		if binding == nil {
 			return Fail("PAYMENT_WECHAT_IDENTITY_REQUIRED", "微信支付身份已变化，请重新登录", nil)
 		}
-		payerID = binding["openId"]
+		payer = jsx.String(binding["openId"])
 	}
 	details, err := c.offer(offerID, false)
 	if err != nil {
@@ -326,118 +312,57 @@ func (c *commerce) createOrder(studentID, orderID string, offerID any, user auth
 	if err != nil {
 		return err
 	}
-	order["status"], order["paidAt"] = "pending", ""
+	order["status"], order["paidAt"], order["settlement"], order["payerOpenId"] = "pending", "", "online", payer
 	product := copyMap(asMap(order["productSnapshot"]))
 	product["policy"], product["origin"], product["paidMinor"] = details.policy, "gateway", details.amount
+	product["offerId"], product["offerName"] = offerID, details.offer["name"]
+	product["allocations"] = allocateMinor(details.amount, details.lines, details.creditTypes)
 	order["productSnapshot"] = product
-	data := map[string]any{"offerId": offerID, "name": details.offer["name"], "amount": details.amount, "currency": "CNY",
-		"policy": details.policy, "allocations": allocateMinor(details.amount, details.lines, details.creditTypes),
-		"paymentId": "", "refunded": 0, "refundPending": false, "grantResult": nil, "createdAt": at}
-	if payerID != nil {
-		data["payerId"] = payerID
-	}
-	err = send(c.app, []step{create("orders", order), create("commerce_orders", map[string]any{
-		"id": orderID, "orderId": orderID, "studentId": studentID, "status": "pending", "version": 1, "data": data,
-	})})
-	if err != nil {
-		raced, findErr := findFirst(c.app, "commerce_orders", `id="`+escape(orderID)+`"`)
-		if findErr != nil || raced == nil || asMap(raced["data"])["offerId"] != offerID {
+	if err := send(c.app, []step{create("orders", order)}); err != nil {
+		raced, findErr := findFirst(c.app, "orders", `id="`+escape(orderID)+`"`)
+		if findErr != nil || raced == nil || asMap(raced["productSnapshot"])["offerId"] != offerID {
 			return err
 		}
 	}
 	return nil
 }
 
-// sync settles an order against the gateway: create its payment, record the receipt, grant credit.
-func (c *commerce) sync(orderID string) error {
-	transaction, err := get(c.app, "commerce_orders", orderID)
-	if err != nil {
-		return err
-	}
-	data := asMap(transaction["data"])
-	var payment map[string]any
-	if !jsx.Truthy(data["paymentId"]) {
-		if payment, err = c.gateway.createPayment(orderID, data["amount"], data["payerId"], data["name"]); err != nil {
-			return err
-		}
-		next := copyMap(data)
-		next["paymentId"] = payment["id"]
-		if err := send(c.app, commerceUpdate("commerce_orders", transaction, map[string]any{"data": next})); err != nil {
-			return err
-		}
-		if transaction, err = get(c.app, "commerce_orders", orderID); err != nil {
-			return err
-		}
-		data = asMap(transaction["data"])
-	} else if payment, err = c.gateway.payment(jsx.String(data["paymentId"])); err != nil {
-		return err
-	}
-	if payment["reference"] != orderID || payment["amount"] != data["amount"] || payment["currency"] != "CNY" {
-		return Fail("PAYMENT_RECEIPT_MISMATCH", "付款信息不一致，已暂停自动发课", nil)
-	}
-	if transaction["status"] == "completed" {
-		return nil
-	}
-	if payment["status"] != "succeeded" {
-		if (payment["status"] == "failed" || payment["status"] == "closed") && transaction["status"] != "failed" {
-			return send(c.app, commerceUpdate("commerce_orders", transaction, map[string]any{"status": "failed"}))
-		}
-		return nil
-	}
-	order, err := get(c.app, "orders", orderID)
-	if err != nil {
-		return err
-	}
-	now := clock()
-	if order["status"] == "pending" {
-		operationID := commerceID("receipt", orderID)
-		at := iso(now)
-		plan := []step{auditOperation(operationID, order, "gateway_receipt", at, nil)}
-		plan = append(plan, orderUpdate(order, operationID, map[string]any{"status": "paid", "paidAt": or(payment["paidAt"], at)})...)
-		plan = append(plan, create("payment_events", map[string]any{"id": commerceID("payment_event", payment["id"]),
-			"orderId": orderID, "providerEventId": "gateway:" + jsx.String(payment["id"]), "type": "paid",
-			"amount": jsx.Number(payment["amount"]) / 100, "payloadHash": commerceID(payment["id"], payment["amount"], payment["currency"])}))
-		plan = append(plan, commerceUpdate("commerce_orders", transaction, map[string]any{"status": "granting"})...)
-		if err := send(c.app, plan); err != nil {
-			return err
-		}
-	}
-	if order, err = get(c.app, "orders", orderID); err != nil {
-		return err
-	}
-	if order["status"] != "paid" && order["status"] != "granted" {
-		return Fail("ORDER_NOT_GRANTABLE", "订单状态需要核对", nil)
-	}
-	result, err := grantOrderCredits(c.app, orderID, Actor{ID: "gateway", Role: "service", IdempotencyKey: "commerce-grant-" + orderID}, now)
-	if err != nil {
-		return err
-	}
-	if transaction, err = get(c.app, "commerce_orders", orderID); err != nil {
-		return err
-	}
-	if transaction["status"] != "completed" {
-		next := copyMap(asMap(transaction["data"]))
-		next["grantResult"] = result
-		return send(c.app, commerceUpdate("commerce_orders", transaction, map[string]any{"status": "completed", "data": next}))
-	}
-	return nil
-}
-
-func (c *commerce) owned(studentID, orderID string) (map[string]any, error) {
-	row, err := get(c.app, "commerce_orders", orderID)
+// onlineOrder loads an order bought online; other orders are not found here.
+func onlineOrder(app core.App, orderID string) (map[string]any, error) {
+	order, err := get(app, "orders", orderID)
 	if err != nil {
 		return nil, err
 	}
-	if row["studentId"] != studentID {
+	if order["settlement"] != "online" {
+		return nil, sql.ErrNoRows
+	}
+	return order, nil
+}
+
+func (c *orderCenter) owned(studentID, orderID string) (map[string]any, error) {
+	order, err := onlineOrder(c.app, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order["studentId"] != studentID {
 		return nil, Fail("COMMERCE_ORDER_FORBIDDEN", "不能操作其他学员的订单", nil)
 	}
-	return row, nil
+	return order, nil
+}
+
+// fulfillment is the grant that delivered an order's credit, or nil before it.
+func fulfillment(app core.App, orderID string) (map[string]any, error) {
+	operation, err := findFirst(app, "credit_operations", `type="grant" && sourceType="order" && sourceId="`+escape(orderID)+`"`)
+	if err != nil || operation == nil {
+		return nil, err
+	}
+	return asMap(operation["resultSnapshot"]), nil
 }
 
 // grantedBatches loads the batches an order's grant created.
-func grantedBatches(app core.App, data map[string]any) ([]map[string]any, error) {
+func grantedBatches(app core.App, grant map[string]any) ([]map[string]any, error) {
 	batches := []map[string]any{}
-	for _, item := range anyList(asMap(data["grantResult"])["batches"]) {
+	for _, item := range anyList(grant["batches"]) {
 		batch, err := get(app, "credit_batches", recordID(asMap(item)["batchId"]))
 		if err != nil {
 			return nil, err
@@ -447,12 +372,20 @@ func grantedBatches(app core.App, data map[string]any) ([]map[string]any, error)
 	return batches, nil
 }
 
-func (c *commerce) detail(studentID, orderID string) (map[string]any, error) {
-	row, err := c.owned(studentID, orderID)
+func (c *orderCenter) detail(studentID, orderID string) (map[string]any, error) {
+	order, err := c.owned(studentID, orderID)
 	if err != nil {
 		return nil, err
 	}
-	batches, err := grantedBatches(c.app, asMap(row["data"]))
+	return c.studentView(order)
+}
+
+func (c *orderCenter) studentView(order map[string]any) (map[string]any, error) {
+	grant, err := fulfillment(c.app, jsx.String(order["id"]))
+	if err != nil {
+		return nil, err
+	}
+	batches, err := grantedBatches(c.app, grant)
 	if err != nil {
 		return nil, err
 	}
@@ -460,52 +393,39 @@ func (c *commerce) detail(studentID, orderID string) (map[string]any, error) {
 	for _, batch := range batches {
 		available += jsx.Number(batch["availableQuantity"])
 	}
-	result := c.present(row)
+	result := c.present(order)
 	result["availableQuantity"] = available
 	return result, nil
 }
 
-func (c *commerce) cashier(studentID, orderID string, user auth.Claims) (any, error) {
-	row, err := c.owned(studentID, orderID)
-	if err != nil {
-		return nil, err
+// onlineStatuses name an online order's progress: paid becomes granting until its credit lands.
+var onlineStatuses = map[any]string{"pending": "pending", "paid": "granting", "granted": "completed", "failed": "failed"}
+
+func onlineStatus(order map[string]any) string {
+	if status, ok := onlineStatuses[order["status"]]; ok {
+		return status
 	}
-	data := asMap(row["data"])
-	if row["status"] != "pending" || !jsx.Truthy(data["paymentId"]) {
-		return nil, Fail("PAYMENT_NOT_READY", "当前订单无需再次付款", nil)
-	}
-	if !c.gateway.mock {
-		openID := auth.ClaimString(user, "wechatOpenId")
-		if openID == "" || openID != data["payerId"] {
-			return nil, Fail("PAYMENT_WECHAT_IDENTITY_REQUIRED", "请使用下单时的微信身份支付", nil)
-		}
-	}
-	payment, err := c.gateway.refreshPayment(jsx.String(data["paymentId"]))
-	if err != nil {
-		return nil, err
-	}
-	if payment["status"] != "pending" {
-		if err := c.sync(orderID); err != nil {
-			return nil, err
-		}
-		return nil, Fail("PAYMENT_WINDOW_CLOSED", "订单已超过支付时间，请重新选购", nil)
-	}
-	return payment["action"], nil
+	return jsx.String(order["status"])
+}
+
+// createdAt is a record's created time in the ISO form clients parse everywhere.
+func createdAt(row map[string]any) string {
+	return strings.Replace(jsx.String(row["created"]), " ", "T", 1)
 }
 
 // present is the order view students and ops share.
-func (c *commerce) present(row map[string]any) map[string]any {
-	data := asMap(row["data"])
-	result := pick(map[string]any{"id": row["id"]}, data,
-		"offerId", "name", "amount", "currency", "policy", "refunded", "refundPending", "createdAt")
-	result["cancellationFees"] = or(data["cancellationFees"], 0)
-	result["status"] = row["status"]
-	result["mockPayment"] = c.gateway.mock && row["status"] == "pending"
-	return result
+func (c *orderCenter) present(order map[string]any) map[string]any {
+	product := asMap(order["productSnapshot"])
+	status := onlineStatus(order)
+	return map[string]any{"id": order["id"], "offerId": product["offerId"], "name": product["offerName"],
+		"amount": product["paidMinor"], "currency": order["currency"], "policy": product["policy"],
+		"refunded": jsx.Number(order["refundedMinor"]), "refundPending": jsx.Number(order["pendingRefundCount"]) > 0,
+		"cancellationFees": jsx.Number(order["cancellationFeeMinor"]), "createdAt": createdAt(order),
+		"status": status, "mockPayment": c.mock && status == "pending"}
 }
 
-func (c *commerce) list(studentID string) (any, error) {
-	rows, err := list(c.app, "commerce_orders", `studentId="`+escape(studentID)+`"`, "-created")
+func (c *orderCenter) list(studentID string) (any, error) {
+	rows, err := list(c.app, "orders", `settlement="online" && studentId="`+escape(studentID)+`"`, "-created")
 	if err != nil {
 		return nil, err
 	}
@@ -516,82 +436,25 @@ func (c *commerce) list(studentID string) (any, error) {
 	return result, nil
 }
 
-func (c *commerce) mockPay(studentID, orderID string) (any, error) {
-	row, err := c.owned(studentID, orderID)
+// settleRefundsOffline hands refunds still owed online to the studio once payment is disabled.
+func settleRefundsOffline(app core.App) error {
+	rows, err := list(app, "order_refunds", `status="processing" && settlement="online"`, "")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	paymentID := asMap(row["data"])["paymentId"]
-	if !jsx.Truthy(paymentID) {
-		return nil, Fail("PAYMENT_NOT_READY", "支付单正在准备", nil)
-	}
-	if err := c.gateway.mockSuccess(jsx.String(paymentID)); err != nil {
-		return nil, err
-	}
-	if err := c.sync(orderID); err != nil {
-		return nil, err
-	}
-	return c.detail(studentID, orderID)
-}
-
-// gatewayEvents lists the gateway's unacknowledged events of one kind.
-func (c *commerce) gatewayEvents(prefix string) ([]map[string]any, error) {
-	events, err := c.gateway.call(http.MethodGet, "/v1/events", nil, "")
-	if err != nil {
-		return nil, err
-	}
-	result := []map[string]any{}
-	for _, item := range anyList(events["items"]) {
-		event := asMap(item)
-		if kind, _ := asMap(event["data"])["type"].(string); strings.HasPrefix(kind, prefix) {
-			result = append(result, event)
-		}
-	}
-	return result, nil
-}
-
-func (c *commerce) ack(event map[string]any) error {
-	_, err := c.gateway.call(http.MethodPost, "/v1/events/"+jsx.String(event["id"])+"/ack", map[string]any{}, "")
-	return err
-}
-
-// recover retries unfinished orders, then acknowledges payment events already reflected locally.
-func (c *commerce) recover() (map[string]any, error) {
-	rows, err := list(c.app, "commerce_orders", `status!="completed"`, "created")
-	if err != nil {
-		return nil, err
-	}
-	failed := 0
 	for _, row := range rows {
-		if c.sync(jsx.String(row["id"])) != nil {
-			failed++
+		if err := send(app, claimedUpdate("order_refunds", row, map[string]any{"settlement": "offline"})); err != nil {
+			return err
 		}
 	}
-	events, err := c.gatewayEvents("payment.")
-	if err != nil {
-		return nil, err
+	return nil
+}
+
+// refundSettlement is how a new refund request will be settled: online while the
+// payment plugin can still finish money, otherwise by the studio offline.
+func refundSettlement(app core.App) string {
+	if tenancy.Allows(app, tenancy.ID(app), tenancy.Payment, tenancy.SettleMoney) {
+		return "online"
 	}
-	for _, event := range events {
-		data := asMap(event["data"])
-		payload := asMap(data["payload"])
-		row, err := findFirst(c.app, "commerce_orders", `id="`+escape(jsx.String(payload["reference"]))+`"`)
-		if err != nil {
-			return nil, err
-		}
-		handled := false
-		if row != nil {
-			if payload["status"] == "succeeded" {
-				handled = row["status"] == "completed"
-			} else {
-				handled = row["status"] == "failed"
-			}
-		}
-		// Events for payments this service never created must not occupy the gateway's pending window.
-		if row == nil || (asMap(row["data"])["paymentId"] == data["targetId"] && handled) {
-			if err := c.ack(event); err != nil {
-				return nil, err
-			}
-		}
-	}
-	return map[string]any{"inspected": len(rows), "unresolved": failed}, nil
+	return "offline"
 }

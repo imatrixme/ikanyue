@@ -255,7 +255,7 @@ func (m MigrationModule) Register(se *core.ServeEvent) {
 		return migrationInventory(e.App)
 	}))
 	router.POST("/ops/course-credits/migration/preview", query(operator, func(e *core.RequestEvent) (any, error) {
-		body, err := readJSONBody(e)
+		body, err := ReadJSONBody(e)
 		if err != nil {
 			return nil, err
 		}
@@ -271,7 +271,7 @@ func (m MigrationModule) Register(se *core.ServeEvent) {
 					return nil, err
 				}
 			}
-			body, err := readJSONBody(e)
+			body, err := ReadJSONBody(e)
 			if err != nil {
 				return nil, err
 			}
@@ -279,7 +279,7 @@ func (m MigrationModule) Register(se *core.ServeEvent) {
 		})
 	}))
 	router.POST("/ops/course-credits/shadow/preview", query([]string{Academic, Settlement}, func(e *core.RequestEvent) (any, error) {
-		body, err := readJSONBody(e)
+		body, err := ReadJSONBody(e)
 		if err != nil {
 			return nil, err
 		}

@@ -372,7 +372,7 @@ func seedCommerce(app core.App, creditTypeID string) error {
 		if err := app.Save(item); err != nil {
 			return err
 		}
-		if err := createMissing(app, "commerce_offers", map[string]any{"id": contentID("local-offer", item.Id),
+		if err := createMissing(app, "offers", map[string]any{"id": contentID("local-offer", item.Id),
 			"packageId": item.Id, "priceVersionId": prices[0].Id, "name": item.GetString("name"), "status": "active",
 			"policy": map[string]any{"version": 1, "packageRefund": "unused_paid_value",
 				"cancellationTiers": []map[string]any{{"beforeMinutes": 0, "feeBps": 0}}, "testOnly": true}}); err != nil {

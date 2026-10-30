@@ -20,12 +20,12 @@ var JoinMethods = []string{"scan_join", "scan_approval", "staff_invite"}
 // tenant_plugins carries it from creation.
 var Collections = []string{
 	"activities", "appointment_events", "appointment_requests", "booking_conflicts", "booking_policies",
-	"class_students", "class_teachers", "classes", "commerce_audit", "commerce_cases", "commerce_claims",
-	"commerce_offers", "commerce_orders", "commerce_refunds", "conversion_allocations", "conversion_authorizations",
+	"class_students", "class_teachers", "classes", "conversion_allocations", "conversion_authorizations",
 	"conversion_rules", "course_specs", "credit_batches", "credit_events", "credit_expiry_changes",
-	"credit_operations", "credit_types", "credit_version_claims", "ops_audit_logs", "orders", "outbox_events",
-	"package_grant_lines", "packages", "payment_events", "point_events", "price_versions",
-	"reconciliation_exceptions", "reconciliation_runs", "renewal_reminders", "renewal_subscriptions",
+	"credit_operations", "credit_types", "credit_version_claims", "offers", "ops_audit_logs", "order_audit",
+	"order_claims", "order_refunds", "orders", "outbox_events", "package_grant_lines", "packages", "payment_audit",
+	"payment_cases", "payment_claims", "payment_events", "payment_transactions", "point_events", "price_versions",
+	"reconciliation_exceptions", "reconciliation_runs", "refund_transactions", "renewal_reminders", "renewal_subscriptions",
 	"reward_items", "schedule_claims", "session_classes", "session_credit_allocations", "session_students",
 	"session_teachers", "sessions", "student_points", "students", "teacher_availability_overrides",
 	"teacher_availability_rules", "teacher_course_offerings", "teacher_credit_events", "teacher_credit_rules",
@@ -124,7 +124,7 @@ func ensurePlugins(app core.App, tenants *core.Collection) error {
 		plugins.Fields.Add(
 			&core.RelationField{Name: Field, CollectionId: tenants.Id, MaxSelect: 1, Required: true},
 			&core.SelectField{Name: "plugin", Required: true, MaxSelect: 1, Values: []string{Payment}},
-			&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: []string{"active", "disabled"}},
+			&core.SelectField{Name: "status", Required: true, MaxSelect: 1, Values: PluginStatuses},
 			&core.DateField{Name: "enabledAt"},
 			&core.AutodateField{Name: "created", OnCreate: true},
 			&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
@@ -136,6 +136,19 @@ func ensurePlugins(app core.App, tenants *core.Collection) error {
 	} else if err != nil {
 		return err
 	}
+	// Billing by time came after the first plugin: winding down and the paid-until date.
+	if status, ok := plugins.Fields.GetByName("status").(*core.SelectField); ok && !slices.Contains(status.Values, WindingDown) {
+		status.Values = PluginStatuses
+	}
+	if plugins.Fields.GetByName("expiresAt") == nil {
+		plugins.Fields.Add(&core.DateField{Name: "expiresAt"})
+	}
+	if err := app.Save(plugins); err != nil {
+		return err
+	}
+	if err := ensureSwitches(app); err != nil {
+		return err
+	}
 	_, err = app.FindFirstRecordByFilter(plugins, "tenant={:tenant} && plugin={:plugin}",
 		dbx.Params{"tenant": DefaultID, "plugin": Payment})
 	if err == nil || !errors.Is(err, sql.ErrNoRows) {
@@ -144,6 +157,25 @@ func ensurePlugins(app core.App, tenants *core.Collection) error {
 	payment := core.NewRecord(plugins)
 	payment.Load(map[string]any{Field: DefaultID, "plugin": Payment, "status": "active", "enabledAt": types.NowDateTime()})
 	return app.Save(payment)
+}
+
+// ensureSwitches creates platform_plugins, the platform's own switches per
+// plugin; paused stops every tenant from starting payments.
+func ensureSwitches(app core.App) error {
+	_, err := app.FindCollectionByNameOrId("platform_plugins")
+	if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	switches := core.NewBaseCollection("platform_plugins")
+	switches.Fields.Add(
+		&core.SelectField{Name: "plugin", Required: true, MaxSelect: 1, Values: []string{Payment}},
+		&core.BoolField{Name: "paused"},
+		&core.TextField{Name: "note", Max: 200},
+		&core.AutodateField{Name: "created", OnCreate: true},
+		&core.AutodateField{Name: "updated", OnCreate: true, OnUpdate: true},
+	)
+	switches.AddIndex("idx_platform_plugins_plugin", true, "plugin", "")
+	return app.Save(switches)
 }
 
 // assign adds the tenant relation, backfills existing rows to the default

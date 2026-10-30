@@ -569,6 +569,8 @@ type cashQuote struct {
 	order, batch          map[string]any
 	allocation            map[string]any
 	institution           bool
+	// settlement is how its refund will be paid: online by the payment plugin or offline by the studio.
+	settlement string
 }
 
 // reservationQuote prices cancelling a reservation paid in cash; nil when the credit was not bought online.
@@ -589,13 +591,16 @@ func reservationQuote(app core.App, appointment map[string]any, allocations []ma
 	allocation := cash[0]
 	batch := batches[jsx.String(allocation["batchId"])]
 	snapshot := batch["grantSnapshot"].(map[string]any)
-	order, err := get(app, "commerce_orders", jsx.String(snapshot["commerceOrderId"]))
+	order, err := onlineOrder(app, jsx.String(snapshot["commerceOrderId"]))
 	if err != nil {
 		return nil, err
 	}
-	data, _ := order["data"].(map[string]any)
-	policy, _ := data["policy"].(map[string]any)
-	grant, _ := data["grantResult"].(map[string]any)
+	product := asMap(order["productSnapshot"])
+	policy, _ := product["policy"].(map[string]any)
+	grant, err := fulfillment(app, jsx.String(order["id"]))
+	if err != nil {
+		return nil, err
+	}
 	granted := false
 	for _, item := range anyList(grant["batches"]) {
 		if entry, _ := item.(map[string]any); entry["batchId"] == batch["id"] {
@@ -603,12 +608,12 @@ func reservationQuote(app core.App, appointment map[string]any, allocations []ma
 		}
 	}
 	if order["studentId"] != appointment["studentId"] || batch["studentId"] != appointment["studentId"] ||
-		order["status"] != "completed" || policy["reservationRefund"] != "cash" ||
+		order["status"] != "granted" || policy["reservationRefund"] != "cash" ||
 		grant["operationId"] != batch["sourceOperationId"] || !granted {
 		return nil, Fail("CASH_RESERVATION_SOURCE_MISMATCH", "预约课时来源需要核对", nil)
 	}
 	var line map[string]any
-	for _, item := range anyList(data["allocations"]) {
+	for _, item := range anyList(product["allocations"]) {
 		if entry, _ := item.(map[string]any); entry["creditTypeId"] == batch["creditTypeId"] {
 			line = entry
 			break
@@ -624,11 +629,12 @@ func reservationQuote(app core.App, appointment map[string]any, allocations []ma
 	if err != nil {
 		return nil, err
 	}
-	available := jsx.Number(jsx.Get(data, "amount")) - jsx.Number(jsx.Get(data, "refunded")) - jsx.Number(or(data["refundReservedAmount"], 0.0))
+	available := jsx.Number(product["paidMinor"]) - jsx.Number(order["refundedMinor"]) - jsx.Number(order["refundReservedMinor"])
 	if !(quote.refundable <= available) {
 		return nil, Fail("CASH_REFUND_PRINCIPAL_CONFLICT", "当前可退本金需要核对", nil)
 	}
 	quote.paid, quote.order, quote.batch, quote.allocation, quote.institution = paid, order, batch, allocation, institution
+	quote.settlement = refundSettlement(app)
 	return quote, nil
 }
 
@@ -701,7 +707,7 @@ func lastOf(items []any) any {
 	return items[len(items)-1]
 }
 
-// cashCancellationPlan reverses the paid unit and reserves its refund on the commerce order.
+// cashCancellationPlan reverses the paid unit and reserves its refund on the online order.
 func cashCancellationPlan(quote *cashQuote, appointment, student, input map[string]any, operationID, at string) ([]step, map[string]any, error) {
 	role := input["actorRole"]
 	if role == "student" || (role == "admin" && !quote.institution) {
@@ -723,23 +729,10 @@ func cashCancellationPlan(quote *cashQuote, appointment, student, input map[stri
 	appointmentID := jsx.String(appointment["id"])
 	refundID := commerceID("reservation-refund", appointmentID)
 	studentVersion := student["version"].(float64)
-	data := copyMap(order["data"].(map[string]any))
-	pending := data["pendingRefundCount"]
-	if pending == nil {
-		pending = 0.0
-		if jsx.Truthy(data["refundPending"]) {
-			pending = 1.0
-		}
-	}
 	due := 0.0
 	if quote.refundable > 0 {
 		due = 1
 	}
-	data["cancellationFees"] = jsx.Number(or(data["cancellationFees"], 0.0)) + quote.fee
-	data["refundPending"] = orChain(data["refundPending"], quote.refundable > 0)
-	data["pendingRefundCount"] = jsx.Number(pending) + due
-	data["refundReservedAmount"] = jsx.Number(or(data["refundReservedAmount"], 0.0)) + quote.refundable
-	orderVersion := order["version"].(float64)
 	orderID := jsx.String(order["id"])
 	batchID := jsx.String(batch["id"])
 	plan := []step{
@@ -755,22 +748,23 @@ func cashCancellationPlan(quote *cashQuote, appointment, student, input map[stri
 				"fee": quote.fee, "refundAmount": quote.refundable, "policyVersion": quote.policyVersion}}),
 		versionClaim("session_student", jsx.String(student["id"]), int(studentVersion), operationID),
 		update("session_students", jsx.String(student["id"]), map[string]any{"creditStatus": "reversed", "settledAt": at, "version": studentVersion + 1}),
-		create("commerce_claims", map[string]any{"id": commerceID("commerce_orders", orderID, orderVersion),
-			"key": "commerce_orders:" + orderID + ":" + jsx.String(orderVersion)}),
-		update("commerce_orders", orderID, map[string]any{"data": data, "version": orderVersion + 1}),
-		create("commerce_audit", map[string]any{"id": commerceID("cancel-audit", appointmentID), "subjectId": orderID,
+		create("order_audit", map[string]any{"id": commerceID("cancel-audit", appointmentID), "subjectId": orderID,
 			"actorId": input["actorId"], "action": "reservation_cancelled", "data": map[string]any{
 				"reason": input["reason"], "appointmentId": appointmentID, "fee": quote.fee, "amount": quote.refundable,
-				"institution": quote.institution, "policy": order["data"].(map[string]any)["policy"],
+				"institution": quote.institution, "policy": asMap(order["productSnapshot"])["policy"],
 				"receivedAt": quote.receivedAt, "createdAt": at}}),
 	}
+	plan = append(plan, orderUpdate(order, operationID, map[string]any{
+		"cancellationFeeMinor": jsx.Number(order["cancellationFeeMinor"]) + quote.fee,
+		"pendingRefundCount":   jsx.Number(order["pendingRefundCount"]) + due,
+		"refundReservedMinor":  jsx.Number(order["refundReservedMinor"]) + quote.refundable,
+	})...)
 	refund := map[string]any{"amount": quote.refundable, "fee": quote.fee, "currency": "CNY", "refundId": nil, "status": "not_due"}
 	if quote.refundable > 0 {
-		plan = append(plan, create("commerce_refunds", map[string]any{"id": refundID, "orderId": orderID, "studentId": order["studentId"],
-			"status": "processing", "version": 1, "data": map[string]any{"amount": quote.refundable, "kind": "reservation",
-				"appointmentId": appointmentID, "gatewayId": "", "held": []any{},
-				"actor": map[string]any{"id": input["actorId"], "role": input["actorRole"], "reason": input["reason"]},
-				"fee":   quote.fee, "createdAt": at, "attempt": 0}}))
+		plan = append(plan, create("order_refunds", map[string]any{"id": refundID, "orderId": orderID, "studentId": order["studentId"],
+			"kind": "reservation", "status": "processing", "settlement": quote.settlement, "amountMinor": quote.refundable,
+			"feeMinor": quote.fee, "appointmentId": appointmentID, "held": []any{},
+			"actor": map[string]any{"id": input["actorId"], "role": input["actorRole"], "reason": input["reason"]}, "version": 1}))
 		refund["refundId"], refund["status"] = refundID, "processing"
 	}
 	return plan, refund, nil

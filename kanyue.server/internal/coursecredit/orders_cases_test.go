@@ -2,20 +2,18 @@ package coursecredit
 
 import (
 	"encoding/json"
-	"io"
 	"math"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
 
 	"kanyue.server/internal/auth"
+	"kanyue.server/internal/tenancy"
 	"kanyue.server/internal/testkit"
 )
 
-// Commerce cases ported from Hono's commerce*.test.js.
+// Order center cases ported from Hono's commerce*.test.js; payment cases live in plugins/payment.
 
 // put saves a record without validation, for fixtures whose relations the code under test never follows.
 func put(t *testing.T, app core.App, collection string, fields map[string]any) *core.Record {
@@ -78,11 +76,14 @@ type cashFixture struct {
 
 func cashSetup(t *testing.T) cashFixture {
 	t.Helper()
-	app := testkit.NewApp(t)
-	order := put(t, app, "commerce_orders", map[string]any{"studentId": "s", "orderId": "order", "status": "completed", "version": 1,
-		"data": jsonMap(t, `{"amount":80000,"refunded":0,"paymentId":"payment","refundPending":false,
+	app := tenancy.Scope(testkit.NewApp(t), tenancy.DefaultID)
+	order := put(t, app, "orders", map[string]any{"studentId": "s", "status": "granted", "settlement": "online", "currency": "CNY",
+		"paymentRef": "payment", "refundedMinor": 0, "refundReservedMinor": 0, "pendingRefundCount": 0, "version": 1,
+		"productSnapshot": jsonMap(t, `{"origin":"gateway","paidMinor":80000,
 			"policy":{"version":2,"packageRefund":"unused_paid_value","reservationRefund":"cash","cancellationTiers":[{"beforeMinutes":60,"feeBps":0},{"beforeMinutes":0,"feeBps":5000}]},
-			"grantResult":{"operationId":"grant","batches":[{"batchId":"batch"}]},"allocations":[{"creditTypeId":"c","quantity":4,"paidMinor":80000}]}`)})
+			"allocations":[{"creditTypeId":"c","quantity":4,"paidMinor":80000}]}`)})
+	put(t, app, "credit_operations", map[string]any{"type": "grant", "sourceType": "order", "sourceId": order.Id,
+		"resultSnapshot": jsonMap(t, `{"operationId":"grant","batches":[{"batchId":"batch"}]}`)})
 	batch := jsonMap(t, `{"id":"batch","studentId":"s","creditTypeId":"c","sourceOperationId":"grant","originalQuantity":4,"availableQuantity":3,
 		"frozenQuantity":1,"reversedQuantity":0,"consumedQuantity":0,"expiredQuantity":0,"version":1}`)
 	batch["grantSnapshot"] = map[string]any{"commerceOrderId": order.Id}
@@ -97,13 +98,7 @@ func (f cashFixture) quote(institution bool) (*cashQuote, error) {
 
 func (f cashFixture) setOrderData(t *testing.T, key string, value any) {
 	t.Helper()
-	row, err := get(f.app, "commerce_orders", f.order.Id)
-	if err != nil {
-		t.Fatal(err)
-	}
-	data := asMap(row["data"])
-	data[key] = value
-	patch(t, f.app, "commerce_orders", f.order.Id, map[string]any{"data": data})
+	patch(t, f.app, "orders", f.order.Id, map[string]any{key: value})
 }
 
 // Hono: commerceCancellation › cash cancellation uses original discount allocation and inclusive server receipt thresholds
@@ -154,7 +149,7 @@ func TestCashCancellationPlanRetiresCreditAndRecordsLiability(t *testing.T) {
 	if _, released := change.data["availableQuantity"]; released {
 		t.Fatal("cash cancellation must not release credit")
 	}
-	if created := stepFor(plan, "commerce_refunds", true); asMap(created.data["data"])["kind"] != "reservation" {
+	if created := stepFor(plan, "order_refunds", true); created.data["kind"] != "reservation" {
 		t.Fatalf("refund = %v", created)
 	}
 	if refund["amount"] != 10000.0 || refund["status"] != "processing" {
@@ -168,10 +163,10 @@ func TestCashCancellationPlanRetiresCreditAndRecordsLiability(t *testing.T) {
 // Hono: commerceCancellation › source mismatch and concurrently reserved principal cannot create a refund
 func TestCashCancellationRejectsReservedPrincipalAndSourceMismatch(t *testing.T) {
 	f := cashSetup(t)
-	f.setOrderData(t, "refundReservedAmount", 79999)
+	f.setOrderData(t, "refundReservedMinor", 79999)
 	_, err := f.quote(false)
 	failsWith(t, err, "CASH_REFUND_PRINCIPAL_CONFLICT")
-	f.setOrderData(t, "refundReservedAmount", 0)
+	f.setOrderData(t, "refundReservedMinor", 0)
 	f.batch["sourceOperationId"] = "other"
 	_, err = f.quote(false)
 	failsWith(t, err, "CASH_RESERVATION_SOURCE_MISMATCH")
@@ -179,34 +174,40 @@ func TestCashCancellationRejectsReservedPrincipalAndSourceMismatch(t *testing.T)
 
 // Hono: commerceCancellation › definitive reservation refund failure retains liability and does not restore credits
 func TestReservationRefundFailureKeepsLiability(t *testing.T) {
-	f := commerceSetup(t)
+	f := orderSetup(t)
 	orderID := f.buy(t, "k1")["id"].(string)
-	row, err := get(f.app, "commerce_orders", orderID)
-	if err != nil {
+	patch(t, f.app, "orders", orderID, map[string]any{"pendingRefundCount": 1, "refundReservedMinor": 10000})
+	refund := testkit.Create(t, f.app, "order_refunds", map[string]any{"orderId": orderID, "studentId": f.studentID, "kind": "reservation",
+		"status": "processing", "settlement": "online", "amountMinor": 10000, "held": []any{}, "version": 1})
+	if err := RefundFailed(f.app, refund.Id, "refX"); err != nil {
 		t.Fatal(err)
 	}
-	data := asMap(row["data"])
-	data["refundPending"], data["pendingRefundCount"], data["refundReservedAmount"] = true, 1, 10000
-	patch(t, f.app, "commerce_orders", orderID, map[string]any{"data": data})
-	refund := testkit.Create(t, f.app, "commerce_refunds", map[string]any{"orderId": orderID, "studentId": f.studentID,
-		"status": "processing", "version": 1, "data": map[string]any{"amount": 10000, "kind": "reservation", "gatewayId": "refX", "held": []any{}}})
-	f.gateway.mu.Lock()
-	f.gateway.refunds["refX"] = map[string]any{"id": "refX", "reference": refund.Id, "paymentId": data["paymentId"], "amount": 10000, "status": "failed"}
-	f.gateway.mu.Unlock()
-
-	if err := (&commerce{app: f.app, gateway: newGateway(f.module.Config)}).syncRefund(refund.Id); err != nil {
-		t.Fatal(err)
+	kept := f.record(t, "orders", orderID)
+	if kept.GetFloat("pendingRefundCount") != 1 || kept.GetFloat("refundReservedMinor") != 10000 {
+		t.Fatalf("order = %v", kept.FieldsData())
 	}
-	after, _ := get(f.app, "commerce_orders", orderID)
-	kept := asMap(after["data"])
-	if kept["refundPending"] != true || kept["refundReservedAmount"] != 10000.0 || kept["pendingRefundCount"] != 1.0 {
-		t.Fatalf("order data = %v", kept)
-	}
-	if f.record(t, "commerce_refunds", refund.Id).GetString("status") != "failed" {
+	if f.record(t, "order_refunds", refund.Id).GetString("status") != "failed" {
 		t.Fatal("refund status")
 	}
 	if batch := firstBatch(t, f.app, f.studentID); batch.GetInt("availableQuantity") != 10 || batch.GetInt("version") != 1 {
 		t.Fatalf("credits must not be touched: %v", batch.FieldsData())
+	}
+	// The liability stays owed until the payment plugin retries it.
+	if err := ReopenRefund(f.app, refund.Id, map[string]any{"id": "finance", "reason": "渠道恢复后重试"}); err != nil {
+		t.Fatal(err)
+	}
+	if f.record(t, "order_refunds", refund.Id).GetString("status") != "processing" {
+		t.Fatal("reopened refund")
+	}
+	if audits, _ := f.app.FindRecordsByFilter("order_audit", `action="refund_retried"`, "", 0, 0); len(audits) != 1 {
+		t.Fatalf("retry audit = %v", audits)
+	}
+	if err := RefundSucceeded(f.app, refund.Id, "refY"); err != nil {
+		t.Fatal(err)
+	}
+	if paid := f.record(t, "orders", orderID); paid.GetFloat("pendingRefundCount") != 0 || paid.GetFloat("refundedMinor") != 10000 ||
+		paid.GetFloat("refundReservedMinor") != 0 {
+		t.Fatalf("settled liability = %v", paid.FieldsData())
 	}
 }
 
@@ -220,11 +221,11 @@ func TestRescheduledAppointmentKeepsCancelAction(t *testing.T) {
 
 // Hono: commerceOperations › order filters use China calendar days and reject invalid or reversed dates
 func TestCommerceOrderFiltersUseChinaDays(t *testing.T) {
-	f := commerceSetup(t)
+	f := orderSetup(t)
 	orderID := f.buy(t, "k1")["id"].(string)
 	count := func(created string) float64 {
 		t.Helper()
-		if _, err := f.app.DB().NewQuery("UPDATE commerce_orders SET created={:created} WHERE id={:id}").
+		if _, err := f.app.DB().NewQuery("UPDATE orders SET created={:created} WHERE id={:id}").
 			Bind(map[string]any{"created": created, "id": orderID}).Execute(); err != nil {
 			t.Fatal(err)
 		}
@@ -244,7 +245,7 @@ func TestCommerceOrderFiltersUseChinaDays(t *testing.T) {
 
 // Hono: commerceOperations › Admin refund forwards authenticated actor and trimmed reason, never client actor
 func TestCommerceOpsRefundUsesAuthenticatedActor(t *testing.T) {
-	f := commerceSetup(t)
+	f := orderSetup(t)
 	orderID := f.buy(t, "k1")["id"].(string)
 	failed(t, f.call(t, f.ops, http.MethodPost, "/ops/commerce/orders/"+orderID+"/refunds",
 		map[string]any{"key": "r0", "expectedAmount": 80000, "reason": ""}), 400, "COMMERCE_REASON_REQUIRED", "empty reason")
@@ -254,8 +255,8 @@ func TestCommerceOpsRefundUsesAuthenticatedActor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	row, _ := get(f.app, "commerce_refunds", refund["id"].(string))
-	if actor := asMap(asMap(row["data"])["actor"]); fmtJSON(actor) != fmtJSON(map[string]any{"id": operator.Id, "reason": "学员申请", "role": "admin"}) {
+	row, _ := get(f.app, "order_refunds", refund["id"].(string))
+	if actor := asMap(row["actor"]); fmtJSON(actor) != fmtJSON(map[string]any{"id": operator.Id, "reason": "学员申请", "role": "admin"}) {
 		t.Fatalf("actor = %v", actor)
 	}
 	if row["studentId"] != f.studentID {
@@ -343,88 +344,24 @@ func TestCommercePricingAndTiersFailClosed(t *testing.T) {
 	}
 }
 
-// Hono: commercePlanning › gateway client does not expose credentials or mistake transport failure for refund failure
-func TestGatewayClientRequestsAndFailures(t *testing.T) {
-	var header http.Header
-	var body string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		raw, _ := io.ReadAll(r.Body)
-		header, body = r.Header.Clone(), string(raw)
-		_, _ = w.Write([]byte(`{"id":"payment"}`))
-	}))
-	t.Cleanup(server.Close)
-	config := CommerceConfig{GatewayURL: server.URL, ServiceToken: serviceToken, MockToken: mockToken, Mock: true}
-	payment, err := newGateway(config).createPayment("order", 100.0, nil, nil)
-	if err != nil || payment["id"] != "payment" {
-		t.Fatalf("payment = %v, %v", payment, err)
-	}
-	if header.Get("Idempotency-Key") != "order" || header.Get("Authorization") != "Bearer "+serviceToken ||
-		body != `{"amount":100,"currency":"CNY","reference":"order"}` {
-		t.Fatalf("request = %v %s", header, body)
-	}
-
-	closed := httptest.NewServer(http.NotFoundHandler())
-	closed.Close()
-	broken := config
-	broken.GatewayURL = closed.URL
-	_, err = newGateway(broken).payment("id")
-	failsWith(t, err, "PAYMENT_RESULT_UNKNOWN")
-	if strings.Contains(err.Error(), serviceToken) {
-		t.Fatal("credential leaked")
-	}
-	production := config
-	production.Mock = false
-	failsWith(t, newGateway(production).mockSuccess("id"), "MOCK_PAYMENT_DISABLED")
-	_, err = newGateway(CommerceConfig{GatewayURL: "http://remote.example", ServiceToken: serviceToken}).payment("id")
-	failsWith(t, err, "PAYMENT_TLS_REQUIRED")
-}
-
-// Hono: commercePlanning › gateway client reports non-JSON proxy failures as channel errors
-func TestGatewayClientNonJSONFailure(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadGateway)
-		_, _ = w.Write([]byte("<html>bad gateway</html>"))
-	}))
-	t.Cleanup(server.Close)
-	_, err := newGateway(CommerceConfig{GatewayURL: server.URL, ServiceToken: serviceToken}).payment("id")
-	failsWith(t, err, "PAYMENT_CHANNEL_ERROR")
-}
-
-// Hono: commercePlanning › recovery acknowledges orphan events and cashier rejects closed payment windows
-func TestCommerceRecoveryAcksOrphansAndCashierClosesWindow(t *testing.T) {
-	f := commerceSetup(t)
-	f.gateway.events = []any{map[string]any{"id": "orphan", "data": map[string]any{"type": "payment.closed", "targetId": "x",
-		"payload": map[string]any{"reference": "unknown", "status": "closed"}}}}
-	if _, err := (&commerce{app: f.app, gateway: newGateway(f.module.Config)}).recover(); err != nil {
-		t.Fatal(err)
-	}
-	if fmtJSON(f.gateway.acked) != `["orphan"]` {
-		t.Fatalf("acked = %v", f.gateway.acked)
-	}
-	order := ok(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders", map[string]any{"key": "k1", "offerId": f.offerID}), "checkout")
-	f.gateway.set("pay1", "closed")
-	failed(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders/"+order["id"].(string)+"/cashier", nil),
-		400, "PAYMENT_WINDOW_CLOSED", "closed window")
-}
-
 // Hono: commercePlanning › student order payload names its offer so clients can reuse a pending order
 func TestCommerceOrderViewNamesOffer(t *testing.T) {
-	view := (&commerce{gateway: newGateway(CommerceConfig{})}).present(map[string]any{"id": "order", "status": "pending",
-		"data": map[string]any{"offerId": "offer", "name": "单节课", "amount": 24000.0}})
-	if view["offerId"] != "offer" || view["mockPayment"] != false {
+	view := (&orderCenter{}).present(map[string]any{"id": "order", "status": "pending",
+		"productSnapshot": map[string]any{"offerId": "offer", "offerName": "单节课", "paidMinor": 24000.0}})
+	if view["offerId"] != "offer" || view["name"] != "单节课" || view["mockPayment"] != false {
 		t.Fatalf("view = %v", view)
 	}
 }
 
 // refundFixture is a paid order whose single batch the test reshapes.
-func refundFixture(t *testing.T) (commerceFixture, string, string) {
+func refundFixture(t *testing.T) (orderFixture, string, string) {
 	t.Helper()
-	f := commerceSetup(t)
+	f := orderSetup(t)
 	orderID := f.buy(t, "k1")["id"].(string)
 	return f, orderID, firstBatch(t, f.app, f.studentID).Id
 }
 
-func (f commerceFixture) previewAmount(t *testing.T, orderID string) map[string]any {
+func (f orderFixture) previewAmount(t *testing.T, orderID string) map[string]any {
 	t.Helper()
 	return ok(t, f.call(t, f.student, http.MethodGet, "/v1/student/commerce/orders/"+orderID+"/refund-preview", nil), "preview")
 }
@@ -432,21 +369,19 @@ func (f commerceFixture) previewAmount(t *testing.T, orderID string) map[string]
 // Hono: commerceRefund › discounted partial use refunds original paid allocation and clamps principal
 func TestRefundPreviewUsesPaidAllocationAndClamps(t *testing.T) {
 	f, orderID, batchID := refundFixture(t)
-	row, _ := get(f.app, "commerce_orders", orderID)
-	data := asMap(row["data"])
-	allocation := asMap(anyList(data["allocations"])[0])
-	allocation["paidMinor"], data["amount"] = 80001, 80001
-	patch(t, f.app, "commerce_orders", orderID, map[string]any{"data": data})
+	row, _ := get(f.app, "orders", orderID)
+	product := asMap(row["productSnapshot"])
+	allocation := asMap(anyList(product["allocations"])[0])
+	allocation["paidMinor"], product["paidMinor"] = 80001, 80001
+	patch(t, f.app, "orders", orderID, map[string]any{"productSnapshot": product})
 	patch(t, f.app, "credit_batches", batchID, map[string]any{"availableQuantity": 3, "consumedQuantity": 7})
 	for refunded, want := range map[float64]float64{0: 24000, 79999: 2, 90000: 0} {
-		data["refunded"] = refunded
-		patch(t, f.app, "commerce_orders", orderID, map[string]any{"data": data})
+		patch(t, f.app, "orders", orderID, map[string]any{"refundedMinor": refunded})
 		if amount := f.previewAmount(t, orderID)["amount"]; amount != want {
 			t.Fatalf("refunded %v previews %v", refunded, amount)
 		}
 	}
-	data["refunded"] = 0
-	patch(t, f.app, "commerce_orders", orderID, map[string]any{"data": data})
+	patch(t, f.app, "orders", orderID, map[string]any{"refundedMinor": 0})
 	patch(t, f.app, "credit_batches", batchID, map[string]any{"availableQuantity": 0, "consumedQuantity": 10})
 	if amount := f.previewAmount(t, orderID)["amount"]; amount != 0.0 {
 		t.Fatalf("used up = %v", amount)
@@ -506,74 +441,17 @@ func TestRefundMovementWithdrawRestoreExpire(t *testing.T) {
 
 // Hono: commerceRoutes › commerce requires student authentication and forwards ownership from token
 func TestCommerceRoutesRequireStudentAndUseTokenOwner(t *testing.T) {
-	f := commerceSetup(t)
+	f := orderSetup(t)
 	if result := f.call(t, nil, http.MethodGet, "/v1/student/commerce/catalog", nil); result.Code() != 403 {
 		t.Fatalf("anonymous = %v", result.Body)
 	}
 	failed(t, f.call(t, f.teacher, http.MethodGet, "/v1/student/commerce/catalog", nil), 403, "STUDENT_LEARNING_STUDENT_REQUIRED", "teacher")
 	order := ok(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders",
 		map[string]any{"key": "k1", "offerId": f.offerID, "studentId": "other"}), "checkout")
-	if f.record(t, "commerce_orders", order["id"].(string)).GetString("studentId") != f.studentID {
+	if f.record(t, "orders", order["id"].(string)).GetString("studentId") != f.studentID {
 		t.Fatal("order must belong to the token's student")
 	}
 	if result := testkit.Raw(t, f.handler, http.MethodPost, "/v1/student/commerce/orders", "null", f.student); result.Code() != 400 {
 		t.Fatalf("null body = %v", result.Body)
-	}
-}
-
-// Hono: commerceRoutes › finance and recovery reject ordinary teacher, student and forced-password-change accounts
-func TestCommerceRecoveryNeedsFinance(t *testing.T) {
-	f := commerceSetup(t)
-	signer, _ := auth.NewSigner(testkit.Secret)
-	sign := func(id, role string, admin bool, extra auth.Claims) map[string]string {
-		claims := auth.Claims{"scope": auth.OpsScope}
-		for key, value := range extra {
-			claims[key] = value
-		}
-		value, err := signer.Sign(id, "S1", role, admin, claims, auth.OpsTokenTTL)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return testkit.Bearer(value)
-	}
-	for _, headers := range []map[string]string{f.student, sign("teacher", "teacher", false, nil),
-		sign("admin", "teacher", true, auth.Claims{"passwordChangeRequired": true})} {
-		if result := f.call(t, headers, http.MethodPost, "/ops/commerce/recover", map[string]any{}); result.Code() != 403 {
-			t.Fatalf("recover allowed: %v", result.Body)
-		}
-	}
-	for _, headers := range []map[string]string{sign("admin", "teacher", true, nil),
-		sign("finance", "teacher", false, auth.Claims{"courseCreditCapabilities": []string{Finance}})} {
-		ok(t, f.call(t, headers, http.MethodPost, "/ops/commerce/recover", map[string]any{}), "recover")
-	}
-}
-
-// Hono: commerceRoutes › feature-off and production remove routes; cross-student access is denied before mutation
-func TestCommerceRoutesOffInProductionAndOwnershipFirst(t *testing.T) {
-	f := commerceSetup(t)
-	order := ok(t, f.call(t, f.student, http.MethodPost, "/v1/student/commerce/orders", map[string]any{"key": "k1", "offerId": f.offerID}), "checkout")
-	production := f.module
-	production.Config.Mock = false
-	handler := testkit.Serve(t, f.app, production.Register)
-	for path, headers := range map[string]map[string]string{
-		"/v1/student/commerce/orders/" + order["id"].(string) + "/mock-pay": f.student,
-		"/ops/commerce/refunds/x/mock-success":                              f.ops,
-	} {
-		request := httptest.NewRequest(http.MethodPost, path, strings.NewReader("{}"))
-		request.Header.Set("Authorization", headers["Authorization"])
-		recorder := httptest.NewRecorder()
-		handler.ServeHTTP(recorder, request)
-		if recorder.Code != http.StatusNotFound {
-			t.Fatalf("%s = %d", path, recorder.Code)
-		}
-	}
-	other := testkit.Create(t, f.app, "students", map[string]any{"cellphone": "13900000002", "realName": "学员乙"})
-	signer, _ := auth.NewSigner(testkit.Secret)
-	token, _ := signer.Sign(other.Id, "S2", "student", false, nil, auth.OpsTokenTTL)
-	f.gateway.set("pay1", "succeeded")
-	failed(t, f.call(t, testkit.Bearer(token), http.MethodPost, "/v1/student/commerce/orders/"+order["id"].(string)+"/refresh", nil),
-		403, "COMMERCE_ORDER_FORBIDDEN", "other student")
-	if f.record(t, "commerce_orders", order["id"].(string)).GetString("status") != "pending" {
-		t.Fatal("a forbidden refresh must not sync the order")
 	}
 }

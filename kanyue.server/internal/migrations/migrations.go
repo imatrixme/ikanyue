@@ -12,6 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/spf13/cobra"
 
+	"kanyue.server/internal/migrations/orderpayment"
 	"kanyue.server/internal/tenancy"
 )
 
@@ -25,6 +26,7 @@ func init() {
 	list.Register(EnsureRenewalReminders, nil, "kanyue_0005_renewal_reminders")
 	list.Register(addVenueCover, nil, "kanyue_0006_venue_cover")
 	list.Register(tenancy.EnsureSchema, nil, "kanyue_0007_tenants")
+	list.Register(orderpayment.Apply, nil, "kanyue_0008_order_payment_split")
 }
 
 // Up applies pending migrations in one transaction and returns their names.

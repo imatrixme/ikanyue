@@ -17,11 +17,10 @@ import (
 	"kanyue.server/internal/tenancy"
 )
 
-// Module is one business area's routes. A module with a Plugin answers 404 for
-// tenants that have not enabled it.
+// Module is one business area's routes. Plugin routes declare the capability
+// they need themselves (tenancy.Needs), so a plugin can wind down route by route.
 type Module struct {
 	Name     string
-	Plugin   string
 	Register func(se *core.ServeEvent)
 }
 
@@ -46,23 +45,14 @@ func Register(app core.App, cfg Config) {
 			Priority: internalOnlyPriority,
 			Func:     internalOnly,
 		})
-		// plugins maps a plugin module's route pattern to its plugin; filled below, before serving.
-		plugins := map[string]string{}
 		se.Router.Bind(&hook.Handler[*core.RequestEvent]{
 			Id:       "kanyueTenant",
 			Priority: tenantPriority,
-			Func:     func(e *core.RequestEvent) error { return scopeTenant(e, plugins) },
+			Func:     scopeTenant,
 		})
 		ops, err := registerModules(se, cfg.Modules)
 		if err != nil {
 			return err
-		}
-		for _, module := range cfg.Modules {
-			for _, op := range ops {
-				if module.Plugin != "" && op.Module == module.Name {
-					plugins[op.Route.Pattern()] = module.Plugin
-				}
-			}
 		}
 		// More specific routes registered above win over this catch-all.
 		se.Router.Any("/{path...}", pages(cfg.Console))
@@ -128,19 +118,15 @@ func internalOnly(e *core.RequestEvent) error {
 	return notFound(e)
 }
 
-// scopeTenant hands module routes an App limited to the request's tenant and
-// hides plugin routes the tenant has not enabled. PocketBase's own API and
+// scopeTenant hands module routes an App limited to the request's tenant.
+// PocketBase's own API and
 // dashboard stay unscoped for platform operations.
-func scopeTenant(e *core.RequestEvent, plugins map[string]string) error {
+func scopeTenant(e *core.RequestEvent) error {
 	path := e.Request.URL.Path
 	if strings.HasPrefix(path, "/api/") || path == "/_" || strings.HasPrefix(path, "/_/") {
 		return e.Next()
 	}
-	tenant := tenancy.Resolve(e)
-	e.App = tenancy.Scope(e.App, tenant)
-	if plugin := plugins[e.Request.Pattern]; plugin != "" && !tenancy.PluginEnabled(e.App, tenant, plugin) {
-		return notFound(e)
-	}
+	e.App = tenancy.Scope(e.App, tenancy.Resolve(e))
 	return e.Next()
 }
 

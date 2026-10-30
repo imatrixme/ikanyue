@@ -1,4 +1,4 @@
-package coursecredit
+package payment
 
 import (
 	"bytes"
@@ -11,10 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"kanyue.server/internal/coursecredit"
 	"kanyue.server/internal/gatewaylink"
 )
 
-// gateway is Hono's commerce GatewayClient: the payment gateway's service API.
+// gateway is the client of kanyue.pay's service API, the only place money moves.
 type gateway struct {
 	base      *url.URL
 	baseErr   error
@@ -33,7 +34,7 @@ var gatewayMessages = map[string]string{
 	"STATEMENT_NOT_GENERATED":         "请选择已经出账的历史日期",
 }
 
-func newGateway(config CommerceConfig) *gateway {
+func newGateway(config Config) *gateway {
 	g := &gateway{token: config.ServiceToken, mockToken: config.MockToken, mock: config.Mock,
 		client: &http.Client{Timeout: 10 * time.Second, Transport: gatewaylink.Track("kanyue.pay", nil),
 			CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("redirect refused") }}}
@@ -49,7 +50,7 @@ func newGateway(config CommerceConfig) *gateway {
 		(parsed.Scheme == "http" && slices.Contains([]string{"127.0.0.1", "localhost", "[::1]"}, hostOf(parsed))):
 		g.base = parsed
 	default:
-		g.baseErr = Fail("PAYMENT_TLS_REQUIRED", "支付服务需要安全连接", nil)
+		g.baseErr = coursecredit.Fail("PAYMENT_TLS_REQUIRED", "支付服务需要安全连接", nil)
 	}
 	return g
 }
@@ -69,14 +70,14 @@ func (g *gateway) request(method, path string, body any, key string, mock bool) 
 		return nil, g.baseErr
 	}
 	if mock && !g.mock {
-		return nil, Fail("MOCK_PAYMENT_DISABLED", "模拟支付未开启", nil)
+		return nil, coursecredit.Fail("MOCK_PAYMENT_DISABLED", "模拟支付未开启", nil)
 	}
 	token := g.token
 	if mock {
 		token = g.mockToken
 	}
 	if len(token) < 32 {
-		return nil, Fail("PAYMENT_NOT_CONFIGURED", "支付服务暂未配置", nil)
+		return nil, coursecredit.Fail("PAYMENT_NOT_CONFIGURED", "支付服务暂未配置", nil)
 	}
 	target, err := g.base.Parse(path)
 	if err != nil {
@@ -90,9 +91,9 @@ func (g *gateway) request(method, path string, body any, key string, mock bool) 
 		}
 		reader = bytes.NewReader(raw)
 	}
-	unknown := Fail("PAYMENT_RESULT_UNKNOWN", "支付结果正在确认，请稍后刷新，不要重复付款", nil)
+	unknown := coursecredit.Fail("PAYMENT_RESULT_UNKNOWN", "支付结果正在确认，请稍后刷新，不要重复付款", nil)
 	if method == http.MethodGet || strings.Contains(path, "statement") {
-		unknown = Fail("PAYMENT_RESULT_UNKNOWN", "支付服务连接超时，请稍后刷新", nil)
+		unknown = coursecredit.Fail("PAYMENT_RESULT_UNKNOWN", "支付服务连接超时，请稍后刷新", nil)
 	}
 	req, err := http.NewRequest(method, target.String(), reader)
 	if err != nil {
@@ -121,7 +122,7 @@ func (g *gateway) request(method, path string, body any, key string, mock bool) 
 		if !ok {
 			message = "支付服务暂未完成操作，请稍后重试"
 		}
-		return nil, Fail("PAYMENT_CHANNEL_ERROR", message, nil)
+		return nil, coursecredit.Fail("PAYMENT_CHANNEL_ERROR", message, nil)
 	}
 	return result, nil
 }
@@ -170,4 +171,17 @@ func (g *gateway) mockSuccess(id string) error {
 	}
 	_, err := g.request(http.MethodPost, "/_test/poll", map[string]any{}, "", true)
 	return err
+}
+
+// encodeURIComponent escapes a path segment the way the JavaScript global does.
+func encodeURIComponent(value string) string {
+	var builder strings.Builder
+	for _, b := range []byte(value) {
+		if b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b >= '0' && b <= '9' || strings.IndexByte("-_.!~*'()", b) >= 0 {
+			builder.WriteByte(b)
+			continue
+		}
+		builder.WriteString("%" + strings.ToUpper(string("0123456789abcdef"[b>>4])+string("0123456789abcdef"[b&15])))
+	}
+	return builder.String()
 }
