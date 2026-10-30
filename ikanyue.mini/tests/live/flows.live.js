@@ -176,10 +176,14 @@ describe.sequential('live mini program flows', () => {
         await act(page.withdrawAppointment());
         expect(log.toasts.at(-1)).toBe('预约申请已撤回');
         expect(page.data.appointment.canWithdraw).toBe(false);
-        // The home lists only bookings still ahead; the declined and withdrawn ones stay under 全部约课.
+        // The home lists the next lessons, soonest first; declined, withdrawn or finished ones stay under 全部约课.
         const home = await smoke('pages/home');
-        expect(home.data.appointments.map((item) => item.status)
+        const { appointments } = home.data;
+        expect(appointments.map((item) => item.status)
             .filter((status) => !['pending', 'confirmed', 'rescheduled'].includes(status))).toEqual([]);
+        expect(appointments.filter((item) => Date.parse(item.endAt) <= Date.now())).toEqual([]);
+        const starts = appointments.map((item) => Date.parse(item.startAt));
+        expect(starts).toEqual([...starts].sort((a, b) => a - b));
     });
 
     it('student cancels the confirmed appointment with a quoted refund', async () => {

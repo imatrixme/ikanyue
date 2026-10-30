@@ -248,6 +248,37 @@ func TestAppointmentListsAreOwnershipSafe(t *testing.T) {
 	failsWith(t, err, "APPOINTMENT_TEACHER_FORBIDDEN")
 }
 
+// The student home lists lessons not yet over, soonest first; the full list stays newest first.
+func TestUpcomingStudentAppointmentsComeSoonestFirst(t *testing.T) {
+	f := bookingSetup(t, true)
+	later, _ := f.confirmed(t, 80, "r1")
+	over, _ := f.confirmed(t, 60, "r2")
+	soon := f.pending(t, 10, "r3")
+	now := time.Now().UTC()
+	patch(t, f.app, "appointment_requests", over, map[string]any{
+		"requestedStartAt": iso(now.Add(-2 * time.Hour)), "requestedEndAt": iso(now.Add(-time.Hour))})
+	ids := func(query map[string]string) string {
+		page, err := listStudentAppointments(f.app, f.studentID, query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := []string{}
+		for _, item := range items(page) {
+			result = append(result, item["appointmentId"].(string))
+		}
+		return strings.Join(result, ",")
+	}
+	if got, want := ids(map[string]string{"upcoming": "true"}), soon+","+later; got != want {
+		t.Fatalf("upcoming = %s, want %s", got, want)
+	}
+	if got, want := ids(map[string]string{"upcoming": "true", "status": "confirmed"}), later; got != want {
+		t.Fatalf("upcoming confirmed = %s, want %s", got, want)
+	}
+	if got, want := ids(map[string]string{}), later+","+soon+","+over; got != want {
+		t.Fatalf("all = %s, want %s", got, want)
+	}
+}
+
 func queryAppointment(changes map[string]any) map[string]any {
 	record := map[string]any{"id": "appointment", "studentId": "student", "teacherId": "teacher", "offeringId": "offering",
 		"courseSpecId": "course", "sessionId": "", "status": "pending", "requestedStartAt": domainStart, "requestedEndAt": domainEnd,

@@ -79,12 +79,12 @@ definePage({
         retry() {
             return this.loadData(true);
         },
-        // Only bookings still ahead; cancelled or declined ones stay under 全部约课.
+        // The next lessons, soonest first; cancelled, declined or finished ones stay under 全部约课.
         // A failure shows a retry instead of an empty list.
         async loadAppointments() {
             try {
                 const page = normalizeAppointmentPage(await Api.listStudentAppointments({
-                    page: 1, perPage: 3, status: OPEN_APPOINTMENT_STATUSES,
+                    page: 1, perPage: 3, status: OPEN_APPOINTMENT_STATUSES, upcoming: true,
                 }));
                 await this.set({ appointments: page.items, appointmentsFailed: false });
             } catch {

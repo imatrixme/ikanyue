@@ -16,7 +16,7 @@ The founder finds the signed-out mini program off-putting. 首页, 约课, the c
   - A row of four shortcuts: 场馆信息 / 课程课包 / 去约课 / 我的课时.
   - Two stacked sections, no tabs:
     - **我的课时**: the lesson balance; or for guests and students without lessons, the existing "开始学习" card.
-    - **我的约课** (signed in only): up to three bookings still ahead (cancelled or declined ones stay under 全部约课), or a quiet line.
+    - **我的约课** (signed in only): the next three lessons not yet over, soonest first (cancelled, declined or finished ones stay under 全部约课), or a quiet line.
 - **Fewer full-width tabs.** Full-width segmented tabs take space and hide information.
   - The login sheet switches between WeChat and password login with a text link.
   - The shared `segmented-control` sizes to its options. The dashboard puts the period chips and the range or month stepper on one row.
@@ -29,7 +29,7 @@ The founder finds the signed-out mini program off-putting. 首页, 约课, the c
 
 ## Non-goals
 
-- No server or API change.
+- No server change beyond one optional list filter: `GET /v1/student/appointments?upcoming=true` keeps lessons not yet over by the server clock, soonest first. Without it the list is unchanged.
 - Booking, purchase and points rules stay the same.
 - The secondary pages (`rewardCatalog`, `pointsHistory`, `appointmentSlots`) keep their current signed-out handling. They are only reached from signed-in pages.
 
@@ -38,7 +38,8 @@ The founder finds the signed-out mini program off-putting. 首页, 约课, the c
 - Affected specs:
   - `student-miniapp-home`: the signed-out home.
   - `miniapp-account-access`: the signed-out points page and in-place sign-in.
-- Affected code (`ikanyue.mini` only):
+- Affected code:
+  - `kanyue.server`: the `upcoming` filter on the student appointment list, with a Go test and a contract check;
   - new `components/login-sheet` and `services/loginGate.js`;
   - `pages/home`, `pages/appointmentBooking`, `pages/courses`, `pages/points`, `pages/profile`;
   - `core/home.js`, `core/profile.js`, `styles/_login.scss`;

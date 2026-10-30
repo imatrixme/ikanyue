@@ -113,6 +113,10 @@ test('student booking views', { skip: !student && 'CONTRACT_STUDENT_* not set' }
   const appointments = (await call('/v1/student/appointments', { token })).body;
   assert.equal(appointments.code, 10000);
   assert.deepEqual(Object.keys(appointments.data).sort(), PAGE_KEYS);
+  const upcoming = (await call('/v1/student/appointments?upcoming=true&perPage=3', { token })).body;
+  assert.equal(upcoming.code, 10000);
+  const starts = upcoming.data.items.map((item) => Date.parse(item.startAt));
+  assert.deepEqual(starts, [...starts].sort((a, b) => a - b));
 
   const query = (path) => call(path, { token, headers: TRACE });
   const command = (path, body) => call(path, { method: 'POST', token, body, headers: TRACE });

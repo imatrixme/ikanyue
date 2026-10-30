@@ -228,8 +228,14 @@ func availableSlots(app core.App, studentID string, query map[string]string) (ma
 	return map[string]any{"offering": bookingOption(withCourse), "slots": slots}, nil
 }
 
+// listStudentAppointments is newest first; upcoming=true keeps only lessons not yet over, soonest first,
+// judged by the server clock so a phone with the wrong time still sees its next lesson.
 func listStudentAppointments(app core.App, studentID string, query map[string]string) (map[string]any, error) {
-	return appointmentPage(app, query, []string{`studentId="` + escape(studentID) + `"`}, "-requestedStartAt", appointmentExpand, studentAppointment)
+	filters, sort := []string{`studentId="` + escape(studentID) + `"`}, "-requestedStartAt"
+	if query["upcoming"] == "true" {
+		filters, sort = append(filters, `requestedEndAt>"`+filterTime(clock())+`"`), "requestedStartAt"
+	}
+	return appointmentPage(app, query, filters, sort, appointmentExpand, studentAppointment)
 }
 
 func listTeacherAppointments(app core.App, teacherID string, query map[string]string) (map[string]any, error) {

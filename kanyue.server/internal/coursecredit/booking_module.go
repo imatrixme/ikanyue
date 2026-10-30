@@ -174,7 +174,7 @@ func (m BookingModule) Register(se *core.ServeEvent) {
 		return availableSlots(e.App, studentID, queryParams(e, "offeringId", "from", "to"))
 	}))
 	router.GET("/v1/student/appointments", studentQuery(func(e *core.RequestEvent, studentID string) (any, error) {
-		return listStudentAppointments(e.App, studentID, queryParams(e, "page", "perPage", "status"))
+		return listStudentAppointments(e.App, studentID, queryParams(e, "page", "perPage", "status", "upcoming"))
 	}))
 	router.GET("/v1/student/appointments/{appointmentId}", studentQuery(func(e *core.RequestEvent, studentID string) (any, error) {
 		return getStudentAppointment(e.App, studentID, path(e, "appointmentId"))
